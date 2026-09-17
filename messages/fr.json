@@ -671,6 +671,36 @@
     "overview": {
       "title": "Vue d'ensemble",
       "description": "Synthèse de santé et analyses automatiques pour {connection} dans {region}."
+    },
+    "alarms": {
+      "title": "Alarmes",
+      "description": "Alarmes CloudWatch de {connection} dans {region}.",
+      "cardTitle": "Alarmes CloudWatch",
+      "filters": {
+        "state": "État",
+        "states": {
+          "all": "Tous les états",
+          "ALARM": "En alarme",
+          "OK": "OK",
+          "INSUFFICIENT_DATA": "Données insuffisantes"
+        },
+        "showTargetTracking": "Afficher les alarmes de suivi de cible",
+        "search": "Rechercher par nom",
+        "apply": "Appliquer"
+      },
+      "columns": {
+        "state": "État",
+        "name": "Nom",
+        "metric": "Métrique",
+        "threshold": "Seuil",
+        "updated": "Modifiée",
+        "reason": "Raison"
+      },
+      "composite": "Alarme composite",
+      "metricMath": "Calcul de métriques",
+      "empty": "Aucune alarme ne correspond à ces filtres.",
+      "hiddenTargetTracking": "{count, plural, one {# alarme de suivi de cible est masquée.} other {# alarmes de suivi de cible sont masquées.}}",
+      "showHidden": "Les afficher"
     }
   }
 }

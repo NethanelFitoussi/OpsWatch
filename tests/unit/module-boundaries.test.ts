@@ -27,6 +27,7 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/cache.ts',
   'lib/monitoring/call.ts',
   'lib/monitoring/metrics.ts',
+  'lib/monitoring/alarms.ts',
   'lib/monitoring/selection.ts',
   'lib/monitoring/target.ts',
   'lib/monitoring/route.ts',

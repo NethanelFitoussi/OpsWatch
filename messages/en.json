@@ -671,6 +671,36 @@
     "overview": {
       "title": "Overview",
       "description": "Health summary and automatic insights for {connection} in {region}."
+    },
+    "alarms": {
+      "title": "Alarms",
+      "description": "CloudWatch alarms of {connection} in {region}.",
+      "cardTitle": "CloudWatch alarms",
+      "filters": {
+        "state": "State",
+        "states": {
+          "all": "All states",
+          "ALARM": "In alarm",
+          "OK": "OK",
+          "INSUFFICIENT_DATA": "Insufficient data"
+        },
+        "showTargetTracking": "Show target-tracking alarms",
+        "search": "Search by name",
+        "apply": "Apply"
+      },
+      "columns": {
+        "state": "State",
+        "name": "Name",
+        "metric": "Metric",
+        "threshold": "Threshold",
+        "updated": "Changed",
+        "reason": "Reason"
+      },
+      "composite": "Composite alarm",
+      "metricMath": "Metric math",
+      "empty": "No alarm matches these filters.",
+      "hiddenTargetTracking": "{count, plural, one {# target-tracking alarm is hidden.} other {# target-tracking alarms are hidden.}}",
+      "showHidden": "Show them"
     }
   }
 }

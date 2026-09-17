@@ -40,3 +40,25 @@ test('an RSC request without a session leaks nothing from a monitoring page', as
   expect(await (await anonymous.get(path, { headers })).text()).not.toContain(MONITORING_CONNECTION);
   await anonymous.dispose();
 });
+
+test('the alarms page hides target-tracking alarms until asked', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'alarms'));
+  await expect(page).toHaveTitle('Alarms · OpsWatch');
+  const high = page.getByRole('row').filter({ hasText: 'opswatch-e2e-high-cpu' });
+  await expect(high).toContainText('In alarm');
+  await expect(page.getByRole('row').filter({ hasText: 'TargetTracking-service/opswatch-e2e/web-AlarmHigh-e2e' })).toHaveCount(0);
+  await expect(page.getByText('1 target-tracking alarm is hidden.')).toBeVisible();
+  await page.getByRole('link', { name: 'Show them' }).click();
+  await expect(page).toHaveURL(/tt=1/);
+  await expect(page.getByRole('row').filter({ hasText: 'TargetTracking-service/opswatch-e2e/web-AlarmHigh-e2e' })).toBeVisible();
+});
+
+test('the state filter keeps only alarms in alarm', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'alarms'));
+  await expect(page.getByRole('row').filter({ hasText: 'opswatch-e2e-db-connections' })).toContainText('OK');
+  await page.getByLabel('State').selectOption('ALARM');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page).toHaveURL(/state=ALARM/);
+  await expect(page.getByRole('row').filter({ hasText: 'opswatch-e2e-high-cpu' })).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: 'opswatch-e2e-db-connections' })).toHaveCount(0);
+});
