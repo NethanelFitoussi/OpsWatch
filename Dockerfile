@@ -13,6 +13,10 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# next.config.ts is frozen into the standalone server at build time: the public URL has to be known
+# here for Server Actions to accept requests from it (see docker-compose.yml). Rebuild after changing it.
+ARG OPSWATCH_PUBLIC_URL=
+ENV OPSWATCH_PUBLIC_URL=${OPSWATCH_PUBLIC_URL}
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runner

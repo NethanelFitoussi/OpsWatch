@@ -1,4 +1,4 @@
-// Shared by next.config.ts and proxy.ts, so this module must not import server-only code.
+// Imported by next.config.ts, so this module must not import server-only code.
 
 /** Clickjacking defence: no page of OpsWatch may be shown inside a frame. */
 export const SECURITY_HEADERS = [
@@ -15,25 +15,12 @@ function hostOf(publicUrl: string | undefined): string | null {
   }
 }
 
-/** Extra hosts allowed to call Server Actions: the host of OPSWATCH_PUBLIC_URL, if any. */
+/**
+ * Extra hosts allowed to call Server Actions: the host of OPSWATCH_PUBLIC_URL, if any. The standalone
+ * server freezes next.config.ts at build time, so the Docker build receives OPSWATCH_PUBLIC_URL as a
+ * build argument (see Dockerfile and docker-compose.yml).
+ */
 export function serverActionAllowedOrigins(publicUrl: string | undefined): string[] {
   const host = hostOf(publicUrl);
   return host ? [host] : [];
-}
-
-/**
- * next.config.ts is frozen into the standalone server at build time, so a Docker image built
- * without OPSWATCH_PUBLIC_URL cannot rely on `serverActions.allowedOrigins`. At run time, a
- * Server Action whose Origin is exactly the public URL gets that host as `x-forwarded-host`,
- * which is what Next.js compares the Origin with. Returns null when nothing needs to change.
- */
-export function withPublicHostForAction(request: Request, publicUrl: string | undefined): Headers | null {
-  const host = hostOf(publicUrl);
-  if (!host || request.method !== 'POST' || !request.headers.has('next-action')) return null;
-  const origin = request.headers.get('origin');
-  if (!origin || hostOf(origin) !== host) return null;
-  if (request.headers.get('x-forwarded-host') === host) return null;
-  const headers = new Headers(request.headers);
-  headers.set('x-forwarded-host', host);
-  return headers;
 }
