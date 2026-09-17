@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
-import { AuthCard } from '@/components/auth-card';
+import { CenteredCard } from '@/components/centered-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { redirect } from '@/i18n/navigation';
 import { hasAdmin } from '@/lib/auth/admin';
@@ -28,9 +28,9 @@ export default async function LoginPage({ params }: Props) {
 
   return (
     <AppShell signedIn={false}>
-      <AuthCard title={t('title')} description={t('description')}>
+      <CenteredCard title={t('title')} description={t('description')}>
         <LoginForm action={loginAction.bind(null, locale)} />
-      </AuthCard>
+      </CenteredCard>
     </AppShell>
   );
 }

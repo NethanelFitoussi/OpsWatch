@@ -33,7 +33,7 @@ export function AuthForm<S extends AuthState>({
       <FormErrorAlert message={state.error && t(state.error)} />
       <FormField id="email" label={emailLabel} type="email" autoComplete="email" defaultValue={state.email} required />
       {children}
-      <SubmitButton className="w-full">{submitLabel}</SubmitButton>
+      <SubmitButton className="h-9 w-full">{submitLabel}</SubmitButton>
     </form>
   );
 }
