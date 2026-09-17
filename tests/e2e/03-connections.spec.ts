@@ -114,6 +114,8 @@ test('copy buttons work without the async clipboard API (plain HTTP)', async ({ 
   page.on('pageerror', (error) => errors.push(error));
   // navigator.clipboard only exists in a secure context; localhost is one, a LAN address over HTTP is not.
   await page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'clipboard', { get: () => undefined }));
+  await page.reload();
+  expect(await page.evaluate(() => navigator.clipboard)).toBeUndefined();
   await page.getByRole('link', { name: /Moto role/ }).first().click();
   const copy = page.getByRole('button', { name: 'Copy' }).first();
   await copy.click();
