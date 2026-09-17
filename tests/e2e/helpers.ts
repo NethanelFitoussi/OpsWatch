@@ -32,3 +32,8 @@ export function rscHeaders(segments: string[], locale = 'en'): Record<string, st
   const tree = node('', node(['locale', locale, 'd', null], leaf));
   return { RSC: '1', 'Next-Router-State-Tree': encodeURIComponent(JSON.stringify(tree)) };
 }
+
+/** moto as published by docker-compose.test.yml; the OpsWatch container reaches it as http://moto:5000. */
+export const MOTO_URL = process.env.E2E_MOTO_URL ?? 'http://localhost:5055';
+/** The region of every e2e connection and of the seeded resources. */
+export const MOTO_REGION = 'us-east-1';
