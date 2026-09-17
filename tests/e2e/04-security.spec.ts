@@ -1,16 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { login } from './helpers';
+import { login, rscHeaders } from './helpers';
 
 // What the Next.js client sends when it already shows /en/accounts/new: the (app) layout is
 // mounted, so a navigation to /en/accounts only asks the server for the page segment.
-type RouterNode = [string | [string, string, string, null], Record<string, RouterNode>];
-const segment = (name: RouterNode[0], child?: RouterNode): RouterNode => [name, child ? { children: child } : {}];
-const ROUTER_STATE_TREE = encodeURIComponent(
-  JSON.stringify(
-    segment('', segment(['locale', 'en', 'd', null], segment('(app)', segment('accounts', segment('new', segment('__PAGE__')))))),
-  ),
-);
-const RSC_HEADERS = { RSC: '1', 'Next-Router-State-Tree': ROUTER_STATE_TREE };
+const RSC_HEADERS = rscHeaders(['(app)', 'accounts', 'new']);
 
 test('an RSC request without a session leaks no connection data', async ({ page, playwright, baseURL }) => {
   await login(page);
@@ -52,10 +45,17 @@ test('the template link sends a signed-out browser to the login page', async ({ 
   await expect(page).toHaveURL(/\/en\/login$/);
 });
 
+test('the template link of an unknown connection lands on the accounts list', async ({ page }) => {
+  await login(page);
+  await page.goto('/api/connections/000000000000/template');
+  await expect(page).toHaveURL(/\/en\/accounts$/);
+});
+
 test('an unknown connection shows a localized not found page', async ({ page }) => {
   await login(page);
   await page.goto('/en/accounts/000000000000');
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+  await expect(page).toHaveTitle('Page not found · OpsWatch');
   await page.goto('/fr/accounts/000000000000');
   await expect(page.getByRole('heading', { level: 1, name: 'Page introuvable' })).toBeVisible();
 });

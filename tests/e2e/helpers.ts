@@ -18,3 +18,17 @@ export async function login(page: Page) {
 export function alert(page: Page) {
   return page.locator('[role="alert"]:not(#__next-route-announcer__)');
 }
+
+type RouterNode = [string | [string, string, string, null], Record<string, RouterNode>];
+
+/**
+ * Headers of a client-side navigation RSC request, as sent by a page already showing `segments`
+ * (for example ['(app)', 'accounts', 'new']) under `/<locale>`. `Next-Router-State-Tree` is an
+ * internal Next.js format, written against Next.js 16.3: check it when upgrading Next.js.
+ */
+export function rscHeaders(segments: string[], locale = 'en'): Record<string, string> {
+  const node = (name: RouterNode[0], child?: RouterNode): RouterNode => [name, child ? { children: child } : {}];
+  const leaf = [...segments].reverse().reduce<RouterNode>((child, name) => node(name, child), node('__PAGE__'));
+  const tree = node('', node(['locale', locale, 'd', null], leaf));
+  return { RSC: '1', 'Next-Router-State-Tree': encodeURIComponent(JSON.stringify(tree)) };
+}

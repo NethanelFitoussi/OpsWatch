@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Db } from '@/lib/db/client';
 import { createConnection } from '@/lib/connections/repository';
 import { createTestDb } from '../helpers/db';
+import { connectionInput } from '../helpers/fixtures';
 
 const state = vi.hoisted(() => ({ db: undefined as unknown as Db, adminId: 1 as number | null }));
 
@@ -27,8 +28,6 @@ function get(id: string, headers: Record<string, string>) {
   });
 }
 
-const input = { name: 'prod', awsAccountId: '111122223333', regions: ['eu-west-1'] };
-
 beforeEach(() => {
   state.db = createTestDb();
   state.adminId = 1;
@@ -36,7 +35,7 @@ beforeEach(() => {
 
 describe('GET /api/connections/[id]/template', () => {
   it('downloads the template of a role connection', async () => {
-    const row = createConnection(state.db, { ...input, method: 'role' });
+    const row = createConnection(state.db, connectionInput());
     const res = await get(row.id, BROWSER);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-disposition')).toBe(`attachment; filename="opswatch-${row.id}.yaml"`);
@@ -50,14 +49,14 @@ describe('GET /api/connections/[id]/template', () => {
   });
 
   it('sends a browser back to the connection page for a connection without a template', async () => {
-    const row = createConnection(state.db, { ...input, method: 'keys' });
+    const row = createConnection(state.db, connectionInput({ method: 'keys' }));
     const res = await get(row.id, BROWSER);
     expect(res.status).toBe(303);
     expect(res.headers.get('location')).toBe(`/fr/accounts/${row.id}`);
   });
 
   it('answers scripts with JSON errors', async () => {
-    const keys = createConnection(state.db, { ...input, method: 'keys' });
+    const keys = createConnection(state.db, connectionInput({ method: 'keys' }));
     expect((await get('unknown00000', SCRIPT)).status).toBe(404);
     const notRole = await get(keys.id, SCRIPT);
     expect(notRole.status).toBe(400);

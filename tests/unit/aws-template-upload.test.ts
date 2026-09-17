@@ -2,10 +2,9 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { uploadTemplate } from '@/lib/aws/template-upload';
+import { BASE_CREDENTIALS, expectSignedWith } from '../helpers/aws';
 
-vi.mock('@/lib/aws/base-credentials', () => ({
-  baseCredentials: () => async () => ({ accessKeyId: 'BASE-FROM-ENV', secretAccessKey: 'base' }),
-}));
+vi.mock('@/lib/aws/base-credentials', () => import('../helpers/base-credentials-mock'));
 
 const s3 = mockClient(S3Client);
 
@@ -22,7 +21,7 @@ describe('uploadTemplate', () => {
     expect(call.args[0].input).toMatchObject({ Bucket: 'templates', Key: 'opswatch/templates/opswatch-abc123def456-v1.yaml' });
     const client = call.thisValue as S3Client;
     expect(client.config.followRegionRedirects).toBe(true);
-    expect(await (client.config.credentials as () => Promise<unknown>)()).toMatchObject({ accessKeyId: 'BASE-FROM-ENV' });
+    await expectSignedWith(client, BASE_CREDENTIALS.accessKeyId);
   });
 
   it('gives up after 5 seconds', async () => {

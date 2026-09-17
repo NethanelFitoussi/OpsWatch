@@ -104,11 +104,25 @@ test('ambient connection: detected identity and a passing test', async ({ page, 
 
 test('the connection headings are read without their step numbers', async ({ page }) => {
   await page.getByRole('link', { name: /Moto role/ }).first().click();
+  await expect(page).toHaveTitle('AWS account · OpsWatch');
   await expect(page.getByRole('heading', { level: 2, name: "OpsWatch's identity", exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Paste the role ARN', exact: true })).toBeVisible();
 });
 
+test('copy buttons work without the async clipboard API (plain HTTP)', async ({ page }) => {
+  const errors: Error[] = [];
+  page.on('pageerror', (error) => errors.push(error));
+  // navigator.clipboard only exists in a secure context; localhost is one, a LAN address over HTTP is not.
+  await page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'clipboard', { get: () => undefined }));
+  await page.getByRole('link', { name: /Moto role/ }).first().click();
+  const copy = page.getByRole('button', { name: 'Copy' }).first();
+  await copy.click();
+  await expect(copy).toContainText(/^(Copied|Copy failed)$/);
+  expect(errors).toEqual([]);
+});
+
 test('the accounts list flags access keys as meant for local testing', async ({ page }) => {
+  await expect(page).toHaveTitle('AWS accounts · OpsWatch');
   const card = page.getByRole('listitem').filter({ hasText: 'Moto keys' });
   await expect(card.getByText('For local testing', { exact: true })).toBeVisible();
   await expect(page.getByRole('listitem').filter({ hasText: 'Moto role' }).getByText('For local testing')).toHaveCount(0);

@@ -2,10 +2,9 @@ import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { mockClient } from 'aws-sdk-client-mock';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { detectBaseIdentity, getCallerIdentity, resetBaseIdentityCache, trustFor } from '@/lib/aws/identity';
+import { BASE_CREDENTIALS, expectSignedWith } from '../helpers/aws';
 
-vi.mock('@/lib/aws/base-credentials', () => ({
-  baseCredentials: () => async () => ({ accessKeyId: 'BASE-FROM-ENV', secretAccessKey: 'base' }),
-}));
+vi.mock('@/lib/aws/base-credentials', () => import('../helpers/base-credentials-mock'));
 
 const sts = mockClient(STSClient);
 
@@ -64,8 +63,7 @@ describe('detectBaseIdentity', () => {
   it('signs GetCallerIdentity with the base credentials', async () => {
     sts.on(GetCallerIdentityCommand).resolves({ Account: '111122223333', Arn: 'arn:aws:iam::111122223333:user/o' });
     await detectBaseIdentity('eu-west-1', 0);
-    const client = sts.commandCalls(GetCallerIdentityCommand)[0].thisValue as STSClient;
-    expect(await (client.config.credentials as () => Promise<unknown>)()).toMatchObject({ accessKeyId: 'BASE-FROM-ENV' });
+    await expectSignedWith(sts.commandCalls(GetCallerIdentityCommand)[0].thisValue as STSClient, BASE_CREDENTIALS.accessKeyId);
   });
 
   it('caches a failure for 30 seconds', async () => {

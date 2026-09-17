@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DecryptionError, decrypt, encrypt, hashToken, randomId, randomToken } from '@/lib/crypto';
-
-const SECRET = 'a'.repeat(32);
-const OTHER = 'b'.repeat(32);
+import { OTHER_SECRET as OTHER, TEST_SECRET as SECRET } from '../helpers/fixtures';
 
 describe('encrypt / decrypt', () => {
   it('round-trips a value', () => {

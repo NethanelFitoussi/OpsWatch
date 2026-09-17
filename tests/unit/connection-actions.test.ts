@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createConnection } from '@/lib/connections/repository';
 import type { Db } from '@/lib/db/client';
 import { createTestDb } from '../helpers/db';
+import { connectionInput } from '../helpers/fixtures';
 
 class RedirectSignal extends Error {
   constructor(public readonly target: unknown) {
@@ -16,6 +17,7 @@ vi.mock('@/lib/db/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/db/client')>()),
   getDb: () => state.db,
 }));
+// A literal: the factory is hoisted above the imports, so it cannot use TEST_SECRET.
 vi.mock('@/lib/env', () => ({ env: () => ({ OPSWATCH_SECRET: 'k'.repeat(32), OPSWATCH_TEMPLATE_BUCKET: 'bucket' }) }));
 vi.mock('@/i18n/navigation', () => ({
   redirect: (target: unknown) => {
@@ -115,7 +117,7 @@ describe('connection forms echo non-secret values after an error', () => {
 describe('launch stack', () => {
   it('logs why the template could not be published and shows the error on the connection page', async () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const row = createConnection(state.db, { name: 'Role', method: 'role', awsAccountId: '111122223333', regions: ['eu-west-1'] });
+    const row = createConnection(state.db, connectionInput());
     expect(await redirectOf(actions.launchStackAction('en', row.id))).toEqual({
       href: { pathname: `/accounts/${row.id}`, query: { error: 'launch_failed' } },
       locale: 'en',

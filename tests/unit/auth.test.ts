@@ -10,9 +10,7 @@ import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { SESSION_TTL_MS, createSession, deleteSession, validateSession } from '@/lib/auth/sessions';
 import { adminUser, sessions } from '@/lib/db/schema';
 import { createTestDb } from '../helpers/db';
-
-const SECRET = 's'.repeat(32);
-const PASSWORD = 'correct horse battery';
+import { NOW, OTHER_SECRET, PASSWORD, TEST_SECRET as SECRET, createAdminWithSession } from '../helpers/fixtures';
 
 describe('password hashing', () => {
   it('hashes with argon2id and verifies', async () => {
@@ -77,9 +75,8 @@ describe('admin account', () => {
 describe('sessions', () => {
   it('creates, validates with rolling expiry, and deletes', async () => {
     const db = createTestDb();
-    const adminId = await createAdmin(db, { email: 'a@example.com', password: PASSWORD });
-    const t0 = new Date('2026-09-17T10:00:00Z');
-    const token = createSession(db, adminId, SECRET, t0);
+    const t0 = NOW;
+    const { adminId, token } = await createAdminWithSession(db, t0);
 
     const t1 = new Date(t0.getTime() + SESSION_TTL_MS - 60_000);
     expect(validateSession(db, token, SECRET, t1)).toBe(adminId);
@@ -94,18 +91,16 @@ describe('sessions', () => {
 
   it('rejects an expired session and a token checked with another secret', async () => {
     const db = createTestDb();
-    const adminId = await createAdmin(db, { email: 'a@example.com', password: PASSWORD });
-    const t0 = new Date('2026-09-17T10:00:00Z');
-    const token = createSession(db, adminId, SECRET, t0);
-    expect(validateSession(db, token, 'o'.repeat(32), t0)).toBeNull();
+    const t0 = NOW;
+    const { token } = await createAdminWithSession(db, t0);
+    expect(validateSession(db, token, OTHER_SECRET, t0)).toBeNull();
     expect(validateSession(db, token, SECRET, new Date(t0.getTime() + SESSION_TTL_MS + 1))).toBeNull();
   });
 
   it('purges abandoned expired sessions when a new one starts', async () => {
     const db = createTestDb();
-    const adminId = await createAdmin(db, { email: 'a@example.com', password: PASSWORD });
-    const t0 = new Date('2026-09-17T10:00:00Z');
-    createSession(db, adminId, SECRET, t0);
+    const t0 = NOW;
+    const { adminId } = await createAdminWithSession(db, t0);
     const later = new Date(t0.getTime() + SESSION_TTL_MS + 1);
     const current = createSession(db, adminId, SECRET, later);
     expect(db.select().from(sessions).all()).toHaveLength(1);

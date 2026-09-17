@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EnvError, loadEnv } from '@/lib/env';
-
-const SECRET = 'x'.repeat(32);
+import { TEST_SECRET as SECRET } from '../helpers/fixtures';
 
 describe('loadEnv', () => {
   it('accepts a minimal valid environment and applies defaults', () => {

@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: '.',
+  // The specs share one fresh stack and run in file order: 01 creates the admin, 03 the "Moto role"
+  // and "Moto keys" connections that later tests in 03 and 04 open. Run the whole suite, in order.
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
