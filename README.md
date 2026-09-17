@@ -39,8 +39,10 @@ getting started guide walks you through connecting an AWS account.
 
 `docker-compose.yml` publishes the port on `127.0.0.1` only: until the admin account exists,
 whoever opens OpsWatch first can create it. To reach OpsWatch from other machines, finish the
-admin setup first, then put it behind a reverse proxy with HTTPS, set `OPSWATCH_PUBLIC_URL` to
-its public address and let the proxy forward to `127.0.0.1:3000`.
+admin setup first, then put it behind a reverse proxy with HTTPS, set `OPSWATCH_PUBLIC_URL` in
+`.env` to its public address and let the proxy forward to `127.0.0.1:3000`. The image reads
+`OPSWATCH_PUBLIC_URL` when it is built too (forms only accept that host), so run
+`docker compose up -d --build` again after changing it.
 
 OpsWatch refuses to start if `OPSWATCH_SECRET` is missing or shorter than 32 characters.
 Keep this value safe: it encrypts stored access keys and signs sessions, and changing it
@@ -52,12 +54,18 @@ signs everyone out and makes stored keys unreadable.
 
 OpsWatch offers three methods. The guide inside the application explains each one step by step.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/guide-steps-dark.png">
+  <img alt="Step-by-step guide, starting with giving OpsWatch an AWS identity" src="docs/screenshots/guide-steps-light.png">
+</picture>
+
 1. **IAM role (recommended).** OpsWatch generates a CloudFormation template that creates a
    read-only role named `OpsWatchReadOnly-<id>` in the monitored account. The role trusts only
    OpsWatch's own AWS identity, and only when it presents a random ExternalId unique to the
    connection. OpsWatch assumes the role and receives temporary credentials valid for one hour.
 2. **Ambient credentials.** OpsWatch uses the identity it already runs with: an ECS task role,
-   an EC2 instance profile, or a profile from a mounted `~/.aws` directory.
+   an EC2 instance profile, or `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`
+   (an `AWS_PROFILE` works with `npm run dev`; when keys and a profile are both set, the keys win).
 3. **Access keys.** An IAM user's access key pair, encrypted at rest. Use this only when the
    other two methods are not possible.
 
@@ -77,8 +85,10 @@ what OpsWatch can and cannot see.
 - The generated role only allows read actions: the full list is in the guide and in
   `src/lib/aws/actions.ts`. OpsWatch's own identity only needs `sts:AssumeRole` on
   `arn:aws:iam::*:role/OpsWatchReadOnly-*`.
-- The ExternalId prevents another OpsWatch instance, or anyone who learns the role ARN,
-  from assuming the role.
+- The trust policy of the generated role already limits it to this OpsWatch instance's AWS
+  identity. The ExternalId adds protection against the confused deputy case, where several
+  OpsWatch instances or tenants share one base identity and one could be pointed at another's
+  role, and against a connection being configured with another connection's role.
 - Access keys are encrypted with AES-256-GCM using a key derived from `OPSWATCH_SECRET`.
 - A single admin account protects the instance. Passwords are hashed with argon2id, sessions
   expire after 12 hours of inactivity, and sign-in attempts are limited to 5 per minute per client.
@@ -96,7 +106,7 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 |----------|----------|---------|
 | `OPSWATCH_SECRET` | Yes, 32+ characters | Encrypts stored access keys and signs sessions |
 | `OPSWATCH_DATA_DIR` | No, default `/data` | Location of the SQLite database |
-| `OPSWATCH_PUBLIC_URL` | No | Public URL; enables `Secure` cookies over HTTPS |
+| `OPSWATCH_PUBLIC_URL` | No | Public URL; enables `Secure` cookies over HTTPS and lets forms post from that host (also read at build time: rebuild after changing it) |
 | `OPSWATCH_TEMPLATE_BUCKET` | No | S3 bucket that enables the experimental "Launch Stack" button |
 | `AWS_*`, `AWS_PROFILE` | For role and ambient methods | OpsWatch's own AWS identity |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests only | Sends every AWS call to a moto server |

@@ -11,6 +11,9 @@ async function main() {
     const page = await browser.newPage({ baseURL, colorScheme, viewport: { width: 1440, height: 900 } });
     await page.goto('/en/getting-started');
     await page.screenshot({ path: `${outDir}/getting-started-${colorScheme}.png` });
+    // The step-by-step area: bring step 0 to the top of the viewport and capture what is visible.
+    await page.locator('#step-0').evaluate((element) => element.scrollIntoView({ block: 'start' }));
+    await page.screenshot({ path: `${outDir}/guide-steps-${colorScheme}.png` });
     await page.close();
   }
 

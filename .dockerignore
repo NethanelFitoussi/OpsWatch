@@ -5,7 +5,9 @@ tmp
 data
 test-results
 playwright-report
-.env
+.env*
+!.env.example
+*.tsbuildinfo
 *.sqlite
 docs
 .superpowers

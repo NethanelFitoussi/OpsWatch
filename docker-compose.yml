@@ -1,6 +1,10 @@
 services:
   opswatch:
-    build: .
+    build:
+      context: .
+      args:
+        # Read from .env: Server Actions only accept the public host the image was built with.
+        OPSWATCH_PUBLIC_URL: ${OPSWATCH_PUBLIC_URL:-}
     image: opswatch:local
     restart: unless-stopped
     ports:
@@ -10,8 +14,10 @@ services:
     env_file: .env
     volumes:
       - opswatch-data:/data
-      # Optional: use a local AWS profile as OpsWatch's identity (set AWS_PROFILE in .env).
-      # - ${HOME}/.aws:/home/opswatch/.aws:ro
+    # OpsWatch's own AWS identity: put AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env.
+    # AWS_PROFILE with a mounted ~/.aws is meant for `npm run dev`: this container runs as uid 1001
+    # and usually cannot read a host ~/.aws/credentials file (mode 600), and SSO profiles also need
+    # a writable cache.
 
 volumes:
   opswatch-data:
