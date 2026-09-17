@@ -93,5 +93,133 @@
       "ambient": "Running on AWS",
       "keys": "Access keys"
     }
+  },
+  "Services": {
+    "ecs": "Amazon ECS",
+    "ec2": "Amazon EC2 (read)",
+    "autoscaling": "Application Auto Scaling",
+    "elb": "Elastic Load Balancing",
+    "rds": "Amazon RDS and Aurora",
+    "pi": "Performance Insights",
+    "cloudwatch": "CloudWatch Metrics",
+    "logs": "CloudWatch Logs"
+  },
+  "Wizard": {
+    "title": "Add an AWS account",
+    "description": "OpsWatch only reads. You can remove the connection and revoke its access at any time.",
+    "methodLegend": "How should OpsWatch access this account?",
+    "recommended": "Recommended",
+    "methods": {
+      "role": {
+        "title": "IAM role",
+        "description": "Deploy a read-only role with CloudFormation. OpsWatch assumes it with temporary credentials."
+      },
+      "ambient": {
+        "title": "Running on AWS",
+        "description": "Use the credentials of the environment OpsWatch runs in: ECS task role, EC2 instance profile or local profile."
+      },
+      "keys": {
+        "title": "Access keys",
+        "description": "Paste an access key for a quick local test. Not recommended in production."
+      }
+    },
+    "name": "Connection name",
+    "namePlaceholder": "Production",
+    "accountId": "AWS account ID",
+    "accountIdHint": "12 digits, shown in the account menu of the AWS console.",
+    "regions": "Regions to read",
+    "regionsHint": "Select at least one region.",
+    "submit": "Create connection",
+    "errors": {
+      "name_invalid": "Enter a name of 1 to 80 characters.",
+      "account_invalid": "The AWS account ID must be exactly 12 digits.",
+      "regions_invalid": "Select at least one valid region.",
+      "method_invalid": "Choose an access method.",
+      "role_arn_invalid": "This is not a valid IAM role ARN.",
+      "role_arn_account_mismatch": "This role belongs to another AWS account.",
+      "role_arn_wrong_role": "This is not the OpsWatch role created for this connection.",
+      "keys_invalid": "These access keys are not valid.",
+      "wrong_method": "This action does not apply to this connection's method.",
+      "not_ready": "Finish the previous steps first."
+    }
+  },
+  "AccountDetail": {
+    "back": "All accounts",
+    "accountLine": "Account {account} · {regions}",
+    "role": {
+      "identityTitle": "OpsWatch's identity",
+      "identityDetected": "OpsWatch runs as {arn}. The role will trust this identity only.",
+      "identityMissing": "OpsWatch has no AWS identity yet, so it cannot generate the template. Give it one first (step 0 of the guide).",
+      "guideLink": "Open the guide",
+      "externalIdTitle": "ExternalId",
+      "externalIdHelp": "A unique value the role requires. It prevents another OpsWatch user from pointing their instance at your role.",
+      "regenerate": "Generate a new ExternalId",
+      "regenerateHelp": "The deployed stack stops working until you deploy the new template.",
+      "deployTitle": "Deploy the CloudFormation stack",
+      "deployHelp": "Deploy the template in account {account}. It creates one read-only IAM role and nothing else.",
+      "download": "Download template",
+      "cliLabel": "Or deploy it with the AWS CLI:",
+      "launchStack": "Launch Stack in the AWS console",
+      "launchFailed": "The template could not be uploaded to the configured bucket.",
+      "outdated": "A newer template is available with permissions for new features. Download it and update the stack.",
+      "roleArnTitle": "Paste the role ARN",
+      "roleArnHelp": "Copy RoleArn from the stack outputs, or run:",
+      "roleArnLabel": "Role ARN",
+      "saveRoleArn": "Save role ARN"
+    },
+    "keys": {
+      "warning": "Access keys are meant for a quick local test. Prefer an IAM role in production.",
+      "title": "Access keys",
+      "accessKeyId": "Access key ID",
+      "secretAccessKey": "Secret access key",
+      "savedHint": "Saved key: {hint}. Enter new keys to replace it.",
+      "unreadable": "The saved keys can no longer be decrypted because OPSWATCH_SECRET changed. Enter them again.",
+      "save": "Save keys"
+    },
+    "ambient": {
+      "title": "Running on AWS",
+      "description": "OpsWatch uses the credentials of the environment it runs in: ECS task role, EC2 instance profile or local AWS profile. Attach the read-only policy of the guide to that identity.",
+      "detected": "Detected identity: {arn}",
+      "missing": "No AWS credentials were found in OpsWatch's environment."
+    },
+    "danger": {
+      "title": "Remove this connection",
+      "description": "OpsWatch forgets this account. Delete the CloudFormation stack in AWS to revoke access completely.",
+      "delete": "Remove connection"
+    }
+  },
+  "Checklist": {
+    "title": "Permission test",
+    "run": "Run test",
+    "running": "Testing…",
+    "neverRun": "Run the test to see what OpsWatch can read in this account.",
+    "testedAt": "Tested {date}",
+    "identity": "Connected as {arn}",
+    "statuses": {
+      "ok": "Allowed",
+      "denied": "Missing permission",
+      "error": "Could not check",
+      "not_applicable": "Not applicable"
+    },
+    "notApplicablePi": "No database instance has Performance Insights enabled in this region.",
+    "denied": "Missing {action}. {impact}",
+    "error": "The check failed ({code}).",
+    "impact": {
+      "ecs": "The containers view will be empty.",
+      "elb": "Load balancers and target health will be missing.",
+      "rds": "The databases view will be empty.",
+      "pi": "Top SQL and wait events will be missing.",
+      "cloudwatch": "Charts will be empty.",
+      "logs": "Log search will be unavailable."
+    },
+    "startQueryNote": "logs:StartQuery is not tested because Logs Insights queries are billed per GB scanned; it is checked on the first query.",
+    "identityErrors": {
+      "AccountMismatch": "These credentials belong to another AWS account than {account}.",
+      "SecretChanged": "The stored access keys can no longer be decrypted: OPSWATCH_SECRET has changed. Enter the keys again.",
+      "NotReady": "Finish the setup steps above before testing.",
+      "AccessDenied": "OpsWatch could not assume the role. Check that the stack is deployed, the role ARN is correct and the ExternalId matches.",
+      "generic": "AWS refused the credentials ({code})."
+    },
+    "failedRequest": "The test could not be run. Please try again."
   }
 }

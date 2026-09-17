@@ -93,5 +93,133 @@
       "ambient": "Exécution sur AWS",
       "keys": "Clés d'accès"
     }
+  },
+  "Services": {
+    "ecs": "Amazon ECS",
+    "ec2": "Amazon EC2 (lecture)",
+    "autoscaling": "Application Auto Scaling",
+    "elb": "Elastic Load Balancing",
+    "rds": "Amazon RDS et Aurora",
+    "pi": "Performance Insights",
+    "cloudwatch": "CloudWatch Metrics",
+    "logs": "CloudWatch Logs"
+  },
+  "Wizard": {
+    "title": "Ajouter un compte AWS",
+    "description": "OpsWatch ne fait que lire. Vous pouvez supprimer la connexion et révoquer son accès à tout moment.",
+    "methodLegend": "Comment OpsWatch doit-il accéder à ce compte ?",
+    "recommended": "Recommandé",
+    "methods": {
+      "role": {
+        "title": "Rôle IAM",
+        "description": "Déployez un rôle en lecture seule avec CloudFormation. OpsWatch l'assume avec des identifiants temporaires."
+      },
+      "ambient": {
+        "title": "Exécution sur AWS",
+        "description": "Utiliser les identifiants de l'environnement d'OpsWatch : rôle de tâche ECS, profil d'instance EC2 ou profil local."
+      },
+      "keys": {
+        "title": "Clés d'accès",
+        "description": "Collez une clé d'accès pour un test rapide en local. Déconseillé en production."
+      }
+    },
+    "name": "Nom de la connexion",
+    "namePlaceholder": "Production",
+    "accountId": "ID du compte AWS",
+    "accountIdHint": "12 chiffres, visibles dans le menu du compte de la console AWS.",
+    "regions": "Régions à lire",
+    "regionsHint": "Sélectionnez au moins une région.",
+    "submit": "Créer la connexion",
+    "errors": {
+      "name_invalid": "Saisissez un nom de 1 à 80 caractères.",
+      "account_invalid": "L'ID du compte AWS doit comporter exactement 12 chiffres.",
+      "regions_invalid": "Sélectionnez au moins une région valide.",
+      "method_invalid": "Choisissez une méthode d'accès.",
+      "role_arn_invalid": "Ce n'est pas un ARN de rôle IAM valide.",
+      "role_arn_account_mismatch": "Ce rôle appartient à un autre compte AWS.",
+      "role_arn_wrong_role": "Ce n'est pas le rôle OpsWatch créé pour cette connexion.",
+      "keys_invalid": "Ces clés d'accès ne sont pas valides.",
+      "wrong_method": "Cette action ne s'applique pas à la méthode de cette connexion.",
+      "not_ready": "Terminez d'abord les étapes précédentes."
+    }
+  },
+  "AccountDetail": {
+    "back": "Tous les comptes",
+    "accountLine": "Compte {account} · {regions}",
+    "role": {
+      "identityTitle": "Identité d'OpsWatch",
+      "identityDetected": "OpsWatch s'exécute en tant que {arn}. Le rôle fera confiance à cette seule identité.",
+      "identityMissing": "OpsWatch n'a pas encore d'identité AWS et ne peut donc pas générer le template. Donnez-lui en une d'abord (étape 0 du guide).",
+      "guideLink": "Ouvrir le guide",
+      "externalIdTitle": "ExternalId",
+      "externalIdHelp": "Une valeur unique exigée par le rôle. Elle empêche un autre utilisateur d'OpsWatch de pointer son instance vers votre rôle.",
+      "regenerate": "Générer un nouvel ExternalId",
+      "regenerateHelp": "La stack déployée ne fonctionne plus tant que le nouveau template n'est pas déployé.",
+      "deployTitle": "Déployer la stack CloudFormation",
+      "deployHelp": "Déployez le template dans le compte {account}. Il crée un seul rôle IAM en lecture seule, rien d'autre.",
+      "download": "Télécharger le template",
+      "cliLabel": "Ou déployez-le avec l'AWS CLI :",
+      "launchStack": "Lancer la stack dans la console AWS",
+      "launchFailed": "Le template n'a pas pu être envoyé dans le bucket configuré.",
+      "outdated": "Un template plus récent est disponible, avec les permissions de nouvelles fonctionnalités. Téléchargez-le et mettez la stack à jour.",
+      "roleArnTitle": "Coller l'ARN du rôle",
+      "roleArnHelp": "Copiez RoleArn dans les sorties de la stack, ou exécutez :",
+      "roleArnLabel": "ARN du rôle",
+      "saveRoleArn": "Enregistrer l'ARN"
+    },
+    "keys": {
+      "warning": "Les clés d'accès servent à un test rapide en local. Préférez un rôle IAM en production.",
+      "title": "Clés d'accès",
+      "accessKeyId": "ID de clé d'accès",
+      "secretAccessKey": "Clé d'accès secrète",
+      "savedHint": "Clé enregistrée : {hint}. Saisissez de nouvelles clés pour la remplacer.",
+      "unreadable": "Les clés enregistrées ne peuvent plus être déchiffrées car OPSWATCH_SECRET a changé. Saisissez-les à nouveau.",
+      "save": "Enregistrer les clés"
+    },
+    "ambient": {
+      "title": "Exécution sur AWS",
+      "description": "OpsWatch utilise les identifiants de son environnement : rôle de tâche ECS, profil d'instance EC2 ou profil AWS local. Attachez à cette identité la politique en lecture seule du guide.",
+      "detected": "Identité détectée : {arn}",
+      "missing": "Aucun identifiant AWS n'a été trouvé dans l'environnement d'OpsWatch."
+    },
+    "danger": {
+      "title": "Supprimer cette connexion",
+      "description": "OpsWatch oublie ce compte. Supprimez la stack CloudFormation dans AWS pour révoquer complètement l'accès.",
+      "delete": "Supprimer la connexion"
+    }
+  },
+  "Checklist": {
+    "title": "Test des permissions",
+    "run": "Lancer le test",
+    "running": "Test en cours…",
+    "neverRun": "Lancez le test pour voir ce qu'OpsWatch peut lire dans ce compte.",
+    "testedAt": "Testé {date}",
+    "identity": "Connecté en tant que {arn}",
+    "statuses": {
+      "ok": "Autorisé",
+      "denied": "Permission manquante",
+      "error": "Vérification impossible",
+      "not_applicable": "Non applicable"
+    },
+    "notApplicablePi": "Aucune instance de base de données n'a Performance Insights activé dans cette région.",
+    "denied": "{action} manquant. {impact}",
+    "error": "La vérification a échoué ({code}).",
+    "impact": {
+      "ecs": "La vue conteneurs sera vide.",
+      "elb": "Les load balancers et l'état des cibles manqueront.",
+      "rds": "La vue bases de données sera vide.",
+      "pi": "Le top SQL et les événements d'attente manqueront.",
+      "cloudwatch": "Les graphiques seront vides.",
+      "logs": "La recherche dans les logs sera indisponible."
+    },
+    "startQueryNote": "logs:StartQuery n'est pas testé car les requêtes Logs Insights sont facturées au Go scanné ; il est vérifié à la première requête.",
+    "identityErrors": {
+      "AccountMismatch": "Ces identifiants appartiennent à un autre compte AWS que {account}.",
+      "SecretChanged": "Les clés d'accès enregistrées ne peuvent plus être déchiffrées : OPSWATCH_SECRET a changé. Saisissez-les à nouveau.",
+      "NotReady": "Terminez les étapes de configuration ci-dessus avant de tester.",
+      "AccessDenied": "OpsWatch n'a pas pu assumer le rôle. Vérifiez que la stack est déployée, que l'ARN du rôle est correct et que l'ExternalId correspond.",
+      "generic": "AWS a refusé les identifiants ({code})."
+    },
+    "failedRequest": "Le test n'a pas pu être lancé. Réessayez."
   }
 }
