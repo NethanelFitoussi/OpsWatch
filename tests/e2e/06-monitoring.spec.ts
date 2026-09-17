@@ -95,3 +95,21 @@ test('the service page shows charts, target health and the log group', async ({ 
   await expect(page.getByText('No running tasks.')).toBeVisible();
   await expect(page.getByText('The p95 response time could not be read.')).toBeVisible();
 });
+
+test('the databases page lists the seeded instance', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'databases'));
+  await expect(page).toHaveTitle('Databases · OpsWatch');
+  const row = page.getByRole('row').filter({ has: page.getByRole('link', { name: 'opswatch-e2e-db' }) });
+  await expect(row).toContainText('db.t3.medium');
+  await expect(row).toContainText('Standalone');
+  await expect(row).toContainText('3 GB');
+});
+
+test('the instance page shows charts and explains that Performance Insights is off', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'databases'));
+  await page.getByRole('link', { name: 'opswatch-e2e-db' }).click();
+  await expect(page.getByRole('figure', { name: 'CPU utilization' }).locator('.recharts-line-curve')).toHaveCount(1);
+  await expect(page.getByRole('figure', { name: 'IOPS' }).locator('.recharts-line-curve')).toHaveCount(2);
+  // moto never reports Performance Insights as enabled (fact 7) and has no PI backend (fact 8).
+  await expect(page.getByText('Performance Insights is not enabled for this instance.')).toBeVisible();
+});

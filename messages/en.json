@@ -714,7 +714,14 @@
       "p95Unavailable": "The p95 response time could not be read.",
       "hosts": "Hosts",
       "healthyHosts": "Healthy",
-      "unhealthyHosts": "Unhealthy"
+      "unhealthyHosts": "Unhealthy",
+      "connections": "Connections",
+      "freeableMemory": "Freeable memory",
+      "iops": "IOPS",
+      "latency": "Latency",
+      "read": "Read",
+      "write": "Write",
+      "replicaLag": "Replica lag"
     },
     "containers": {
       "title": "Containers",
@@ -784,6 +791,61 @@
         "title": "Logs",
         "empty": "The task definition does not send logs to CloudWatch Logs (awslogs driver).",
         "otherRegion": "{group} (region {region})"
+      }
+    },
+    "databases": {
+      "title": "Databases",
+      "description": "RDS and Aurora instances of {connection} in {region}.",
+      "cardTitle": "Database instances",
+      "empty": "No database instance in this region.",
+      "columns": {
+        "instance": "Instance",
+        "cluster": "Cluster",
+        "engine": "Engine",
+        "class": "Class",
+        "role": "Role",
+        "cpu": "CPU",
+        "connections": "Connections",
+        "freeableMemory": "Freeable memory",
+        "replicaLag": "Replica lag"
+      },
+      "roles": {
+        "writer": "Writer",
+        "reader": "Reader",
+        "standalone": "Standalone"
+      },
+      "back": "All databases",
+      "metaTitle": "Database instance",
+      "instanceDescription": "RDS database instance.",
+      "notFound": "This instance does not exist in this region.",
+      "summary": {
+        "title": "Instance",
+        "status": "Status",
+        "engine": "Engine",
+        "class": "Class",
+        "memory": "Memory",
+        "memoryUnknown": "Unknown for this class",
+        "role": "Role",
+        "cluster": "Cluster",
+        "zone": "Availability zone",
+        "performanceInsights": "Performance Insights",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "charts": {
+        "title": "Metrics"
+      },
+      "topSql": {
+        "title": "Top SQL",
+        "description": "Statements ranked by average active sessions over the selected period.",
+        "disabled": "Performance Insights is not enabled for this instance.",
+        "empty": "No SQL activity recorded for this period.",
+        "showFull": "Show the full statement",
+        "columns": {
+          "rank": "Rank",
+          "statement": "Statement",
+          "load": "Average active sessions"
+        }
       }
     },
     "targetGroup": {

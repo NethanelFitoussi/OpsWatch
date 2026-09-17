@@ -33,6 +33,9 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/route.ts',
   'lib/monitoring/ecs.ts',
   'lib/monitoring/elb.ts',
+  'lib/monitoring/rds.ts',
+  'lib/monitoring/instance-memory.ts',
+  'lib/monitoring/pi.ts',
 ];
 
 describe('module boundaries', () => {

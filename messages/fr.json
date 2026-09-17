@@ -714,7 +714,14 @@
       "p95Unavailable": "Le temps de réponse p95 n'a pas pu être lu.",
       "hosts": "Hôtes",
       "healthyHosts": "Sains",
-      "unhealthyHosts": "Défaillants"
+      "unhealthyHosts": "Défaillants",
+      "connections": "Connexions",
+      "freeableMemory": "Mémoire disponible",
+      "iops": "IOPS",
+      "latency": "Latence",
+      "read": "Lecture",
+      "write": "Écriture",
+      "replicaLag": "Retard de réplication"
     },
     "containers": {
       "title": "Conteneurs",
@@ -784,6 +791,61 @@
         "title": "Journaux",
         "empty": "La définition de tâche n'envoie pas ses journaux à CloudWatch Logs (pilote awslogs).",
         "otherRegion": "{group} (région {region})"
+      }
+    },
+    "databases": {
+      "title": "Bases de données",
+      "description": "Instances RDS et Aurora de {connection} dans {region}.",
+      "cardTitle": "Instances de base de données",
+      "empty": "Aucune instance de base de données dans cette région.",
+      "columns": {
+        "instance": "Instance",
+        "cluster": "Cluster",
+        "engine": "Moteur",
+        "class": "Classe",
+        "role": "Rôle",
+        "cpu": "CPU",
+        "connections": "Connexions",
+        "freeableMemory": "Mémoire disponible",
+        "replicaLag": "Retard de réplication"
+      },
+      "roles": {
+        "writer": "Écriture",
+        "reader": "Lecture",
+        "standalone": "Autonome"
+      },
+      "back": "Toutes les bases de données",
+      "metaTitle": "Instance de base de données",
+      "instanceDescription": "Instance de base de données RDS.",
+      "notFound": "Cette instance n'existe pas dans cette région.",
+      "summary": {
+        "title": "Instance",
+        "status": "Statut",
+        "engine": "Moteur",
+        "class": "Classe",
+        "memory": "Mémoire",
+        "memoryUnknown": "Inconnue pour cette classe",
+        "role": "Rôle",
+        "cluster": "Cluster",
+        "zone": "Zone de disponibilité",
+        "performanceInsights": "Performance Insights",
+        "enabled": "Activé",
+        "disabled": "Désactivé"
+      },
+      "charts": {
+        "title": "Métriques"
+      },
+      "topSql": {
+        "title": "Top SQL",
+        "description": "Requêtes classées par sessions actives moyennes sur la période choisie.",
+        "disabled": "Performance Insights n'est pas activé pour cette instance.",
+        "empty": "Aucune activité SQL enregistrée sur cette période.",
+        "showFull": "Afficher la requête complète",
+        "columns": {
+          "rank": "Rang",
+          "statement": "Requête",
+          "load": "Sessions actives moyennes"
+        }
       }
     },
     "targetGroup": {
