@@ -25,6 +25,9 @@ type Message = { kind: 'status' | 'error'; text: string };
 /** Error codes of the Logs routes that have their own message; anything else falls back to the generic one. */
 const SIMPLE_ERROR_CODES = ['invalid_query', 'range_too_long', 'unauthorized'] as const;
 
+/** How often the elapsed time reaches the live region, whatever the poll interval is. */
+const ANNOUNCE_EVERY_MS = 5000;
+
 /** The query editor: it starts a Logs Insights query, polls it and shows its rows as text. */
 export function LogsQueryPanel({
   connectionId,
@@ -54,7 +57,8 @@ export function LogsQueryPanel({
   useEffect(() => {
     const onPageHide = () => {
       const queryId = queryIdRef.current;
-      if (queryId) void createLogsApi(connectionId, region).stop(queryId);
+      // Nothing can be shown or retried at unload, so a failing stop is swallowed exactly as the poller swallows it.
+      if (queryId) void createLogsApi(connectionId, region).stop(queryId).catch(() => undefined);
     };
     window.addEventListener('pagehide', onPageHide);
     return () => window.removeEventListener('pagehide', onPageHide);
@@ -118,10 +122,11 @@ export function LogsQueryPanel({
 
   const running = phase === 'running';
   const fields = results?.fields ?? [];
+  const statusText = message?.kind === 'status' ? message.text : '';
 
   return (
     <div className="space-y-6">
-      <MonitoringCard title={t('logs.query')}>
+      <MonitoringCard title={t('logs.editor')}>
         <div className="space-y-4">
           <div className="space-y-2">
             <span className="text-sm font-medium">{t('logs.groups')}</span>
@@ -190,9 +195,17 @@ export function LogsQueryPanel({
             </div>
           </div>
 
-          <p role="status" className="text-sm text-muted-foreground">
-            {running ? t('logs.status.running', { seconds: Math.round(elapsed / 1000) }) : message?.kind === 'status' ? message.text : ''}
-          </p>
+          <div className="text-sm text-muted-foreground">
+            {/*
+             * One live region, never remounted, for both the elapsed time and the outcome. While the query runs it is
+             * visually hidden and the seconds it announces only change every 5 s, so a screen reader is not flooded;
+             * the visible line beside it keeps ticking every second and is hidden from assistive technology.
+             */}
+            <p role="status" className={running ? 'sr-only' : undefined}>
+              {running ? t('logs.status.running', { seconds: Math.floor(elapsed / ANNOUNCE_EVERY_MS) * (ANNOUNCE_EVERY_MS / 1000) }) : statusText}
+            </p>
+            {running && <p aria-hidden="true">{t('logs.status.running', { seconds: Math.round(elapsed / 1000) })}</p>}
+          </div>
           {message?.kind === 'error' && (
             <p role="alert" className="text-sm text-destructive">
               {message.text}

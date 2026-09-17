@@ -49,3 +49,25 @@ test('the service page links to its log group', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/c/${id}/${MOTO_REGION}/logs\\?group=%2Fecs%2Fopswatch-web$`));
   await expect(page.getByText('/ecs/opswatch-web').first()).toBeVisible();
 });
+
+test('the picker keeps a group selected under an earlier prefix', async ({ page }) => {
+  await login(page);
+  const id = await ensureMonitoringConnection(page);
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
+
+  await page.getByLabel('Log group name prefix').fill('/ecs');
+  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await page.getByRole('button', { name: 'Use selected groups' }).click();
+  await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
+
+  await page.getByLabel('Log group name prefix').fill('/aws/lambda');
+  await page.getByRole('button', { name: 'Search' }).click();
+  // The first group is no longer on screen, so only the hidden inputs can carry it into the next submit.
+  await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toHaveCount(0);
+  await page.getByRole('checkbox', { name: /\/aws\/lambda\/opswatch-e2e-worker/ }).check();
+  await page.getByRole('button', { name: 'Use selected groups' }).click();
+
+  await expect(page.getByRole('button', { name: 'Run query' })).toBeEnabled();
+  expect(new URL(page.url()).searchParams.getAll('group').sort()).toEqual(['/aws/lambda/opswatch-e2e-worker', '/ecs/opswatch-web']);
+});

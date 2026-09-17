@@ -676,6 +676,7 @@
       },
       "logs": {
         "query": "Query",
+        "editor": "Query editor",
         "range": "Time range",
         "groups": "Selected log groups",
         "noGroups": "Select at least one log group to run a query.",

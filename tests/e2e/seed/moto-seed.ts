@@ -17,6 +17,8 @@ export const SEED = {
   service: 'web',
   taskFamily: 'opswatch-web',
   logGroup: '/ecs/opswatch-web',
+  /** A second group under another prefix, so a picker search can show one without the other. */
+  otherLogGroup: '/aws/lambda/opswatch-e2e-worker',
   logStream: 'web/web/e2e',
   logMessages: ['GET /health 200 3ms', 'GET /api/orders 500 1520ms', 'ERROR payment gateway timeout'],
   loadBalancer: 'opswatch-e2e-alb',
@@ -206,6 +208,7 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
 
   // Logs (fact 10): events within the last few minutes, oldest first.
   await logs.send(new CreateLogGroupCommand({ logGroupName: SEED.logGroup }));
+  await logs.send(new CreateLogGroupCommand({ logGroupName: SEED.otherLogGroup }));
   await logs.send(new CreateLogStreamCommand({ logGroupName: SEED.logGroup, logStreamName: SEED.logStream }));
   await logs.send(
     new PutLogEventsCommand({

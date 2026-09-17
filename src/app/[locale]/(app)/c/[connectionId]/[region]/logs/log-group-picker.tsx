@@ -38,6 +38,8 @@ export async function LogGroupPicker({
   }
 
   const locale = await getLocale();
+  const shown = new Set(groups.data.map((group) => group.name));
+  const carried = selected.filter((name) => !shown.has(name));
   return (
     <MonitoringCard title={title}>
       <div className="space-y-4">
@@ -76,6 +78,10 @@ export async function LogGroupPicker({
                 </li>
               ))}
             </ul>
+            {/* A group selected under another prefix is not on screen to be re-checked, so it rides along hidden. */}
+            {carried.map((name) => (
+              <input key={name} type="hidden" name="group" value={name} />
+            ))}
             <input type="hidden" name="prefix" value={prefix} />
             <input type="hidden" name="range" value={range} />
             <Button type="submit" size="sm">

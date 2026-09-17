@@ -676,6 +676,7 @@
       },
       "logs": {
         "query": "Requête",
+        "editor": "Éditeur de requête",
         "range": "Période",
         "groups": "Groupes sélectionnés",
         "noGroups": "Sélectionnez au moins un groupe de journaux pour lancer une requête.",
