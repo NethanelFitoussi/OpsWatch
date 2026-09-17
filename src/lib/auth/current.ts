@@ -12,13 +12,14 @@ const SESSION_COOKIE = 'opswatch_session';
 // The database enforces the 12 h rolling expiry; the cookie only needs to outlive it.
 const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
-function cookieOptions() {
+/** Options of every OpsWatch cookie: HttpOnly, SameSite=Lax, and Secure when the public URL is https. */
+export function cookieOptions(maxAge = COOKIE_MAX_AGE_SECONDS, path = '/') {
   return {
     httpOnly: true,
     sameSite: 'lax' as const,
     secure: env().OPSWATCH_PUBLIC_URL?.startsWith('https://') ?? false,
-    path: '/',
-    maxAge: COOKIE_MAX_AGE_SECONDS,
+    path,
+    maxAge,
   };
 }
 

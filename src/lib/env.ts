@@ -7,6 +7,9 @@ const schema = z.object({
   OPSWATCH_PUBLIC_URL: z.url().optional(),
   OPSWATCH_TEMPLATE_BUCKET: z.string().min(3).optional(),
   OPSWATCH_AWS_ENDPOINT_URL: z.url().optional(),
+  OPSWATCH_GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  OPSWATCH_GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  OPSWATCH_GOOGLE_ALLOWED_DOMAIN: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof schema>;

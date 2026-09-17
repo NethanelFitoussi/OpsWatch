@@ -31,12 +31,18 @@ describe('loadEnv', () => {
       OPSWATCH_PUBLIC_URL: 'https://ops.example.com',
       OPSWATCH_TEMPLATE_BUCKET: 'my-bucket',
       OPSWATCH_AWS_ENDPOINT_URL: 'http://moto:5000',
+      OPSWATCH_GOOGLE_CLIENT_ID: 'id.apps.googleusercontent.com',
+      OPSWATCH_GOOGLE_CLIENT_SECRET: 'google-secret',
+      OPSWATCH_GOOGLE_ALLOWED_DOMAIN: 'example.com',
     });
     expect(env).toMatchObject({
       OPSWATCH_DATA_DIR: '/tmp/ow',
       OPSWATCH_PUBLIC_URL: 'https://ops.example.com',
       OPSWATCH_TEMPLATE_BUCKET: 'my-bucket',
       OPSWATCH_AWS_ENDPOINT_URL: 'http://moto:5000',
+      OPSWATCH_GOOGLE_CLIENT_ID: 'id.apps.googleusercontent.com',
+      OPSWATCH_GOOGLE_CLIENT_SECRET: 'google-secret',
+      OPSWATCH_GOOGLE_ALLOWED_DOMAIN: 'example.com',
     });
   });
 });

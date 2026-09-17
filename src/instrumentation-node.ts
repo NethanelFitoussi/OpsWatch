@@ -4,8 +4,9 @@
 // only ever be imported from within the `NEXT_RUNTIME === 'nodejs'` branch of `register()`.
 export async function registerNode() {
   const { loadEnv, EnvError } = await import('./lib/env');
+  let env;
   try {
-    loadEnv(process.env);
+    env = loadEnv(process.env);
   } catch (error) {
     if (error instanceof EnvError) {
       console.error(`[opswatch] ${error.message}`);
@@ -14,9 +15,11 @@ export async function registerNode() {
     throw error;
   }
   const { baseCredentialsWarning } = await import('./lib/aws/base-credentials');
-  const warning = baseCredentialsWarning(process.env);
-  if (warning) {
-    console.warn(`[opswatch] ${warning}`);
+  const { googleSignInWarning } = await import('./lib/auth/google');
+  for (const warning of [baseCredentialsWarning(process.env), googleSignInWarning(env)]) {
+    if (warning) {
+      console.warn(`[opswatch] ${warning}`);
+    }
   }
   const { getDb } = await import('./lib/db/client');
   getDb();

@@ -4,6 +4,7 @@ import {
   AdminValidationError,
   authenticate,
   createAdmin,
+  findAdmin,
   hasAdmin,
 } from '@/lib/auth/admin';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
@@ -29,8 +30,10 @@ describe('admin account', () => {
   it('creates the single admin and authenticates it', async () => {
     const db = createTestDb();
     expect(hasAdmin(db)).toBe(false);
+    expect(findAdmin(db)).toBeUndefined();
     const id = await createAdmin(db, { email: 'Admin@Example.com', password: PASSWORD });
     expect(hasAdmin(db)).toBe(true);
+    expect(findAdmin(db)).toEqual({ id, email: 'admin@example.com' });
     expect(await authenticate(db, 'admin@example.com', PASSWORD)).toBe(id);
     expect(await authenticate(db, 'admin@example.com', 'wrong password!')).toBeNull();
     expect(await authenticate(db, 'nobody@example.com', PASSWORD)).toBeNull();

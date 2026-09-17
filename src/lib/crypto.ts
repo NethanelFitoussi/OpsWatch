@@ -10,7 +10,9 @@ import {
 const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 
-type Purpose = 'access-keys' | 'sessions';
+type Purpose = 'access-keys' | 'sessions' | 'google-sign-in';
+/** Purposes of the values `encrypt` seals: each gets its own key, so one cannot be passed off as another. */
+type EncryptionPurpose = Exclude<Purpose, 'sessions'>;
 
 function deriveKey(secret: string, purpose: Purpose): Buffer {
   return Buffer.from(hkdfSync('sha256', secret, 'opswatch', purpose, 32));
@@ -23,14 +25,14 @@ export class DecryptionError extends Error {
   }
 }
 
-export function encrypt(plaintext: string, secret: string): string {
+export function encrypt(plaintext: string, secret: string, purpose: EncryptionPurpose = 'access-keys'): string {
   const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv('aes-256-gcm', deriveKey(secret, 'access-keys'), iv);
+  const cipher = createCipheriv('aes-256-gcm', deriveKey(secret, purpose), iv);
   const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString('base64url');
 }
 
-export function decrypt(payload: string, secret: string): string {
+export function decrypt(payload: string, secret: string, purpose: EncryptionPurpose = 'access-keys'): string {
   try {
     const data = Buffer.from(payload, 'base64url');
     if (data.length < IV_LENGTH + TAG_LENGTH + 1) {
@@ -39,7 +41,7 @@ export function decrypt(payload: string, secret: string): string {
     const iv = data.subarray(0, IV_LENGTH);
     const tag = data.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
     const ciphertext = data.subarray(IV_LENGTH + TAG_LENGTH);
-    const decipher = createDecipheriv('aes-256-gcm', deriveKey(secret, 'access-keys'), iv);
+    const decipher = createDecipheriv('aes-256-gcm', deriveKey(secret, purpose), iv);
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
   } catch {

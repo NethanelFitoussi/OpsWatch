@@ -10,6 +10,7 @@ const SERVER_ONLY_MODULES = [
   'lib/auth/password.ts',
   'lib/auth/actions.ts',
   'lib/auth/current.ts',
+  'lib/auth/google.ts',
   'lib/auth/login-limiter.ts',
   'lib/auth/route.ts',
   'lib/aws/base-credentials.ts',

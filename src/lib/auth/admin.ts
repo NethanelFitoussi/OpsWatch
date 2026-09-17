@@ -28,6 +28,11 @@ export function hasAdmin(db: Pick<Db, 'select'>): boolean {
   return db.select({ id: adminUser.id }).from(adminUser).limit(1).get() !== undefined;
 }
 
+/** The single admin account, if it exists. */
+export function findAdmin(db: Pick<Db, 'select'>): { id: number; email: string } | undefined {
+  return db.select({ id: adminUser.id, email: adminUser.email }).from(adminUser).limit(1).get();
+}
+
 export async function createAdmin(
   db: Db,
   input: { email: string; password: string },
