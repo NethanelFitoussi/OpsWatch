@@ -701,6 +701,100 @@
       "empty": "No alarm matches these filters.",
       "hiddenTargetTracking": "{count, plural, one {# target-tracking alarm is hidden.} other {# target-tracking alarms are hidden.}}",
       "showHidden": "Show them"
+    },
+    "metrics": {
+      "cpu": "CPU utilization",
+      "memory": "Memory utilization",
+      "tasks": "Tasks",
+      "runningTasks": "Running",
+      "desiredTasks": "Desired",
+      "requests": "Requests",
+      "target5xx": "Target 5xx errors",
+      "responseTimeP95": "Response time (p95)",
+      "p95Unavailable": "The p95 response time could not be read.",
+      "hosts": "Hosts",
+      "healthyHosts": "Healthy",
+      "unhealthyHosts": "Unhealthy"
+    },
+    "containers": {
+      "title": "Containers",
+      "description": "ECS clusters and services of {connection} in {region}.",
+      "search": {
+        "label": "Search services",
+        "submit": "Search"
+      },
+      "clustersTitle": "ECS clusters",
+      "noClusters": "No ECS cluster in this region.",
+      "containerInsights": "Container Insights on",
+      "noServices": "No service matches.",
+      "truncated": "Showing the first {shown} of {matched} services. Refine the search to see the others.",
+      "columns": {
+        "service": "Service",
+        "status": "Status",
+        "tasks": "Tasks",
+        "cpu": "CPU",
+        "memory": "Memory",
+        "deployment": "Last deployment"
+      },
+      "taskCounts": "{running}/{desired} running · {pending} pending",
+      "rollout": {
+        "COMPLETED": "Completed",
+        "IN_PROGRESS": "In progress",
+        "FAILED": "Failed"
+      },
+      "back": "All services",
+      "serviceMetaTitle": "ECS service",
+      "serviceDescription": "ECS service in the {cluster} cluster.",
+      "summary": {
+        "title": "Service",
+        "status": "Status",
+        "taskDefinition": "Task definition",
+        "launchType": "Launch type",
+        "desired": "Desired tasks",
+        "running": "Running tasks",
+        "pending": "Pending tasks",
+        "deployment": "Last deployment",
+        "deploymentStarted": "Started {time}",
+        "notFound": "This service does not exist in this cluster and region."
+      },
+      "charts": {
+        "title": "Utilization"
+      },
+      "tasks": {
+        "title": "Running tasks",
+        "empty": "No running tasks.",
+        "columns": {
+          "task": "Task",
+          "revision": "Revision",
+          "lastStatus": "Status",
+          "health": "Health",
+          "started": "Started",
+          "zone": "Zone"
+        }
+      },
+      "events": {
+        "title": "Recent events",
+        "empty": "No recent event."
+      },
+      "targetGroups": {
+        "title": "Target groups",
+        "empty": "This service is not attached to a load balancer."
+      },
+      "logs": {
+        "title": "Logs",
+        "empty": "The task definition does not send logs to CloudWatch Logs (awslogs driver).",
+        "otherRegion": "{group} (region {region})"
+      }
+    },
+    "targetGroup": {
+      "targets": "Targets",
+      "noTargets": "No registered target.",
+      "notAttached": "This target group is not attached to a load balancer, so it has no metrics.",
+      "columns": {
+        "target": "Target",
+        "state": "State",
+        "reason": "Reason"
+      }
     }
   }
 }

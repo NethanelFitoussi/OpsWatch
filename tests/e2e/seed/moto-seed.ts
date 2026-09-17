@@ -177,6 +177,7 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
     put('AWS/ApplicationELB', 'TargetResponseTime', lb, () => 0.12, 'Seconds'),
     put('AWS/ApplicationELB', 'RequestCount', tg, () => 120, 'Count'),
     put('AWS/ApplicationELB', 'HTTPCode_Target_5XX_Count', tg, () => 1, 'Count'),
+    put('AWS/ApplicationELB', 'TargetResponseTime', tg, () => 0.12, 'Seconds'),
     put('AWS/ApplicationELB', 'HealthyHostCount', tg, () => 1, 'Count'),
     put('AWS/ApplicationELB', 'UnHealthyHostCount', tg, () => 0, 'Count'),
   ]);

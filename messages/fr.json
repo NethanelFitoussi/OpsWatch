@@ -701,6 +701,100 @@
       "empty": "Aucune alarme ne correspond à ces filtres.",
       "hiddenTargetTracking": "{count, plural, one {# alarme de suivi de cible est masquée.} other {# alarmes de suivi de cible sont masquées.}}",
       "showHidden": "Les afficher"
+    },
+    "metrics": {
+      "cpu": "Utilisation CPU",
+      "memory": "Utilisation mémoire",
+      "tasks": "Tâches",
+      "runningTasks": "En cours",
+      "desiredTasks": "Souhaitées",
+      "requests": "Requêtes",
+      "target5xx": "Erreurs 5xx des cibles",
+      "responseTimeP95": "Temps de réponse (p95)",
+      "p95Unavailable": "Le temps de réponse p95 n'a pas pu être lu.",
+      "hosts": "Hôtes",
+      "healthyHosts": "Sains",
+      "unhealthyHosts": "Défaillants"
+    },
+    "containers": {
+      "title": "Conteneurs",
+      "description": "Clusters et services ECS de {connection} dans {region}.",
+      "search": {
+        "label": "Rechercher des services",
+        "submit": "Rechercher"
+      },
+      "clustersTitle": "Clusters ECS",
+      "noClusters": "Aucun cluster ECS dans cette région.",
+      "containerInsights": "Container Insights activé",
+      "noServices": "Aucun service ne correspond.",
+      "truncated": "Affichage des {shown} premiers services sur {matched}. Affinez la recherche pour voir les autres.",
+      "columns": {
+        "service": "Service",
+        "status": "Statut",
+        "tasks": "Tâches",
+        "cpu": "CPU",
+        "memory": "Mémoire",
+        "deployment": "Dernier déploiement"
+      },
+      "taskCounts": "{running}/{desired} en cours · {pending} en attente",
+      "rollout": {
+        "COMPLETED": "Terminé",
+        "IN_PROGRESS": "En cours",
+        "FAILED": "Échec"
+      },
+      "back": "Tous les services",
+      "serviceMetaTitle": "Service ECS",
+      "serviceDescription": "Service ECS du cluster {cluster}.",
+      "summary": {
+        "title": "Service",
+        "status": "Statut",
+        "taskDefinition": "Définition de tâche",
+        "launchType": "Type de lancement",
+        "desired": "Tâches souhaitées",
+        "running": "Tâches en cours",
+        "pending": "Tâches en attente",
+        "deployment": "Dernier déploiement",
+        "deploymentStarted": "Lancé {time}",
+        "notFound": "Ce service n'existe pas dans ce cluster et cette région."
+      },
+      "charts": {
+        "title": "Utilisation"
+      },
+      "tasks": {
+        "title": "Tâches en cours",
+        "empty": "Aucune tâche en cours.",
+        "columns": {
+          "task": "Tâche",
+          "revision": "Révision",
+          "lastStatus": "Statut",
+          "health": "Santé",
+          "started": "Démarrée",
+          "zone": "Zone"
+        }
+      },
+      "events": {
+        "title": "Événements récents",
+        "empty": "Aucun événement récent."
+      },
+      "targetGroups": {
+        "title": "Groupes cibles",
+        "empty": "Ce service n'est rattaché à aucun répartiteur de charge."
+      },
+      "logs": {
+        "title": "Journaux",
+        "empty": "La définition de tâche n'envoie pas ses journaux à CloudWatch Logs (pilote awslogs).",
+        "otherRegion": "{group} (région {region})"
+      }
+    },
+    "targetGroup": {
+      "targets": "Cibles",
+      "noTargets": "Aucune cible enregistrée.",
+      "notAttached": "Ce groupe cible n'est rattaché à aucun répartiteur de charge : il n'a pas de métriques.",
+      "columns": {
+        "target": "Cible",
+        "state": "État",
+        "reason": "Raison"
+      }
     }
   }
 }

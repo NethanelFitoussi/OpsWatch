@@ -31,6 +31,8 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/selection.ts',
   'lib/monitoring/target.ts',
   'lib/monitoring/route.ts',
+  'lib/monitoring/ecs.ts',
+  'lib/monitoring/elb.ts',
 ];
 
 describe('module boundaries', () => {

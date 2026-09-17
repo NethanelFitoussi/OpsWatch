@@ -1,9 +1,18 @@
-import { describe, expect, it } from 'vitest';
-import { parseTimeRange, periodForRange, recentWindow, timeWindow } from '@/lib/monitoring/shared/time-range';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { currentWindow, parseTimeRange, periodForRange, recentWindow, timeWindow } from '@/lib/monitoring/shared/time-range';
 
 const now = Date.parse('2026-09-17T10:07:42.500Z');
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('time ranges', () => {
+  it('builds the current window from the clock', () => {
+    vi.useFakeTimers({ now });
+    expect(currentWindow('1h')).toEqual(timeWindow('1h', now));
+  });
+
   it('picks the GetMetricData period from the range', () => {
     expect(['1h', '3h', '12h', '24h', '7d'].map((r) => periodForRange(r as never))).toEqual([60, 60, 300, 300, 3600]);
   });

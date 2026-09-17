@@ -62,3 +62,36 @@ test('the state filter keeps only alarms in alarm', async ({ page }) => {
   await expect(page.getByRole('row').filter({ hasText: 'opswatch-e2e-high-cpu' })).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: 'opswatch-e2e-db-connections' })).toHaveCount(0);
 });
+
+test('the containers page lists the seeded service with its task counts and sparklines', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'containers'));
+  await expect(page).toHaveTitle('Containers · OpsWatch');
+  await expect(page.getByRole('heading', { level: 2, name: 'opswatch-e2e', exact: true })).toBeVisible();
+  await expect(page.getByText('Container Insights on')).toBeVisible();
+  const row = page.getByRole('row').filter({ has: page.getByRole('link', { name: 'web', exact: true }) });
+  // moto starts no task (fact 6): 0 running, 2 pending, deployment in progress.
+  await expect(row).toContainText('0/2 running · 2 pending');
+  await expect(row).toContainText('In progress');
+  await expect(row.getByRole('img', { name: /^CPU utilization over the selected period/ })).toBeVisible();
+});
+
+test('the time range is kept in the URL', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'containers'));
+  await page.getByRole('navigation', { name: 'Time range' }).getByRole('link', { name: '12 h' }).click();
+  await expect(page).toHaveURL(/range=12h/);
+  await expect(page.getByRole('navigation', { name: 'Time range' }).getByRole('link', { name: '12 h' })).toHaveAttribute('aria-current', 'page');
+});
+
+test('the service page shows charts, target health and the log group', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'containers'));
+  await page.getByRole('link', { name: 'web', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/containers/opswatch-e2e/web`));
+  await expect(page.getByRole('figure', { name: 'CPU utilization' }).locator('.recharts-line-curve')).toHaveCount(1);
+  await expect(page.getByRole('figure', { name: 'Tasks' }).locator('.recharts-line-curve')).toHaveCount(2);
+  await expect(page.getByRole('heading', { level: 3, name: /opswatch-e2e-web/ })).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: '10.0.1.10:80' })).toContainText('healthy');
+  await expect(page.getByText('/ecs/opswatch-web')).toBeVisible();
+  // moto gaps (facts 2 and 6): no running task, no p95.
+  await expect(page.getByText('No running tasks.')).toBeVisible();
+  await expect(page.getByText('The p95 response time could not be read.')).toBeVisible();
+});
