@@ -15,6 +15,7 @@ export const AWS_ICONS = {
   aurora: 'Arch_Amazon-Aurora_48.svg',
   cloudwatch: 'Arch_Amazon-CloudWatch_48.svg',
   logs: 'Res_Amazon-CloudWatch_Logs_48.svg',
+  alarm: 'Res_Amazon-CloudWatch_Alarm_48.svg',
 } as const;
 
 export type AwsIconName = keyof typeof AWS_ICONS;

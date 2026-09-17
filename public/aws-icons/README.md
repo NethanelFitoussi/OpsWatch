@@ -20,6 +20,7 @@ Files:
 - `Arch_Amazon-Aurora_48.svg`: Amazon Aurora
 - `Arch_Amazon-CloudWatch_48.svg`: Amazon CloudWatch
 - `Res_Amazon-CloudWatch_Logs_48.svg`: Amazon CloudWatch Logs
+- `Res_Amazon-CloudWatch_Alarm_48.svg`: Amazon CloudWatch alarm
 
 AWS Architecture Icons are provided by Amazon Web Services under the AWS icon usage guidelines; AWS and
 the service names are trademarks of Amazon.com, Inc. or its affiliates. OpsWatch is not affiliated with AWS.

@@ -78,7 +78,7 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         </Suspense>
       )}
 
-      <SectionCard title={tChecklist('title')} action={view.status !== 'draft' && <TestButton connectionId={view.id} />}>
+      <SectionCard id="permissions" className="scroll-mt-20" title={tChecklist('title')} action={view.status !== 'draft' && <TestButton connectionId={view.id} />}>
         <PermissionChecklist result={view.lastTest} account={view.awsAccountId} />
       </SectionCard>
 

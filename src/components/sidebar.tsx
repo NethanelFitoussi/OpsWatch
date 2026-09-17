@@ -7,7 +7,7 @@ import { signOutAction } from '@/lib/auth/actions';
 import { cn } from '@/lib/utils';
 import { AwsIcon } from './aws-icon';
 import { BrandLink } from './brand-link';
-import { NAV_ITEMS, type NavItem } from './nav-items';
+import { NAV_ITEMS, isNavActive, navHref, type NavItem } from './nav-items';
 
 /** The label names the item, so its icon is decorative. */
 function NavIcon({ icon: Icon }: { icon: NavItem['icon'] }) {
@@ -21,32 +21,18 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <ul className="space-y-1">
-      {NAV_ITEMS.map(({ key, href, icon, enabled }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+      {NAV_ITEMS.map((item) => {
+        const active = isNavActive(item, pathname);
         const classes = cn(
-          'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+          'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring',
           active ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground',
-          enabled
-            ? 'hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring'
-            : 'cursor-not-allowed',
         );
         return (
-          <li key={key}>
-            {enabled ? (
-              <Link href={href} className={classes} aria-current={active ? 'page' : undefined} onClick={onNavigate}>
-                <NavIcon icon={icon} />
-                {t(key)}
-              </Link>
-            ) : (
-              <span className={classes} aria-disabled="true">
-                {/* Disabled: the label and badge are dimmed, the AWS icon is shown as published. */}
-                <NavIcon icon={icon} />
-                <span className="min-w-0 truncate opacity-70">{t(key)}</span>
-                <span className="ml-auto shrink-0 rounded-full border px-2 py-0.5 text-[11px] leading-none whitespace-nowrap opacity-70">
-                  {t('comingSoon')}
-                </span>
-              </span>
-            )}
+          <li key={item.key}>
+            <Link href={navHref(item, pathname)} className={classes} aria-current={active ? 'page' : undefined} onClick={onNavigate}>
+              <NavIcon icon={item.icon} />
+              {t(item.key)}
+            </Link>
           </li>
         );
       })}

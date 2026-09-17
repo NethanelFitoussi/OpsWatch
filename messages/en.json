@@ -9,9 +9,11 @@
       "containers": "Containers",
       "databases": "Databases",
       "logs": "Logs",
-      "comingSoon": "Coming soon",
       "signOut": "Sign out",
-      "mainNavigation": "Main navigation"
+      "mainNavigation": "Main navigation",
+      "overview": "Overview",
+      "loadBalancers": "Load balancers",
+      "alarms": "Alarms"
     },
     "language": {
       "label": "Language",
@@ -74,7 +76,8 @@
     "account": "AWS account",
     "region": "Region",
     "noAccounts": "No AWS account connected",
-    "manageAccounts": "Manage accounts"
+    "manageAccounts": "Manage accounts",
+    "notMonitorable": "Pass the permission test to monitor this account"
   },
   "Status": {
     "draft": "Setup incomplete",
@@ -628,5 +631,46 @@
     "description": "OpsWatch could not display this page. Try again, and check the server logs if it keeps failing.",
     "retry": "Try again",
     "accounts": "Go to AWS accounts"
+  },
+  "Monitoring": {
+    "client": {
+      "region": {
+        "label": "Region",
+        "current": "Region: {region}"
+      },
+      "range": {
+        "label": "Time range",
+        "options": {
+          "1h": "1 h",
+          "3h": "3 h",
+          "12h": "12 h",
+          "24h": "24 h",
+          "7d": "7 d"
+        }
+      },
+      "refresh": {
+        "pause": "Pause auto-refresh",
+        "resume": "Resume auto-refresh",
+        "every": "Refreshes every {minutes} min",
+        "paused": "Auto-refresh paused"
+      },
+      "chart": {
+        "noData": "No data for this period",
+        "legend": "Series"
+      }
+    },
+    "common": {
+      "failure": {
+        "denied": "OpsWatch cannot read this (missing {action}).",
+        "openChecklist": "Open the permission test",
+        "throttled": "AWS is limiting requests right now. The data loads again on the next refresh.",
+        "error": "AWS returned an error ({code})."
+      },
+      "sparkline": "{metric} over the selected period, latest {value}"
+    },
+    "overview": {
+      "title": "Overview",
+      "description": "Health summary and automatic insights for {connection} in {region}."
+    }
   }
 }

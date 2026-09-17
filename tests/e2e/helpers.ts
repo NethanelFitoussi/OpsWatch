@@ -37,3 +37,33 @@ export function rscHeaders(segments: string[], locale = 'en'): Record<string, st
 export const MOTO_URL = process.env.E2E_MOTO_URL ?? 'http://localhost:5055';
 /** The region of every e2e connection and of the seeded resources. */
 export const MOTO_REGION = 'us-east-1';
+
+/** Creates a connection through the wizard and returns its id, on its connection page. */
+export async function createConnection(page: Page, method: 'role' | 'ambient' | 'keys', name: string, region = MOTO_REGION) {
+  await page.goto('/en/accounts/new');
+  // The radio inputs are visually hidden inside their card labels.
+  await page.locator(`input[name="method"][value="${method}"]`).check({ force: true });
+  await page.getByLabel('Connection name').fill(name);
+  await page.getByLabel('AWS account ID').fill(MOTO_ACCOUNT);
+  await page.getByRole('checkbox', { name: region }).click();
+  await page.getByRole('button', { name: 'Create connection' }).click();
+  await expect(page).toHaveURL(/\/en\/accounts\/[0-9a-f]{12}$/);
+  return page.url().split('/').pop() as string;
+}
+
+export const MONITORING_CONNECTION = 'Moto monitoring';
+
+/** The ambient connection the monitoring specs use, created and tested once per stack. */
+export async function ensureMonitoringConnection(page: Page): Promise<string> {
+  await page.goto('/en/accounts');
+  const existing = page.getByRole('link', { name: new RegExp(MONITORING_CONNECTION) });
+  if ((await existing.count()) > 0) {
+    return ((await existing.first().getAttribute('href')) ?? '').split('/').pop() as string;
+  }
+  const id = await createConnection(page, 'ambient', MONITORING_CONNECTION);
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+  return id;
+}
+
+export const monitoringUrl = (connectionId: string, section: string, suffix = '') => `/en/c/${connectionId}/${MOTO_REGION}/${section}${suffix}`;

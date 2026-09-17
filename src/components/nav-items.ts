@@ -1,18 +1,33 @@
-import { BookOpen, Cloud, type LucideIcon } from 'lucide-react';
+import { BookOpen, Cloud, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import { monitoringPath, parseMonitoringPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
+export type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'accounts';
 export type NavItem = {
-  key: 'gettingStarted' | 'accounts' | 'containers' | 'databases' | 'logs';
-  href: string;
+  key: NavKey;
   /** A Lucide icon, or the AWS service icon of a section about that service. */
   icon: LucideIcon | AwsIconName;
-  enabled: boolean;
-};
+} & ({ kind: 'monitoring'; section: MonitoringSection } | { kind: 'static'; href: string });
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { key: 'gettingStarted', href: '/getting-started', icon: BookOpen, enabled: true },
-  { key: 'accounts', href: '/accounts', icon: Cloud, enabled: true },
-  { key: 'containers', href: '/containers', icon: 'ecs', enabled: false },
-  { key: 'databases', href: '/databases', icon: 'rds', enabled: false },
-  { key: 'logs', href: '/logs', icon: 'logs', enabled: false },
+  { key: 'overview', kind: 'monitoring', section: 'overview', icon: LayoutDashboard },
+  { key: 'containers', kind: 'monitoring', section: 'containers', icon: 'ecs' },
+  { key: 'databases', kind: 'monitoring', section: 'databases', icon: 'rds' },
+  { key: 'loadBalancers', kind: 'monitoring', section: 'load-balancers', icon: 'elb' },
+  { key: 'alarms', kind: 'monitoring', section: 'alarms', icon: 'alarm' },
+  { key: 'logs', kind: 'monitoring', section: 'logs', icon: 'logs' },
+  { key: 'gettingStarted', kind: 'static', href: '/getting-started', icon: BookOpen },
+  { key: 'accounts', kind: 'static', href: '/accounts', icon: Cloud },
 ];
+
+/** Monitoring links keep the current connection and region; elsewhere they open the section's redirect. */
+export function navHref(item: NavItem, pathname: string): string {
+  if (item.kind === 'static') return item.href;
+  const current = parseMonitoringPath(pathname);
+  return current ? monitoringPath(current, item.section) : `/${item.section}`;
+}
+
+export function isNavActive(item: NavItem, pathname: string): boolean {
+  if (item.kind === 'static') return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  return parseMonitoringPath(pathname)?.section === item.section || pathname === `/${item.section}`;
+}

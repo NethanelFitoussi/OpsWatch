@@ -1,22 +1,10 @@
 import fs from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
-import { MOTO_ACCOUNT, alert, login } from './helpers';
+import { expect, test } from '@playwright/test';
+import { MOTO_ACCOUNT, alert, createConnection, login } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await login(page);
 });
-
-async function createConnection(page: Page, method: 'role' | 'ambient' | 'keys', name: string) {
-  await page.goto('/en/accounts/new');
-  // The radio inputs are visually hidden inside their card labels.
-  await page.locator(`input[name="method"][value="${method}"]`).check({ force: true });
-  await page.getByLabel('Connection name').fill(name);
-  await page.getByLabel('AWS account ID').fill(MOTO_ACCOUNT);
-  await page.getByRole('checkbox', { name: 'us-east-1' }).click();
-  await page.getByRole('button', { name: 'Create connection' }).click();
-  await expect(page).toHaveURL(/\/en\/accounts\/[0-9a-f]{12}$/);
-  return page.url().split('/').pop() as string;
-}
 
 test('role connection: template download, role ARN and a passing test', async ({ page }) => {
   const id = await createConnection(page, 'role', 'Moto role');

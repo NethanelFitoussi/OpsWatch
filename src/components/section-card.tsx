@@ -11,6 +11,7 @@ export const SECTION_CARD_SPACING = '[--card-spacing:--spacing(5)] sm:[--card-sp
  * action (a button) aligned with the title.
  */
 export function SectionCard({
+  id,
   title,
   step,
   description,
@@ -19,6 +20,8 @@ export function SectionCard({
   contentClassName,
   children,
 }: {
+  /** An anchor other pages link to. */
+  id?: string;
   title: ReactNode;
   step?: number;
   description?: ReactNode;
@@ -28,7 +31,7 @@ export function SectionCard({
   children?: ReactNode;
 }) {
   return (
-    <Card className={cn(SECTION_CARD_SPACING, className)}>
+    <Card id={id} className={cn(SECTION_CARD_SPACING, className)}>
       <CardHeader className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="flex min-w-0 flex-1 basis-64 gap-3">
           {step !== undefined && <StepNumber number={step} decorative className="size-7 text-[13px]" />}

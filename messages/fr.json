@@ -9,9 +9,11 @@
       "containers": "Conteneurs",
       "databases": "Bases de données",
       "logs": "Logs",
-      "comingSoon": "Bientôt",
       "signOut": "Se déconnecter",
-      "mainNavigation": "Navigation principale"
+      "mainNavigation": "Navigation principale",
+      "overview": "Vue d'ensemble",
+      "loadBalancers": "Répartiteurs de charge",
+      "alarms": "Alarmes"
     },
     "language": {
       "label": "Langue",
@@ -74,7 +76,8 @@
     "account": "Compte AWS",
     "region": "Région",
     "noAccounts": "Aucun compte AWS connecté",
-    "manageAccounts": "Gérer les comptes"
+    "manageAccounts": "Gérer les comptes",
+    "notMonitorable": "Réussissez le test des permissions pour surveiller ce compte"
   },
   "Status": {
     "draft": "Configuration incomplète",
@@ -628,5 +631,46 @@
     "description": "OpsWatch n'a pas pu afficher cette page. Réessayez, et consultez les logs du serveur si l'erreur persiste.",
     "retry": "Réessayer",
     "accounts": "Aller aux comptes AWS"
+  },
+  "Monitoring": {
+    "client": {
+      "region": {
+        "label": "Région",
+        "current": "Région : {region}"
+      },
+      "range": {
+        "label": "Période",
+        "options": {
+          "1h": "1 h",
+          "3h": "3 h",
+          "12h": "12 h",
+          "24h": "24 h",
+          "7d": "7 j"
+        }
+      },
+      "refresh": {
+        "pause": "Suspendre l'actualisation automatique",
+        "resume": "Reprendre l'actualisation automatique",
+        "every": "Actualisé toutes les {minutes} min",
+        "paused": "Actualisation automatique suspendue"
+      },
+      "chart": {
+        "noData": "Aucune donnée sur cette période",
+        "legend": "Séries"
+      }
+    },
+    "common": {
+      "failure": {
+        "denied": "OpsWatch ne peut pas lire ces données (permission {action} manquante).",
+        "openChecklist": "Ouvrir le test des permissions",
+        "throttled": "AWS limite les requêtes en ce moment. Les données se rechargeront à la prochaine actualisation.",
+        "error": "AWS a renvoyé une erreur ({code})."
+      },
+      "sparkline": "{metric} sur la période choisie, dernière valeur {value}"
+    },
+    "overview": {
+      "title": "Vue d'ensemble",
+      "description": "Synthèse de santé et analyses automatiques pour {connection} dans {region}."
+    }
   }
 }

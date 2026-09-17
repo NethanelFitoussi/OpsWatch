@@ -9,7 +9,7 @@ type Props = { children: React.ReactNode; params: Promise<{ locale: string }> };
 
 export default async function ProtectedLayout({ children, params }: Props) {
   await initProtectedRoute(params);
-  const connections = listConnections(getDb()).map(({ id, name, regions }) => ({ id, name, regions }));
+  const connections = listConnections(getDb()).map(({ id, name, regions, status }) => ({ id, name, regions, status }));
 
   return (
     <AppShell signedIn connections={connections}>

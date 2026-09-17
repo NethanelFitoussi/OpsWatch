@@ -13,6 +13,7 @@ export const CLIENT_NAMESPACES = [
   'Checklist',
   'ErrorPage',
   'GettingStarted.diagram',
+  'Monitoring.client',
 ] as const;
 
 type Tree = { [key: string]: unknown };
