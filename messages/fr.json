@@ -710,6 +710,8 @@
       "desiredTasks": "Souhaitées",
       "requests": "Requêtes",
       "target5xx": "Erreurs 5xx des cibles",
+      "elb5xx": "Erreurs 5xx du répartiteur",
+      "errors5xx": "Erreurs 5xx",
       "responseTimeP95": "Temps de réponse (p95)",
       "p95Unavailable": "Le temps de réponse p95 n'a pas pu être lu.",
       "hosts": "Hôtes",
@@ -846,6 +848,42 @@
           "statement": "Requête",
           "load": "Sessions actives moyennes"
         }
+      }
+    },
+    "loadBalancers": {
+      "title": "Répartiteurs de charge",
+      "description": "Application Load Balancers de {connection} dans {region}.",
+      "cardTitle": "Application Load Balancers",
+      "empty": "Aucun Application Load Balancer dans cette région.",
+      "columns": {
+        "name": "Nom",
+        "scheme": "Schéma",
+        "state": "État",
+        "requests": "Requêtes",
+        "elb5xx": "5xx ELB",
+        "target5xx": "5xx cibles",
+        "p95": "Temps de réponse p95",
+        "hosts": "Hôtes sains / défaillants"
+      },
+      "hostCounts": "{healthy} / {unhealthy}",
+      "back": "Tous les répartiteurs de charge",
+      "metaTitle": "Répartiteur de charge",
+      "detailDescription": "Application Load Balancer.",
+      "notFound": "Ce répartiteur de charge n'existe pas dans cette région, ou ce n'est pas un Application Load Balancer.",
+      "summary": {
+        "title": "Répartiteur de charge",
+        "dnsName": "Nom DNS",
+        "scheme": "Schéma",
+        "state": "État",
+        "vpc": "VPC",
+        "created": "Créé {time}"
+      },
+      "charts": {
+        "title": "Trafic et erreurs"
+      },
+      "targetGroups": {
+        "title": "Groupes cibles",
+        "empty": "Aucun groupe cible n'est rattaché à ce répartiteur de charge."
       }
     },
     "targetGroup": {

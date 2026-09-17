@@ -710,6 +710,8 @@
       "desiredTasks": "Desired",
       "requests": "Requests",
       "target5xx": "Target 5xx errors",
+      "elb5xx": "Load balancer 5xx errors",
+      "errors5xx": "5xx errors",
       "responseTimeP95": "Response time (p95)",
       "p95Unavailable": "The p95 response time could not be read.",
       "hosts": "Hosts",
@@ -846,6 +848,42 @@
           "statement": "Statement",
           "load": "Average active sessions"
         }
+      }
+    },
+    "loadBalancers": {
+      "title": "Load balancers",
+      "description": "Application load balancers of {connection} in {region}.",
+      "cardTitle": "Application load balancers",
+      "empty": "No application load balancer in this region.",
+      "columns": {
+        "name": "Name",
+        "scheme": "Scheme",
+        "state": "State",
+        "requests": "Requests",
+        "elb5xx": "ELB 5xx",
+        "target5xx": "Target 5xx",
+        "p95": "p95 response time",
+        "hosts": "Healthy / unhealthy hosts"
+      },
+      "hostCounts": "{healthy} / {unhealthy}",
+      "back": "All load balancers",
+      "metaTitle": "Load balancer",
+      "detailDescription": "Application load balancer.",
+      "notFound": "This load balancer does not exist in this region, or it is not an application load balancer.",
+      "summary": {
+        "title": "Load balancer",
+        "dnsName": "DNS name",
+        "scheme": "Scheme",
+        "state": "State",
+        "vpc": "VPC",
+        "created": "Created {time}"
+      },
+      "charts": {
+        "title": "Traffic and errors"
+      },
+      "targetGroups": {
+        "title": "Target groups",
+        "empty": "No target group is attached to this load balancer."
       }
     },
     "targetGroup": {

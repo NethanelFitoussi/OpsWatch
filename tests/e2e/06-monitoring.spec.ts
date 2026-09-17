@@ -113,3 +113,20 @@ test('the instance page shows charts and explains that Performance Insights is o
   // moto never reports Performance Insights as enabled (fact 7) and has no PI backend (fact 8).
   await expect(page.getByText('Performance Insights is not enabled for this instance.')).toBeVisible();
 });
+
+test('the load balancers page lists the seeded ALB with its requests and hosts', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'load-balancers'));
+  await expect(page).toHaveTitle('Load balancers · OpsWatch');
+  const row = page.getByRole('row').filter({ has: page.getByRole('link', { name: 'opswatch-e2e-alb' }) });
+  await expect(row).toContainText('3,600'); // 30 datapoints of 120 requests
+  await expect(row).toContainText('1 / 0');
+  await expect(row).toContainText('—'); // p95 unavailable on moto (fact 2)
+});
+
+test('the load balancer page shows traffic charts and its target group', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'load-balancers'));
+  await page.getByRole('link', { name: 'opswatch-e2e-alb' }).click();
+  await expect(page.getByRole('figure', { name: 'Requests' }).first().locator('.recharts-line-curve')).toHaveCount(1);
+  await expect(page.getByRole('heading', { level: 3, name: /opswatch-e2e-web/ })).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: '10.0.1.10:80' })).toContainText('healthy');
+});
