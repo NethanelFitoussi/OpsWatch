@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { LOCALE_COOKIE } from './i18n/locale-cookie';
+import { withPublicHostForAction } from './lib/http/public-host';
 import { routing, type AppLocale } from './i18n/routing';
 
 const intl = createMiddleware(routing);
@@ -15,7 +16,8 @@ export function proxy(request: NextRequest) {
     const locale = isAppLocale(saved) ? saved : routing.defaultLocale;
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
-  return intl(request);
+  const headers = withPublicHostForAction(request, process.env.OPSWATCH_PUBLIC_URL || undefined);
+  return intl(headers ? new NextRequest(request.url, { method: request.method, headers }) : request);
 }
 
 export const config = {

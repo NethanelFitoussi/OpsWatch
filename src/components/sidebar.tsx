@@ -43,9 +43,24 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+export function SignOutForm() {
+  const t = useTranslations('Common.nav');
+  const locale = useLocale();
+  return (
+    <form action={signOutAction.bind(null, locale)}>
+      <button
+        type="submit"
+        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      >
+        <LogOut className="size-4" aria-hidden />
+        {t('signOut')}
+      </button>
+    </form>
+  );
+}
+
 export function Sidebar({ signedIn }: { signedIn: boolean }) {
   const t = useTranslations();
-  const locale = useLocale();
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r bg-sidebar px-4 py-5 md:flex">
@@ -56,17 +71,7 @@ export function Sidebar({ signedIn }: { signedIn: boolean }) {
       <nav aria-label={t('Common.nav.mainNavigation')} className="flex-1">
         <NavList />
       </nav>
-      {signedIn && (
-        <form action={signOutAction.bind(null, locale)}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          >
-            <LogOut className="size-4" aria-hidden />
-            {t('Common.nav.signOut')}
-          </button>
-        </form>
-      )}
+      {signedIn && <SignOutForm />}
     </aside>
   );
 }

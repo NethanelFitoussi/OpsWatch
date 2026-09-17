@@ -4,7 +4,9 @@ services:
     image: opswatch:local
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # Reachable from this machine only. To expose OpsWatch, create the admin account first,
+      # then put it behind an HTTPS reverse proxy and set OPSWATCH_PUBLIC_URL (see README).
+      - "127.0.0.1:3000:3000"
     env_file: .env
     volumes:
       - opswatch-data:/data

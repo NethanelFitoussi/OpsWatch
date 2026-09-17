@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { requireAdmin } from '@/lib/auth/current';
 import { detectBaseIdentity, type CallerIdentity } from '@/lib/aws/identity';
 import { deployCommand, roleArnCommand } from '@/lib/aws/template';
 import { ConnectionNotFoundError, getConnection, toView } from '@/lib/connections/repository';
@@ -49,6 +50,8 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
   const { locale, id } = await params;
   const { error } = await searchParams;
   setRequestLocale(locale);
+  // The (app) layout also checks, but a layout does not stop this segment from rendering in an RSC request.
+  await requireAdmin(locale);
 
   let view;
   try {

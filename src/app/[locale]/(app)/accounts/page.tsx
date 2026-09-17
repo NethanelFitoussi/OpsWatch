@@ -4,6 +4,7 @@ import { ConnectionStatusBadge } from '@/components/connection-status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { requireAdmin } from '@/lib/auth/current';
 import { listConnections, toView } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -13,6 +14,8 @@ type Props = { params: Promise<{ locale: string }> };
 export default async function AccountsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+  // The (app) layout also checks, but a layout does not stop this segment from rendering in an RSC request.
+  await requireAdmin(locale);
   const t = await getTranslations('Accounts');
   const format = await getFormatter();
   const views = listConnections(getDb()).map((row) => toView(row, env().OPSWATCH_SECRET));

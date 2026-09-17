@@ -37,6 +37,12 @@ docker compose up -d --build
 Ouvrez http://localhost:3000. La première visite vous demande de créer le compte
 administrateur, puis le guide de démarrage vous accompagne pour connecter un compte AWS.
 
+`docker-compose.yml` ne publie le port que sur `127.0.0.1` : tant que le compte administrateur
+n'existe pas, la première personne qui ouvre OpsWatch peut le créer. Pour accéder à OpsWatch
+depuis d'autres machines, terminez d'abord la création de l'administrateur, puis placez-le
+derrière un reverse proxy en HTTPS, définissez `OPSWATCH_PUBLIC_URL` avec son adresse publique
+et faites pointer le proxy vers `127.0.0.1:3000`.
+
 OpsWatch refuse de démarrer si `OPSWATCH_SECRET` est absent ou fait moins de 32 caractères.
 Conservez cette valeur : elle chiffre les clés d'accès enregistrées et signe les sessions.
 La changer déconnecte tout le monde et rend les clés enregistrées illisibles.
@@ -71,7 +77,12 @@ région, et montre ce qu'OpsWatch peut voir ou non.
 - Les clés d'accès sont chiffrées en AES-256-GCM avec une clé dérivée de `OPSWATCH_SECRET`.
 - Un unique compte administrateur protège l'instance. Les mots de passe sont hachés avec
   argon2id, les sessions expirent après 12 heures d'inactivité, et les tentatives de connexion
-  sont limitées à 5 par minute par client et 20 par minute au total.
+  sont limitées à 5 par minute par client.
+- L'adresse d'un client peut être falsifiée, donc les connexions sont aussi surveillées
+  globalement. Dès que plus de 20 connexions ont échoué dans la dernière minute, OpsWatch
+  vérifie les mots de passe un par un, à au moins 3 secondes d'intervalle, et refuse les
+  nouvelles tentatives tant que plus de 50 sont déjà en attente. L'administrateur n'est jamais
+  bloqué : le bon mot de passe fonctionne toujours pendant une attaque, après une attente.
 - Placez OpsWatch derrière HTTPS et définissez `OPSWATCH_PUBLIC_URL` pour que les cookies
   soient marqués `Secure`.
 

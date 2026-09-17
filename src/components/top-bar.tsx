@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { ConnectionSwitcher, type ShellConnection } from './connection-switcher';
 import { LocaleSwitcher } from './locale-switcher';
-import { NavList } from './sidebar';
+import { NavList, SignOutForm } from './sidebar';
 import { ThemeToggle } from './theme-toggle';
 
-export function TopBar({ connections }: { connections?: ShellConnection[] }) {
+export function TopBar({ signedIn, connections }: { signedIn: boolean; connections?: ShellConnection[] }) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
 
@@ -40,6 +40,11 @@ export function TopBar({ connections }: { connections?: ShellConnection[] }) {
       {open && (
         <nav aria-label={t('Common.nav.mainNavigation')} className="border-t px-4 py-3 md:hidden">
           <NavList onNavigate={() => setOpen(false)} />
+          {signedIn && (
+            <div className="mt-3 border-t pt-3">
+              <SignOutForm />
+            </div>
+          )}
         </nav>
       )}
     </header>
