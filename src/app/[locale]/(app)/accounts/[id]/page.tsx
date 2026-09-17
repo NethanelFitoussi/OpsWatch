@@ -104,7 +104,7 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         <>
           <Card>
             <CardHeader>
-              <CardTitle><h2>① {t('role.identityTitle')}</h2></CardTitle>
+              <CardTitle><h2><span aria-hidden>① </span>{t('role.identityTitle')}</h2></CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {identity ? (
@@ -125,7 +125,7 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle><h2>② {t('role.deployTitle')}</h2></CardTitle>
+              <CardTitle><h2><span aria-hidden>② </span>{t('role.deployTitle')}</h2></CardTitle>
               <CardDescription>{t('role.deployHelp', { account: view.awsAccountId })}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -183,7 +183,7 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle><h2>③ {t('role.roleArnTitle')}</h2></CardTitle>
+              <CardTitle><h2><span aria-hidden>③ </span>{t('role.roleArnTitle')}</h2></CardTitle>
               <CardDescription>{t('role.roleArnHelp')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

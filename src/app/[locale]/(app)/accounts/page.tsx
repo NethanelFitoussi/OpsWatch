@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
@@ -61,6 +62,16 @@ export default async function AccountsPage({ params }: Props) {
                       <CardDescription>
                         {t('accountId')} {c.awsAccountId} · {t(`methods.${c.method}`)}
                       </CardDescription>
+                      {(c.method === 'keys' || c.templateOutdated) && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {c.method === 'keys' && (
+                            <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">
+                              {t('localTesting')}
+                            </Badge>
+                          )}
+                          {c.templateOutdated && <Badge variant="outline">{t('updateStack')}</Badge>}
+                        </div>
+                      )}
                     </div>
                     <ConnectionStatusBadge status={c.status} />
                   </CardHeader>

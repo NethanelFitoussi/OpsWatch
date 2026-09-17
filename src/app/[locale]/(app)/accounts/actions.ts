@@ -8,6 +8,7 @@ import { uploadTemplate } from '@/lib/aws/template-upload';
 import { requireAdmin } from '@/lib/auth/current';
 import {
   ConnectionInputError,
+  ConnectionNotFoundError,
   createConnection,
   deleteConnection,
   getConnection,
@@ -20,37 +21,60 @@ import { credentialResolver } from '@/lib/connections/resolver';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
 
-export type FormState = { error?: ConnectionInputErrorCode };
+/** Non-secret values echoed back so the form keeps them after an error. Secrets never are. */
+export type FormValues = {
+  name?: string;
+  awsAccountId?: string;
+  regions?: string[];
+  roleArn?: string;
+  accessKeyId?: string;
+};
 
-function inputError(error: unknown): FormState {
+export type FormState = { error?: ConnectionInputErrorCode; values?: FormValues };
+
+/** A connection removed meanwhile (another tab, a stale page) sends the admin back to the list. */
+function redirectIfRemoved(error: unknown, locale: string): void {
+  if (error instanceof ConnectionNotFoundError) {
+    redirect({ href: '/accounts', locale });
+  }
+}
+
+function inputError(error: unknown, values: FormValues, locale: string): FormState {
+  redirectIfRemoved(error, locale);
   if (error instanceof ConnectionInputError) {
-    return { error: error.code };
+    return { error: error.code, values };
   }
   throw error;
 }
 
 export async function createConnectionAction(locale: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin(locale);
+  const values = {
+    name: String(formData.get('name') ?? ''),
+    awsAccountId: String(formData.get('awsAccountId') ?? ''),
+    regions: formData.getAll('regions').map(String),
+  };
   let id: string;
   try {
     id = createConnection(getDb(), {
-      name: String(formData.get('name') ?? ''),
+      name: values.name,
       method: String(formData.get('method') ?? ''),
-      awsAccountId: String(formData.get('awsAccountId') ?? '').replace(/\D/g, ''),
-      regions: formData.getAll('regions').map(String),
+      awsAccountId: values.awsAccountId.replace(/\D/g, ''),
+      regions: values.regions,
     }).id;
   } catch (error) {
-    return inputError(error);
+    return inputError(error, values, locale);
   }
   return redirect({ href: `/accounts/${id}`, locale });
 }
 
 export async function saveRoleArnAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin(locale);
+  const roleArn = String(formData.get('roleArn') ?? '');
   try {
-    setRoleArn(getDb(), id, String(formData.get('roleArn') ?? ''));
+    setRoleArn(getDb(), id, roleArn);
   } catch (error) {
-    return inputError(error);
+    return inputError(error, { roleArn }, locale);
   }
   credentialResolver.forget(id);
   return redirect({ href: `/accounts/${id}`, locale });
@@ -58,22 +82,28 @@ export async function saveRoleArnAction(locale: string, id: string, _prev: FormS
 
 export async function saveAccessKeysAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin(locale);
+  const accessKeyId = String(formData.get('accessKeyId') ?? '');
   try {
     setAccessKeys(
       getDb(),
       id,
-      { accessKeyId: String(formData.get('accessKeyId') ?? ''), secretAccessKey: String(formData.get('secretAccessKey') ?? '') },
+      { accessKeyId, secretAccessKey: String(formData.get('secretAccessKey') ?? '') },
       env().OPSWATCH_SECRET,
     );
   } catch (error) {
-    return inputError(error);
+    return inputError(error, { accessKeyId }, locale);
   }
   return redirect({ href: `/accounts/${id}`, locale });
 }
 
 export async function regenerateExternalIdAction(locale: string, id: string): Promise<void> {
   await requireAdmin(locale);
-  regenerateExternalId(getDb(), id);
+  try {
+    regenerateExternalId(getDb(), id);
+  } catch (error) {
+    redirectIfRemoved(error, locale);
+    throw error;
+  }
   credentialResolver.forget(id);
   redirect({ href: `/accounts/${id}`, locale });
 }
@@ -81,7 +111,13 @@ export async function regenerateExternalIdAction(locale: string, id: string): Pr
 export async function launchStackAction(locale: string, id: string): Promise<void> {
   await requireAdmin(locale);
   const bucket = env().OPSWATCH_TEMPLATE_BUCKET;
-  const row = getConnection(getDb(), id);
+  let row;
+  try {
+    row = getConnection(getDb(), id);
+  } catch (error) {
+    redirectIfRemoved(error, locale);
+    throw error;
+  }
   let url: string;
   try {
     if (!bucket || !row.externalId) {

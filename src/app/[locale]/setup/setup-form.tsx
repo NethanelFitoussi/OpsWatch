@@ -21,7 +21,7 @@ export function SetupForm({ action }: { action: (prev: SetupState, data: FormDat
       )}
       <div className="space-y-2">
         <Label htmlFor="email">{t('setup.email')}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.email} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{t('setup.password')}</Label>

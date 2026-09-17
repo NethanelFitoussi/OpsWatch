@@ -17,6 +17,7 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
   const t = useTranslations('Wizard');
   const [state, formAction, pending] = useActionState(action, {});
   const [method, setMethod] = useState<ConnectionMethod>('role');
+  const selectedRegions = new Set(state.values?.regions);
 
   return (
     <form action={formAction} className="space-y-8">
@@ -41,7 +42,9 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
                 type="radio"
                 name="method"
                 value={m}
-                checked={method === m}
+                // Uncontrolled on purpose: React resets the form after the action, and a reset
+                // restores the default, which follows the selected method.
+                defaultChecked={method === m}
                 onChange={() => setMethod(m)}
                 className="sr-only"
               />
@@ -58,13 +61,14 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="name">{t('name')}</Label>
-          <Input id="name" name="name" placeholder={t('namePlaceholder')} maxLength={80} required />
+          <Input id="name" name="name" defaultValue={state.values?.name} placeholder={t('namePlaceholder')} maxLength={80} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="awsAccountId">{t('accountId')}</Label>
           <Input
             id="awsAccountId"
             name="awsAccountId"
+            defaultValue={state.values?.awsAccountId}
             inputMode="numeric"
             pattern="[0-9 -]{12,14}"
             placeholder="123456789012"
@@ -81,7 +85,14 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
         <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-3 lg:grid-cols-4">
           {AWS_REGIONS.map((region) => (
             <label key={region} className="flex items-center gap-2 font-mono text-sm">
-              <Checkbox name="regions" value={region} />
+              {/* Radix resets a checkbox to the value it mounted with when the form resets after an
+                  action, so a checkbox remounts whenever the echoed selection changes its state. */}
+              <Checkbox
+                key={`${region}:${selectedRegions.has(region)}`}
+                name="regions"
+                value={region}
+                defaultChecked={selectedRegions.has(region)}
+              />
               {region}
             </label>
           ))}

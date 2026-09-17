@@ -88,6 +88,8 @@
     "regions": "Regions",
     "lastTested": "Last tested {date}",
     "neverTested": "Never tested",
+    "localTesting": "For local testing",
+    "updateStack": "Update the stack: a newer template is available",
     "methods": {
       "role": "IAM role",
       "ambient": "Running on AWS",
@@ -600,5 +602,17 @@
       "Timeout": "AWS did not answer within 5 seconds. Check that OpsWatch can reach AWS STS (network, proxy, firewall), then reload this page.",
       "generic": "Check OpsWatch's AWS credentials, then reload this page."
     }
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "This page does not exist, or the connection it showed has been removed.",
+    "accounts": "Go to AWS accounts",
+    "guide": "Open the getting started guide"
+  },
+  "ErrorPage": {
+    "title": "Something went wrong",
+    "description": "OpsWatch could not display this page. Try again, and check the server logs if it keeps failing.",
+    "retry": "Try again",
+    "accounts": "Go to AWS accounts"
   }
 }

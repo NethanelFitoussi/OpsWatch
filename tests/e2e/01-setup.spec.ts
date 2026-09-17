@@ -19,10 +19,9 @@ test('rejects mismatched passwords, then creates the admin', async ({ page }) =>
   await page.getByRole('button', { name: 'Create admin account' }).click();
   await expect(alert(page)).toHaveText('The two passwords do not match.');
 
-  // React resets every uncontrolled field (including email) once the form
-  // action settles, even when it resolves with a validation error, so all
-  // three fields need to be filled in again for the retry.
-  await page.getByLabel('Email').fill(ADMIN.email);
+  // The email is kept after a validation error; passwords are never echoed back.
+  await expect(page.getByLabel('Email')).toHaveValue(ADMIN.email);
+  await expect(page.getByLabel('Password', { exact: true })).toHaveValue('');
   await page.getByLabel('Password', { exact: true }).fill(ADMIN.password);
   await page.getByLabel('Confirm password').fill(ADMIN.password);
   await page.getByRole('button', { name: 'Create admin account' }).click();
@@ -41,6 +40,8 @@ test('wrong password is refused, right password signs in, sign out works', async
   await page.getByLabel('Password').fill('not the right password');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(alert(page)).toHaveText('Incorrect email or password.');
+  await expect(page.getByLabel('Email')).toHaveValue(ADMIN.email);
+  await expect(page.getByLabel('Password')).toHaveValue('');
 
   await login(page);
   await page.getByRole('button', { name: 'Sign out' }).click();

@@ -2,9 +2,9 @@
 
 import { Loader2, PlayCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
+import { useRouter } from '@/i18n/navigation';
 
 export function TestButton({ connectionId }: { connectionId: string }) {
   const t = useTranslations('Checklist');
@@ -18,6 +18,11 @@ export function TestButton({ connectionId }: { connectionId: string }) {
     setFailed(false);
     try {
       const res = await fetch(`/api/connections/${connectionId}/test`, { method: 'POST' });
+      if (res.status === 401) {
+        // The session expired: sign in again rather than showing a generic error.
+        router.push('/login');
+        return;
+      }
       if (!res.ok) {
         setFailed(true);
       }

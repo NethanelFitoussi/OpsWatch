@@ -27,7 +27,7 @@ export function RoleArnForm({ action, defaultValue }: { action: Action; defaultV
       <ErrorAlert state={state} />
       <Label htmlFor="roleArn">{t('roleArnLabel')}</Label>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Input id="roleArn" name="roleArn" defaultValue={defaultValue} className="font-mono" placeholder="arn:aws:iam::123456789012:role/OpsWatchReadOnly-…" required />
+        <Input id="roleArn" name="roleArn" defaultValue={state.values?.roleArn ?? defaultValue} className="font-mono" placeholder="arn:aws:iam::123456789012:role/OpsWatchReadOnly-…" required />
         <Button type="submit" disabled={pending}>{t('saveRoleArn')}</Button>
       </div>
     </form>
@@ -43,7 +43,7 @@ export function AccessKeysForm({ action }: { action: Action }) {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="accessKeyId">{t('accessKeyId')}</Label>
-          <Input id="accessKeyId" name="accessKeyId" className="font-mono" required />
+          <Input id="accessKeyId" name="accessKeyId" defaultValue={state.values?.accessKeyId} className="font-mono" required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="secretAccessKey">{t('secretAccessKey')}</Label>

@@ -55,7 +55,7 @@ export function ConnectionDiagram() {
                   setActive(node.id);
                 }
               }}
-              className="cursor-pointer outline-none"
+              className="group cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <rect
                 x={node.x}
@@ -67,6 +67,8 @@ export function ConnectionDiagram() {
                   'transition-colors',
                   node.container ? 'fill-muted/40' : 'fill-card',
                   isActive ? 'stroke-primary' : 'stroke-border',
+                  // Visible keyboard focus even where a browser draws no outline around SVG groups.
+                  'group-focus-visible:stroke-ring group-focus-visible:[stroke-width:3.5]',
                   node.id === 'instance' && 'fill-primary/10',
                 )}
                 strokeWidth={isActive ? 2.5 : 1.5}

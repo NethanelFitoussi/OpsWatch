@@ -88,6 +88,8 @@
     "regions": "Régions",
     "lastTested": "Dernier test {date}",
     "neverTested": "Jamais testé",
+    "localTesting": "Pour tester en local",
+    "updateStack": "Mettez la stack à jour : un template plus récent est disponible",
     "methods": {
       "role": "Rôle IAM",
       "ambient": "Exécution sur AWS",
@@ -600,5 +602,17 @@
       "Timeout": "AWS n'a pas répondu en 5 secondes. Vérifiez qu'OpsWatch peut joindre AWS STS (réseau, proxy, pare-feu), puis rechargez cette page.",
       "generic": "Vérifiez les identifiants AWS d'OpsWatch, puis rechargez cette page."
     }
+  },
+  "NotFound": {
+    "title": "Page introuvable",
+    "description": "Cette page n'existe pas, ou la connexion qu'elle affichait a été supprimée.",
+    "accounts": "Aller aux comptes AWS",
+    "guide": "Ouvrir le guide"
+  },
+  "ErrorPage": {
+    "title": "Une erreur est survenue",
+    "description": "OpsWatch n'a pas pu afficher cette page. Réessayez, et consultez les logs du serveur si l'erreur persiste.",
+    "retry": "Réessayer",
+    "accounts": "Aller aux comptes AWS"
   }
 }

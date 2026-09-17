@@ -24,10 +24,10 @@ export function ConnectionSwitcher({ connections }: { connections: ShellConnecti
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="max-w-64 justify-between gap-2" aria-label={t('account')}>
+        <Button variant="outline" className="min-w-0 max-w-64 shrink justify-between gap-2" aria-label={t('account')}>
           <Cloud className="size-4 shrink-0" aria-hidden />
-          <span className="truncate">{current ? current.name : t('noAccounts')}</span>
-          {current && <span className="text-xs text-muted-foreground">{current.regions[0]}</span>}
+          <span className="min-w-0 truncate">{current ? current.name : t('noAccounts')}</span>
+          {current && <span className="hidden text-xs text-muted-foreground sm:inline">{current.regions[0]}</span>}
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" aria-hidden />
         </Button>
       </DropdownMenuTrigger>

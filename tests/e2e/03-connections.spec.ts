@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-async function createConnection(page: Page, method: 'role' | 'keys', name: string) {
+async function createConnection(page: Page, method: 'role' | 'ambient' | 'keys', name: string) {
   await page.goto('/en/accounts/new');
   // The radio inputs are visually hidden inside their card labels.
   await page.locator(`input[name="method"][value="${method}"]`).check({ force: true });
@@ -39,11 +39,28 @@ test('role connection: template download, role ARN and a passing test', async ({
   await expect(page.getByRole('listitem').filter({ hasText: 'Amazon ECS' })).toContainText('Allowed');
 });
 
-test('refuses a role ARN from another account', async ({ page }) => {
+test('refuses a role ARN from another account and keeps what was typed', async ({ page }) => {
   const id = await createConnection(page, 'role', 'Wrong account');
-  await page.getByLabel('Role ARN').fill(`arn:aws:iam::999999999999:role/OpsWatchReadOnly-${id}`);
+  const arn = `arn:aws:iam::999999999999:role/OpsWatchReadOnly-${id}`;
+  await page.getByLabel('Role ARN').fill(arn);
   await page.getByRole('button', { name: 'Save role ARN' }).click();
   await expect(alert(page)).toHaveText('This role belongs to another AWS account.');
+  await expect(page.getByLabel('Role ARN')).toHaveValue(arn);
+});
+
+test('the wizard keeps the name, account ID and regions after a validation error', async ({ page }) => {
+  await page.goto('/en/accounts/new');
+  await page.locator('input[name="method"][value="keys"]').check({ force: true });
+  await page.getByLabel('Connection name').fill('Kept values');
+  // Passes the browser pattern but has only 10 digits, so the server refuses it.
+  await page.getByLabel('AWS account ID').fill('1234 5678 90-');
+  await page.getByRole('checkbox', { name: 'eu-west-3' }).click();
+  await page.getByRole('button', { name: 'Create connection' }).click();
+  await expect(alert(page)).toHaveText('The AWS account ID must be exactly 12 digits.');
+  await expect(page.getByLabel('Connection name')).toHaveValue('Kept values');
+  await expect(page.getByLabel('AWS account ID')).toHaveValue('1234 5678 90-');
+  await expect(page.getByRole('checkbox', { name: 'eu-west-3' })).toBeChecked();
+  await expect(page.locator('input[name="method"][value="keys"]')).toBeChecked();
 });
 
 test('access keys are masked after saving and can be tested', async ({ page }) => {
@@ -54,10 +71,47 @@ test('access keys are masked after saving and can be tested', async ({ page }) =
   await page.getByRole('button', { name: 'Save keys' }).click();
 
   await expect(page.getByText('Saved key: AKIA…MPLE. Enter new keys to replace it.')).toBeVisible();
+  await expect(page.getByLabel('Access key ID')).toHaveValue('');
   expect(await page.content()).not.toContain(secret);
 
   await page.getByRole('button', { name: 'Run test' }).click();
   await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+});
+
+test('invalid access keys keep the key ID but never the secret', async ({ page }) => {
+  await createConnection(page, 'keys', 'Invalid keys');
+  await page.getByLabel('Access key ID').fill('not-a-key');
+  await page.getByLabel('Secret access key').fill('tooShortSecretValue9');
+  await page.getByRole('button', { name: 'Save keys' }).click();
+  await expect(alert(page).filter({ hasText: 'These access keys are not valid.' })).toBeVisible();
+  await expect(page.getByLabel('Access key ID')).toHaveValue('not-a-key');
+  await expect(page.getByLabel('Secret access key')).toHaveValue('');
+  expect(await page.content()).not.toContain('tooShortSecretValue9');
+});
+
+test('ambient connection: detected identity and a passing test', async ({ page, context }) => {
+  await createConnection(page, 'ambient', 'Moto ambient');
+  await expect(page.getByText('Detected identity:', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('listitem').filter({ hasText: 'Amazon ECS' })).toContainText('Allowed');
+
+  // An expired session sends the test button to the login page.
+  await context.clearCookies();
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page).toHaveURL(/\/en\/login$/);
+});
+
+test('the connection headings are read without their step numbers', async ({ page }) => {
+  await page.getByRole('link', { name: /Moto role/ }).first().click();
+  await expect(page.getByRole('heading', { level: 2, name: "OpsWatch's identity", exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Paste the role ARN', exact: true })).toBeVisible();
+});
+
+test('the accounts list flags access keys as meant for local testing', async ({ page }) => {
+  const card = page.getByRole('listitem').filter({ hasText: 'Moto keys' });
+  await expect(card.getByText('For local testing', { exact: true })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Moto role' }).getByText('For local testing')).toHaveCount(0);
 });
 
 test('the test API rejects foreign origins and missing sessions', async ({ playwright, baseURL }) => {

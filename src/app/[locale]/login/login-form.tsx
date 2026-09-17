@@ -21,7 +21,7 @@ export function LoginForm({ action }: { action: (prev: LoginState, data: FormDat
       )}
       <div className="space-y-2">
         <Label htmlFor="email">{t('login.email')}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.email} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{t('login.password')}</Label>

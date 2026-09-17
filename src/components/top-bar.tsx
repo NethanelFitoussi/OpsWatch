@@ -27,12 +27,13 @@ export function TopBar({ signedIn, connections }: { signedIn: boolean; connectio
         >
           <Menu className="size-5" aria-hidden />
         </Button>
-        <Link href="/getting-started" className="flex items-center gap-2 font-semibold md:hidden">
+        <Link href="/getting-started" className="flex shrink-0 items-center gap-2 font-semibold md:hidden">
           <Radar className="size-5 text-primary" aria-hidden />
-          {t('Common.appName')}
+          {/* Kept for screen readers on narrow screens, where the icon alone has to fit. */}
+          <span className="sr-only sm:not-sr-only">{t('Common.appName')}</span>
         </Link>
         {connections && <ConnectionSwitcher connections={connections} />}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <LocaleSwitcher />
           <ThemeToggle />
         </div>
