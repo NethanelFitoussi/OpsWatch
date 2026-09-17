@@ -56,6 +56,8 @@ test('an unknown connection shows a localized not found page', async ({ page }) 
   await page.goto('/en/accounts/000000000000');
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
   await expect(page).toHaveTitle('Page not found · OpsWatch');
+  // The page's own metadata title must not stay next to the not-found one.
+  await expect(page.locator('title')).toHaveCount(1);
   await page.goto('/fr/accounts/000000000000');
   await expect(page.getByRole('heading', { level: 1, name: 'Page introuvable' })).toBeVisible();
 });
