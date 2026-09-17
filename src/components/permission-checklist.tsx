@@ -1,8 +1,9 @@
 import { CircleCheck, CircleMinus, CircleX, TriangleAlert } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
+import { AwsIcon, SERVICE_ICONS } from '@/components/aws-icon';
 import { knownIdentityError } from '@/lib/aws/identity-errors';
 import type { CheckStatus, PermissionTestResult } from '@/lib/connections/types';
-import { TONE_TEXT } from '@/lib/ui/tones';
+import { TONE_BORDER, TONE_SOFT, TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<CheckStatus, { icon: typeof CircleCheck; className: string }> = {
@@ -18,14 +19,14 @@ export async function PermissionChecklist({ result, account }: { result: Permiss
   const format = await getFormatter();
 
   if (!result) {
-    return <p className="text-sm text-muted-foreground">{t('neverRun')}</p>;
+    return <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">{t('neverRun')}</p>;
   }
 
   if (result.identityError) {
     const code = result.identityError;
     const known = knownIdentityError(code);
     return (
-      <div role="status" className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+      <div role="status" className={cn('rounded-lg border p-4 text-sm', TONE_BORDER.danger, TONE_SOFT.danger)}>
         {known ? t(`identityErrors.${known}`, { account, code }) : t('identityErrors.generic', { code })}
       </div>
     );
@@ -41,21 +42,24 @@ export async function PermissionChecklist({ result, account }: { result: Permiss
       </p>
       {regions.map((region) => (
         <section key={region} aria-labelledby={`region-${region}`}>
-          <h3 id={`region-${region}`} className="mb-2 font-mono text-xs uppercase text-muted-foreground">{region}</h3>
-          <ul className="divide-y rounded-md border">
+          <h3 id={`region-${region}`} className="mb-2 font-mono text-xs font-medium tracking-wide text-muted-foreground uppercase">{region}</h3>
+          <ul className="divide-y overflow-hidden rounded-lg border">
             {result.checks
               .filter((c) => c.region === region)
               .map((check) => {
                 const { icon: Icon, className } = ICONS[check.status];
                 return (
-                  <li key={check.service} className="flex items-start gap-3 p-3">
-                    <Icon className={cn('mt-0.5 size-5 shrink-0', className)} aria-hidden />
+                  <li key={check.service} className="flex items-start gap-3 p-3 sm:gap-4 sm:p-4">
+                    <AwsIcon name={SERVICE_ICONS[check.service][0]} size={32} alt="" className="mt-0.5" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium">
-                        {services(check.service)}{' '}
-                        <span className="text-sm font-normal text-muted-foreground">· {t(`statuses.${check.status}`)}</span>
-                      </p>
-                      <p className="font-mono text-xs text-muted-foreground">{check.action}</p>
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <p className="font-medium">{services(check.service)}</p>
+                        <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Icon className={cn('size-4 shrink-0', className)} aria-hidden />
+                          {t(`statuses.${check.status}`)}
+                        </p>
+                      </div>
+                      <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{check.action}</p>
                       {check.status === 'denied' && (
                         <p className="mt-1 text-sm">{t('denied', { action: check.action, impact: t(`impact.${check.service}`) })}</p>
                       )}

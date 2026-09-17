@@ -108,6 +108,12 @@
     "cloudwatch": "CloudWatch Metrics",
     "logs": "CloudWatch Logs"
   },
+  "AwsIcons": {
+    "cloudformation": "AWS CloudFormation",
+    "iam": "AWS Identity and Access Management (IAM)",
+    "ecs": "Amazon Elastic Container Service (ECS)",
+    "ec2": "Amazon EC2"
+  },
   "Wizard": {
     "title": "Ajouter un compte AWS",
     "description": "OpsWatch ne fait que lire. Vous pouvez supprimer la connexion et révoquer son accès à tout moment.",

@@ -4,7 +4,7 @@ export const IAM_POLICY_VERSION = '2012-10-17';
 /** Lifetime of assumed-role credentials, and the role's MaxSessionDuration. */
 export const ASSUME_ROLE_DURATION_SECONDS = 3600;
 
-type ServiceGroupId = 'ecs' | 'ec2' | 'autoscaling' | 'elb' | 'rds' | 'pi' | 'cloudwatch' | 'logs';
+export type ServiceGroupId = 'ecs' | 'ec2' | 'autoscaling' | 'elb' | 'rds' | 'pi' | 'cloudwatch' | 'logs';
 
 export type ServiceGroup = {
   id: ServiceGroupId;

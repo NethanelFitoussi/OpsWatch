@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { AwsIcon, SERVICE_ICONS } from '@/components/aws-icon';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SERVICE_GROUPS } from '@/lib/aws/actions';
 
@@ -10,8 +11,13 @@ export async function ServiceCards() {
     <div className="grid gap-4 lg:grid-cols-2">
       {SERVICE_GROUPS.map((group) => (
         <Card key={group.id}>
-          <CardHeader>
-            <CardTitle>{services(group.id)}</CardTitle>
+          <CardHeader className="flex items-center gap-3">
+            <span className="flex shrink-0 gap-1.5">
+              {SERVICE_ICONS[group.id].map((icon) => (
+                <AwsIcon key={icon} name={icon} size={36} alt="" />
+              ))}
+            </span>
+            <CardTitle className="text-base font-semibold">{services(group.id)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <dl className="space-y-2">

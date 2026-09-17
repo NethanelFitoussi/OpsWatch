@@ -40,3 +40,13 @@ test('step 0 explains both identities and answers the Identity Center question',
   await expect(page.getByText('What about IAM Identity Center (SSO)?', { exact: true })).toBeVisible();
   await expect(step0.getByText('arn:aws:iam::*:role/OpsWatchReadOnly-*').first()).toBeVisible();
 });
+
+test('the guide shows the AWS service icons, with alt text only where the name is not written', async ({ page }) => {
+  await page.goto('/en/getting-started');
+  await expect(page.getByRole('img', { name: 'AWS CloudFormation' }).first()).toBeVisible();
+  const ecsCard = page.locator('#services [data-slot="card"]').filter({ hasText: 'Amazon ECS' });
+  await expect(ecsCard.locator('img[src="/aws-icons/Arch_Amazon-Elastic-Container-Service_48.svg"]')).toHaveAttribute('alt', '');
+  const icon = await page.request.get('/aws-icons/Arch_Amazon-CloudWatch_48.svg');
+  expect(icon.headers()['content-type']).toContain('image/svg+xml');
+  expect((await page.request.get('/icon.svg')).ok()).toBe(true);
+});

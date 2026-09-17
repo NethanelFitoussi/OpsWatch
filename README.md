@@ -118,3 +118,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 [MIT](LICENSE)
+
+### AWS icons
+
+AWS Architecture Icons are provided by Amazon Web Services under the AWS icon usage guidelines; AWS and the service names are trademarks of Amazon.com, Inc. or its affiliates. OpsWatch is not affiliated with AWS.
+Source and terms: [public/aws-icons/README.md](public/aws-icons/README.md).

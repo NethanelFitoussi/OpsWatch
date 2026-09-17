@@ -36,7 +36,9 @@ test('role connection: template download, role ARN and a passing test', async ({
 
   await page.getByRole('button', { name: 'Run test' }).click();
   await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('listitem').filter({ hasText: 'Amazon ECS' })).toContainText('Allowed');
+  const ecsLine = page.getByRole('listitem').filter({ hasText: 'Amazon ECS' });
+  await expect(ecsLine).toContainText('Allowed');
+  await expect(ecsLine.locator('img')).toHaveAttribute('alt', '');
 });
 
 test('refuses a role ARN from another account and keeps what was typed', async ({ page }) => {
