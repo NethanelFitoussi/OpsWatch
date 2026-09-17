@@ -1,0 +1,121 @@
+import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
+import { mockClient } from 'aws-sdk-client-mock';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createCredentialResolver, type AssumeRoleEvent } from '@/lib/aws/credentials';
+
+const sts = mockClient(STSClient);
+const T0 = Date.parse('2026-09-17T10:00:00Z');
+const role = {
+  method: 'role' as const,
+  connectionId: 'abc123def456',
+  roleArn: 'arn:aws:iam::111122223333:role/OpsWatchReadOnly-abc123def456',
+  externalId: 'ext-id',
+};
+
+function assumeRoleResponse(expiresAt: number) {
+  return {
+    Credentials: {
+      AccessKeyId: 'ASIATEMP',
+      SecretAccessKey: 'temp-secret',
+      SessionToken: 'temp-token',
+      Expiration: new Date(expiresAt),
+    },
+  };
+}
+
+beforeEach(() => sts.reset());
+
+describe('credential resolver', () => {
+  it('assumes the role with the ExternalId, session name and duration', async () => {
+    sts.on(AssumeRoleCommand).resolves(assumeRoleResponse(T0 + 3_600_000));
+    const events: AssumeRoleEvent[] = [];
+    const resolver = createCredentialResolver({
+      now: () => T0,
+      ambientProvider: async () => ({ accessKeyId: 'BASE', secretAccessKey: 'base' }),
+      log: (e) => events.push(e),
+    });
+
+    const creds = await resolver.resolve(role, 'eu-west-1');
+
+    expect(creds).toEqual({
+      accessKeyId: 'ASIATEMP',
+      secretAccessKey: 'temp-secret',
+      sessionToken: 'temp-token',
+      expiration: new Date(T0 + 3_600_000),
+    });
+    expect(sts.commandCalls(AssumeRoleCommand)[0].args[0].input).toEqual({
+      RoleArn: role.roleArn,
+      ExternalId: 'ext-id',
+      RoleSessionName: 'opswatch-abc123def456',
+      DurationSeconds: 3600,
+    });
+    expect(events).toEqual([{ event: 'assume_role', connectionId: 'abc123def456', ok: true }]);
+  });
+
+  it('reuses cached credentials until 5 minutes before expiry', async () => {
+    sts.on(AssumeRoleCommand).resolves(assumeRoleResponse(T0 + 3_600_000));
+    let now = T0;
+    const resolver = createCredentialResolver({
+      now: () => now,
+      ambientProvider: async () => ({ accessKeyId: 'BASE', secretAccessKey: 'base' }),
+      log: () => {},
+    });
+
+    await resolver.resolve(role, 'eu-west-1');
+    now = T0 + 54 * 60_000; // 6 minutes left
+    await resolver.resolve(role, 'eu-west-1');
+    expect(sts.commandCalls(AssumeRoleCommand)).toHaveLength(1);
+
+    now = T0 + 56 * 60_000; // 4 minutes left
+    await resolver.resolve(role, 'eu-west-1');
+    expect(sts.commandCalls(AssumeRoleCommand)).toHaveLength(2);
+  });
+
+  it('assumes again after forget() or when the ExternalId changes', async () => {
+    sts.on(AssumeRoleCommand).resolves(assumeRoleResponse(T0 + 3_600_000));
+    const resolver = createCredentialResolver({
+      now: () => T0,
+      ambientProvider: async () => ({ accessKeyId: 'BASE', secretAccessKey: 'base' }),
+      log: () => {},
+    });
+    await resolver.resolve(role, 'eu-west-1');
+    await resolver.resolve({ ...role, externalId: 'new-ext-id' }, 'eu-west-1');
+    resolver.forget('abc123def456');
+    await resolver.resolve(role, 'eu-west-1');
+    expect(sts.commandCalls(AssumeRoleCommand)).toHaveLength(3);
+  });
+
+  it('logs and rethrows a failed AssumeRole without secrets', async () => {
+    sts.on(AssumeRoleCommand).rejects(Object.assign(new Error('not authorized'), { name: 'AccessDenied' }));
+    const log = vi.fn();
+    const resolver = createCredentialResolver({
+      now: () => T0,
+      ambientProvider: async () => ({ accessKeyId: 'BASE', secretAccessKey: 'base' }),
+      log,
+    });
+    await expect(resolver.resolve(role, 'eu-west-1')).rejects.toMatchObject({ name: 'AccessDenied' });
+    expect(log).toHaveBeenCalledWith({
+      event: 'assume_role',
+      connectionId: 'abc123def456',
+      ok: false,
+      errorCode: 'AccessDenied',
+    });
+  });
+
+  it('returns ambient credentials from the provider chain', async () => {
+    const resolver = createCredentialResolver({
+      ambientProvider: async () => ({ accessKeyId: 'AMBIENT', secretAccessKey: 'amb' }),
+    });
+    expect(await resolver.resolve({ method: 'ambient' }, 'eu-west-1')).toEqual({
+      accessKeyId: 'AMBIENT',
+      secretAccessKey: 'amb',
+    });
+  });
+
+  it('returns static access keys', async () => {
+    const resolver = createCredentialResolver({ ambientProvider: async () => ({ accessKeyId: 'x', secretAccessKey: 'y' }) });
+    expect(
+      await resolver.resolve({ method: 'keys', accessKeyId: 'AKIAEXAMPLE', secretAccessKey: 'secret' }, 'eu-west-1'),
+    ).toEqual({ accessKeyId: 'AKIAEXAMPLE', secretAccessKey: 'secret' });
+  });
+});
