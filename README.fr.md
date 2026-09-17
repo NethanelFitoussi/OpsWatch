@@ -130,8 +130,9 @@ région, et montre ce qu'OpsWatch peut voir ou non.
   nouvelles tentatives tant que plus de 50 sont déjà en attente. L'administrateur n'est jamais
   bloqué : le bon mot de passe fonctionne toujours pendant une attaque, après une attente.
 - La connexion facultative avec Google utilise OpenID Connect avec PKCE, state et nonce, vérifie
-  le jeton d'identité et n'accepte que l'e-mail vérifié de l'administrateur. Les échecs de
-  connexion avec Google comptent dans la surveillance globale ci-dessus.
+  le jeton d'identité et n'accepte que l'e-mail vérifié de l'administrateur. Une connexion avec
+  Google démarrée qui échoue ou est refusée compte dans la surveillance globale ci-dessus, comme
+  un mauvais mot de passe ; une connexion annulée sur la page de Google ne compte pas.
 - Placez OpsWatch derrière HTTPS et définissez `OPSWATCH_PUBLIC_URL` pour que les cookies
   soient marqués `Secure`.
 

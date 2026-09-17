@@ -10,6 +10,10 @@ const state = vi.hoisted(() => ({
   failures: 0,
   claims: {} as Record<string, unknown> | undefined,
   grant: undefined as undefined | ((...args: unknown[]) => void),
+  sessionError: false,
+  // Never reset: the discovered configuration is cached for the whole module.
+  discoveryCalls: [] as unknown[][],
+  clientSecrets: [] as string[],
 }));
 
 vi.mock('@/lib/db/client', () => ({ getDb: () => ({}) }));
@@ -18,6 +22,7 @@ vi.mock('@/lib/auth/current', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth/current')>()),
   clientIp: async () => 'client-1',
   startSession: async (adminId: number) => {
+    if (state.sessionError) throw new Error('database is locked');
     state.sessions.push(adminId);
   },
 }));
@@ -33,19 +38,30 @@ vi.mock('@/lib/auth/login-limiter', async () => {
   };
 });
 // Google's network is never reached: discovery and the token exchange are replaced at the library boundary.
-vi.mock('openid-client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('openid-client')>()),
-  discovery: async () => ({ discovered: true }),
-  authorizationCodeGrant: async (...args: unknown[]) => {
-    state.grant?.(...args);
-    return { claims: () => state.claims };
-  },
-}));
+vi.mock('openid-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('openid-client')>();
+  return {
+    ...actual,
+    ClientSecretPost: (secret: string) => {
+      state.clientSecrets.push(secret);
+      return actual.ClientSecretPost(secret);
+    },
+    discovery: async (...args: unknown[]) => {
+      state.discoveryCalls.push(args);
+      return { discovered: true };
+    },
+    authorizationCodeGrant: async (...args: unknown[]) => {
+      state.grant?.(...args);
+      return { claims: () => state.claims };
+    },
+  };
+});
 
 const { GET: start } = await import('@/app/api/auth/google/start/route');
 const { GET: callback } = await import('@/app/api/auth/google/callback/route');
 const { GOOGLE_FLOW_COOKIE, sealGoogleFlow } = await import('@/lib/auth/google');
 const { loginLimiter } = await import('@/lib/auth/login-limiter');
+const { enableNonRepudiationChecks } = await import('openid-client');
 
 const GOOGLE_ENV = {
   OPSWATCH_SECRET: TEST_SECRET,
@@ -76,8 +92,10 @@ beforeEach(() => {
   state.failures = 0;
   state.claims = { email: 'A@example.com', email_verified: true };
   state.grant = undefined;
+  state.sessionError = false;
   loginLimiter.reset('client-1');
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 describe('GET /api/auth/google/start', () => {
@@ -153,14 +171,43 @@ describe('GET /api/auth/google/callback', () => {
     expect(state.sessions).toEqual([]);
   });
 
-  it('fails without a valid flow cookie', async () => {
+  it('fails without a valid flow cookie, and anonymous requests do not count as failed logins', async () => {
     expect((await callbackRequest('code=abc&state=expected-state', '')).headers.get('location')).toBe(
       '/en/login?error=google_failed',
     );
     expect((await callbackRequest('code=abc&state=expected-state', flowCookie(Date.now() - 1))).headers.get('location')).toBe(
       '/en/login?error=google_failed',
     );
-    expect(state.failures).toBe(2);
+    expect(state.failures).toBe(0);
+  });
+
+  it('does nothing but send the browser to the login page when Google sign-in is disabled', async () => {
+    state.env = loadEnv({ OPSWATCH_SECRET: TEST_SECRET });
+    const response = await callbackRequest('code=abc&state=forged');
+    expect(response.headers.get('location')).toBe('/fr/login');
+    expect(state.failures).toBe(0);
+    expect(state.sessions).toEqual([]);
+  });
+
+  it('still clears the flow and reports a failure when the session cannot be started', async () => {
+    state.sessionError = true;
+    const response = await callbackRequest('code=abc&state=expected-state');
+    expect(response.status).toBe(303);
+    expect(response.headers.get('location')).toBe('/fr/login?error=google_failed');
+    expectFlowCookieCleared(response);
+  });
+
+  it('discovers Google once, with the client secret and ID token signature checks', async () => {
+    await callbackRequest('code=abc&state=expected-state');
+    await callbackRequest('code=abc&state=expected-state');
+    expect(state.discoveryCalls).toHaveLength(1);
+    const [issuer, clientId, metadata, clientAuth, options] = state.discoveryCalls[0];
+    expect(String(issuer)).toBe('https://accounts.google.com/');
+    expect(clientId).toBe('test-client');
+    expect(metadata).toBeUndefined();
+    expect(state.clientSecrets).toEqual(['test-secret']);
+    expect(clientAuth).toBeTypeOf('function');
+    expect((options as { execute: unknown[] }).execute).toContain(enableNonRepudiationChecks);
   });
 
   it('fails when the token exchange or ID token validation fails', async () => {

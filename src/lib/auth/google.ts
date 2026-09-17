@@ -115,6 +115,8 @@ export async function buildAuthorizationRequest(
   return { url, flow };
 }
 
+// One cache for the whole process, not per client ID: the configuration comes from environment
+// variables, which cannot change while OpsWatch runs.
 let discovered: Promise<client.Configuration> | undefined;
 
 /** Discovered once per process; a failed discovery is retried on the next sign-in. */

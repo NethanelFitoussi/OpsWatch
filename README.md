@@ -122,8 +122,9 @@ what OpsWatch can and cannot see.
   3 seconds apart, and refuses new attempts while more than 50 are already waiting. The admin
   is never locked out: the right password still works during an attack, after a wait.
 - Optional Google sign-in uses OpenID Connect with PKCE, state and nonce, verifies the ID token,
-  and only accepts the verified admin email. Failed Google sign-ins count toward the global
-  sign-in watch above.
+  and only accepts the verified admin email. A Google sign-in that fails or is refused after
+  it started counts toward the global sign-in watch above, like a wrong password; one cancelled
+  on Google's page does not.
 - Put OpsWatch behind HTTPS and set `OPSWATCH_PUBLIC_URL` so cookies are marked `Secure`.
 
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).

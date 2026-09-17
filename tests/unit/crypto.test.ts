@@ -23,6 +23,14 @@ describe('encrypt / decrypt', () => {
     expect(() => decrypt(encrypt('secret', SECRET), OTHER)).toThrow(DecryptionError);
   });
 
+  it('still decrypts access keys stored before encryption purposes were introduced', () => {
+    // Produced by the encrypt() of commit c7f725f, which always used the 'access-keys' key.
+    const stored =
+      'FgxWonFi_B_F-X19PiK2THrz-c1cL_d2eJwcOJ4AZm-WNh7mNPu1PB7NuQJDEvO-DV5NMIBLlhTbRR96wYp5NlodiXAzgK7-2XEjdAhRfFtJ_YluSHNSwZ8kgLs';
+    expect(decrypt(stored, SECRET)).toBe('{"accessKeyId":"AKIAEXAMPLE","secretAccessKey":"example-secret"}');
+    expect(() => decrypt(stored, SECRET, 'google-sign-in')).toThrow(DecryptionError);
+  });
+
   it('rejects garbage', () => {
     expect(() => decrypt('abc', SECRET)).toThrow(DecryptionError);
   });
