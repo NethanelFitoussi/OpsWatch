@@ -5,7 +5,7 @@ import type { LoadBalancer, TargetGroup } from './elb';
 import { MIN_CONSECUTIVE, average, breachActive, sliceSince, sum, thresholdLevel, type Levels } from './evaluate';
 import type { SeriesData } from './metrics';
 import type { RdsCluster, RdsInstance } from './rds';
-import { formatMetricValue, type MetricUnit } from './shared/format';
+import { GIB, formatMetricValue, type MetricUnit } from './shared/format';
 import { monitoringPath, type ScopeRef } from './shared/paths';
 
 export type InsightSeverity = 'critical' | 'warning' | 'info';
@@ -172,7 +172,7 @@ function rdsInstanceInsights(s: RdsInstanceSignals, ctx: RuleContext): Insight[]
 
   // FreeableMemory is absolute: it only means something as a share of the instance's memory.
   if (s.instance.memoryGiB != null) {
-    const total = s.instance.memoryGiB * 1024 ** 3;
+    const total = s.instance.memoryGiB * GIB;
     const bytes = sliceSince(s.freeableMemory, since);
     const percent: SeriesData = { timestamps: bytes.timestamps, values: bytes.values.map((v) => (v / total) * 100) };
     const level = thresholdLevel(percent, FREEABLE_MEMORY_LEVELS, 'below');

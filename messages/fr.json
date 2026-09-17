@@ -725,7 +725,7 @@
       "description": "Synthèse de santé et analyses automatiques pour {connection} dans {region}.",
       "summary": {
         "label": "Synthèse de santé",
-        "window": "15 dernières minutes",
+        "window": "{minutes} dernières minutes ({taskMinutes} pour le décompte des tâches)",
         "open": "Ouvrir",
         "ecs": {
           "title": "Conteneurs",
@@ -746,7 +746,7 @@
       },
       "insights": {
         "title": "Analyses",
-        "description": "Vérifications automatiques sur les 15 dernières minutes. Les alarmes de suivi de cible sont ignorées.",
+        "description": "Vérifications automatiques sur les {minutes} dernières minutes ({taskMinutes} pour le décompte des tâches). Les alarmes de suivi de cible sont ignorées.",
         "listLabel": "Analyses",
         "none": "Rien à signaler : toutes les vérifications passent.",
         "unavailable": "Certaines vérifications n'ont pas pu s'exécuter : {families}.",

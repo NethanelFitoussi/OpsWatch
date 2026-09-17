@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { MonitoringHeader } from '@/components/monitoring/monitoring-header';
 import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
+import { SEARCH_MAX } from '@/lib/limits';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { pageNow, parseTimeRange } from '@/lib/monitoring/shared/time-range';
 import { ClusterSections } from './cards';
@@ -12,8 +13,6 @@ type Props = {
   params: Promise<MonitoringParams>;
   searchParams: Promise<{ range?: string | string[]; q?: string | string[] }>;
 };
-
-const SEARCH_MAX = 100;
 
 export const generateMetadata = localizedTitle('Monitoring.containers.title');
 

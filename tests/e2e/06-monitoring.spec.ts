@@ -121,6 +121,8 @@ test('the load balancers page lists the seeded ALB with its requests and hosts',
   await expect(row).toContainText('3,600'); // 30 datapoints of 120 requests
   await expect(row).toContainText('1 / 0');
   await expect(row).toContainText('—'); // p95 unavailable on moto (fact 2)
+  // Said in full once above the table, as the detail views say it, so the dash is not read as "no traffic".
+  await expect(page.getByText('The p95 response time could not be read.')).toBeVisible();
 });
 
 test('the load balancer page shows traffic charts and its target group', async ({ page }) => {

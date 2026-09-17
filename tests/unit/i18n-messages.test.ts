@@ -29,4 +29,16 @@ describe('message catalogues', () => {
       expect(value.trim(), key).not.toBe('');
     }
   });
+
+  it('let the Overview caption name both evaluation windows, in both languages', () => {
+    // The rules evaluate 15 minutes, except the task counts, which evaluate 10: the caption must say so
+    // from the rule constants rather than spell one number out.
+    for (const keys of [enKeys, frKeys]) {
+      for (const key of ['Monitoring.overview.summary.window', 'Monitoring.overview.insights.description']) {
+        expect(keys[key], key).toContain('{minutes}');
+        expect(keys[key], key).toContain('{taskMinutes}');
+        expect(keys[key], key).not.toMatch(/\b(10|15)\b/);
+      }
+    }
+  });
 });

@@ -25,7 +25,7 @@ export async function MonitoringHeader({
       description={description}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <RegionSelector regions={context.connection.regions} current={context.scope.region} range={range} />
+          <RegionSelector regions={context.connection.regions} current={context.scope.region} />
           {range && <TimeRangeSelector current={range} />}
           {autoRefresh && <AutoRefresh />}
         </div>

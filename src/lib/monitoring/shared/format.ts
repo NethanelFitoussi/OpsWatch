@@ -4,6 +4,8 @@ export type MetricUnit = 'percent' | 'count' | 'rate' | 'bytes' | 'seconds' | 'm
 export const NO_VALUE = '—';
 
 const BYTE_UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte'] as const;
+/** AWS reports instance memory in GiB and FreeableMemory in bytes; this is what converts one into the other. */
+export const GIB = 1024 ** 3;
 
 function unit(locale: string, name: string, value: number, digits: number): string {
   return new Intl.NumberFormat(locale, { style: 'unit', unit: name, maximumFractionDigits: digits }).format(value);

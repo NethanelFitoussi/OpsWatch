@@ -43,7 +43,7 @@ export default async function LogsPage({ params, searchParams }: Props) {
           connectionId={context.scope.connectionId}
           region={context.scope.region}
           groups={groups}
-          initialRange={range}
+          range={range}
           maxQueryLength={LOGS_MAX_QUERY_LENGTH}
         />
       </div>

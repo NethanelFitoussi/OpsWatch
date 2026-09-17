@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { MonitoringHeader } from '@/components/monitoring/monitoring-header';
 import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
+import { SEARCH_MAX } from '@/lib/limits';
 import { ALARM_STATE_FILTERS, parseAlarmFilter } from '@/lib/monitoring/alarms';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { AlarmsCard } from './cards';
@@ -43,7 +44,7 @@ export default async function AlarmsPage({ params, searchParams }: Props) {
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('filters.search')}
-          <Input name="q" defaultValue={filter.search} maxLength={100} />
+          <Input name="q" defaultValue={filter.search} maxLength={SEARCH_MAX} />
         </label>
         <Button type="submit">{t('filters.apply')}</Button>
       </form>

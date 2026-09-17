@@ -1,6 +1,7 @@
 import 'server-only';
 import { CloudWatchClient, DescribeAlarmsCommand, type CompositeAlarm, type MetricAlarm } from '@aws-sdk/client-cloudwatch';
 import { clientConfig } from '../aws/client-config';
+import { SEARCH_MAX } from '../limits';
 import { sendWithTimeout } from '../aws/timeout';
 import { isOneOf } from '../type-guards';
 import { describeCall, describeTimeout, type AwsTarget, type MonitoringDeps } from './call';
@@ -27,7 +28,6 @@ const isTargetTrackingAlarm = (name: string): boolean => name.startsWith(TARGET_
 const STATES = ['OK', 'ALARM', 'INSUFFICIENT_DATA'] as const;
 const STATE_ORDER: Record<AlarmState, number> = { ALARM: 0, INSUFFICIENT_DATA: 1, OK: 2 };
 const MAX_PAGES = 50;
-const SEARCH_MAX = 100;
 
 const state = (value: string | undefined): AlarmState => (isOneOf(STATES, value) ? value : 'INSUFFICIENT_DATA');
 

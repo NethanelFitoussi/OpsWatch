@@ -725,7 +725,7 @@
       "description": "Health summary and automatic insights for {connection} in {region}.",
       "summary": {
         "label": "Health summary",
-        "window": "Last 15 minutes",
+        "window": "Last {minutes} minutes ({taskMinutes} for task counts)",
         "open": "Open",
         "ecs": {
           "title": "Containers",
@@ -746,7 +746,7 @@
       },
       "insights": {
         "title": "Insights",
-        "description": "Automatic checks on the last 15 minutes. Target-tracking alarms are left out.",
+        "description": "Automatic checks on the last {minutes} minutes ({taskMinutes} for task counts). Target-tracking alarms are left out.",
         "listLabel": "Insights",
         "none": "Nothing to report: every check passes.",
         "unavailable": "Some checks could not run: {families}.",

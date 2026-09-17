@@ -4,6 +4,7 @@ import { FailureNotice } from '@/components/monitoring/failure-notice';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { Link } from '@/i18n/navigation';
 import type { MonitoringScope } from '@/lib/monitoring/call';
+import { sum } from '@/lib/monitoring/evaluate';
 import {
   listLoadBalancers,
   listTargetGroups,
@@ -21,10 +22,11 @@ import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_TEXT } from '@/lib/ui/tones';
 
-const sum = (series: readonly MetricSeries[], id: string) => seriesById(series, id).values.reduce((a, b) => a + b, 0);
+const total = (series: readonly MetricSeries[], id: string) => sum(seriesById(series, id).values);
 
 export async function LoadBalancersCard({ scope, range, nowMs }: { scope: MonitoringScope; range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.loadBalancers');
+  const tMetrics = await getTranslations('Monitoring.metrics');
   const locale = await getLocale();
   const title = t('cardTitle');
 
@@ -88,6 +90,12 @@ export async function LoadBalancersCard({ scope, range, nowMs }: { scope: Monito
           <FailureNotice failure={groupsResult} connectionId={scope.connectionId} />
         </div>
       )}
+      {/* Said once for the column, in the words the detail views use: an em dash alone reads like "no data". */}
+      {!p95.ok && (
+        <p role="status" className="mb-3 text-sm text-muted-foreground">
+          {tMetrics('p95Unavailable')}
+        </p>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -116,9 +124,9 @@ export async function LoadBalancersCard({ scope, range, nowMs }: { scope: Monito
                 </TableCell>
                 <TableCell>{lb.scheme ?? NO_VALUE}</TableCell>
                 <TableCell>{lb.state ?? NO_VALUE}</TableCell>
-                <TableCell>{main.ok ? formatMetricValue(sum(main.data, `l${index}req`), 'count', locale) : NO_VALUE}</TableCell>
-                <TableCell>{main.ok ? formatMetricValue(sum(main.data, `l${index}elb5xx`), 'count', locale) : NO_VALUE}</TableCell>
-                <TableCell>{main.ok ? formatMetricValue(sum(main.data, `l${index}t5xx`), 'count', locale) : NO_VALUE}</TableCell>
+                <TableCell>{main.ok ? formatMetricValue(total(main.data, `l${index}req`), 'count', locale) : NO_VALUE}</TableCell>
+                <TableCell>{main.ok ? formatMetricValue(total(main.data, `l${index}elb5xx`), 'count', locale) : NO_VALUE}</TableCell>
+                <TableCell>{main.ok ? formatMetricValue(total(main.data, `l${index}t5xx`), 'count', locale) : NO_VALUE}</TableCell>
                 <TableCell>
                   {p95.ok ? formatMetricValue(latestValue(seriesById(p95.data, `l${index}p95`)), 'seconds', locale) : NO_VALUE}
                 </TableCell>

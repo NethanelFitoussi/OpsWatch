@@ -9,7 +9,7 @@ import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring
 import { piWindow, topSql } from '@/lib/monitoring/pi';
 import { RDS_METRIC_UNITS, detailMetrics, findInstance, rdsMetricQueries, type RdsInstance, type RdsMetric } from '@/lib/monitoring/rds';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
-import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
+import { GIB, formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
 import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 
@@ -20,8 +20,6 @@ type Loaded = { ok: true; target: AwsTarget; instance: RdsInstance } | { ok: fal
 const STATEMENT_PREVIEW_CHARS = 200;
 /** Hard cap on the SQL text kept in the page, whatever Performance Insights returns. */
 const STATEMENT_MAX_CHARS = 4000;
-
-const GIB = 1024 ** 3;
 
 const chartSeries = (series: readonly MetricSeries[], metric: RdsMetric, label: string): ChartSeries => ({
   id: `m${metric}`,

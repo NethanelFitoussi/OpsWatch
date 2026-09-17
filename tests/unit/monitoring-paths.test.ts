@@ -3,6 +3,7 @@ import { isDbInstanceId, isEcsName, isLoadBalancerName } from '@/lib/monitoring/
 import { monitoringPath, parseMonitoringPath, permissionsPath, switchConnectionPath, withRegion } from '@/lib/monitoring/shared/paths';
 
 const scope = { connectionId: 'abc123def456', region: 'eu-west-1' };
+const target = { connectionId: 'def456abc123', region: 'us-east-1' };
 
 describe('monitoring paths', () => {
   it('builds section and resource paths', () => {
@@ -21,8 +22,27 @@ describe('monitoring paths', () => {
   it('switches region or connection and keeps only the section', () => {
     expect(withRegion('/c/abc123def456/eu-west-1/containers/prod/web', 'us-east-1')).toBe('/c/abc123def456/us-east-1/containers');
     expect(withRegion('/accounts', 'us-east-1')).toBe('/accounts');
-    expect(switchConnectionPath('/c/abc123def456/eu-west-1/alarms', { connectionId: 'def456abc123', region: 'us-east-1' })).toBe('/c/def456abc123/us-east-1/alarms');
-    expect(switchConnectionPath('/accounts', { connectionId: 'def456abc123', region: 'us-east-1' })).toBe('/c/def456abc123/us-east-1/overview');
+    expect(switchConnectionPath('/c/abc123def456/eu-west-1/alarms', target)).toBe('/c/def456abc123/us-east-1/alarms');
+    expect(switchConnectionPath('/accounts', target)).toBe('/c/def456abc123/us-east-1/overview');
+  });
+
+  it('carries the filters of the current page into the new region', () => {
+    expect(withRegion('/c/abc123def456/eu-west-1/alarms', 'us-east-1', 'state=ALARM&tt=1&q=web')).toBe(
+      '/c/abc123def456/us-east-1/alarms?state=ALARM&tt=1&q=web',
+    );
+    expect(withRegion('/c/abc123def456/eu-west-1/logs', 'us-east-1', 'group=%2Fecs%2Fweb&prefix=%2Fecs&range=12h')).toBe(
+      '/c/abc123def456/us-east-1/logs?group=%2Fecs%2Fweb&prefix=%2Fecs&range=12h',
+    );
+    // The resource is dropped with the section it belonged to, the query string is not.
+    expect(withRegion('/c/abc123def456/eu-west-1/containers/prod/web', 'us-east-1', 'range=12h&q=web')).toBe(
+      '/c/abc123def456/us-east-1/containers?range=12h&q=web',
+    );
+  });
+
+  it('switches connection without leaving the account pages', () => {
+    expect(switchConnectionPath('/accounts/abc123def456', target)).toBe('/accounts/def456abc123');
+    expect(switchConnectionPath('/accounts/new', target)).toBe('/c/def456abc123/us-east-1/overview');
+    expect(switchConnectionPath('/c/abc123def456/eu-west-1/logs', target)).toBe('/c/def456abc123/us-east-1/logs');
   });
 });
 

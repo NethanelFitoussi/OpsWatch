@@ -1,12 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { createLogsApi, type ClientQueryResults, type LogsClientError } from '@/lib/monitoring/shared/logs-api';
 import { runLogsQuery } from '@/lib/monitoring/shared/logs-poller';
 import {
@@ -33,18 +35,20 @@ export function LogsQueryPanel({
   connectionId,
   region,
   groups,
-  initialRange,
+  range,
   maxQueryLength,
 }: {
   connectionId: string;
   region: string;
   groups: string[];
-  initialRange: LogsTimeRange;
+  range: LogsTimeRange;
   maxQueryLength: number;
 }) {
   const t = useTranslations('Monitoring.client');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState(DEFAULT_LOGS_QUERY);
-  const [range, setRange] = useState<LogsTimeRange>(initialRange);
   const [phase, setPhase] = useState<Phase>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [results, setResults] = useState<ClientQueryResults | null>(null);
@@ -63,6 +67,13 @@ export function LogsQueryPanel({
     window.addEventListener('pagehide', onPageHide);
     return () => window.removeEventListener('pagehide', onPageHide);
   }, [connectionId, region]);
+
+  /** The range lives in the URL, so the picker's links and this editor can never disagree about it. */
+  const selectRange = (value: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set('range', value);
+    router.replace(`${pathname}?${next.toString()}`);
+  };
 
   const run = useCallback(async () => {
     controllerRef.current?.abort();
@@ -166,7 +177,7 @@ export function LogsQueryPanel({
               <select
                 id="logs-range"
                 value={range}
-                onChange={(event) => setRange(event.target.value as LogsTimeRange)}
+                onChange={(event) => selectRange(event.target.value)}
                 className="h-9 rounded-md border bg-background px-2 text-sm"
               >
                 {LOGS_TIME_RANGES.map((value) => (

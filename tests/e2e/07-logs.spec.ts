@@ -39,6 +39,13 @@ test('the logs page searches groups, runs a query and shows rows', async ({ page
   // moto returns every event in range at once (fact 10).
   await expect(results.getByRole('row').filter({ hasText: 'ERROR payment gateway timeout' })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/^3 rows · /)).toBeVisible();
+
+  // The range lives in the URL, so the editor and the picker's hidden field can never disagree about it.
+  await page.getByLabel('Time range').selectOption('3h');
+  await expect(page).toHaveURL(/range=3h/);
+  await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
+  await expect(page.locator('input[name="range"]').first()).toHaveValue('3h');
+  await expect(page.getByLabel('Time range')).toHaveValue('3h');
 });
 
 test('the service page links to its log group', async ({ page }) => {
