@@ -1,3 +1,5 @@
+import { LOGS_STOP_TIMEOUT_MS } from './logs-queries';
+
 /** The Logs Insights routes as the browser sees them: only ids, never credentials. */
 export type LogsClientError = { code: string; action?: string; awsCode?: string };
 
@@ -44,9 +46,14 @@ export function createLogsApi(connectionId: string, region: string): LogsApi {
     start: (input) =>
       outcome(() => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) })),
     poll: (queryId) => outcome(() => fetch(`${url}/${encodeURIComponent(queryId)}`, { cache: 'no-store' })),
-    // keepalive lets the stop request finish when the user leaves the page.
+    // keepalive lets the stop request finish when the user leaves the page; the timeout signal keeps it from
+    // hanging forever when it never gets a response, which would otherwise leave the poller stuck awaiting it.
     stop: async (queryId) => {
-      await fetch(`${url}/${encodeURIComponent(queryId)}`, { method: 'DELETE', keepalive: true });
+      try {
+        await fetch(`${url}/${encodeURIComponent(queryId)}`, { method: 'DELETE', keepalive: true, signal: AbortSignal.timeout(LOGS_STOP_TIMEOUT_MS) });
+      } catch {
+        // A timed-out or otherwise failed stop is ignored, same as a stop the server itself could not complete.
+      }
     },
   };
 }

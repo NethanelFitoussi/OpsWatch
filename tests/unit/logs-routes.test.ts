@@ -169,16 +169,41 @@ describe('GET /api/connections/[id]/regions/[region]/logs/query/[queryId]', () =
 });
 
 describe('DELETE /api/connections/[id]/regions/[region]/logs/query/[queryId]', () => {
-  it('checks the origin, stops the query and forgets it even when the stop fails', async () => {
+  it('checks the origin before stopping the query', async () => {
     expect((await post(usable.id, 'eu-west-1')).status).toBe(200);
     expect((await del(usable.id, 'eu-west-1', 'q-1', { origin: 'https://evil.example' })).status).toBe(403);
     expect(logs.stopLogsQuery).not.toHaveBeenCalled();
+  });
+
+  it('forgets the binding once the stop succeeds', async () => {
+    expect((await post(usable.id, 'eu-west-1')).status).toBe(200);
+    vi.mocked(logs.stopLogsQuery).mockResolvedValueOnce({ ok: true, data: true });
 
     const res = await del(usable.id, 'eu-west-1', 'q-1');
     expect(res.status).toBe(204);
     expect(await res.text()).toBe('');
     expect(logs.stopLogsQuery).toHaveBeenCalledWith({ connectionId: usable.id, region: 'eu-west-1', credentials: { accessKeyId: 'A', secretAccessKey: 'S' } }, 'q-1');
     expect((await get(usable.id, 'eu-west-1', 'q-1')).status).toBe(404);
+  });
+
+  it('keeps the binding when the stop fails, so a retry can still reach the query, but still answers 204', async () => {
+    expect((await post(usable.id, 'eu-west-1')).status).toBe(200);
+    // The suite-wide mock already resolves stopLogsQuery to a failure; assert the response contract explicitly.
+    const res = await del(usable.id, 'eu-west-1', 'q-1');
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe('');
+    expect((await get(usable.id, 'eu-west-1', 'q-1')).status).toBe(200);
+  });
+
+  it('never calls stopLogsQuery, and answers 204, when the target cannot be resolved', async () => {
+    expect((await post(usable.id, 'eu-west-1')).status).toBe(200);
+    const target = await import('@/lib/monitoring/target');
+    vi.mocked(target.resolveTarget).mockResolvedValueOnce({ ok: false, reason: 'error', code: 'CredentialsError', action: 'sts:GetCallerIdentity' });
+
+    const res = await del(usable.id, 'eu-west-1', 'q-1');
+    expect(res.status).toBe(204);
+    expect(logs.stopLogsQuery).not.toHaveBeenCalled();
+    expect((await get(usable.id, 'eu-west-1', 'q-1')).status).toBe(200);
   });
 
   it('hides an unbound query', async () => {

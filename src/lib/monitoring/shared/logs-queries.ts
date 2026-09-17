@@ -19,6 +19,8 @@ export type LogsTimeRange = (typeof LOGS_TIME_RANGES)[number];
 
 export const LOGS_POLL_INTERVAL_MS = 1000;
 export const LOGS_CLIENT_TIMEOUT_MS = 60_000;
+/** The stop request must settle on its own even if it never gets a response, so the poller never hangs waiting for it. */
+export const LOGS_STOP_TIMEOUT_MS = 5000;
 
 /** Statuses a query never leaves: the poller stops on any of them. */
 export const TERMINAL_QUERY_STATUSES = ['Complete', 'Failed', 'Cancelled', 'Timeout', 'Unknown'] as const;

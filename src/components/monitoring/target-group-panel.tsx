@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { getTranslations } from 'next-intl/server';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,11 +17,14 @@ const MUTED_BADGE_CLASS = 'bg-muted text-muted-foreground';
 
 const chartSeries = (series: readonly MetricSeries[], id: string, label: string): ChartSeries => ({ id, label, ...seriesById(series, id) });
 
+/** ARNs (not names) are unique, so two target groups that happen to share a name never collide on one page. */
+const targetGroupHeadingId = (arn: string) => `target-group-${createHash('sha1').update(arn).digest('hex').slice(0, 12)}`;
+
 /** Target health and the ALB metrics of one target group. Reused by the containers and load balancer pages. */
 export async function TargetGroupPanel({ scope, group, range, nowMs }: { scope: MonitoringScope; group: TargetGroup; range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.targetGroup');
   const tMetrics = await getTranslations('Monitoring.metrics');
-  const headingId = `target-group-${group.name}`;
+  const headingId = targetGroupHeadingId(group.arn);
   const heading = (
     <h3 id={headingId} className="text-sm font-semibold">
       {group.name}

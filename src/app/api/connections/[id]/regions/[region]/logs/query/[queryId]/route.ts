@@ -26,8 +26,11 @@ export async function DELETE(request: Request, { params }: Context) {
   if (!auth.ok) return auth.response;
   if (!queryBindings.matches(queryId, { ...auth.scope, sessionId: auth.sessionId })) return apiError('not_found');
   const target = await resolveTarget(auth.scope);
-  // StopQuery failures are ignored (moto 5.2.3 does not implement it); the binding is dropped either way.
-  if (target.ok) await stopLogsQuery(target.data, queryId);
-  queryBindings.forget(queryId);
+  // StopQuery failures are ignored (moto 5.2.3 does not implement it), but the binding is only dropped once
+  // the query is actually done with: a successful stop, or an AWS answer meaning it was already finished.
+  // A denied, throttled or timed-out stop keeps the binding so a retry from `pagehide` can find it again;
+  // the response is always 204 either way so the UI is unaffected.
+  const result = target.ok ? await stopLogsQuery(target.data, queryId) : target;
+  if (result.ok) queryBindings.forget(queryId);
   return new NextResponse(null, { status: 204 });
 }
