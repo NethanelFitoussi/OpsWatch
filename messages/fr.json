@@ -285,59 +285,164 @@
       }
     },
     "stepsTitle": "Pas à pas",
+    "shared": {
+      "openAdd": "Dans OpsWatch, ouvrez « <ui>{accounts}</ui> » et cliquez sur « <ui>{add}</ui> ».",
+      "readOnlyPurpose": "La politique accorde exactement les actions de lecture listées dans « <services>{servicesTitle}</services> », rien de plus.",
+      "pasteReadOnly": "Remplacez le contenu par la politique ci-dessous, cliquez sur « <ui>Next</ui> », nommez-la <code>OpsWatchReadOnly</code>, puis cliquez sur « <ui>Create policy</ui> ».",
+      "readOnlyPolicyLabel": "Politique en lecture seule",
+      "placeholderId": "id de connexion"
+    },
+    "figures": {
+      "createUser": "L'écran « Create user » : <m>1</m> laissez l'accès à la console décoché, <m>2</m> cliquez sur « Next ».",
+      "inlinePolicy": "L'éditeur de politique intégrée : <m>1</m> ouvrez l'onglet « JSON » et collez la politique, <m>2</m> cliquez sur « Next ».",
+      "accessKey": "La création de la clé d'accès : <m>1</m> choisissez « Application running outside AWS », <m>2</m> cliquez sur « Next ».",
+      "review": "Le dernier écran de CloudFormation : <m>1</m> cochez la confirmation IAM, <m>2</m> cliquez sur « Submit ». Sans cette case, CloudFormation refuse de créer la stack.",
+      "outputs": "L'onglet « Outputs » de la stack : <m>1</m> copiez la valeur de RoleArn."
+    },
     "role": {
       "title": "Avec un rôle IAM",
       "steps": {
         "s0": {
-          "title": "Donner une identité AWS à OpsWatch",
-          "body": "OpsWatch a besoin de sa propre identité pour assumer des rôles. Sur un portable, créez un utilisateur IAM avec uniquement la politique ci-dessous et donnez ses clés à OpsWatch via AWS_ACCESS_KEY_ID et AWS_SECRET_ACCESS_KEY ou un profil AWS. Sur ECS ou EC2, attachez la même politique au rôle de la tâche ou de l'instance.",
-          "policyLabel": "Politique de l'identité d'OpsWatch"
+          "title": "Donner à OpsWatch sa propre identité AWS",
+          "purpose": "OpsWatch a besoin d'une identité dont le seul droit est d'assumer les rôles en lecture seule que vous créerez aux étapes suivantes.",
+          "tabs": {
+            "server": "OpsWatch tourne sur mon ordinateur ou un serveur (Docker)",
+            "aws": "OpsWatch tourne sur AWS (ECS ou EC2)"
+          },
+          "server": {
+            "i1": "Connectez-vous à la console AWS du compte où vous voulez garder l'identité d'OpsWatch. Ce peut être le compte que vous allez surveiller.",
+            "i2": "Ouvrez <ui>IAM</ui> → <ui>Users</ui> → « <ui>Create user</ui> ». Nommez l'utilisateur <code>opswatch</code>. Laissez « <ui>Provide user access to the AWS Management Console</ui> » décoché, puis cliquez sur « <ui>Next</ui> ».",
+            "i3": "Sur « <ui>Set permissions</ui> », gardez « <ui>Add user to group</ui> » ou choisissez « <ui>Attach policies directly</ui> » sans sélectionner de politique. Cliquez sur « <ui>Next</ui> », puis sur « <ui>Create user</ui> ».",
+            "i4": "Ouvrez le nouvel utilisateur → onglet « <ui>Permissions</ui> » → « <ui>Add permissions</ui> » → « <ui>Create inline policy</ui> » → onglet « <ui>JSON</ui> ». Remplacez le contenu par la politique ci-dessous, cliquez sur « <ui>Next</ui> », nommez-la <code>OpsWatchAssumeRole</code>, puis cliquez sur « <ui>Create policy</ui> ».",
+            "i5": "Ouvrez l'onglet « <ui>Security credentials</ui> » → « <ui>Create access key</ui> » → cas d'usage « <ui>Application running outside AWS</ui> » → « <ui>Next</ui> » → « <ui>Create access key</ui> ». Copiez l'« <ui>Access key</ui> » et la « <ui>Secret access key</ui> » : la clé secrète ne s'affiche qu'une seule fois.",
+            "i6": "Dans le fichier <code>.env</code> d'OpsWatch, renseignez <code>AWS_ACCESS_KEY_ID</code> et <code>AWS_SECRET_ACCESS_KEY</code> avec ces deux valeurs, et <code>AWS_REGION</code> avec votre région habituelle, par exemple <code>eu-west-1</code>. Vérifiez que <code>OPSWATCH_SECRET</code> contient au moins 32 caractères aléatoires (générez-les avec <code>openssl rand -base64 48</code>) : sans lui, OpsWatch refuse de démarrer. Redémarrez ensuite OpsWatch avec <code>docker compose up -d</code>.",
+            "profileTitle": "Les clés ou un profil, jamais les deux",
+            "profile": "Au lieu des deux variables de clés, vous pouvez enregistrer les clés dans un profil AWS CLI avec <code>aws configure --profile opswatch</code>, définir <code>AWS_PROFILE=opswatch</code> et monter <code>~/.aws</code> comme indiqué dans <code>docker-compose.yml</code>. Choisissez l'un ou l'autre : quand <code>AWS_PROFILE</code> est défini, le SDK AWS ignore sans prévenir <code>AWS_ACCESS_KEY_ID</code> et <code>AWS_SECRET_ACCESS_KEY</code>.",
+            "i7": "Vérification : une fois la connexion créée à l'étape 1, sa page n'indique plus qu'OpsWatch n'a pas d'identité AWS. La carte « <ui>{identityTitle}</ui> » affiche l'ARN de l'utilisateur <code>opswatch</code>.",
+            "envLabel": ".env"
+          },
+          "aws": {
+            "i1": "ECS : ouvrez la définition de tâche et notez le « <ui>Task role</ui> » (et non le « <ui>Task execution role</ui> »). EC2 : ouvrez l'instance → onglet « <ui>Security</ui> » → notez l'« <ui>IAM Role</ui> ». S'il n'y en a pas, créez un rôle pour la tâche ECS ou le service EC2, puis attachez-le.",
+            "i2": "Ouvrez <ui>IAM</ui> → <ui>Roles</ui> → ce rôle → « <ui>Add permissions</ui> » → « <ui>Create inline policy</ui> » → « <ui>JSON</ui> ». Collez la politique ci-dessous, cliquez sur « <ui>Next</ui> », nommez-la <code>OpsWatchAssumeRole</code>, puis cliquez sur « <ui>Create policy</ui> ».",
+            "i3": "Redéployez le service ECS (« <ui>Update service</ui> » → « <ui>Force new deployment</ui> ») ou redémarrez OpsWatch sur l'instance pour qu'il prenne le rôle en compte. Aucune clé à configurer : laissez <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code> et <code>AWS_PROFILE</code> vides."
+          },
+          "policyLabel": "Politique de l'identité d'OpsWatch",
+          "sso": {
+            "title": "Et IAM Identity Center (SSO) ?",
+            "body": "Utilisez IAM, pas IAM Identity Center. Identity Center est conçu pour des personnes qui se connectent : ses identifiants sont temporaires et expirent au bout de quelques heures, si bien qu'OpsWatch cesserait de fonctionner jusqu'à ce que quelqu'un relance <code>aws sso login</code>. Pour un outil qui tourne en continu, utilisez un utilisateur IAM ou un rôle ECS ou EC2. Pour un essai rapide en local, un profil SSO passé par <code>AWS_PROFILE</code> fonctionne jusqu'à l'expiration de la session."
+          },
+          "ownKey": {
+            "title": "Pourquoi ne pas utiliser ma propre clé d'accès ?",
+            "body": "Cela fonctionne, mais c'est déconseillé. Votre clé a généralement des droits d'administrateur : si le <code>.env</code>, le serveur ou la base de données d'OpsWatch fuite, c'est tout le compte qui est exposé. L'identité dédiée ne peut qu'assumer les rôles <code>{rolePattern}</code>, qui sont en lecture seule. Vous pouvez la révoquer sans toucher à vos propres accès, et CloudTrail montre clairement ce qu'OpsWatch a fait. Ne créez jamais de clés d'accès pour l'utilisateur root."
+          }
         },
         "s1": {
-          "title": "Créer la connexion",
-          "body": "Dans OpsWatch, ajoutez un compte et choisissez Rôle IAM. OpsWatch génère un ExternalId unique et un template CloudFormation pour cette connexion."
+          "title": "Créer la connexion dans OpsWatch",
+          "purpose": "La connexion enregistre le compte à surveiller et génère les valeurs uniques dont son template CloudFormation a besoin.",
+          "i2": "Choisissez « <ui>{method}</ui> ».",
+          "i3": "Renseignez « <ui>{name}</ui> », « <ui>{accountId}</ui> » (les 12 chiffres du compte à surveiller, visibles dans le menu du compte en haut à droite de la console AWS) et « <ui>{regions}</ui> » (les régions où tournent vos ressources).",
+          "i4": "Cliquez sur « <ui>{submit}</ui> ». OpsWatch crée un ExternalId unique et prépare le template de cette connexion."
         },
         "s2": {
-          "title": "Déployer la stack",
-          "body": "Dans le compte à lire, déployez le template : téléversez-le dans la console CloudFormation, lancez la commande AWS CLI affichée sur la page de la connexion, ou utilisez Launch Stack si un bucket de templates est configuré."
+          "title": "Déployer la stack CloudFormation dans le compte à surveiller",
+          "purpose": "La stack crée le rôle en lecture seule qu'OpsWatch va assumer. Choisissez l'une des trois méthodes ci-dessous.",
+          "region": "Créez la stack dans une seule région. IAM est global : n'importe quelle région convient.",
+          "console": {
+            "title": "Avec la console AWS",
+            "i1": "Sur la page de la connexion dans OpsWatch, cliquez sur « <ui>{download}</ui> ».",
+            "i2": "Dans la console AWS du compte à surveiller, ouvrez <ui>CloudFormation</ui> → <ui>Stacks</ui> → « <ui>Create stack</ui> » → « <ui>With new resources (standard)</ui> ».",
+            "i3": "Choisissez « <ui>Upload a template file</ui> » → « <ui>Choose file</ui> », sélectionnez le fichier téléchargé, puis cliquez sur « <ui>Next</ui> ».",
+            "i4": "Dans « <ui>Stack name</ui> », saisissez <code>{stackName}</code> : le nom du fichier téléchargé sans <code>.yaml</code>, que l'on retrouve aussi dans la commande AWS CLI de la page de la connexion. Cliquez sur « <ui>Next</ui> », puis encore sur « <ui>Next</ui> ».",
+            "i5": "Sur « <ui>Review and create</ui> », cochez « <ui>I acknowledge that AWS CloudFormation might create IAM resources with custom names.</ui> », puis cliquez sur « <ui>Submit</ui> ».",
+            "i6": "Attendez le statut <code>CREATE_COMPLETE</code>, ce qui prend environ une minute."
+          },
+          "cli": {
+            "title": "Avec l'AWS CLI",
+            "i1": "Sur la page de la connexion, cliquez sur « <ui>{download}</ui> » et copiez la commande AWS CLI affichée sous le bouton.",
+            "i2": "Lancez-la depuis le dossier qui contient le template téléchargé, avec des identifiants du compte à surveiller. Elle contient déjà <code>--capabilities CAPABILITY_NAMED_IAM</code>, l'équivalent en ligne de commande de la case de confirmation."
+          },
+          "launch": {
+            "title": "Avec Launch Stack",
+            "note": "Disponible uniquement si <code>OPSWATCH_TEMPLATE_BUCKET</code> est configuré.",
+            "i1": "Sur la page de la connexion, cliquez sur « <ui>{launchStack}</ui> ». La console AWS s'ouvre avec le template et le nom de la stack déjà remplis.",
+            "i2": "Cochez la case de confirmation, puis cliquez sur « <ui>Create stack</ui> »."
+          }
         },
         "s3": {
           "title": "Coller l'ARN du rôle",
-          "body": "Quand la stack est terminée, copiez sa sortie RoleArn et collez-la sur la page de la connexion."
+          "purpose": "L'ARN indique à OpsWatch quel rôle assumer dans le compte surveillé.",
+          "i1": "Dans CloudFormation, ouvrez la stack → onglet « <ui>Outputs</ui> » → copiez la valeur de <code>RoleArn</code>. Elle ressemble à <code>{example}</code>.",
+          "i2": "Sur la page de la connexion, collez-la dans « <ui>{roleArnLabel}</ui> » et cliquez sur « <ui>{save}</ui> »."
         },
         "s4": {
           "title": "Lancer le test",
-          "body": "OpsWatch assume le rôle et vérifie chaque service. Vert : autorisé ; orange : une permission manque et vous voyez ce que vous perdez ; rouge : la connexion a échoué."
+          "purpose": "OpsWatch assume le rôle et vérifie, service par service, ce qu'il peut lire.",
+          "i1": "Sur la page de la connexion, cliquez sur « <ui>{run}</ui> ». Le résultat s'affiche en quelques secondes.",
+          "i2": "Regardez la couleur de chaque ligne :",
+          "green": "<ui>Vert, « {status} »</ui> : OpsWatch peut lire ce service. Rien à faire.",
+          "orange": "<ui>Orange, « {status} »</ui> : une action manque et la ligne indique ce que vous perdez. Ouvrez « <services>{servicesTitle}</services> » pour voir pourquoi OpsWatch en a besoin, puis ajoutez-la en mettant la stack à jour avec un template fraîchement téléchargé.",
+          "red": "<ui>Rouge</ui> : la connexion ou la vérification a échoué, et le message en donne la raison. Consultez « <troubleshooting>{troubleshootingTitle}</troubleshooting> »."
         }
       }
     },
     "ambient": {
       "title": "Exécution sur AWS",
+      "intro": "OpsWatch tourne sur ECS ou EC2 dans le compte qu'il surveille et le lit avec son propre rôle de tâche ou d'instance : ni stack, ni clés.",
       "steps": {
         "s1": {
-          "title": "Attacher les permissions en lecture seule",
-          "body": "Donnez au rôle de tâche ECS ou au profil d'instance EC2 les actions listées dans « Ce dont chaque service a besoin », dans le compte où tourne OpsWatch."
+          "title": "Trouver le rôle avec lequel tourne OpsWatch",
+          "purpose": "C'est ce rôle qui recevra les permissions en lecture seule."
         },
         "s2": {
-          "title": "Créer la connexion",
-          "body": "Ajoutez un compte, choisissez Exécution sur AWS, puis lancez le test."
+          "title": "Attacher la politique en lecture seule",
+          "i1": "Ouvrez <ui>IAM</ui> → <ui>Roles</ui> → ce rôle → « <ui>Add permissions</ui> » → « <ui>Create inline policy</ui> » → « <ui>JSON</ui> »."
+        },
+        "s3": {
+          "title": "Redémarrer OpsWatch",
+          "purpose": "Un redémarrage garantit qu'OpsWatch tourne avec le rôle et ses nouvelles permissions.",
+          "i1": "ECS : ouvrez le service → « <ui>Update service</ui> » → « <ui>Force new deployment</ui> ». EC2 : redémarrez OpsWatch sur l'instance, par exemple avec <code>docker compose restart</code>."
+        },
+        "s4": {
+          "title": "Créer la connexion et lancer le test",
+          "purpose": "OpsWatch vérifie que son rôle peut lire le compte.",
+          "i2": "Choisissez « <ui>{method}</ui> ». Dans « <ui>{accountId}</ui> », saisissez l'ID du compte où tourne OpsWatch : cette méthode ne peut pas lire un autre compte.",
+          "i3": "Sélectionnez les régions et cliquez sur « <ui>{submit}</ui> », puis sur « <ui>{run}</ui> » dans la page de la connexion."
         }
       }
     },
     "keys": {
       "title": "Avec des clés d'accès",
+      "intro": "Pour un test rapide en local. Les clés appartiennent à un utilisateur dédié en lecture seule, jamais à votre propre utilisateur IAM ni à l'utilisateur root.",
       "steps": {
         "s1": {
           "title": "Créer un utilisateur IAM dédié",
-          "body": "Créez un utilisateur avec uniquement les actions listées dans « Ce dont chaque service a besoin », puis créez-lui une clé d'accès."
+          "purpose": "Cet utilisateur ne peut que lire : une clé divulguée ne permet de rien modifier dans votre compte.",
+          "i1": "Dans la console AWS du compte à surveiller, ouvrez <ui>IAM</ui> → <ui>Users</ui> → « <ui>Create user</ui> ».",
+          "i2": "Nommez-le <code>opswatch-readonly</code> et laissez « <ui>Provide user access to the AWS Management Console</ui> » décoché. Cliquez sur « <ui>Next</ui> », encore sur « <ui>Next</ui> », puis sur « <ui>Create user</ui> »."
         },
         "s2": {
-          "title": "Coller les clés",
-          "body": "Ajoutez un compte, choisissez Clés d'accès et collez la paire de clés. OpsWatch la chiffre et ne l'affiche plus jamais."
+          "title": "Attacher la politique en lecture seule",
+          "i1": "Ouvrez le nouvel utilisateur → onglet « <ui>Permissions</ui> » → « <ui>Add permissions</ui> » → « <ui>Create inline policy</ui> » → onglet « <ui>JSON</ui> »."
         },
         "s3": {
-          "title": "Renouveler ou supprimer",
-          "body": "Supprimez la clé dans IAM à la fin du test, ou passez à un rôle IAM."
+          "title": "Créer une clé d'accès",
+          "purpose": "OpsWatch signe ses requêtes AWS avec cette paire de clés.",
+          "i1": "Ouvrez l'onglet « <ui>Security credentials</ui> » → « <ui>Create access key</ui> » → cas d'usage « <ui>Application running outside AWS</ui> » → « <ui>Next</ui> » → « <ui>Create access key</ui> ».",
+          "i2": "Copiez l'« <ui>Access key</ui> » et la « <ui>Secret access key</ui> ». La clé secrète ne s'affiche qu'une seule fois."
+        },
+        "s4": {
+          "title": "Enregistrer les clés dans OpsWatch",
+          "purpose": "OpsWatch chiffre les clés avant de les enregistrer.",
+          "i2": "Choisissez « <ui>{method}</ui> », renseignez le nom, l'ID du compte et les régions, puis cliquez sur « <ui>{submit}</ui> ».",
+          "i3": "Sur la page de la connexion, collez les valeurs dans « <ui>{accessKeyId}</ui> » et « <ui>{secretAccessKey}</ui> », puis cliquez sur « <ui>{save}</ui> ».",
+          "i4": "Les clés sont chiffrées et ne sont plus jamais affichées : il ne reste qu'un indice du type <code>AKIA…MPLE</code>."
+        },
+        "s5": {
+          "title": "Lancer le test et entretenir la clé",
+          "purpose": "Une clé permanente demande de l'attention tant qu'elle existe.",
+          "i1": "Sur la page de la connexion, cliquez sur « <ui>{run}</ui> ».",
+          "i2": "Renouvelez la clé régulièrement : créez-en une nouvelle, enregistrez-la dans OpsWatch, puis supprimez l'ancienne dans IAM.",
+          "i3": "Supprimez la clé dans IAM quand vous n'utilisez plus OpsWatch, et passez à la <role>méthode du rôle IAM</role> dès que possible."
         }
       }
     },
@@ -430,6 +535,52 @@
           "body": "L'ARN du rôle ou les clés proviennent d'un autre compte AWS que celui saisi pour la connexion. Vérifiez l'ID de compte à 12 chiffres."
         }
       }
+    },
+    "mockups": {
+      "iam": "IAM",
+      "users": "Users",
+      "roles": "Roles",
+      "createUser": "Create user",
+      "specifyUserDetails": "Specify user details",
+      "userDetails": "User details",
+      "userName": "User name",
+      "consoleAccess": "Provide user access to the AWS Management Console - optional",
+      "consoleAccessHint": "If you're providing console access to a person, it's a best practice to manage their access in IAM Identity Center.",
+      "cancel": "Cancel",
+      "next": "Next",
+      "previous": "Previous",
+      "submit": "Submit",
+      "createPolicy": "Create policy",
+      "specifyPermissions": "Specify permissions",
+      "policyEditor": "Policy editor",
+      "visual": "Visual",
+      "json": "JSON",
+      "createAccessKey": "Create access key",
+      "bestPractices": "Access key best practices & alternatives",
+      "useCase": "Use case",
+      "useCases": {
+        "cli": "Command Line Interface (CLI)",
+        "local": "Local code",
+        "compute": "Application running on an AWS compute service",
+        "thirdParty": "Third-party service",
+        "outside": "Application running outside AWS",
+        "other": "Other"
+      },
+      "cloudformation": "CloudFormation",
+      "stacks": "Stacks",
+      "createStack": "Create stack",
+      "reviewAndCreate": "Review and create",
+      "capabilities": "Capabilities",
+      "capabilitiesNotice": "The following resource(s) require capabilities: [AWS::IAM::Role]",
+      "acknowledge": "I acknowledge that AWS CloudFormation might create IAM resources with custom names.",
+      "stackInfo": "Stack info",
+      "events": "Events",
+      "resources": "Resources",
+      "outputs": "Outputs",
+      "parameters": "Parameters",
+      "outputsCount": "Outputs ({count})",
+      "key": "Key",
+      "value": "Value"
     }
   }
 }

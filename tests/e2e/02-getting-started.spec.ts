@@ -31,3 +31,12 @@ test('the guide shows the base identity policy and every service group', async (
     await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
   }
 });
+
+test('step 0 explains both identities and answers the Identity Center question', async ({ page }) => {
+  await page.goto('/en/getting-started');
+  const step0 = page.locator('#step-0');
+  await step0.getByRole('tab', { name: 'OpsWatch runs on AWS (ECS or EC2)' }).click();
+  await expect(step0.getByText('ECS: open the task definition and note the', { exact: false })).toBeVisible();
+  await expect(page.getByText('What about IAM Identity Center (SSO)?', { exact: true })).toBeVisible();
+  await expect(step0.getByText('arn:aws:iam::*:role/OpsWatchReadOnly-*').first()).toBeVisible();
+});

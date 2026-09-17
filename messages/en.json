@@ -285,59 +285,164 @@
       }
     },
     "stepsTitle": "Step by step",
+    "shared": {
+      "openAdd": "In OpsWatch, open \"<ui>{accounts}</ui>\" and click \"<ui>{add}</ui>\".",
+      "readOnlyPurpose": "The policy grants exactly the read actions listed in \"<services>{servicesTitle}</services>\", nothing more.",
+      "pasteReadOnly": "Replace the content with the policy below, click \"<ui>Next</ui>\", name it <code>OpsWatchReadOnly</code>, then click \"<ui>Create policy</ui>\".",
+      "readOnlyPolicyLabel": "Read-only policy",
+      "placeholderId": "connection id"
+    },
+    "figures": {
+      "createUser": "The \"Create user\" screen: <m>1</m> leave console access unchecked, <m>2</m> click \"Next\".",
+      "inlinePolicy": "The inline policy editor: <m>1</m> open the \"JSON\" tab and paste the policy, <m>2</m> click \"Next\".",
+      "accessKey": "Creating the access key: <m>1</m> choose \"Application running outside AWS\", <m>2</m> click \"Next\".",
+      "review": "The last CloudFormation screen: <m>1</m> tick the IAM acknowledgement, <m>2</m> click \"Submit\". Without the tick, CloudFormation refuses to create the stack.",
+      "outputs": "The \"Outputs\" tab of the stack: <m>1</m> copy the value of RoleArn."
+    },
     "role": {
       "title": "With an IAM role",
       "steps": {
         "s0": {
-          "title": "Give OpsWatch an AWS identity",
-          "body": "OpsWatch needs its own identity to assume roles. On a laptop, create an IAM user with only the policy below and give its keys to OpsWatch through AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY or an AWS profile. On ECS or EC2, attach the same policy to the task or instance role.",
-          "policyLabel": "Policy for OpsWatch's identity"
+          "title": "Give OpsWatch its own AWS identity",
+          "purpose": "OpsWatch needs an identity whose only right is to assume the read-only roles you will create in the next steps.",
+          "tabs": {
+            "server": "OpsWatch runs on my computer or a server (Docker)",
+            "aws": "OpsWatch runs on AWS (ECS or EC2)"
+          },
+          "server": {
+            "i1": "Sign in to the AWS console of the account where you want to keep OpsWatch's identity. It can be the account you will monitor.",
+            "i2": "Open <ui>IAM</ui> → <ui>Users</ui> → \"<ui>Create user</ui>\". Name it <code>opswatch</code>. Leave \"<ui>Provide user access to the AWS Management Console</ui>\" unchecked, then click \"<ui>Next</ui>\".",
+            "i3": "On \"<ui>Set permissions</ui>\", keep \"<ui>Add user to group</ui>\" or choose \"<ui>Attach policies directly</ui>\" without selecting any policy. Click \"<ui>Next</ui>\", then \"<ui>Create user</ui>\".",
+            "i4": "Open the new user → \"<ui>Permissions</ui>\" tab → \"<ui>Add permissions</ui>\" → \"<ui>Create inline policy</ui>\" → \"<ui>JSON</ui>\" tab. Replace the content with the policy below, click \"<ui>Next</ui>\", name it <code>OpsWatchAssumeRole</code>, then click \"<ui>Create policy</ui>\".",
+            "i5": "Open the \"<ui>Security credentials</ui>\" tab → \"<ui>Create access key</ui>\" → use case \"<ui>Application running outside AWS</ui>\" → \"<ui>Next</ui>\" → \"<ui>Create access key</ui>\". Copy the \"<ui>Access key</ui>\" and the \"<ui>Secret access key</ui>\": the secret is shown only once.",
+            "i6": "In OpsWatch's <code>.env</code> file, set <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> to these two values, and <code>AWS_REGION</code> to your usual region, for example <code>eu-west-1</code>. Check that <code>OPSWATCH_SECRET</code> holds at least 32 random characters (generate them with <code>openssl rand -base64 48</code>): without it, OpsWatch refuses to start. Then restart OpsWatch with <code>docker compose up -d</code>.",
+            "profileTitle": "Keys or profile, never both",
+            "profile": "Instead of the two key variables, you can store the keys in an AWS CLI profile with <code>aws configure --profile opswatch</code>, set <code>AWS_PROFILE=opswatch</code> and mount <code>~/.aws</code> as shown in <code>docker-compose.yml</code>. Choose one or the other: when <code>AWS_PROFILE</code> is set, the AWS SDK silently ignores <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code>.",
+            "i7": "Check: once you have created the connection in step 1, its page no longer warns that OpsWatch has no AWS identity. The \"<ui>{identityTitle}</ui>\" card shows the ARN of the <code>opswatch</code> user.",
+            "envLabel": ".env"
+          },
+          "aws": {
+            "i1": "ECS: open the task definition and note the \"<ui>Task role</ui>\" (not the \"<ui>Task execution role</ui>\"). EC2: open the instance → \"<ui>Security</ui>\" tab → note the \"<ui>IAM Role</ui>\". If there is none, create a role for the ECS task or the EC2 service and attach it.",
+            "i2": "Open <ui>IAM</ui> → <ui>Roles</ui> → that role → \"<ui>Add permissions</ui>\" → \"<ui>Create inline policy</ui>\" → \"<ui>JSON</ui>\". Paste the policy below, click \"<ui>Next</ui>\", name it <code>OpsWatchAssumeRole</code>, then click \"<ui>Create policy</ui>\".",
+            "i3": "Redeploy the ECS service (\"<ui>Update service</ui>\" → \"<ui>Force new deployment</ui>\") or restart OpsWatch on the instance so it picks up the role. There are no keys to configure: leave <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code> and <code>AWS_PROFILE</code> empty."
+          },
+          "policyLabel": "Policy for OpsWatch's identity",
+          "sso": {
+            "title": "What about IAM Identity Center (SSO)?",
+            "body": "Use IAM, not IAM Identity Center. Identity Center is made for people who sign in: its credentials are temporary and expire after a few hours, so OpsWatch would stop working until someone runs <code>aws sso login</code> again. For a tool that runs all the time, use an IAM user or an ECS or EC2 role. For a quick local try, an SSO profile set through <code>AWS_PROFILE</code> works until the session expires."
+          },
+          "ownKey": {
+            "title": "Why not use my own access key?",
+            "body": "It works, but it is not recommended. Your key usually has administrator rights: if OpsWatch's <code>.env</code>, server or database leaks, the whole account is exposed. The dedicated identity can only assume <code>{rolePattern}</code> roles, which are read-only. You can revoke it without touching your own access, and CloudTrail shows clearly what OpsWatch did. Never create access keys for the root user."
+          }
         },
         "s1": {
-          "title": "Create the connection",
-          "body": "In OpsWatch, add an account and choose IAM role. OpsWatch generates a unique ExternalId and a CloudFormation template for this connection."
+          "title": "Create the connection in OpsWatch",
+          "purpose": "The connection records the account to monitor and generates the unique values its CloudFormation template needs.",
+          "i2": "Choose \"<ui>{method}</ui>\".",
+          "i3": "Fill in \"<ui>{name}</ui>\", \"<ui>{accountId}</ui>\" (the 12 digits of the account to monitor, shown in the account menu at the top right of the AWS console) and \"<ui>{regions}</ui>\" (the regions where your resources run).",
+          "i4": "Click \"<ui>{submit}</ui>\". OpsWatch creates a unique ExternalId and prepares the template for this connection."
         },
         "s2": {
-          "title": "Deploy the stack",
-          "body": "In the account to read, deploy the template: upload it in the CloudFormation console, run the AWS CLI command shown on the connection page, or use Launch Stack when a template bucket is configured."
+          "title": "Deploy the CloudFormation stack in the account to monitor",
+          "purpose": "The stack creates the read-only role that OpsWatch will assume. Choose one of the three ways below.",
+          "region": "Create the stack in one region only. IAM is global, so any region works.",
+          "console": {
+            "title": "With the AWS console",
+            "i1": "On the OpsWatch connection page, click \"<ui>{download}</ui>\".",
+            "i2": "In the AWS console of the account to monitor, open <ui>CloudFormation</ui> → <ui>Stacks</ui> → \"<ui>Create stack</ui>\" → \"<ui>With new resources (standard)</ui>\".",
+            "i3": "Choose \"<ui>Upload a template file</ui>\" → \"<ui>Choose file</ui>\", select the downloaded file, then click \"<ui>Next</ui>\".",
+            "i4": "In \"<ui>Stack name</ui>\", enter <code>{stackName}</code>: the name of the downloaded file without <code>.yaml</code>, also shown in the AWS CLI command of the connection page. Click \"<ui>Next</ui>\", then \"<ui>Next</ui>\" again.",
+            "i5": "On \"<ui>Review and create</ui>\", tick \"<ui>I acknowledge that AWS CloudFormation might create IAM resources with custom names.</ui>\", then click \"<ui>Submit</ui>\".",
+            "i6": "Wait for the status <code>CREATE_COMPLETE</code>, which takes about one minute."
+          },
+          "cli": {
+            "title": "With the AWS CLI",
+            "i1": "On the connection page, click \"<ui>{download}</ui>\" and copy the AWS CLI command shown below the button.",
+            "i2": "Run it from the folder containing the downloaded template, with credentials of the account to monitor. It already contains <code>--capabilities CAPABILITY_NAMED_IAM</code>, the command-line equivalent of the acknowledgement box."
+          },
+          "launch": {
+            "title": "With Launch Stack",
+            "note": "Only available when <code>OPSWATCH_TEMPLATE_BUCKET</code> is configured.",
+            "i1": "On the connection page, click \"<ui>{launchStack}</ui>\". The AWS console opens with the template and the stack name already filled in.",
+            "i2": "Tick the acknowledgement box, then click \"<ui>Create stack</ui>\"."
+          }
         },
         "s3": {
           "title": "Paste the role ARN",
-          "body": "When the stack is complete, copy its RoleArn output and paste it on the connection page."
+          "purpose": "The ARN tells OpsWatch which role to assume in the monitored account.",
+          "i1": "In CloudFormation, open the stack → \"<ui>Outputs</ui>\" tab → copy the value of <code>RoleArn</code>. It looks like <code>{example}</code>.",
+          "i2": "On the connection page, paste it into \"<ui>{roleArnLabel}</ui>\" and click \"<ui>{save}</ui>\"."
         },
         "s4": {
           "title": "Run the test",
-          "body": "OpsWatch assumes the role and checks each service. Green means allowed, orange means a permission is missing and tells you what you lose, red means the connection failed."
+          "purpose": "OpsWatch assumes the role and checks, service by service, what it can read.",
+          "i1": "On the connection page, click \"<ui>{run}</ui>\". The result appears after a few seconds.",
+          "i2": "Read the colour of each line:",
+          "green": "<ui>Green, \"{status}\"</ui>: OpsWatch can read this service. Nothing to do.",
+          "orange": "<ui>Orange, \"{status}\"</ui>: an action is missing and the line says what you lose. Open \"<services>{servicesTitle}</services>\" to see why OpsWatch needs it, then add it by updating the stack with a newly downloaded template.",
+          "red": "<ui>Red</ui>: the connection or the check failed, and the message gives the reason. See \"<troubleshooting>{troubleshootingTitle}</troubleshooting>\"."
         }
       }
     },
     "ambient": {
       "title": "Running on AWS",
+      "intro": "OpsWatch runs on ECS or EC2 in the account it monitors and reads it with its own task or instance role: no stack and no keys.",
       "steps": {
         "s1": {
-          "title": "Attach the read-only permissions",
-          "body": "Give the ECS task role or EC2 instance profile the actions listed in \"What each service needs\", in the account OpsWatch runs in."
+          "title": "Find the role OpsWatch runs with",
+          "purpose": "This role will receive the read-only permissions."
         },
         "s2": {
-          "title": "Create the connection",
-          "body": "Add an account, choose Running on AWS, and run the test."
+          "title": "Attach the read-only policy",
+          "i1": "Open <ui>IAM</ui> → <ui>Roles</ui> → that role → \"<ui>Add permissions</ui>\" → \"<ui>Create inline policy</ui>\" → \"<ui>JSON</ui>\"."
+        },
+        "s3": {
+          "title": "Restart OpsWatch",
+          "purpose": "A restart makes sure OpsWatch runs with the role and its new permissions.",
+          "i1": "ECS: open the service → \"<ui>Update service</ui>\" → \"<ui>Force new deployment</ui>\". EC2: restart OpsWatch on the instance, for example with <code>docker compose restart</code>."
+        },
+        "s4": {
+          "title": "Create the connection and run the test",
+          "purpose": "OpsWatch checks that its role can read the account.",
+          "i2": "Choose \"<ui>{method}</ui>\". In \"<ui>{accountId}</ui>\", enter the ID of the account OpsWatch runs in: this method cannot read another account.",
+          "i3": "Select the regions and click \"<ui>{submit}</ui>\", then click \"<ui>{run}</ui>\" on the connection page."
         }
       }
     },
     "keys": {
       "title": "With access keys",
+      "intro": "For a quick local test. The keys belong to a dedicated read-only user, never to your own IAM user or to the root user.",
       "steps": {
         "s1": {
           "title": "Create a dedicated IAM user",
-          "body": "Create a user with only the actions listed in \"What each service needs\", then create an access key for it."
+          "purpose": "This user can only read, so a leaked key cannot change anything in your account.",
+          "i1": "In the AWS console of the account to monitor, open <ui>IAM</ui> → <ui>Users</ui> → \"<ui>Create user</ui>\".",
+          "i2": "Name it <code>opswatch-readonly</code> and leave \"<ui>Provide user access to the AWS Management Console</ui>\" unchecked. Click \"<ui>Next</ui>\", \"<ui>Next</ui>\" again, then \"<ui>Create user</ui>\"."
         },
         "s2": {
-          "title": "Paste the keys",
-          "body": "Add an account, choose Access keys and paste the key pair. OpsWatch encrypts it and never shows it again."
+          "title": "Attach the read-only policy",
+          "i1": "Open the new user → \"<ui>Permissions</ui>\" tab → \"<ui>Add permissions</ui>\" → \"<ui>Create inline policy</ui>\" → \"<ui>JSON</ui>\" tab."
         },
         "s3": {
-          "title": "Rotate or remove",
-          "body": "Delete the key in IAM when you are done testing, or switch to an IAM role."
+          "title": "Create an access key",
+          "purpose": "OpsWatch signs its AWS requests with this key pair.",
+          "i1": "Open the \"<ui>Security credentials</ui>\" tab → \"<ui>Create access key</ui>\" → use case \"<ui>Application running outside AWS</ui>\" → \"<ui>Next</ui>\" → \"<ui>Create access key</ui>\".",
+          "i2": "Copy the \"<ui>Access key</ui>\" and the \"<ui>Secret access key</ui>\". The secret is shown only once."
+        },
+        "s4": {
+          "title": "Save the keys in OpsWatch",
+          "purpose": "OpsWatch encrypts the keys before storing them.",
+          "i2": "Choose \"<ui>{method}</ui>\", fill in the name, the account ID and the regions, then click \"<ui>{submit}</ui>\".",
+          "i3": "On the connection page, paste the values into \"<ui>{accessKeyId}</ui>\" and \"<ui>{secretAccessKey}</ui>\", then click \"<ui>{save}</ui>\".",
+          "i4": "The keys are encrypted and never shown again: only a hint like <code>AKIA…MPLE</code> remains."
+        },
+        "s5": {
+          "title": "Run the test and look after the key",
+          "purpose": "A long-lived key needs care for as long as it exists.",
+          "i1": "On the connection page, click \"<ui>{run}</ui>\".",
+          "i2": "Rotate the key regularly: create a new one, save it in OpsWatch, then delete the old one in IAM.",
+          "i3": "Delete the key in IAM when you stop using OpsWatch, and switch to the <role>IAM role method</role> whenever you can."
         }
       }
     },
@@ -430,6 +535,52 @@
           "body": "The role ARN or the keys come from another AWS account than the one entered for the connection. Check the 12-digit account ID."
         }
       }
+    },
+    "mockups": {
+      "iam": "IAM",
+      "users": "Users",
+      "roles": "Roles",
+      "createUser": "Create user",
+      "specifyUserDetails": "Specify user details",
+      "userDetails": "User details",
+      "userName": "User name",
+      "consoleAccess": "Provide user access to the AWS Management Console - optional",
+      "consoleAccessHint": "If you're providing console access to a person, it's a best practice to manage their access in IAM Identity Center.",
+      "cancel": "Cancel",
+      "next": "Next",
+      "previous": "Previous",
+      "submit": "Submit",
+      "createPolicy": "Create policy",
+      "specifyPermissions": "Specify permissions",
+      "policyEditor": "Policy editor",
+      "visual": "Visual",
+      "json": "JSON",
+      "createAccessKey": "Create access key",
+      "bestPractices": "Access key best practices & alternatives",
+      "useCase": "Use case",
+      "useCases": {
+        "cli": "Command Line Interface (CLI)",
+        "local": "Local code",
+        "compute": "Application running on an AWS compute service",
+        "thirdParty": "Third-party service",
+        "outside": "Application running outside AWS",
+        "other": "Other"
+      },
+      "cloudformation": "CloudFormation",
+      "stacks": "Stacks",
+      "createStack": "Create stack",
+      "reviewAndCreate": "Review and create",
+      "capabilities": "Capabilities",
+      "capabilitiesNotice": "The following resource(s) require capabilities: [AWS::IAM::Role]",
+      "acknowledge": "I acknowledge that AWS CloudFormation might create IAM resources with custom names.",
+      "stackInfo": "Stack info",
+      "events": "Events",
+      "resources": "Resources",
+      "outputs": "Outputs",
+      "parameters": "Parameters",
+      "outputsCount": "Outputs ({count})",
+      "key": "Key",
+      "value": "Value"
     }
   }
 }
