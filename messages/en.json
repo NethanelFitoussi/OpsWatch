@@ -478,7 +478,7 @@
       "title": "What OpsWatch shows",
       "intro": "Once a connection passes its permission test, pick it in the top bar, then a region, to open these pages.",
       "items": {
-        "overview": "Overview: health summary and automatic insights on the last 15 minutes (tasks below desired, high CPU or memory, failed deployments, database CPU and memory, Aurora replica lag, load balancer 5xx errors and unhealthy hosts, alarms firing).",
+        "overview": "Overview: health summary and automatic insights (tasks below desired over 10 minutes; high CPU or memory, failed deployments, database CPU and memory, Aurora replica lag, load balancer 5xx errors and unhealthy hosts, alarms firing, over 15 minutes).",
         "containers": "Containers: ECS services with tasks, CPU and memory, then per service its charts, tasks, events, target groups and log groups.",
         "databases": "Databases: RDS and Aurora instances with their role, metrics and, when Performance Insights is on, the top SQL statements.",
         "loadBalancers": "Load balancers: requests, 5xx errors, p95 response time and target health of each application load balancer.",

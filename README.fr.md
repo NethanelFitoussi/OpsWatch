@@ -116,11 +116,12 @@ région, et montre ce qu'OpsWatch peut voir ou non.
 Choisissez une connexion dans la barre du haut, puis une région. Chaque page lit AWS en direct ;
 rien n'est enregistré.
 
-- **Vue d'ensemble** : synthèse de santé et analyses automatiques sur les 15 dernières minutes
-  (tâches en dessous du nombre souhaité, CPU ou mémoire au-dessus de 85 %, déploiements en échec
-  ou bloqués, CPU des bases au-dessus de 80 %, mémoire libre en dessous de 5 %, retard de
-  réplication Aurora au-dessus d'1 s, erreurs 5xx et hôtes défaillants des répartiteurs de charge,
-  alarmes à l'état ALARM). Un seuil doit tenir 3 minutes consécutives pour déclencher une analyse.
+- **Vue d'ensemble** : synthèse de santé et analyses automatiques (tâches en dessous du nombre
+  souhaité, sur les 10 dernières minutes ; le reste — CPU ou mémoire au-dessus de 85 %,
+  déploiements en échec ou bloqués, CPU des bases au-dessus de 80 %, mémoire libre en dessous de
+  5 %, retard de réplication Aurora au-dessus d'1 s, erreurs 5xx et hôtes défaillants des
+  répartiteurs de charge, alarmes à l'état ALARM — sur les 15 dernières minutes). Un seuil doit
+  tenir 3 minutes consécutives pour déclencher une analyse.
 - **Conteneurs** : clusters et services ECS (jusqu'à 100 par cluster, avec recherche), puis pour
   chaque service ses graphiques de CPU et mémoire, ses tâches en cours, ses événements récents,
   ses groupes cibles et ses groupes de journaux.

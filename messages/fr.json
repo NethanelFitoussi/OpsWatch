@@ -478,7 +478,7 @@
       "title": "Ce qu'OpsWatch affiche",
       "intro": "Dès qu'une connexion réussit son test des permissions, choisissez-la dans la barre du haut puis choisissez une région pour ouvrir ces pages.",
       "items": {
-        "overview": "Vue d'ensemble : synthèse de santé et analyses automatiques sur les 15 dernières minutes (tâches manquantes, CPU ou mémoire élevés, déploiements en échec, CPU et mémoire des bases, retard de réplication Aurora, erreurs 5xx et hôtes défaillants des répartiteurs, alarmes déclenchées).",
+        "overview": "Vue d'ensemble : synthèse de santé et analyses automatiques (tâches manquantes sur 10 minutes ; CPU ou mémoire élevés, déploiements en échec, CPU et mémoire des bases, retard de réplication Aurora, erreurs 5xx et hôtes défaillants des répartiteurs, alarmes déclenchées, sur 15 minutes).",
         "containers": "Conteneurs : services ECS avec tâches, CPU et mémoire, puis pour chaque service ses graphiques, tâches, événements, groupes cibles et groupes de journaux.",
         "databases": "Bases de données : instances RDS et Aurora avec leur rôle, leurs métriques et, si Performance Insights est activé, les requêtes SQL les plus coûteuses.",
         "loadBalancers": "Répartiteurs de charge : requêtes, erreurs 5xx, temps de réponse p95 et santé des cibles de chaque Application Load Balancer.",

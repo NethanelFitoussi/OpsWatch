@@ -110,7 +110,7 @@ what OpsWatch can and cannot see.
 
 Pick a connection in the top bar, then a region. Every page reads AWS live; nothing is stored.
 
-- **Overview**: health summary and automatic insights on the last 15 minutes (tasks below desired, CPU or memory above 85 %, failed or stuck deployments, database CPU above 80 %, free memory below 5 %, Aurora replica lag above 1 s, load balancer 5xx errors, unhealthy hosts, alarms in ALARM state). A threshold must hold for 3 consecutive minutes to raise an insight.
+- **Overview**: health summary and automatic insights (tasks below desired, over the last 10 minutes; everything else — CPU or memory above 85 %, failed or stuck deployments, database CPU above 80 %, free memory below 5 %, Aurora replica lag above 1 s, load balancer 5xx errors, unhealthy hosts, alarms in ALARM state — over the last 15 minutes). A threshold must hold for 3 consecutive minutes to raise an insight.
 - **Containers**: ECS clusters and services (up to 100 per cluster, with search), then per service CPU and memory charts, running tasks, recent events, target groups and log groups.
 - **Databases**: RDS and Aurora instances with role, CPU, connections, free memory and replica lag; per instance charts and Performance Insights top SQL.
 - **Load balancers**: application load balancers with requests, 5xx errors, p95 response time and target health.
