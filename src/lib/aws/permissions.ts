@@ -6,13 +6,12 @@ import { DescribeLoadBalancersCommand, ElasticLoadBalancingV2Client } from '@aws
 import { ListAvailableResourceMetricsCommand, PIClient } from '@aws-sdk/client-pi';
 import { DescribeDBInstancesCommand, RDSClient } from '@aws-sdk/client-rds';
 import type { AwsCredentialIdentity } from '@smithy/types';
-import type { CheckedService, OverallStatus, PermissionTestResult, ServiceCheck } from '../connections/types';
 import { clientConfig } from './client-config';
-import { awsErrorCode } from './errors';
-import { getCallerIdentity } from './identity';
-import { AWS_CALL_TIMEOUT_MS, withTimeout } from './timeout';
-
-export const CHECK_TIMEOUT_MS = AWS_CALL_TIMEOUT_MS;
+import { awsErrorCode, normalizeAwsErrorCode } from './errors';
+import { lookUpCallerIdentity } from './identity';
+import type { OpsWatchIdentityError } from './identity-errors';
+import type { CheckedService, OverallStatus, PermissionTestResult, ServiceCheck } from './permission-types';
+import { AWS_CALL_TIMEOUT_MS, sendWithTimeout } from './timeout';
 
 export type PermissionTestInput = {
   expectedAccountId: string;
@@ -25,11 +24,8 @@ export type PermissionTestInput = {
 const DENIED = /^(AccessDenied|UnauthorizedOperation|AuthorizationError|NotAuthorized)/;
 
 export function classifyError(error: unknown): { status: 'denied' | 'error'; errorCode: string } {
-  const code = awsErrorCode(error);
-  if (code === 'TimeoutError' || code === 'AbortError') {
-    return { status: 'error', errorCode: 'Timeout' };
-  }
-  return DENIED.test(code) ? { status: 'denied', errorCode: code } : { status: 'error', errorCode: code };
+  const errorCode = normalizeAwsErrorCode(awsErrorCode(error));
+  return { status: DENIED.test(errorCode) ? 'denied' : 'error', errorCode };
 }
 
 export function overallStatus(accountMatches: boolean, checks: ServiceCheck[]): OverallStatus {
@@ -44,22 +40,6 @@ export function overallStatus(accountMatches: boolean, checks: ServiceCheck[]): 
   return failing.length === 0 ? 'ok' : 'degraded';
 }
 
-async function check(
-  service: CheckedService,
-  action: string,
-  region: string,
-  checkedAt: string,
-  timeoutMs: number,
-  call: (signal: AbortSignal) => Promise<unknown>,
-): Promise<ServiceCheck> {
-  try {
-    await withTimeout(call, timeoutMs);
-    return { service, region, action, status: 'ok', checkedAt };
-  } catch (error) {
-    return { service, region, action, checkedAt, ...classifyError(error) };
-  }
-}
-
 async function checkRegion(
   region: string,
   credentials: AwsCredentialIdentity,
@@ -67,51 +47,60 @@ async function checkRegion(
   checkedAt: string,
 ): Promise<ServiceCheck[]> {
   const config = clientConfig(region, credentials);
-  let piIdentifier: string | undefined;
 
+  async function check(service: CheckedService, action: string, call: () => Promise<unknown>): Promise<ServiceCheck> {
+    try {
+      await call();
+      return { service, region, action, status: 'ok', checkedAt };
+    } catch (error) {
+      return { service, region, action, checkedAt, ...classifyError(error) };
+    }
+  }
+
+  let piIdentifier: string | undefined;
   const [ecs, elb, rds, cloudwatch, logs] = await Promise.all([
-    check('ecs', 'ecs:ListClusters', region, checkedAt, timeoutMs, (abortSignal) =>
-      new ECSClient(config).send(new ListClustersCommand({ maxResults: 1 }), { abortSignal }),
+    check('ecs', 'ecs:ListClusters', () =>
+      sendWithTimeout(new ECSClient(config), new ListClustersCommand({ maxResults: 1 }), timeoutMs),
     ),
-    check('elb', 'elasticloadbalancing:DescribeLoadBalancers', region, checkedAt, timeoutMs, (abortSignal) =>
-      new ElasticLoadBalancingV2Client(config).send(new DescribeLoadBalancersCommand({ PageSize: 1 }), { abortSignal }),
+    check('elb', 'elasticloadbalancing:DescribeLoadBalancers', () =>
+      sendWithTimeout(new ElasticLoadBalancingV2Client(config), new DescribeLoadBalancersCommand({ PageSize: 1 }), timeoutMs),
     ),
-    check('rds', 'rds:DescribeDBInstances', region, checkedAt, timeoutMs, async (abortSignal) => {
-      const out = await new RDSClient(config).send(new DescribeDBInstancesCommand({ MaxRecords: 20 }), { abortSignal });
+    check('rds', 'rds:DescribeDBInstances', async () => {
+      const out = await sendWithTimeout(new RDSClient(config), new DescribeDBInstancesCommand({ MaxRecords: 20 }), timeoutMs);
       piIdentifier = out.DBInstances?.find((i) => i.PerformanceInsightsEnabled && i.DbiResourceId)?.DbiResourceId;
     }),
-    check('cloudwatch', 'cloudwatch:ListMetrics', region, checkedAt, timeoutMs, (abortSignal) =>
-      new CloudWatchClient(config).send(new ListMetricsCommand({ Namespace: 'AWS/ECS' }), { abortSignal }),
+    check('cloudwatch', 'cloudwatch:ListMetrics', () =>
+      sendWithTimeout(new CloudWatchClient(config), new ListMetricsCommand({ Namespace: 'AWS/ECS' }), timeoutMs),
     ),
-    check('logs', 'logs:DescribeLogGroups', region, checkedAt, timeoutMs, (abortSignal) =>
-      new CloudWatchLogsClient(config).send(new DescribeLogGroupsCommand({ limit: 1 }), { abortSignal }),
+    check('logs', 'logs:DescribeLogGroups', () =>
+      sendWithTimeout(new CloudWatchLogsClient(config), new DescribeLogGroupsCommand({ limit: 1 }), timeoutMs),
     ),
   ]);
 
   // Copied into a const so TypeScript keeps the narrowing inside the callback.
   const identifier: string | undefined = piIdentifier;
+  const piAction = 'pi:ListAvailableResourceMetrics';
   const pi: ServiceCheck =
     rds.status === 'ok' && identifier
-      ? await check('pi', 'pi:ListAvailableResourceMetrics', region, checkedAt, timeoutMs, (abortSignal) =>
-          new PIClient(config).send(
+      ? await check('pi', piAction, () =>
+          sendWithTimeout(
+            new PIClient(config),
             new ListAvailableResourceMetricsCommand({ ServiceType: 'RDS', Identifier: identifier, MetricTypes: ['os'] }),
-            { abortSignal },
+            timeoutMs,
           ),
         )
-      : { service: 'pi', region, action: 'pi:ListAvailableResourceMetrics', status: 'not_applicable', checkedAt };
+      : { service: 'pi', region, action: piAction, status: 'not_applicable', checkedAt };
 
   return [ecs, elb, rds, pi, cloudwatch, logs];
 }
 
 export async function runPermissionTest(input: PermissionTestInput): Promise<PermissionTestResult> {
   const testedAt = (input.now ?? (() => new Date()))().toISOString();
-  const timeoutMs = input.timeoutMs ?? CHECK_TIMEOUT_MS;
+  const timeoutMs = input.timeoutMs ?? AWS_CALL_TIMEOUT_MS;
 
-  let identity;
-  try {
-    identity = await getCallerIdentity(input.credentials, input.regions[0], timeoutMs);
-  } catch (error) {
-    return { overall: 'failed', accountMatches: false, identityError: awsErrorCode(error), checks: [], testedAt };
+  const { identity, errorCode } = await lookUpCallerIdentity(input.credentials, input.regions[0], timeoutMs);
+  if (!identity) {
+    return { overall: 'failed', accountMatches: false, identityError: errorCode, checks: [], testedAt };
   }
 
   if (identity.account !== input.expectedAccountId) {
@@ -119,7 +108,7 @@ export async function runPermissionTest(input: PermissionTestInput): Promise<Per
       overall: 'failed',
       accountMatches: false,
       identityArn: identity.arn,
-      identityError: 'AccountMismatch',
+      identityError: 'AccountMismatch' satisfies OpsWatchIdentityError,
       checks: [],
       testedAt,
     };

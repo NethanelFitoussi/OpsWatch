@@ -1,6 +1,6 @@
 import { CircleCheck, CircleMinus, CircleX, TriangleAlert } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
-import { IDENTITY_ERROR_HINTS, identityErrorHint } from '@/lib/aws/identity-errors';
+import { knownIdentityError } from '@/lib/aws/identity-errors';
 import type { CheckStatus, PermissionTestResult } from '@/lib/connections/types';
 import { cn } from '@/lib/utils';
 
@@ -10,21 +10,6 @@ const ICONS: Record<CheckStatus, { icon: typeof CircleCheck; className: string }
   error: { icon: CircleX, className: 'text-red-600 dark:text-red-400' },
   not_applicable: { icon: CircleMinus, className: 'text-muted-foreground' },
 };
-
-const KNOWN_IDENTITY_ERRORS = [
-  'AccountMismatch',
-  'SecretChanged',
-  'NotReady',
-  'AccessDenied',
-  ...IDENTITY_ERROR_HINTS,
-] as const;
-type KnownIdentityError = (typeof KNOWN_IDENTITY_ERRORS)[number];
-
-function knownIdentityError(code: string): KnownIdentityError | null {
-  const hint = identityErrorHint(code);
-  if (hint) return hint;
-  return (KNOWN_IDENTITY_ERRORS as readonly string[]).includes(code) ? (code as KnownIdentityError) : null;
-}
 
 export async function PermissionChecklist({ result, account }: { result: PermissionTestResult | null; account: string }) {
   const t = await getTranslations('Checklist');

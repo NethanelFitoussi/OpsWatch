@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE_IDENTITY_POLICY, SERVICE_GROUPS, allActions } from '@/lib/aws/actions';
+import { ASSUME_ROLE_DURATION_SECONDS, BASE_IDENTITY_POLICY, SERVICE_GROUPS, allActions, readOnlyPolicyDocument } from '@/lib/aws/actions';
 
 describe('IAM action catalogue', () => {
   it('lists the 37 read-only actions of the spec without duplicates', () => {
@@ -28,5 +28,17 @@ describe('IAM action catalogue', () => {
     expect(BASE_IDENTITY_POLICY.Statement).toEqual([
       { Effect: 'Allow', Action: 'sts:AssumeRole', Resource: 'arn:aws:iam::*:role/OpsWatchReadOnly-*' },
     ]);
+  });
+
+  it('builds the read-only policy document from the catalogue', () => {
+    expect(readOnlyPolicyDocument()).toEqual({
+      Version: '2012-10-17',
+      Statement: [{ Effect: 'Allow', Action: allActions(), Resource: '*' }],
+    });
+    expect(BASE_IDENTITY_POLICY.Version).toBe('2012-10-17');
+  });
+
+  it('assumes roles for one hour', () => {
+    expect(ASSUME_ROLE_DURATION_SECONDS).toBe(3600);
   });
 });

@@ -1,8 +1,8 @@
 import { Globe } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BASE_IDENTITY_POLICY, ROLE_NAME_PREFIX, allActions } from '@/lib/aws/actions';
-import { roleNameFor, stackNameFor } from '@/lib/aws/template';
+import { BASE_IDENTITY_POLICY, ROLE_NAME_PREFIX, readOnlyPolicyDocument } from '@/lib/aws/actions';
+import { roleArnFor, stackNameFor } from '@/lib/aws/template';
 import { Callout } from './callout';
 import { CodeBlock } from './code-block';
 import {
@@ -33,7 +33,7 @@ export async function Steps() {
   const checklist = await getTranslations('Checklist');
 
   const basePolicy = json(BASE_IDENTITY_POLICY);
-  const readOnlyPolicy = json({ Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: allActions(), Resource: '*' }] });
+  const readOnlyPolicy = json(readOnlyPolicyDocument());
   const rich = (key: string, values: Record<string, string | number> = {}) => t.rich(key, { ...richTags, ...values });
 
   const openAdd = rich('shared.openAdd', { accounts: nav('accounts'), add: accounts('add') });
@@ -158,11 +158,11 @@ export async function Steps() {
           <SubSteps
             items={[
               {
-                content: rich('role.steps.s3.i1', { example: `arn:aws:iam::${SAMPLE_ACCOUNT_ID}:role/${roleNameFor('<id>')}` }),
+                content: rich('role.steps.s3.i1', { example: roleArnFor(SAMPLE_ACCOUNT_ID, '<id>') }),
                 extra: (
                   <OutputsIllustration
                     stackName={stackNameFor(SAMPLE_CONNECTION_ID)}
-                    roleArn={`arn:aws:iam::${SAMPLE_ACCOUNT_ID}:role/${roleNameFor(SAMPLE_CONNECTION_ID)}`}
+                    roleArn={roleArnFor(SAMPLE_ACCOUNT_ID, SAMPLE_CONNECTION_ID)}
                   />
                 ),
               },

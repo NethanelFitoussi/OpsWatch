@@ -1,8 +1,10 @@
 export const TEMPLATE_VERSION = 1;
 export const ROLE_NAME_PREFIX = 'OpsWatchReadOnly-';
+export const IAM_POLICY_VERSION = '2012-10-17';
+/** Lifetime of assumed-role credentials, and the role's MaxSessionDuration. */
+export const ASSUME_ROLE_DURATION_SECONDS = 3600;
 
-export const SERVICE_GROUP_IDS = ['ecs', 'ec2', 'autoscaling', 'elb', 'rds', 'pi', 'cloudwatch', 'logs'] as const;
-export type ServiceGroupId = (typeof SERVICE_GROUP_IDS)[number];
+type ServiceGroupId = 'ecs' | 'ec2' | 'autoscaling' | 'elb' | 'rds' | 'pi' | 'cloudwatch' | 'logs';
 
 export type ServiceGroup = {
   id: ServiceGroupId;
@@ -93,8 +95,13 @@ export function allActions(): string[] {
   return SERVICE_GROUPS.flatMap((group) => [...group.actions]);
 }
 
+/** The policy of the read-only role: every action of the catalogue, on every resource. */
+export function readOnlyPolicyDocument() {
+  return { Version: IAM_POLICY_VERSION, Statement: [{ Effect: 'Allow', Action: allActions(), Resource: '*' }] };
+}
+
 export const BASE_IDENTITY_POLICY = {
-  Version: '2012-10-17',
+  Version: IAM_POLICY_VERSION,
   Statement: [
     {
       Effect: 'Allow',

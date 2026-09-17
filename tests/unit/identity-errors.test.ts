@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { identityErrorHint } from '@/lib/aws/identity-errors';
+import { normalizeAwsErrorCode } from '@/lib/aws/errors';
+import { identityErrorHint, knownIdentityError } from '@/lib/aws/identity-errors';
 import { browserLocale, isBrowserNavigation, seeOther } from '@/lib/http/browser';
 
 describe('identityErrorHint', () => {
@@ -16,6 +17,26 @@ describe('identityErrorHint', () => {
   it('has no hint for other errors', () => {
     expect(identityErrorHint('AccessDenied')).toBeNull();
     expect(identityErrorHint('UnknownError')).toBeNull();
+  });
+});
+
+describe('knownIdentityError', () => {
+  it('names the errors the checklist explains, folding hints in', () => {
+    expect(knownIdentityError('AccountMismatch')).toBe('AccountMismatch');
+    expect(knownIdentityError('SecretChanged')).toBe('SecretChanged');
+    expect(knownIdentityError('NotReady')).toBe('NotReady');
+    expect(knownIdentityError('AccessDenied')).toBe('AccessDenied');
+    expect(knownIdentityError('ExpiredTokenException')).toBe('ExpiredToken');
+    expect(knownIdentityError('AbortError')).toBe('Timeout');
+    expect(knownIdentityError('ThrottlingException')).toBeNull();
+  });
+});
+
+describe('normalizeAwsErrorCode', () => {
+  it('reports both ways a call can time out as Timeout', () => {
+    expect(normalizeAwsErrorCode('TimeoutError')).toBe('Timeout');
+    expect(normalizeAwsErrorCode('AbortError')).toBe('Timeout');
+    expect(normalizeAwsErrorCode('AccessDenied')).toBe('AccessDenied');
   });
 });
 

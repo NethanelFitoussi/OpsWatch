@@ -1,18 +1,19 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { mockClient } from 'aws-sdk-client-mock';
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 import { TEMPLATE_VERSION, allActions } from '@/lib/aws/actions';
 import {
   buildTemplate,
+  type CloudFormationRoleTemplate,
   deployCommand,
   quickCreateUrl,
   renderTemplateYaml,
   roleArnCommand,
+  roleArnFor,
   roleNameFor,
+  stackNameFor,
+  templateFileNameFor,
   templateObjectKey,
 } from '@/lib/aws/template';
-import { uploadTemplate } from '@/lib/aws/template-upload';
 
 const input = {
   connectionId: 'abc123def456',
@@ -20,24 +21,9 @@ const input = {
   trust: { principal: 'arn:aws:iam::111122223333:user/opswatch' },
 };
 
-type Template = {
-  Resources: {
-    OpsWatchReadOnlyRole: {
-      Type: string;
-      Properties: {
-        RoleName: string;
-        MaxSessionDuration: number;
-        AssumeRolePolicyDocument: { Statement: Array<Record<string, unknown>> };
-        Policies: Array<{ PolicyDocument: { Statement: Array<{ Action: string[]; Resource: string }> } }>;
-      };
-    };
-  };
-  Outputs: Record<string, { Value: unknown }>;
-};
-
 describe('CloudFormation template', () => {
   it('creates the read-only role with the exact actions', () => {
-    const t = parse(renderTemplateYaml(input)) as Template;
+    const t = parse(renderTemplateYaml(input)) as CloudFormationRoleTemplate;
     const role = t.Resources.OpsWatchReadOnlyRole;
     expect(role.Type).toBe('AWS::IAM::Role');
     expect(role.Properties.RoleName).toBe('OpsWatchReadOnly-abc123def456');
@@ -48,7 +34,7 @@ describe('CloudFormation template', () => {
   });
 
   it('requires the ExternalId and trusts the given principal', () => {
-    const t = buildTemplate(input) as unknown as Template;
+    const t = buildTemplate(input);
     expect(t.Resources.OpsWatchReadOnlyRole.Properties.AssumeRolePolicyDocument.Statement[0]).toEqual({
       Effect: 'Allow',
       Principal: { AWS: 'arn:aws:iam::111122223333:user/opswatch' },
@@ -62,7 +48,7 @@ describe('CloudFormation template', () => {
     const t = buildTemplate({
       ...input,
       trust: { principal: 'arn:aws:iam::111122223333:root', principalArnPatterns: patterns },
-    }) as unknown as Template;
+    });
     expect(t.Resources.OpsWatchReadOnlyRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition).toEqual({
       StringEquals: { 'sts:ExternalId': 'ext-1234567890' },
       ArnLike: { 'aws:PrincipalArn': patterns },
@@ -70,7 +56,7 @@ describe('CloudFormation template', () => {
   });
 
   it('outputs the role ARN and the template version', () => {
-    const t = buildTemplate(input) as unknown as Template;
+    const t = buildTemplate(input);
     expect(t.Outputs.RoleArn.Value).toEqual({ 'Fn::GetAtt': ['OpsWatchReadOnlyRole', 'Arn'] });
     expect(t.Outputs.OpsWatchTemplateVersion.Value).toBe(String(TEMPLATE_VERSION));
   });
@@ -97,15 +83,10 @@ describe('CloudFormation template', () => {
     );
   });
 
-  it('uploads the template to the configured bucket', async () => {
-    const s3 = mockClient(S3Client);
-    s3.on(PutObjectCommand).resolves({});
-    await uploadTemplate({ bucket: 'my-bucket', connectionId: 'abc123def456', region: 'eu-west-1', body: 'yaml' });
-    expect(s3.commandCalls(PutObjectCommand)[0].args[0].input).toEqual({
-      Bucket: 'my-bucket',
-      Key: 'opswatch/templates/opswatch-abc123def456-v1.yaml',
-      Body: 'yaml',
-      ContentType: 'application/x-yaml',
-    });
+  it('derives every resource name from the connection ID', () => {
+    expect(stackNameFor('abc123def456')).toBe('opswatch-abc123def456');
+    expect(templateFileNameFor('abc123def456')).toBe('opswatch-abc123def456.yaml');
+    expect(roleArnFor('111122223333', 'abc123def456')).toBe('arn:aws:iam::111122223333:role/OpsWatchReadOnly-abc123def456');
+    expect(roleArnFor('111122223333', 'abc123def456', 'aws-cn')).toBe('arn:aws-cn:iam::111122223333:role/OpsWatchReadOnly-abc123def456');
   });
 });

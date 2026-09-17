@@ -1,17 +1,55 @@
 import { stringify } from 'yaml';
-import { ROLE_NAME_PREFIX, TEMPLATE_VERSION, allActions } from './actions';
+import {
+  ASSUME_ROLE_DURATION_SECONDS,
+  IAM_POLICY_VERSION,
+  ROLE_NAME_PREFIX,
+  TEMPLATE_VERSION,
+  readOnlyPolicyDocument,
+} from './actions';
 import type { TrustSpec } from './identity';
 
 export type TemplateInput = { connectionId: string; externalId: string; trust: TrustSpec };
 
+/** Prefix of every AWS name OpsWatch derives from a connection: stack, template file, role session. */
+export const resourcePrefix = (connectionId: string) => `opswatch-${connectionId}`;
 export const roleNameFor = (connectionId: string) => `${ROLE_NAME_PREFIX}${connectionId}`;
-export const stackNameFor = (connectionId: string) => `opswatch-${connectionId}`;
-export const templateFileNameFor = (connectionId: string) => `opswatch-${connectionId}.yaml`;
+export const roleArnFor = (accountId: string, connectionId: string, partition = 'aws') =>
+  `arn:${partition}:iam::${accountId}:role/${roleNameFor(connectionId)}`;
+export const stackNameFor = resourcePrefix;
+export const templateFileNameFor = (connectionId: string) => `${resourcePrefix(connectionId)}.yaml`;
 export const templateObjectKey = (connectionId: string) =>
-  `opswatch/templates/opswatch-${connectionId}-v${TEMPLATE_VERSION}.yaml`;
+  `opswatch/templates/${resourcePrefix(connectionId)}-v${TEMPLATE_VERSION}.yaml`;
 
-export function buildTemplate(input: TemplateInput): Record<string, unknown> {
-  const condition: Record<string, unknown> = { StringEquals: { 'sts:ExternalId': input.externalId } };
+type TrustCondition = {
+  StringEquals: { 'sts:ExternalId': string };
+  ArnLike?: { 'aws:PrincipalArn': string[] };
+};
+
+export type CloudFormationRoleTemplate = {
+  AWSTemplateFormatVersion: string;
+  Description: string;
+  Resources: {
+    OpsWatchReadOnlyRole: {
+      Type: 'AWS::IAM::Role';
+      Properties: {
+        RoleName: string;
+        MaxSessionDuration: number;
+        AssumeRolePolicyDocument: {
+          Version: string;
+          Statement: { Effect: 'Allow'; Principal: { AWS: string }; Action: 'sts:AssumeRole'; Condition: TrustCondition }[];
+        };
+        Policies: { PolicyName: string; PolicyDocument: ReturnType<typeof readOnlyPolicyDocument> }[];
+      };
+    };
+  };
+  Outputs: {
+    RoleArn: { Description: string; Value: { 'Fn::GetAtt': [string, string] } };
+    OpsWatchTemplateVersion: { Value: string };
+  };
+};
+
+export function buildTemplate(input: TemplateInput): CloudFormationRoleTemplate {
+  const condition: TrustCondition = { StringEquals: { 'sts:ExternalId': input.externalId } };
   if (input.trust.principalArnPatterns?.length) {
     condition.ArnLike = { 'aws:PrincipalArn': input.trust.principalArnPatterns };
   }
@@ -24,9 +62,9 @@ export function buildTemplate(input: TemplateInput): Record<string, unknown> {
         Type: 'AWS::IAM::Role',
         Properties: {
           RoleName: roleNameFor(input.connectionId),
-          MaxSessionDuration: 3600,
+          MaxSessionDuration: ASSUME_ROLE_DURATION_SECONDS,
           AssumeRolePolicyDocument: {
-            Version: '2012-10-17',
+            Version: IAM_POLICY_VERSION,
             Statement: [
               {
                 Effect: 'Allow',
@@ -39,10 +77,7 @@ export function buildTemplate(input: TemplateInput): Record<string, unknown> {
           Policies: [
             {
               PolicyName: 'OpsWatchReadOnly',
-              PolicyDocument: {
-                Version: '2012-10-17',
-                Statement: [{ Effect: 'Allow', Action: allActions(), Resource: '*' }],
-              },
+              PolicyDocument: readOnlyPolicyDocument(),
             },
           ],
         },

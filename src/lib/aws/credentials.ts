@@ -1,18 +1,19 @@
 import 'server-only';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@smithy/types';
+import { ASSUME_ROLE_DURATION_SECONDS } from './actions';
 import { baseCredentials } from './base-credentials';
 import { clientConfig } from './client-config';
 import { awsErrorCode } from './errors';
-import { AWS_CALL_TIMEOUT_MS, withTimeout } from './timeout';
+import { resourcePrefix } from './template';
+import { AWS_CALL_TIMEOUT_MS, sendWithTimeout } from './timeout';
 
 export type CredentialsInput =
   | { method: 'role'; connectionId: string; roleArn: string; externalId: string }
   | { method: 'ambient' }
   | { method: 'keys'; accessKeyId: string; secretAccessKey: string };
 
-export const ASSUME_ROLE_DURATION_SECONDS = 3600;
-export const REFRESH_WINDOW_MS = 5 * 60_000;
+const REFRESH_WINDOW_MS = 5 * 60_000;
 
 export type AssumeRoleEvent = { event: 'assume_role'; connectionId: string; ok: boolean; errorCode?: string };
 
@@ -47,17 +48,14 @@ export function createCredentialResolver(
 
     const sts = new STSClient(clientConfig(region, ambient));
     try {
-      const out = await withTimeout(
-        (abortSignal) =>
-          sts.send(
-            new AssumeRoleCommand({
-              RoleArn: input.roleArn,
-              ExternalId: input.externalId,
-              RoleSessionName: `opswatch-${input.connectionId}`,
-              DurationSeconds: ASSUME_ROLE_DURATION_SECONDS,
-            }),
-            { abortSignal },
-          ),
+      const out = await sendWithTimeout(
+        sts,
+        new AssumeRoleCommand({
+          RoleArn: input.roleArn,
+          ExternalId: input.externalId,
+          RoleSessionName: resourcePrefix(input.connectionId),
+          DurationSeconds: ASSUME_ROLE_DURATION_SECONDS,
+        }),
         timeoutMs,
       );
       const c = out.Credentials;

@@ -4,3 +4,8 @@ export function awsErrorCode(error: unknown): string {
   }
   return 'UnknownError';
 }
+
+/** Reports both ways an AWS call can time out (our own timer or an aborted request) as `Timeout`. */
+export function normalizeAwsErrorCode(code: string): string {
+  return code === 'TimeoutError' || code === 'AbortError' ? 'Timeout' : code;
+}
