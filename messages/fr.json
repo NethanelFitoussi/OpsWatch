@@ -221,5 +221,215 @@
       "generic": "AWS a refusé les identifiants ({code})."
     },
     "failedRequest": "Le test n'a pas pu être lancé. Réessayez."
+  },
+  "GettingStarted": {
+    "metaTitle": "Premiers pas",
+    "title": "Connectez votre compte AWS",
+    "subtitle": "Lecture seule, révocable à tout moment, et rien ne quitte votre infrastructure.",
+    "cta": "Connecter un compte",
+    "methodsTitle": "Choisissez comment OpsWatch accède à AWS",
+    "methods": {
+      "role": {
+        "title": "Rôle IAM",
+        "badge": "Recommandé",
+        "description": "Un rôle en lecture seule créé par CloudFormation. OpsWatch l'assume avec des identifiants temporaires et un ExternalId.",
+        "link": "Suivre les étapes"
+      },
+      "ambient": {
+        "title": "Exécution sur AWS",
+        "description": "OpsWatch tourne sur ECS ou EC2 dans le compte qu'il lit et utilise son rôle de tâche ou d'instance.",
+        "link": "Voir comment"
+      },
+      "keys": {
+        "title": "Clés d'accès",
+        "description": "Collez une paire de clés pour un test rapide en local. Simple, mais des clés permanentes sont un risque en production.",
+        "link": "Voir comment"
+      }
+    },
+    "diagram": {
+      "title": "Comment ça marche",
+      "hint": "Survolez ou sélectionnez un bloc pour voir son rôle.",
+      "nodes": {
+        "account": {
+          "label": "Votre compte AWS",
+          "description": "Le compte qu'OpsWatch lit. Rien n'y est installé à part un rôle IAM."
+        },
+        "stack": {
+          "label": "Stack CloudFormation",
+          "description": "Générée par OpsWatch pour cette connexion. Supprimer la stack supprime le rôle et révoque l'accès."
+        },
+        "role": {
+          "label": "Rôle IAM OpsWatchReadOnly",
+          "description": "La seule ressource créée par la stack. Il n'a ni mot de passe ni clé ; il peut seulement être assumé."
+        },
+        "permissions": {
+          "label": "Politique de permissions",
+          "description": "Ce que le rôle peut faire : décrire et lister ECS, ELB, RDS, Performance Insights et CloudWatch, et lancer des requêtes Logs Insights. Ni S3, ni secrets."
+        },
+        "trust": {
+          "label": "Trust policy + ExternalId",
+          "description": "Qui peut assumer le rôle : uniquement l'identité d'OpsWatch, et seulement si elle présente l'ExternalId de cette connexion."
+        },
+        "instance": {
+          "label": "Instance OpsWatch",
+          "description": "Votre OpsWatch auto-hébergé. Il a sa propre identité AWS, autorisée uniquement à assumer les rôles OpsWatch."
+        },
+        "assumeRole": {
+          "label": "sts:AssumeRole",
+          "description": "OpsWatch demande un accès à AWS STS en présentant l'ARN du rôle et l'ExternalId. AWS vérifie la trust policy."
+        },
+        "credentials": {
+          "label": "Identifiants temporaires (1 h)",
+          "description": "STS renvoie des identifiants valables une heure. OpsWatch les renouvelle automatiquement et ne les enregistre jamais."
+        }
+      }
+    },
+    "stepsTitle": "Pas à pas",
+    "role": {
+      "title": "Avec un rôle IAM",
+      "steps": {
+        "s0": {
+          "title": "Donner une identité AWS à OpsWatch",
+          "body": "OpsWatch a besoin de sa propre identité pour assumer des rôles. Sur un portable, créez un utilisateur IAM avec uniquement la politique ci-dessous et donnez ses clés à OpsWatch via AWS_ACCESS_KEY_ID et AWS_SECRET_ACCESS_KEY ou un profil AWS. Sur ECS ou EC2, attachez la même politique au rôle de la tâche ou de l'instance.",
+          "policyLabel": "Politique de l'identité d'OpsWatch"
+        },
+        "s1": {
+          "title": "Créer la connexion",
+          "body": "Dans OpsWatch, ajoutez un compte et choisissez Rôle IAM. OpsWatch génère un ExternalId unique et un template CloudFormation pour cette connexion."
+        },
+        "s2": {
+          "title": "Déployer la stack",
+          "body": "Dans le compte à lire, déployez le template : téléversez-le dans la console CloudFormation, lancez la commande AWS CLI affichée sur la page de la connexion, ou utilisez Launch Stack si un bucket de templates est configuré."
+        },
+        "s3": {
+          "title": "Coller l'ARN du rôle",
+          "body": "Quand la stack est terminée, copiez sa sortie RoleArn et collez-la sur la page de la connexion."
+        },
+        "s4": {
+          "title": "Lancer le test",
+          "body": "OpsWatch assume le rôle et vérifie chaque service. Vert : autorisé ; orange : une permission manque et vous voyez ce que vous perdez ; rouge : la connexion a échoué."
+        }
+      }
+    },
+    "ambient": {
+      "title": "Exécution sur AWS",
+      "steps": {
+        "s1": {
+          "title": "Attacher les permissions en lecture seule",
+          "body": "Donnez au rôle de tâche ECS ou au profil d'instance EC2 les actions listées dans « Ce dont chaque service a besoin », dans le compte où tourne OpsWatch."
+        },
+        "s2": {
+          "title": "Créer la connexion",
+          "body": "Ajoutez un compte, choisissez Exécution sur AWS, puis lancez le test."
+        }
+      }
+    },
+    "keys": {
+      "title": "Avec des clés d'accès",
+      "steps": {
+        "s1": {
+          "title": "Créer un utilisateur IAM dédié",
+          "body": "Créez un utilisateur avec uniquement les actions listées dans « Ce dont chaque service a besoin », puis créez-lui une clé d'accès."
+        },
+        "s2": {
+          "title": "Coller les clés",
+          "body": "Ajoutez un compte, choisissez Clés d'accès et collez la paire de clés. OpsWatch la chiffre et ne l'affiche plus jamais."
+        },
+        "s3": {
+          "title": "Renouveler ou supprimer",
+          "body": "Supprimez la clé dans IAM à la fin du test, ou passez à un rôle IAM."
+        }
+      }
+    },
+    "servicesTitle": "Ce dont chaque service a besoin",
+    "servicesIntro": "Le rôle est volontairement plus restreint que la politique AWS ReadOnlyAccess, qui peut lire le contenu des buckets S3. OpsWatch ne lit jamais S3, Secrets Manager ni SSM Parameter Store.",
+    "serviceCards": {
+      "actions": "Actions IAM",
+      "why": "Pourquoi",
+      "unlocks": "Débloque",
+      "without": "Sans elle",
+      "billed": "{action} est facturée par AWS au Go de logs scanné.",
+      "groups": {
+        "ecs": {
+          "why": "Lister les clusters, services et tâches, et lire leurs définitions.",
+          "unlocks": "La vue conteneurs : services, tâches, déploiements et événements.",
+          "without": "Aucune donnée de conteneur."
+        },
+        "ec2": {
+          "why": "Lire les instances, interfaces réseau, groupes de sécurité et sous-réseaux.",
+          "unlocks": "Retrouver le service derrière une adresse IP ou un hôte.",
+          "without": "Les adresses IP des logs et des connexions aux bases restent anonymes."
+        },
+        "autoscaling": {
+          "why": "Lire les cibles et politiques de scaling des services ECS.",
+          "unlocks": "Les valeurs minimum, maximum et cible à côté de chaque service.",
+          "without": "Les limites de scaling ne sont pas affichées."
+        },
+        "elb": {
+          "why": "Lire les load balancers, listeners, règles et l'état des cibles.",
+          "unlocks": "Quel service reçoit quel trafic, et les cibles en mauvaise santé.",
+          "without": "Le routage et l'état des cibles manquent."
+        },
+        "rds": {
+          "why": "Lire les clusters, instances, proxies et événements.",
+          "unlocks": "La vue bases de données, avec les vrais rôles writer et reader.",
+          "without": "Aucune donnée de base de données."
+        },
+        "pi": {
+          "why": "Lire la charge, les dimensions et le texte SQL de Performance Insights.",
+          "unlocks": "Le top SQL, les événements d'attente et les clients les plus actifs.",
+          "without": "Vous voyez le CPU mais pas la requête qui le consomme."
+        },
+        "cloudwatch": {
+          "why": "Lire les données de métriques, lister les métriques et les alarmes.",
+          "unlocks": "Tous les graphiques : CPU, mémoire, requêtes, latence et erreurs.",
+          "without": "Les graphiques restent vides."
+        },
+        "logs": {
+          "why": "Lister les groupes de logs et lancer des requêtes Logs Insights.",
+          "unlocks": "La recherche dans les logs et des analyses comme les erreurs par route ou les clients les plus actifs.",
+          "without": "Pas de recherche dans les logs."
+        }
+      }
+    },
+    "security": {
+      "title": "Sécurité",
+      "canTitle": "OpsWatch peut",
+      "can1": "Lire les métadonnées et métriques des services listés ci-dessus.",
+      "can2": "Lancer les requêtes Logs Insights que vous démarrez, facturées par AWS.",
+      "cannotTitle": "OpsWatch ne peut pas",
+      "cannot1": "Modifier, créer ou supprimer quoi que ce soit dans votre compte.",
+      "cannot2": "Lire des objets S3, des secrets ou des paramètres.",
+      "cannot3": "Être utilisé par une autre instance d'OpsWatch, grâce à l'ExternalId.",
+      "externalIdTitle": "Pourquoi un ExternalId ?",
+      "externalIdBody": "Sans lui, quiconque connaît l'ARN de votre rôle pourrait configurer son propre OpsWatch pour l'utiliser. C'est le problème dit du « confused deputy ». Le rôle n'accepte que les demandes qui présentent aussi la valeur aléatoire générée pour votre connexion.",
+      "revokeTitle": "Révoquer l'accès",
+      "revokeBody": "Supprimez la stack CloudFormation. Le rôle disparaît et OpsWatch perd l'accès immédiatement. Supprimez ensuite la connexion dans OpsWatch."
+    },
+    "troubleshooting": {
+      "title": "Dépannage",
+      "items": {
+        "assumeRole": {
+          "title": "AccessDenied en assumant le rôle",
+          "body": "La trust policy ne correspond pas : la stack vient d'un ancien template, l'ExternalId a été régénéré, ou OpsWatch tourne désormais avec une autre identité. Téléchargez à nouveau le template et mettez la stack à jour."
+        },
+        "region": {
+          "title": "Une région échoue toujours",
+          "body": "La région est peut-être désactivée pour votre compte. Activez-la dans les paramètres du compte AWS, ou retirez-la de la connexion."
+        },
+        "pi": {
+          "title": "Performance Insights est « non applicable »",
+          "body": "Aucune instance de cette région n'a Performance Insights activé. Activez-le sur l'instance de base de données pour obtenir le top SQL."
+        },
+        "scp": {
+          "title": "Une permission reste manquante alors que le rôle l'a",
+          "body": "Une service control policy (SCP) de votre organisation AWS ou une permissions boundary refuse peut-être l'action. Demandez à l'administrateur de l'organisation."
+        },
+        "account": {
+          "title": "Les identifiants appartiennent à un autre compte",
+          "body": "L'ARN du rôle ou les clés proviennent d'un autre compte AWS que celui saisi pour la connexion. Vérifiez l'ID de compte à 12 chiffres."
+        }
+      }
+    }
   }
 }

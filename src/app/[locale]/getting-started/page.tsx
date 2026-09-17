@@ -1,15 +1,79 @@
+import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { AppShell } from '@/components/app-shell';
+import { ConnectionDiagram } from '@/components/getting-started/connection-diagram';
+import { MethodCards } from '@/components/getting-started/method-cards';
+import { SecuritySection } from '@/components/getting-started/security-section';
+import { ServiceCards } from '@/components/getting-started/service-cards';
+import { Steps } from '@/components/getting-started/steps';
+import { Troubleshooting } from '@/components/getting-started/troubleshooting';
+import { Button } from '@/components/ui/button';
+import { Link } from '@/i18n/navigation';
+import { getCurrentAdminId } from '@/lib/auth/current';
+
+export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ locale: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'GettingStarted' });
+  return { title: t('metaTitle') };
+}
+
+function Section({ id, title, intro, children }: { id: string; title: string; intro?: string; children: React.ReactNode }) {
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 space-y-6">
+      <div>
+        <h2 id={`${id}-title`} className="text-2xl font-semibold tracking-tight">{title}</h2>
+        {intro && <p className="mt-2 max-w-3xl text-muted-foreground">{intro}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default async function GettingStartedPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations('Common');
+  const t = await getTranslations('GettingStarted');
+  const signedIn = (await getCurrentAdminId()) !== null;
+
   return (
-    <main className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">{t('appName')}</h1>
-      <p className="mt-2 text-muted-foreground">{t('tagline')}</p>
-    </main>
+    <AppShell signedIn={signedIn}>
+      <div className="space-y-16">
+        <header className="rounded-2xl border bg-gradient-to-br from-primary/10 via-background to-background px-6 py-10 md:px-10">
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{t('title')}</h1>
+          <p className="mt-3 max-w-2xl text-lg text-muted-foreground">{t('subtitle')}</p>
+          <Button asChild size="lg" className="mt-6">
+            <Link href="/accounts/new">{t('cta')}</Link>
+          </Button>
+        </header>
+
+        <Section id="methods" title={t('methodsTitle')}>
+          <MethodCards />
+        </Section>
+
+        <Section id="how-it-works" title={t('diagram.title')}>
+          <ConnectionDiagram />
+        </Section>
+
+        <Section id="steps" title={t('stepsTitle')}>
+          <Steps />
+        </Section>
+
+        <Section id="services" title={t('servicesTitle')} intro={t('servicesIntro')}>
+          <ServiceCards />
+        </Section>
+
+        <Section id="security" title={t('security.title')}>
+          <SecuritySection />
+        </Section>
+
+        <Section id="troubleshooting" title={t('troubleshooting.title')}>
+          <Troubleshooting />
+        </Section>
+      </div>
+    </AppShell>
   );
 }
