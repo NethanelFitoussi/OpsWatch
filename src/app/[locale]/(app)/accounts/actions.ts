@@ -2,8 +2,8 @@
 
 import { redirect as nextRedirect } from 'next/navigation';
 import { redirect } from '@/i18n/navigation';
-import { detectBaseIdentity, trustFor } from '@/lib/aws/identity';
-import { quickCreateUrl, renderTemplateYaml } from '@/lib/aws/template';
+import { awsErrorCode } from '@/lib/aws/errors';
+import { quickCreateUrl } from '@/lib/aws/template';
 import { uploadTemplate } from '@/lib/aws/template-upload';
 import { requireAdmin } from '@/lib/auth/current';
 import {
@@ -11,15 +11,17 @@ import {
   ConnectionNotFoundError,
   createConnection,
   deleteConnection,
-  getConnection,
+  findConnection,
   regenerateExternalId,
   setAccessKeys,
   setRoleArn,
   type ConnectionInputErrorCode,
 } from '@/lib/connections/repository';
 import { credentialResolver } from '@/lib/connections/resolver';
+import { isTemplateReady, renderConnectionTemplate } from '@/lib/connections/template';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
+import { logConnectionEvent } from '@/lib/log';
 
 /** Non-secret values echoed back so the form keeps them after an error. Secrets never are. */
 export type FormValues = {
@@ -110,28 +112,23 @@ export async function regenerateExternalIdAction(locale: string, id: string): Pr
 
 export async function launchStackAction(locale: string, id: string): Promise<void> {
   await requireAdmin(locale);
+  const row = findConnection(getDb(), id);
+  if (!row) {
+    return redirect({ href: '/accounts', locale });
+  }
+  const failed = { href: { pathname: `/accounts/${id}`, query: { error: 'launch_failed' } }, locale };
   const bucket = env().OPSWATCH_TEMPLATE_BUCKET;
-  let row;
+  if (!bucket || !isTemplateReady(row)) {
+    return redirect(failed);
+  }
+  const region = row.regions[0];
   try {
-    row = getConnection(getDb(), id);
+    await uploadTemplate({ bucket, connectionId: id, region, body: await renderConnectionTemplate(row) });
   } catch (error) {
-    redirectIfRemoved(error, locale);
-    throw error;
+    logConnectionEvent({ event: 'launch_stack', connectionId: id, ok: false, errorCode: awsErrorCode(error) });
+    return redirect(failed);
   }
-  let url: string;
-  try {
-    if (!bucket || !row.externalId) {
-      throw new Error('launch stack unavailable');
-    }
-    const region = row.regions[0];
-    const identity = await detectBaseIdentity(region);
-    const body = renderTemplateYaml({ connectionId: id, externalId: row.externalId, trust: trustFor(identity) });
-    await uploadTemplate({ bucket, connectionId: id, region, body });
-    url = quickCreateUrl({ bucket, connectionId: id, region });
-  } catch {
-    return redirect({ href: { pathname: `/accounts/${id}`, query: { error: 'launch_failed' } }, locale });
-  }
-  nextRedirect(url);
+  nextRedirect(quickCreateUrl({ bucket, connectionId: id, region }));
 }
 
 export async function deleteConnectionAction(locale: string, id: string): Promise<void> {

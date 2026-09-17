@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createConnection } from '@/lib/connections/repository';
 import type { Db } from '@/lib/db/client';
 import { createTestDb } from '../helpers/db';
 
@@ -19,6 +20,12 @@ vi.mock('@/lib/env', () => ({ env: () => ({ OPSWATCH_SECRET: 'k'.repeat(32), OPS
 vi.mock('@/i18n/navigation', () => ({
   redirect: (target: unknown) => {
     throw new RedirectSignal(target);
+  },
+}));
+vi.mock('@/lib/aws/identity', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/aws/identity')>()),
+  detectBaseIdentity: async () => {
+    throw Object.assign(new Error('no credentials'), { name: 'CredentialsProviderError' });
   },
 }));
 vi.mock('next/navigation', () => ({
@@ -93,5 +100,19 @@ describe('connection forms echo non-secret values after an error', () => {
     );
     expect(result).toEqual({ error: 'keys_invalid', values: { accessKeyId: 'not-a-key' } });
     expect(JSON.stringify(result)).not.toContain('secret-value');
+  });
+});
+
+describe('launch stack', () => {
+  it('logs why the template could not be published and shows the error on the connection page', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const row = createConnection(state.db, { name: 'Role', method: 'role', awsAccountId: '111122223333', regions: ['eu-west-1'] });
+    expect(await redirectOf(actions.launchStackAction('en', row.id))).toEqual({
+      href: { pathname: `/accounts/${row.id}`, query: { error: 'launch_failed' } },
+      locale: 'en',
+    });
+    expect(info).toHaveBeenCalledWith(
+      JSON.stringify({ event: 'launch_stack', connectionId: row.id, ok: false, errorCode: 'CredentialsProviderError' }),
+    );
   });
 });

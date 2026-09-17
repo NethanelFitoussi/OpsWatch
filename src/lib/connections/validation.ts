@@ -11,6 +11,7 @@ export const accessKeysSchema = z.object({
   accessKeyId: z.string().regex(/^(AKIA|ASIA)[A-Z0-9]{16}$/),
   secretAccessKey: z.string().min(30).max(128),
 });
+export type AccessKeys = z.infer<typeof accessKeysSchema>;
 
 const ROLE_ARN = /^arn:aws[\w-]*:iam::(\d{12}):role\/(?:[\w+=,.@-]+\/)*([\w+=,.@-]+)$/;
 

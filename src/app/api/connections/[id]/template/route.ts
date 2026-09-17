@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
-import { detectBaseIdentity, trustFor } from '@/lib/aws/identity';
-import { renderTemplateYaml, templateFileNameFor } from '@/lib/aws/template';
+import { templateFileNameFor } from '@/lib/aws/template';
+import { awsErrorCode } from '@/lib/aws/errors';
 import { getCurrentAdminId } from '@/lib/auth/current';
-import { ConnectionNotFoundError, getConnection } from '@/lib/connections/repository';
+import { findConnection } from '@/lib/connections/repository';
+import { isTemplateReady, renderConnectionTemplate } from '@/lib/connections/template';
 import { getDb } from '@/lib/db/client';
+import { apiError } from '@/lib/http/api-error';
 import { browserLocale, isBrowserNavigation, seeOther } from '@/lib/http/browser';
+import { logConnectionEvent } from '@/lib/log';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,33 +15,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const browser = isBrowserNavigation(request);
   const locale = browserLocale(request);
   if ((await getCurrentAdminId()) === null) {
-    return browser ? seeOther(`/${locale}/login`) : NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return browser ? seeOther(`/${locale}/login`) : apiError('unauthorized');
   }
   const { id } = await params;
 
-  let row;
+  const row = findConnection(getDb(), id);
+  if (!row) {
+    return browser ? seeOther(`/${locale}/accounts`) : apiError('not_found');
+  }
+  if (!isTemplateReady(row)) {
+    return browser ? seeOther(`/${locale}/accounts/${row.id}`) : apiError('not_a_role_connection');
+  }
+
+  let yaml: string;
   try {
-    row = getConnection(getDb(), id);
+    yaml = await renderConnectionTemplate(row);
   } catch (error) {
-    if (error instanceof ConnectionNotFoundError) {
-      return NextResponse.json({ error: 'not_found' }, { status: 404 });
-    }
-    throw error;
-  }
-  if (row.method !== 'role' || !row.externalId) {
-    return NextResponse.json({ error: 'not_a_role_connection' }, { status: 400 });
+    logConnectionEvent({ event: 'template_download', connectionId: row.id, ok: false, errorCode: awsErrorCode(error) });
+    return browser ? seeOther(`/${locale}/accounts/${row.id}?error=no_base_identity`) : apiError('no_base_identity');
   }
 
-  let identity;
-  try {
-    identity = await detectBaseIdentity(row.regions[0]);
-  } catch {
-    return browser
-      ? seeOther(`/${locale}/accounts/${row.id}?error=no_base_identity`)
-      : NextResponse.json({ error: 'no_base_identity' }, { status: 409 });
-  }
-
-  const yaml = renderTemplateYaml({ connectionId: row.id, externalId: row.externalId, trust: trustFor(identity) });
   return new Response(yaml, {
     headers: {
       'content-type': 'application/x-yaml; charset=utf-8',

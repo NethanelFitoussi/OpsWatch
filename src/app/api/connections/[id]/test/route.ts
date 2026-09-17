@@ -5,16 +5,17 @@ import { credentialResolver } from '@/lib/connections/resolver';
 import { testConnection } from '@/lib/connections/test-connection';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
+import { apiError } from '@/lib/http/api-error';
 import { isSameOrigin } from '@/lib/http/origin';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!isSameOrigin(request, env().OPSWATCH_PUBLIC_URL)) {
-    return NextResponse.json({ error: 'forbidden_origin' }, { status: 403 });
+    return apiError('forbidden_origin');
   }
   if ((await getCurrentAdminId()) === null) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return apiError('unauthorized');
   }
   const { id } = await params;
   try {
@@ -25,7 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ConnectionNotFoundError) {
-      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+      return apiError('not_found');
     }
     throw error;
   }

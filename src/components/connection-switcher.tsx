@@ -13,8 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Link } from '@/i18n/navigation';
+import type { ConnectionRow } from '@/lib/db/schema';
 
-export type ShellConnection = { id: string; name: string; regions: string[] };
+export type ShellConnection = Pick<ConnectionRow, 'id' | 'name' | 'regions'>;
 
 export function ConnectionSwitcher({ connections }: { connections: ShellConnection[] }) {
   const t = useTranslations('Shell');

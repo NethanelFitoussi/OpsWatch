@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { TEMPLATE_VERSION } from '@/lib/aws/actions';
-import { DecryptionError } from '@/lib/crypto';
+import { DecryptionError, encrypt } from '@/lib/crypto';
 import {
   ConnectionInputError,
   ConnectionNotFoundError,
   createConnection,
   credentialsInputFor,
   deleteConnection,
+  findConnection,
   getConnection,
   listConnections,
   readAccessKeys,
@@ -162,5 +163,22 @@ describe('connections repository', () => {
     expect(toView({ ...row, templateVersion: TEMPLATE_VERSION - 1 }, SECRET).templateOutdated).toBe(true);
     deleteConnection(db, row.id);
     expect(() => getConnection(db, row.id)).toThrow(ConnectionNotFoundError);
+  });
+
+  it('finds a connection or returns null', () => {
+    const db = createTestDb();
+    const row = createConnection(db, { ...base, method: 'ambient' }, now);
+    expect(findConnection(db, row.id)).toEqual(row);
+    expect(findConnection(db, 'unknown00000')).toBeNull();
+  });
+
+  it('treats decryptable but malformed stored keys as unreadable', () => {
+    const db = createTestDb();
+    const row = createConnection(db, { ...base, method: 'keys' }, now);
+    for (const plaintext of ['not json', '{"accessKeyId":1}']) {
+      const corrupt = { ...row, accessKeyCiphertext: encrypt(plaintext, SECRET) };
+      expect(() => readAccessKeys(corrupt, SECRET)).toThrow(DecryptionError);
+      expect(toView(corrupt, SECRET)).toMatchObject({ accessKeyHint: null, keysUnreadable: true });
+    }
   });
 });

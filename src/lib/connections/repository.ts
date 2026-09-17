@@ -7,8 +7,9 @@ import { roleNameFor } from '../aws/template';
 import { DecryptionError, decrypt, encrypt, randomId, randomToken } from '../crypto';
 import type { Db } from '../db/client';
 import { connections, type ConnectionRow } from '../db/schema';
-import type { ConnectionMethod, ConnectionStatus, PermissionTestResult } from './types';
+import type { PermissionTestResult } from './types';
 import {
+  type AccessKeys,
   accessKeysSchema,
   accountIdSchema,
   methodSchema,
@@ -43,20 +44,14 @@ export class ConnectionInputError extends Error {
   }
 }
 
-export type ConnectionView = {
-  id: string;
-  name: string;
-  method: ConnectionMethod;
-  awsAccountId: string;
-  regions: string[];
-  roleArn: string | null;
-  externalId: string | null;
+/** What pages may show about a connection: no ciphertext, only a hint of the access key ID. */
+export type ConnectionView = Pick<
+  ConnectionRow,
+  'id' | 'name' | 'method' | 'awsAccountId' | 'regions' | 'roleArn' | 'externalId' | 'status' | 'lastTest' | 'updatedAt'
+> & {
   templateOutdated: boolean;
   accessKeyHint: string | null;
   keysUnreadable: boolean;
-  status: ConnectionStatus;
-  lastTest: PermissionTestResult | null;
-  updatedAt: Date;
 };
 
 function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, code: ConnectionInputErrorCode): T {
@@ -99,8 +94,12 @@ export function listConnections(db: Db): ConnectionRow[] {
   return db.select().from(connections).orderBy(desc(connections.createdAt)).all();
 }
 
+export function findConnection(db: Db, id: string): ConnectionRow | null {
+  return db.select().from(connections).where(eq(connections.id, id)).get() ?? null;
+}
+
 export function getConnection(db: Db, id: string): ConnectionRow {
-  const row = db.select().from(connections).where(eq(connections.id, id)).get();
+  const row = findConnection(db, id);
   if (!row) {
     throw new ConnectionNotFoundError(id);
   }
@@ -141,7 +140,7 @@ export function setRoleArn(db: Db, id: string, roleArn: string, now: Date = new 
 export function setAccessKeys(
   db: Db,
   id: string,
-  input: { accessKeyId: string; secretAccessKey: string },
+  input: AccessKeys,
   secret: string,
   now: Date = new Date(),
 ): ConnectionRow {
@@ -188,11 +187,24 @@ export function deleteConnection(db: Db, id: string): void {
   db.delete(connections).where(eq(connections.id, id)).run();
 }
 
-export function readAccessKeys(row: ConnectionRow, secret: string): { accessKeyId: string; secretAccessKey: string } {
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Stored keys that decrypt but do not parse are reported like undecryptable ones: unreadable. */
+export function readAccessKeys(row: ConnectionRow, secret: string): AccessKeys {
   if (!row.accessKeyCiphertext) {
     throw new ConnectionInputError('not_ready');
   }
-  return JSON.parse(decrypt(row.accessKeyCiphertext, secret)) as { accessKeyId: string; secretAccessKey: string };
+  const parsed = accessKeysSchema.safeParse(parseJson(decrypt(row.accessKeyCiphertext, secret)));
+  if (!parsed.success) {
+    throw new DecryptionError();
+  }
+  return parsed.data;
 }
 
 export function credentialsInputFor(row: ConnectionRow, secret: string): CredentialsInput {

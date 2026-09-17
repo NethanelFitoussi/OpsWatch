@@ -1,6 +1,8 @@
 import 'server-only';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@smithy/types';
+import type { AccessKeys } from '../connections/validation';
+import { logConnectionEvent, type ConnectionEvent } from '../log';
 import { ASSUME_ROLE_DURATION_SECONDS } from './actions';
 import { baseCredentials } from './base-credentials';
 import { clientConfig } from './client-config';
@@ -11,11 +13,11 @@ import { AWS_CALL_TIMEOUT_MS, sendWithTimeout } from './timeout';
 export type CredentialsInput =
   | { method: 'role'; connectionId: string; roleArn: string; externalId: string }
   | { method: 'ambient' }
-  | { method: 'keys'; accessKeyId: string; secretAccessKey: string };
+  | ({ method: 'keys' } & AccessKeys);
 
 const REFRESH_WINDOW_MS = 5 * 60_000;
 
-export type AssumeRoleEvent = { event: 'assume_role'; connectionId: string; ok: boolean; errorCode?: string };
+export type AssumeRoleEvent = ConnectionEvent & { event: 'assume_role' };
 
 export type CredentialResolver = {
   resolve(input: CredentialsInput, region: string): Promise<AwsCredentialIdentity>;
@@ -31,7 +33,7 @@ export function createCredentialResolver(
   } = {},
 ): CredentialResolver {
   const now = deps.now ?? Date.now;
-  const log = deps.log ?? ((event: AssumeRoleEvent) => console.info(JSON.stringify(event)));
+  const log = deps.log ?? logConnectionEvent;
   const ambient = deps.ambientProvider ?? baseCredentials();
   const timeoutMs = deps.timeoutMs ?? AWS_CALL_TIMEOUT_MS;
   const cache = new Map<string, AwsCredentialIdentity>();

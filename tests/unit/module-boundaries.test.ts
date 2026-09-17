@@ -73,6 +73,7 @@ const SERVER_ONLY_MODULES = [
   'lib/connections/repository.ts',
   'lib/connections/resolver.ts',
   'lib/connections/test-connection.ts',
+  'lib/connections/template.ts',
   'lib/db/client.ts',
 ];
 
