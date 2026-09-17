@@ -90,6 +90,17 @@ export function MockButton({ primary, children }: { primary?: boolean; children:
   );
 }
 
+/** Footer of a console wizard page: Cancel, optional extra buttons, then the highlighted primary action (marker 2). */
+export function MockWizardFooter({ cancel, extra, primary }: { cancel: string; extra?: ReactNode; primary: string }) {
+  return (
+    <>
+      <MockButton>{cancel}</MockButton>
+      {extra}
+      <Highlight n={2}><MockButton primary>{primary}</MockButton></Highlight>
+    </>
+  );
+}
+
 export function MockCheckbox({ checked, children }: { checked: boolean; children: ReactNode }) {
   return (
     <span className="flex items-start gap-2 text-left">

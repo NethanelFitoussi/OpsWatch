@@ -1,13 +1,14 @@
 import { CircleHelp, TriangleAlert, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { TONE_BORDER, TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
 const VARIANTS: Record<'question' | 'warning', { icon: LucideIcon; box: string; iconClass: string }> = {
   question: { icon: CircleHelp, box: 'border-border bg-muted/40', iconClass: 'text-foreground/70' },
   warning: {
     icon: TriangleAlert,
-    box: 'border-amber-300/70 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/30',
-    iconClass: 'text-amber-600 dark:text-amber-400',
+    box: cn(TONE_BORDER.warning, 'bg-amber-50 dark:bg-amber-950/30'),
+    iconClass: TONE_TEXT.warning,
   },
 };
 

@@ -1,10 +1,10 @@
 'use client';
 
-import { Menu, Radar } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link } from '@/i18n/navigation';
+import { BrandLink } from './brand-link';
 import { ConnectionSwitcher, type ShellConnection } from './connection-switcher';
 import { LocaleSwitcher } from './locale-switcher';
 import { NavList, SignOutForm } from './sidebar';
@@ -27,11 +27,8 @@ export function TopBar({ signedIn, connections }: { signedIn: boolean; connectio
         >
           <Menu className="size-5" aria-hidden />
         </Button>
-        <Link href="/getting-started" className="flex shrink-0 items-center gap-2 font-semibold md:hidden">
-          <Radar className="size-5 text-primary" aria-hidden />
-          {/* Kept for screen readers on narrow screens, where the icon alone has to fit. */}
-          <span className="sr-only sm:not-sr-only">{t('Common.appName')}</span>
-        </Link>
+        {/* The name stays for screen readers on narrow screens, where the icon alone has to fit. */}
+        <BrandLink className="shrink-0 md:hidden" labelClassName="sr-only sm:not-sr-only" />
         {connections && <ConnectionSwitcher connections={connections} />}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <LocaleSwitcher />

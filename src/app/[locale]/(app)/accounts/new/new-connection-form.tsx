@@ -2,31 +2,27 @@
 
 import { useTranslations } from 'next-intl';
 import { useActionState, useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FormErrorAlert } from '@/components/form-error-alert';
+import { FormField } from '@/components/form-field';
+import { SubmitButton } from '@/components/submit-button';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { CONNECTION_NAME_MAX } from '@/lib/limits';
-import { CONNECTION_METHODS, type ConnectionMethod } from '@/lib/connections/types';
 import { AWS_REGIONS } from '@/lib/aws/regions';
+import { CONNECTION_METHODS, type ConnectionMethod } from '@/lib/connections/types';
+import type { FormAction } from '@/lib/forms/action-state';
+import { CONNECTION_NAME_MAX } from '@/lib/limits';
 import { cn } from '@/lib/utils';
 import type { FormState } from '../actions';
 
-export function NewConnectionForm({ action }: { action: (prev: FormState, data: FormData) => Promise<FormState> }) {
+export function NewConnectionForm({ action }: { action: FormAction<FormState> }) {
   const t = useTranslations('Wizard');
-  const [state, formAction, pending] = useActionState(action, {});
+  const [state, formAction] = useActionState(action, {});
   const [method, setMethod] = useState<ConnectionMethod>('role');
   const selectedRegions = new Set(state.values?.regions);
 
   return (
     <form action={formAction} className="space-y-8">
-      {state.error && (
-        <Alert variant="destructive" role="alert">
-          <AlertDescription>{t(`errors.${state.error}`)}</AlertDescription>
-        </Alert>
-      )}
+      <FormErrorAlert message={state.error && t(`errors.${state.error}`)} />
 
       <fieldset>
         <legend className="mb-3 font-medium">{t('methodLegend')}</legend>
@@ -60,24 +56,24 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
       </fieldset>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="name">{t('name')}</Label>
-          <Input id="name" name="name" defaultValue={state.values?.name} placeholder={t('namePlaceholder')} maxLength={CONNECTION_NAME_MAX} required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="awsAccountId">{t('accountId')}</Label>
-          <Input
-            id="awsAccountId"
-            name="awsAccountId"
-            defaultValue={state.values?.awsAccountId}
-            inputMode="numeric"
-            pattern="[0-9 -]{12,14}"
-            placeholder="123456789012"
-            required
-            aria-describedby="account-hint"
-          />
-          <p id="account-hint" className="text-xs text-muted-foreground">{t('accountIdHint')}</p>
-        </div>
+        <FormField
+          id="name"
+          label={t('name')}
+          defaultValue={state.values?.name}
+          placeholder={t('namePlaceholder')}
+          maxLength={CONNECTION_NAME_MAX}
+          required
+        />
+        <FormField
+          id="awsAccountId"
+          label={t('accountId')}
+          hint={t('accountIdHint')}
+          defaultValue={state.values?.awsAccountId}
+          inputMode="numeric"
+          pattern="[0-9 -]{12,14}"
+          placeholder="123456789012"
+          required
+        />
       </div>
 
       <fieldset>
@@ -100,7 +96,7 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
         </div>
       </fieldset>
 
-      <Button type="submit" disabled={pending}>{t('submit')}</Button>
+      <SubmitButton>{t('submit')}</SubmitButton>
     </form>
   );
 }

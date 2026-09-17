@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
+import { SectionHeading } from './section-heading';
 
 export type SubStep = { content: ReactNode; extra?: ReactNode };
 
 export function Method({ id, title, intro, children }: { id?: string; title: string; intro?: string; children: ReactNode }) {
   return (
     <div id={id} className="scroll-mt-20">
-      <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
-      {intro && <p className="mt-2 max-w-3xl text-muted-foreground">{intro}</p>}
+      <SectionHeading as="h3" title={title} intro={intro} />
       <ol className="mt-8 space-y-10">{children}</ol>
     </div>
   );

@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { ConnectionDiagram } from '@/components/getting-started/connection-diagram';
 import { MethodCards } from '@/components/getting-started/method-cards';
+import { SectionHeading } from '@/components/getting-started/section-heading';
 import { SecuritySection } from '@/components/getting-started/security-section';
 import { ServiceCards } from '@/components/getting-started/service-cards';
 import { Steps } from '@/components/getting-started/steps';
@@ -25,8 +26,7 @@ function Section({ id, title, intro, children }: { id: string; title: string; in
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 space-y-6">
       <div>
-        <h2 id={`${id}-title`} className="text-2xl font-semibold tracking-tight">{title}</h2>
-        {intro && <p className="mt-2 max-w-3xl text-muted-foreground">{intro}</p>}
+        <SectionHeading as="h2" id={`${id}-title`} title={title} intro={intro} />
       </div>
       {children}
     </section>

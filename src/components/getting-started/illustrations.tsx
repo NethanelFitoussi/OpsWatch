@@ -13,6 +13,7 @@ import {
   MockSegmented,
   MockUnderlineTabs,
   MockWindow,
+  MockWizardFooter,
 } from './console-mockup';
 import { richTags } from './rich';
 
@@ -32,12 +33,7 @@ export async function CreateUserIllustration({ userName }: { userName: string })
       <MockWindow
         breadcrumb={[m('iam'), m('users'), m('createUser')]}
         title={m('specifyUserDetails')}
-        footer={
-          <>
-            <MockButton>{m('cancel')}</MockButton>
-            <Highlight n={2}><MockButton primary>{m('next')}</MockButton></Highlight>
-          </>
-        }
+        footer={<MockWizardFooter cancel={m('cancel')} primary={m('next')} />}
       >
         <MockPanel title={m('userDetails')}>
           <MockField label={m('userName')} value={userName} />
@@ -58,12 +54,7 @@ export async function InlinePolicyIllustration({ userName, policy }: { userName:
       <MockWindow
         breadcrumb={[m('iam'), m('users'), userName, m('createPolicy')]}
         title={m('specifyPermissions')}
-        footer={
-          <>
-            <MockButton>{m('cancel')}</MockButton>
-            <Highlight n={2}><MockButton primary>{m('next')}</MockButton></Highlight>
-          </>
-        }
+        footer={<MockWizardFooter cancel={m('cancel')} primary={m('next')} />}
       >
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <p className="text-[13px] font-semibold">{m('policyEditor')}</p>
@@ -82,12 +73,7 @@ export async function AccessKeyIllustration({ userName }: { userName: string }) 
       <MockWindow
         breadcrumb={[m('iam'), m('users'), userName, m('createAccessKey')]}
         title={m('bestPractices')}
-        footer={
-          <>
-            <MockButton>{m('cancel')}</MockButton>
-            <Highlight n={2}><MockButton primary>{m('next')}</MockButton></Highlight>
-          </>
-        }
+        footer={<MockWizardFooter cancel={m('cancel')} primary={m('next')} />}
       >
         <MockPanel title={m('useCase')}>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -114,13 +100,7 @@ export async function ReviewIllustration() {
       <MockWindow
         breadcrumb={[m('cloudformation'), m('stacks'), m('createStack')]}
         title={m('reviewAndCreate')}
-        footer={
-          <>
-            <MockButton>{m('cancel')}</MockButton>
-            <MockButton>{m('previous')}</MockButton>
-            <Highlight n={2}><MockButton primary>{m('submit')}</MockButton></Highlight>
-          </>
-        }
+        footer={<MockWizardFooter cancel={m('cancel')} extra={<MockButton>{m('previous')}</MockButton>} primary={m('submit')} />}
       >
         <MockPanel title={m('capabilities')}>
           <p className="flex items-start gap-2 rounded-md border bg-muted/50 p-2.5 text-[11px]">

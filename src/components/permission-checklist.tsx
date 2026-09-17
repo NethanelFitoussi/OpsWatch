@@ -2,12 +2,13 @@ import { CircleCheck, CircleMinus, CircleX, TriangleAlert } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { knownIdentityError } from '@/lib/aws/identity-errors';
 import type { CheckStatus, PermissionTestResult } from '@/lib/connections/types';
+import { TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<CheckStatus, { icon: typeof CircleCheck; className: string }> = {
-  ok: { icon: CircleCheck, className: 'text-emerald-600 dark:text-emerald-400' },
-  denied: { icon: TriangleAlert, className: 'text-amber-600 dark:text-amber-400' },
-  error: { icon: CircleX, className: 'text-red-600 dark:text-red-400' },
+  ok: { icon: CircleCheck, className: TONE_TEXT.success },
+  denied: { icon: TriangleAlert, className: TONE_TEXT.warning },
+  error: { icon: CircleX, className: TONE_TEXT.danger },
   not_applicable: { icon: CircleMinus, className: 'text-muted-foreground' },
 };
 

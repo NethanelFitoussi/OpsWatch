@@ -26,6 +26,7 @@
     "actions": {
       "copy": "Copy",
       "copied": "Copied",
+      "copyFailed": "Copy failed",
       "save": "Save",
       "cancel": "Cancel",
       "continue": "Continue",

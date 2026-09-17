@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
+import { TONE_TEXT } from '@/lib/ui/tones';
+import { cn } from '@/lib/utils';
 
 export function TestButton({ connectionId }: { connectionId: string }) {
   const t = useTranslations('Checklist');
@@ -40,7 +42,7 @@ export function TestButton({ connectionId }: { connectionId: string }) {
         {running ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <PlayCircle className="size-4" aria-hidden />}
         {running ? t('running') : t('run')}
       </Button>
-      {failed && <p role="alert" className="text-sm text-red-600">{t('failedRequest')}</p>}
+      {failed && <p role="alert" className={cn('text-sm', TONE_TEXT.danger)}>{t('failedRequest')}</p>}
     </div>
   );
 }

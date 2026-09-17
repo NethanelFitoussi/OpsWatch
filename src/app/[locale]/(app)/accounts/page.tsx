@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
+import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,17 +21,18 @@ export default async function AccountsPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">{t('description')}</p>
-        </div>
-        <Button asChild>
-          <Link href="/accounts/new">
-            <Plus className="size-4" aria-hidden /> {t('add')}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        className="items-end gap-4"
+        actions={
+          <Button asChild>
+            <Link href="/accounts/new">
+              <Plus className="size-4" aria-hidden /> {t('add')}
+            </Link>
+          </Button>
+        }
+      />
 
       {views.length === 0 ? (
         <Card className="border-dashed">

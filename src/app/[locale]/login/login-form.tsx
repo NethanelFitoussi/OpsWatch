@@ -2,34 +2,22 @@
 
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FormErrorAlert } from '@/components/form-error-alert';
+import { FormField } from '@/components/form-field';
+import { SubmitButton } from '@/components/submit-button';
+import type { FormAction } from '@/lib/forms/action-state';
 import type { LoginState } from './actions';
 
-export function LoginForm({ action }: { action: (prev: LoginState, data: FormData) => Promise<LoginState> }) {
+export function LoginForm({ action }: { action: FormAction<LoginState> }) {
   const t = useTranslations('Auth');
-  const [state, formAction, pending] = useActionState(action, {});
+  const [state, formAction] = useActionState(action, {});
 
   return (
     <form action={formAction} className="space-y-4">
-      {state.error && (
-        <Alert variant="destructive" role="alert">
-          <AlertDescription>{t(`errors.${state.error}`)}</AlertDescription>
-        </Alert>
-      )}
-      <div className="space-y-2">
-        <Label htmlFor="email">{t('login.email')}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.email} required />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">{t('login.password')}</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
-      </div>
-      <Button type="submit" className="w-full" disabled={pending}>
-        {t('login.submit')}
-      </Button>
+      <FormErrorAlert message={state.error && t(`errors.${state.error}`)} />
+      <FormField id="email" label={t('login.email')} type="email" autoComplete="email" defaultValue={state.email} required />
+      <FormField id="password" label={t('login.password')} type="password" autoComplete="current-password" required />
+      <SubmitButton className="w-full">{t('login.submit')}</SubmitButton>
     </form>
   );
 }

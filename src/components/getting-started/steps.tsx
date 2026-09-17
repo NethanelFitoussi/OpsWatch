@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BASE_IDENTITY_POLICY, ROLE_NAME_PREFIX, readOnlyPolicyDocument } from '@/lib/aws/actions';
 import { roleArnFor, stackNameFor } from '@/lib/aws/template';
 import { Callout } from './callout';
-import { CodeBlock } from './code-block';
+import { CodeBlock } from '@/components/code-block';
 import {
   AccessKeyIllustration,
   CreateUserIllustration,

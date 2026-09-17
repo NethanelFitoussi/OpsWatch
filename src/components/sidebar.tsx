@@ -1,10 +1,11 @@
 'use client';
 
-import { LogOut, Radar } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { signOutAction } from '@/lib/auth/actions';
 import { cn } from '@/lib/utils';
+import { BrandLink } from './brand-link';
 import { NAV_ITEMS } from './nav-items';
 
 export function NavList({ onNavigate }: { onNavigate?: () => void }) {
@@ -60,15 +61,12 @@ export function SignOutForm() {
 }
 
 export function Sidebar({ signedIn }: { signedIn: boolean }) {
-  const t = useTranslations();
+  const t = useTranslations('Common.nav');
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r bg-sidebar px-4 py-5 md:flex">
-      <Link href="/getting-started" className="mb-8 flex items-center gap-2 px-3 text-lg font-semibold">
-        <Radar className="size-5 text-primary" aria-hidden />
-        {t('Common.appName')}
-      </Link>
-      <nav aria-label={t('Common.nav.mainNavigation')} className="flex-1">
+      <BrandLink className="mb-8 px-3 text-lg" />
+      <nav aria-label={t('mainNavigation')} className="flex-1">
         <NavList />
       </nav>
       {signedIn && <SignOutForm />}
