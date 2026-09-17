@@ -44,17 +44,18 @@ async function authorize(requestedLocale: string): Promise<AppLocale> {
   return locale;
 }
 
+/** What a change needs: the values to echo back on invalid input (null without a form), and the change. */
+type Change = { values: FormValues | null; mutate: (db: Db) => { id: string } };
+
 /**
- * Runs one change and then shows the connection page. A connection removed meanwhile (another tab, a
- * stale page) sends the admin back to the list. Invalid input goes back to the form with `values`, or is
- * rethrown when there is no form (`values` null). Cached credentials of the connection are dropped.
+ * Checks the session, then reads the form (`prepare`) and runs one change, and shows the connection page.
+ * A connection removed meanwhile (another tab, a stale page) sends the admin back to the list. Invalid
+ * input goes back to the form with `values`, or is rethrown when there is no form (`values` null).
+ * Cached credentials of the connection are dropped.
  */
-async function mutateConnection(
-  requestedLocale: string,
-  values: FormValues | null,
-  mutate: (db: Db) => { id: string },
-): Promise<FormState> {
+async function mutateConnection(requestedLocale: string, prepare: () => Change): Promise<FormState> {
   const locale = await authorize(requestedLocale);
+  const { values, mutate } = prepare();
   let id: string;
   try {
     id = mutate(getDb()).id;
@@ -72,36 +73,45 @@ async function mutateConnection(
 }
 
 export async function createConnectionAction(locale: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const values = {
-    name: formString(formData, 'name'),
-    awsAccountId: formString(formData, 'awsAccountId'),
-    regions: formStrings(formData, 'regions'),
-  };
-  return mutateConnection(locale, values, (db) =>
-    createConnection(db, {
-      name: values.name,
-      method: formString(formData, 'method'),
-      awsAccountId: values.awsAccountId.replace(/\D/g, ''),
-      regions: values.regions,
-    }),
-  );
+  return mutateConnection(locale, () => {
+    const values = {
+      name: formString(formData, 'name'),
+      awsAccountId: formString(formData, 'awsAccountId'),
+      regions: formStrings(formData, 'regions'),
+    };
+    return {
+      values,
+      mutate: (db) =>
+        createConnection(db, {
+          name: values.name,
+          method: formString(formData, 'method'),
+          awsAccountId: values.awsAccountId.replace(/\D/g, ''),
+          regions: values.regions,
+        }),
+    };
+  });
 }
 
 export async function saveRoleArnAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const roleArn = formString(formData, 'roleArn');
-  return mutateConnection(locale, { roleArn }, (db) => setRoleArn(db, id, roleArn));
+  return mutateConnection(locale, () => {
+    const roleArn = formString(formData, 'roleArn');
+    return { values: { roleArn }, mutate: (db) => setRoleArn(db, id, roleArn) };
+  });
 }
 
 export async function saveAccessKeysAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const accessKeyId = formString(formData, 'accessKeyId');
-  const secretAccessKey = formString(formData, 'secretAccessKey');
-  return mutateConnection(locale, { accessKeyId }, (db) =>
-    setAccessKeys(db, id, { accessKeyId, secretAccessKey }, env().OPSWATCH_SECRET),
-  );
+  return mutateConnection(locale, () => {
+    const accessKeyId = formString(formData, 'accessKeyId');
+    const secretAccessKey = formString(formData, 'secretAccessKey');
+    return {
+      values: { accessKeyId },
+      mutate: (db) => setAccessKeys(db, id, { accessKeyId, secretAccessKey }, env().OPSWATCH_SECRET),
+    };
+  });
 }
 
 export async function regenerateExternalIdAction(locale: string, id: string): Promise<void> {
-  await mutateConnection(locale, null, (db) => regenerateExternalId(db, id));
+  await mutateConnection(locale, () => ({ values: null, mutate: (db) => regenerateExternalId(db, id) }));
 }
 
 export async function launchStackAction(requestedLocale: string, id: string): Promise<void> {

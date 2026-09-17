@@ -10,9 +10,14 @@ class RedirectSignal extends Error {
   }
 }
 
-const state = vi.hoisted(() => ({ db: undefined as unknown as Db }));
+const state = vi.hoisted(() => ({ db: undefined as unknown as Db, signedIn: true }));
 
-vi.mock('@/lib/auth/current', () => ({ requireAdmin: async () => 1 }));
+vi.mock('@/lib/auth/current', () => ({
+  requireAdmin: async () => {
+    if (!state.signedIn) throw new Error('signed out');
+    return 1;
+  },
+}));
 vi.mock('@/lib/db/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/db/client')>()),
   getDb: () => state.db,
@@ -56,6 +61,7 @@ function form(entries: [string, string][]) {
 
 beforeEach(() => {
   state.db = createTestDb();
+  state.signedIn = true;
 });
 
 describe('connection actions on a removed connection', () => {
@@ -67,6 +73,22 @@ describe('connection actions on a removed connection', () => {
     ['saveAccessKeysAction', () => actions.saveAccessKeysAction('fr', 'gone00000000', {}, form([['accessKeyId', 'x']]))],
   ])('%s goes back to the accounts list', async (_name, run) => {
     expect(await redirectOf(run())).toEqual({ href: '/accounts', locale: 'fr' });
+  });
+});
+
+describe('connection form actions without a session', () => {
+  it.each([
+    ['createConnectionAction', (data: FormData) => actions.createConnectionAction('en', {}, data)],
+    ['saveRoleArnAction', (data: FormData) => actions.saveRoleArnAction('en', 'abc123def456', {}, data)],
+    ['saveAccessKeysAction', (data: FormData) => actions.saveAccessKeysAction('en', 'abc123def456', {}, data)],
+  ])('%s reads no form field before the authorization', async (_name, run) => {
+    state.signedIn = false;
+    const data = form([['name', 'x']]);
+    const get = vi.spyOn(data, 'get');
+    const getAll = vi.spyOn(data, 'getAll');
+    await expect(run(data)).rejects.toThrow('signed out');
+    expect(get).not.toHaveBeenCalled();
+    expect(getAll).not.toHaveBeenCalled();
   });
 });
 
