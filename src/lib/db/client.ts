@@ -9,7 +9,7 @@ import * as schema from './schema';
 
 export type Db = BetterSQLite3Database<typeof schema>;
 
-export const MIGRATIONS_FOLDER = path.join(process.cwd(), 'drizzle');
+const MIGRATIONS_FOLDER = path.join(process.cwd(), 'drizzle');
 
 export function createDb(filename: string): Db {
   if (filename !== ':memory:') {

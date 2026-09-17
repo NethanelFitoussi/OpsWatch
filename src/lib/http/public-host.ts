@@ -1,9 +1,12 @@
 // Imported by next.config.ts, so this module must not import server-only code.
 
-/** Clickjacking defence: no page of OpsWatch may be shown inside a frame. */
 export const SECURITY_HEADERS = [
+  // Clickjacking defence: no page of OpsWatch may be shown inside a frame.
   { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
   { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  // Links to the AWS console and the Launch Stack redirect must not reveal connection page URLs.
+  { key: 'Referrer-Policy', value: 'same-origin' },
 ];
 
 function hostOf(publicUrl: string | undefined): string | null {

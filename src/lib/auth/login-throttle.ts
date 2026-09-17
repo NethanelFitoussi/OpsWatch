@@ -1,4 +1,4 @@
-export type ThrottleResult<T> = { limited: true } | { limited: false; value: T };
+type ThrottleResult<T> = { limited: true } | { limited: false; value: T };
 
 export type LoginThrottle = {
   /** Runs one password verification, slowed down while sign-ins are failing globally. */

@@ -3,7 +3,7 @@ import type { GetOutputType } from '@smithy/types';
 /** Every AWS call OpsWatch makes on a user's behalf gives up after this long. */
 export const AWS_CALL_TIMEOUT_MS = 5000;
 
-export function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>, timeoutMs: number = AWS_CALL_TIMEOUT_MS): Promise<T> {
+function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>, timeoutMs: number = AWS_CALL_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {

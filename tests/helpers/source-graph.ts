@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const ROOT = path.resolve(import.meta.dirname, '../..');
+const ROOT = path.resolve(import.meta.dirname, '../..');
 export const SRC = path.join(ROOT, 'src');
 
-export function sourceFiles(dir: string = SRC): string[] {
+function sourceFiles(dir: string = SRC): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) return sourceFiles(full);
@@ -14,7 +14,7 @@ export function sourceFiles(dir: string = SRC): string[] {
 
 export const readSource = (file: string) => fs.readFileSync(file, 'utf8');
 
-export const directive = (source: string) => source.match(/^\s*['"]use (client|server)['"]/)?.[1];
+const directive = (source: string) => source.match(/^\s*['"]use (client|server)['"]/)?.[1];
 
 /** Specifiers of the value imports and re-exports of a module (`import type` is erased, so it is skipped). */
 export function valueImports(source: string): string[] {

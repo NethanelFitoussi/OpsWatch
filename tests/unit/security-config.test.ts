@@ -33,14 +33,20 @@ describe('next.config', () => {
     expect(config.experimental?.serverActions?.allowedOrigins).toEqual(['ops.example.com']);
   });
 
-  it('sends anti-framing headers on every route', async () => {
+  it('sends the security headers on every route', async () => {
     const rules = await nextConfig.headers!();
     expect(rules).toEqual([{ source: '/:path*', headers: SECURITY_HEADERS }]);
     expect(SECURITY_HEADERS).toEqual(
       expect.arrayContaining([
         { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
         { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'same-origin' },
       ]),
     );
+  });
+
+  it('does not advertise the framework', () => {
+    expect(nextConfig.poweredByHeader).toBe(false);
   });
 });

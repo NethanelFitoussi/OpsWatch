@@ -15,7 +15,7 @@ export const resourcePrefix = (connectionId: string) => `opswatch-${connectionId
 export const roleNameFor = (connectionId: string) => `${ROLE_NAME_PREFIX}${connectionId}`;
 export const roleArnFor = (accountId: string, connectionId: string, partition = 'aws') =>
   `arn:${partition}:iam::${accountId}:role/${roleNameFor(connectionId)}`;
-export const stackNameFor = resourcePrefix;
+export const stackNameFor = (connectionId: string) => resourcePrefix(connectionId);
 export const templateFileNameFor = (connectionId: string) => `${resourcePrefix(connectionId)}.yaml`;
 export const templateObjectKey = (connectionId: string) =>
   `opswatch/templates/${resourcePrefix(connectionId)}-v${TEMPLATE_VERSION}.yaml`;

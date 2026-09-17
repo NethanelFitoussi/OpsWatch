@@ -4,9 +4,9 @@ import { z } from 'zod';
 const schema = z.object({
   OPSWATCH_SECRET: z.string().min(32, 'must be at least 32 characters'),
   OPSWATCH_DATA_DIR: z.string().min(1).default('/data'),
-  OPSWATCH_PUBLIC_URL: z.string().url().optional(),
+  OPSWATCH_PUBLIC_URL: z.url().optional(),
   OPSWATCH_TEMPLATE_BUCKET: z.string().min(3).optional(),
-  OPSWATCH_AWS_ENDPOINT_URL: z.string().url().optional(),
+  OPSWATCH_AWS_ENDPOINT_URL: z.url().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
