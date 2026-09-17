@@ -866,6 +866,7 @@
         "hosts": "Hôtes sains / défaillants"
       },
       "hostCounts": "{healthy} / {unhealthy}",
+      "hostsIncomplete": "L'état des hôtes n'a pas pu être entièrement vérifié pour {count, plural, one {# répartiteur de charge} other {# répartiteurs de charge}}.",
       "back": "Tous les répartiteurs de charge",
       "metaTitle": "Répartiteur de charge",
       "detailDescription": "Application Load Balancer.",

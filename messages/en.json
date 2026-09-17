@@ -866,6 +866,7 @@
         "hosts": "Healthy / unhealthy hosts"
       },
       "hostCounts": "{healthy} / {unhealthy}",
+      "hostsIncomplete": "Host health could not be fully checked for {count, plural, one {# load balancer} other {# load balancers}}.",
       "back": "All load balancers",
       "metaTitle": "Load balancer",
       "detailDescription": "Application load balancer.",

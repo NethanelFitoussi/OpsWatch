@@ -160,6 +160,46 @@ export function targetHealthCounts(entries: readonly TargetHealthEntry[]): { hea
   };
 }
 
+export type LoadBalancerHostSummary = { healthy: number; unhealthy: number; incomplete: boolean };
+
+/**
+ * One host-health summary per load balancer ARN, from the `DescribeTargetHealth` results of the target groups
+ * that were checked (`healthResults`, aligned index-for-index with the first `healthResults.length` items of
+ * `allGroups`). A load balancer's summary is `incomplete` — its counts must not be trusted as complete — when
+ * one of its target groups' health call failed, or when a target group was skipped past `healthResults.length`
+ * (the `MAX_TARGET_GROUPS_WITH_HEALTH` cap the caller applied before fetching).
+ */
+export function summarizeTargetGroupHealth(
+  allGroups: readonly TargetGroup[],
+  healthResults: readonly MonitoringResult<TargetHealthEntry[]>[],
+): Map<string, LoadBalancerHostSummary> {
+  const summaries = new Map<string, LoadBalancerHostSummary>();
+  const summaryFor = (arn: string): LoadBalancerHostSummary => {
+    const existing = summaries.get(arn);
+    if (existing) return existing;
+    const created: LoadBalancerHostSummary = { healthy: 0, unhealthy: 0, incomplete: false };
+    summaries.set(arn, created);
+    return created;
+  };
+  allGroups.slice(0, healthResults.length).forEach((group, index) => {
+    const health = healthResults[index];
+    for (const loadBalancerArn of group.loadBalancerArns) {
+      const summary = summaryFor(loadBalancerArn);
+      if (health.ok) {
+        const counts = targetHealthCounts(health.data);
+        summary.healthy += counts.healthy;
+        summary.unhealthy += counts.unhealthy;
+      } else {
+        summary.incomplete = true;
+      }
+    }
+  });
+  for (const group of allGroups.slice(healthResults.length)) {
+    for (const loadBalancerArn of group.loadBalancerArns) summaryFor(loadBalancerArn).incomplete = true;
+  }
+  return summaries;
+}
+
 export async function describeTargetGroups(target: AwsTarget, arns: readonly string[], deps: MonitoringDeps = {}): Promise<MonitoringResult<TargetGroup[]>> {
   const batches = await Promise.all(
     chunk(arns, DESCRIBE_TARGET_GROUPS_BATCH).map((batch) =>

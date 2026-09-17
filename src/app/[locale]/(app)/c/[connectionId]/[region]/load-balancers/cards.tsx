@@ -9,12 +9,12 @@ import {
   listTargetGroups,
   loadBalancerLatencyQuery,
   loadBalancerQueries,
+  summarizeTargetGroupHealth,
   targetHealth,
-  targetHealthCounts,
   MAX_TARGET_GROUPS_WITH_HEALTH,
-  type TargetHealthEntry,
+  type LoadBalancerHostSummary,
 } from '@/lib/monitoring/elb';
-import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
+import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
 import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
@@ -45,14 +45,8 @@ export async function LoadBalancersCard({ scope, range }: { scope: MonitoringSco
       </MonitoringCard>
     );
   }
-  if (!groupsResult.ok) {
-    return (
-      <MonitoringCard title={title}>
-        <FailureNotice failure={groupsResult} connectionId={scope.connectionId} />
-      </MonitoringCard>
-    );
-  }
   const lbs = lbsResult.data;
+  // An empty region has nothing to show regardless of whether the target group lookup below succeeded.
   if (lbs.length === 0) {
     return (
       <MonitoringCard title={title}>
@@ -61,31 +55,37 @@ export async function LoadBalancersCard({ scope, range }: { scope: MonitoringSco
     );
   }
 
+  // A failed target group lookup must not hide name/scheme/state/requests/5xx: the table still renders,
+  // with a notice above it and every host count shown as incomplete (same principle as a `main` failure below).
+  const allGroups = groupsResult.ok ? groupsResult.data : [];
+  const checkedGroups = allGroups.slice(0, MAX_TARGET_GROUPS_WITH_HEALTH);
+
   const window = currentWindow(range);
-  const targetGroups = groupsResult.data.slice(0, MAX_TARGET_GROUPS_WITH_HEALTH);
   const [main, p95, healthResults] = await Promise.all([
     getMetricSeries(target.data, lbs.flatMap((lb, index) => loadBalancerQueries(lb, `l${index}`)), window),
     // Percentile queries always go in their own request (moto fact 2).
     getMetricSeries(target.data, lbs.map((lb, index) => loadBalancerLatencyQuery(lb, `l${index}`)), window),
-    Promise.all(targetGroups.map((group) => targetHealth(target.data, group.arn))),
+    Promise.all(checkedGroups.map((group) => targetHealth(target.data, group.arn))),
   ]);
 
-  const healthByLoadBalancer = new Map<string, TargetHealthEntry[]>();
-  targetGroups.forEach((group, index) => {
-    const health = healthResults[index];
-    if (!health.ok) return;
-    for (const loadBalancerArn of group.loadBalancerArns) {
-      const entries = healthByLoadBalancer.get(loadBalancerArn) ?? [];
-      entries.push(...health.data);
-      healthByLoadBalancer.set(loadBalancerArn, entries);
-    }
-  });
+  const hostSummaries = summarizeTargetGroupHealth(allGroups, healthResults);
+  const hostsFor = (arn: string): LoadBalancerHostSummary =>
+    !groupsResult.ok ? { healthy: 0, unhealthy: 0, incomplete: true } : (hostSummaries.get(arn) ?? { healthy: 0, unhealthy: 0, incomplete: false });
+  // Counted separately from the `groupsResult` failure notice below: this is about rows that could each be
+  // individually incomplete (a denied DescribeTargetHealth call, or a target group past the checked cap)
+  // even though listing target groups itself succeeded.
+  const incompleteCount = groupsResult.ok ? lbs.filter((lb) => hostsFor(lb.arn).incomplete).length : 0;
 
   return (
     <MonitoringCard title={title}>
       {!main.ok && (
         <div className="mb-3">
           <FailureNotice failure={main} connectionId={scope.connectionId} />
+        </div>
+      )}
+      {!groupsResult.ok && (
+        <div className="mb-3">
+          <FailureNotice failure={groupsResult} connectionId={scope.connectionId} />
         </div>
       )}
       <Table>
@@ -103,9 +103,7 @@ export async function LoadBalancersCard({ scope, range }: { scope: MonitoringSco
         </TableHeader>
         <TableBody>
           {lbs.map((lb, index) => {
-            const { healthy, unhealthy } = targetHealthCounts(healthByLoadBalancer.get(lb.arn) ?? []);
-            const p95Series = p95.ok ? seriesById(p95.data, `l${index}p95`) : null;
-            const p95Latest = p95Series && p95Series.values.length > 0 ? p95Series.values[p95Series.values.length - 1] : null;
+            const { healthy, unhealthy, incomplete } = hostsFor(lb.arn);
             return (
               <TableRow key={lb.arn}>
                 <TableCell>
@@ -121,15 +119,22 @@ export async function LoadBalancersCard({ scope, range }: { scope: MonitoringSco
                 <TableCell>{main.ok ? formatMetricValue(sum(main.data, `l${index}req`), 'count', locale) : NO_VALUE}</TableCell>
                 <TableCell>{main.ok ? formatMetricValue(sum(main.data, `l${index}elb5xx`), 'count', locale) : NO_VALUE}</TableCell>
                 <TableCell>{main.ok ? formatMetricValue(sum(main.data, `l${index}t5xx`), 'count', locale) : NO_VALUE}</TableCell>
-                <TableCell>{p95Series ? formatMetricValue(p95Latest, 'seconds', locale) : NO_VALUE}</TableCell>
                 <TableCell>
-                  <span className={unhealthy > 0 ? TONE_TEXT.danger : undefined}>{t('hostCounts', { healthy, unhealthy })}</span>
+                  {p95.ok ? formatMetricValue(latestValue(seriesById(p95.data, `l${index}p95`)), 'seconds', locale) : NO_VALUE}
+                </TableCell>
+                <TableCell>
+                  {incomplete ? (
+                    NO_VALUE
+                  ) : (
+                    <span className={unhealthy > 0 ? TONE_TEXT.danger : undefined}>{t('hostCounts', { healthy, unhealthy })}</span>
+                  )}
                 </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
+      {incompleteCount > 0 && <p className="mt-3 text-sm text-muted-foreground">{t('hostsIncomplete', { count: incompleteCount })}</p>}
     </MonitoringCard>
   );
 }

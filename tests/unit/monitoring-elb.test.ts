@@ -16,6 +16,7 @@ import {
   loadBalancerDimension,
   loadBalancerLatencyQuery,
   loadBalancerQueries,
+  summarizeTargetGroupHealth,
   targetGroupDimension,
   targetGroupLatencyQuery,
   targetGroupQueries,
@@ -25,6 +26,7 @@ import {
   type TargetGroup,
   type TargetHealthEntry,
 } from '@/lib/monitoring/elb';
+import type { MonitoringResult } from '@/lib/monitoring/result';
 
 const elb = mockClient(ElasticLoadBalancingV2Client);
 const target = { connectionId: 'abc123def456', region: 'eu-west-1', credentials: { accessKeyId: 'ASIA', secretAccessKey: 's' } };
@@ -258,5 +260,43 @@ describe('targetHealthCounts', () => {
     const entry = (state: string): TargetHealthEntry => ({ id: '10.0.0.1', port: 80, state, reason: null, description: null });
     const entries = [entry('healthy'), entry('unhealthy'), entry('draining'), entry('initial'), entry('unhealthy.draining')];
     expect(targetHealthCounts(entries)).toEqual({ healthy: 1, unhealthy: 1 });
+  });
+});
+
+describe('summarizeTargetGroupHealth', () => {
+  const group = (name: string, arns: string[]): TargetGroup => ({
+    name,
+    arn: `arn:aws:elasticloadbalancing:eu-west-1:111122223333:targetgroup/${name}/1`,
+    protocol: 'HTTP',
+    port: 80,
+    targetType: 'ip',
+    healthCheckPath: '/health',
+    loadBalancerArns: arns,
+  });
+  const entry = (state: string): TargetHealthEntry => ({ id: '10.0.0.1', port: 80, state, reason: null, description: null });
+  const ok = (entries: TargetHealthEntry[]): MonitoringResult<TargetHealthEntry[]> => ({ ok: true, data: entries });
+  const denied = (): MonitoringResult<TargetHealthEntry[]> => ({ ok: false, reason: 'denied', code: 'AccessDenied', action: 'elasticloadbalancing:DescribeTargetHealth' });
+
+  it('sums healthy and unhealthy counts across a load balancer’s target groups, complete when every call succeeds', () => {
+    const groups = [group('web', [lbArn]), group('api', [lbArn])];
+    const summaries = summarizeTargetGroupHealth(groups, [ok([entry('healthy'), entry('unhealthy')]), ok([entry('healthy')])]);
+    expect(summaries.get(lbArn)).toEqual({ healthy: 2, unhealthy: 1, incomplete: false });
+  });
+
+  it('marks a load balancer incomplete when one of its target groups’ health call failed', () => {
+    const groups = [group('web', [lbArn]), group('api', [lbArn])];
+    const summaries = summarizeTargetGroupHealth(groups, [ok([entry('healthy')]), denied()]);
+    expect(summaries.get(lbArn)).toEqual({ healthy: 1, unhealthy: 0, incomplete: true });
+  });
+
+  it('marks a load balancer incomplete when one of its target groups was skipped past the checked cap', () => {
+    // Only the first group (index 0) has a health result; the second was excluded by the MAX_TARGET_GROUPS_WITH_HEALTH cap.
+    const groups = [group('web', [lbArn]), group('api', [lbArn])];
+    const summaries = summarizeTargetGroupHealth(groups, [ok([entry('healthy')])]);
+    expect(summaries.get(lbArn)).toEqual({ healthy: 1, unhealthy: 0, incomplete: true });
+  });
+
+  it('has no entry for a load balancer whose target groups were never observed', () => {
+    expect(summarizeTargetGroupHealth([], []).size).toBe(0);
   });
 });
