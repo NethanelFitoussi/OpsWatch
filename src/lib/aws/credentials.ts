@@ -1,8 +1,9 @@
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import type { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@smithy/types';
+import { baseCredentials } from './base-credentials';
 import { clientConfig } from './client-config';
 import { awsErrorCode } from './errors';
+import { AWS_CALL_TIMEOUT_MS, withTimeout } from './timeout';
 
 export type CredentialsInput =
   | { method: 'role'; connectionId: string; roleArn: string; externalId: string }
@@ -24,11 +25,13 @@ export function createCredentialResolver(
     now?: () => number;
     ambientProvider?: AwsCredentialIdentityProvider;
     log?: (event: AssumeRoleEvent) => void;
+    timeoutMs?: number;
   } = {},
 ): CredentialResolver {
   const now = deps.now ?? Date.now;
   const log = deps.log ?? ((event: AssumeRoleEvent) => console.info(JSON.stringify(event)));
-  const ambient = deps.ambientProvider ?? fromNodeProviderChain();
+  const ambient = deps.ambientProvider ?? baseCredentials();
+  const timeoutMs = deps.timeoutMs ?? AWS_CALL_TIMEOUT_MS;
   const cache = new Map<string, AwsCredentialIdentity>();
 
   async function assumeRole(
@@ -43,13 +46,18 @@ export function createCredentialResolver(
 
     const sts = new STSClient(clientConfig(region, ambient));
     try {
-      const out = await sts.send(
-        new AssumeRoleCommand({
-          RoleArn: input.roleArn,
-          ExternalId: input.externalId,
-          RoleSessionName: `opswatch-${input.connectionId}`,
-          DurationSeconds: ASSUME_ROLE_DURATION_SECONDS,
-        }),
+      const out = await withTimeout(
+        (abortSignal) =>
+          sts.send(
+            new AssumeRoleCommand({
+              RoleArn: input.roleArn,
+              ExternalId: input.externalId,
+              RoleSessionName: `opswatch-${input.connectionId}`,
+              DurationSeconds: ASSUME_ROLE_DURATION_SECONDS,
+            }),
+            { abortSignal },
+          ),
+        timeoutMs,
       );
       const c = out.Credentials;
       if (!c?.AccessKeyId || !c.SecretAccessKey || !c.SessionToken || !c.Expiration) {

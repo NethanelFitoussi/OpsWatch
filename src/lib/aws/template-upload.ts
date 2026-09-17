@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { baseCredentials } from './base-credentials';
 import { clientConfig } from './client-config';
 import { templateObjectKey } from './template';
 
@@ -9,7 +10,7 @@ export async function uploadTemplate(input: {
   region: string;
   body: string;
 }): Promise<void> {
-  const client = new S3Client(clientConfig(input.region));
+  const client = new S3Client({ ...clientConfig(input.region, baseCredentials()), followRegionRedirects: true });
   await client.send(
     new PutObjectCommand({
       Bucket: input.bucket,

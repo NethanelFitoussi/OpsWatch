@@ -9,7 +9,10 @@ fs.writeFileSync(
   renderTemplateYaml({
     connectionId: 'abc123def456',
     externalId: 'sample-external-id-0123456789abcdef',
-    trust: { principal: 'arn:aws:iam::111122223333:root', principalArnPattern: 'arn:aws:iam::111122223333:role/*opswatch' },
+    trust: {
+      principal: 'arn:aws:iam::111122223333:root',
+      principalArnPatterns: ['arn:aws:iam::111122223333:role/opswatch', 'arn:aws:iam::111122223333:role/*/opswatch'],
+    },
   }),
 );
 console.log(`wrote ${out}`);

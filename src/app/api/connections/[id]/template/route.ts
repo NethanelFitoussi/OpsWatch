@@ -4,12 +4,16 @@ import { renderTemplateYaml, templateFileNameFor } from '@/lib/aws/template';
 import { getCurrentAdminId } from '@/lib/auth/current';
 import { ConnectionNotFoundError, getConnection } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
+import { browserLocale, isBrowserNavigation, seeOther } from '@/lib/http/browser';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // A click on the download link must land on a page, not on a JSON error.
+  const browser = isBrowserNavigation(request);
+  const locale = browserLocale(request);
   if ((await getCurrentAdminId()) === null) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return browser ? seeOther(`/${locale}/login`) : NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const { id } = await params;
 
@@ -30,7 +34,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     identity = await detectBaseIdentity(row.regions[0]);
   } catch {
-    return NextResponse.json({ error: 'no_base_identity' }, { status: 409 });
+    return browser
+      ? seeOther(`/${locale}/accounts/${row.id}?error=no_base_identity`)
+      : NextResponse.json({ error: 'no_base_identity' }, { status: 409 });
   }
 
   const yaml = renderTemplateYaml({ connectionId: row.id, externalId: row.externalId, trust: trustFor(identity) });

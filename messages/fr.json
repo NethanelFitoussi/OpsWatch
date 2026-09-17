@@ -158,9 +158,11 @@
       "deployTitle": "Déployer la stack CloudFormation",
       "deployHelp": "Déployez le template dans le compte {account}. Il crée un seul rôle IAM en lecture seule, rien d'autre.",
       "download": "Télécharger le template",
+      "downloadUnavailable": "Disponible dès qu'OpsWatch a une identité AWS (voir la première étape ci-dessus).",
       "cliLabel": "Ou déployez-le avec l'AWS CLI :",
       "launchStack": "Lancer la stack dans la console AWS",
       "launchFailed": "Le template n'a pas pu être envoyé dans le bucket configuré.",
+      "noBaseIdentity": "Le template n'a pas pu être généré car OpsWatch n'a pas d'identité AWS. La première étape ci-dessus explique pourquoi.",
       "outdated": "Un template plus récent est disponible, avec les permissions de nouvelles fonctionnalités. Téléchargez-le et mettez la stack à jour.",
       "roleArnTitle": "Coller l'ARN du rôle",
       "roleArnHelp": "Copiez RoleArn dans les sorties de la stack, ou exécutez :",
@@ -218,6 +220,11 @@
       "SecretChanged": "Les clés d'accès enregistrées ne peuvent plus être déchiffrées : OPSWATCH_SECRET a changé. Saisissez-les à nouveau.",
       "NotReady": "Terminez les étapes de configuration ci-dessus avant de tester.",
       "AccessDenied": "OpsWatch n'a pas pu assumer le rôle. Vérifiez que la stack est déployée, que l'ARN du rôle est correct et que l'ExternalId correspond.",
+      "CredentialsProviderError": "OpsWatch n'a trouvé aucun identifiant AWS à utiliser. Voir son identité en haut de cette page.",
+      "ExpiredToken": "Les identifiants utilisés ont expiré ({code}).",
+      "InvalidClientTokenId": "AWS ne reconnaît pas l'identifiant de clé d'accès utilisé : il a été supprimé, désactivé ou mal saisi.",
+      "SignatureDoesNotMatch": "La clé d'accès secrète utilisée ne correspond pas à son identifiant de clé.",
+      "Timeout": "AWS n'a pas répondu en 5 secondes. Vérifiez qu'OpsWatch peut joindre AWS, puis relancez le test.",
       "generic": "AWS a refusé les identifiants ({code})."
     },
     "failedRequest": "Le test n'a pas pu être lancé. Réessayez."
@@ -362,8 +369,8 @@
             "i2": "Lancez-la depuis le dossier qui contient le template téléchargé, avec des identifiants du compte à surveiller. Elle contient déjà <code>--capabilities CAPABILITY_NAMED_IAM</code>, l'équivalent en ligne de commande de la case de confirmation."
           },
           "launch": {
-            "title": "Avec Launch Stack",
-            "note": "Disponible uniquement si <code>OPSWATCH_TEMPLATE_BUCKET</code> est configuré.",
+            "title": "Avec Launch Stack (expérimental)",
+            "note": "Expérimental : cette option n'a pas encore été validée sur un vrai compte AWS. Disponible uniquement si <code>OPSWATCH_TEMPLATE_BUCKET</code> est configuré. OpsWatch envoie le template dans ce bucket : son identité a donc besoin de <code>s3:PutObject</code> dessus, et l'utilisateur de la console du compte surveillé doit pouvoir lire l'objet du template : autorisez-le avec une politique de bucket accordant <code>s3:GetObject</code> sur <code>opswatch/templates/*</code>. En cas de doute, téléchargez plutôt le template.",
             "i1": "Sur la page de la connexion, cliquez sur « <ui>{launchStack}</ui> ». La console AWS s'ouvre avec le template et le nom de la stack déjà remplis.",
             "i2": "Cochez la case de confirmation, puis cliquez sur « <ui>Create stack</ui> »."
           }
@@ -581,6 +588,17 @@
       "outputsCount": "Outputs ({count})",
       "key": "Key",
       "value": "Value"
+    }
+  },
+  "IdentityErrors": {
+    "title": "Erreur AWS : {code}.",
+    "hints": {
+      "CredentialsProviderError": "Aucun identifiant AWS n'a été trouvé. Définissez AWS_ACCESS_KEY_ID et AWS_SECRET_ACCESS_KEY dans .env, ou exécutez OpsWatch sur AWS avec un rôle de tâche ECS ou un rôle d'instance EC2. Sans clés, un AWS_PROFILE défini dans le shell qui lance OpsWatch doit désigner un profil existant et lisible.",
+      "ExpiredToken": "Les identifiants ont expiré. Remplacez les clés temporaires (avec leur AWS_SESSION_TOKEN), ou relancez aws sso login pour un profil SSO, puis redémarrez OpsWatch.",
+      "InvalidClientTokenId": "AWS ne reconnaît pas cet identifiant de clé d'accès : il a été supprimé, désactivé ou mal saisi. Vérifiez AWS_ACCESS_KEY_ID, puis redémarrez OpsWatch.",
+      "SignatureDoesNotMatch": "La clé d'accès secrète ne correspond pas à l'identifiant de clé. Vérifiez AWS_SECRET_ACCESS_KEY (sans espace ni guillemet en trop), puis redémarrez OpsWatch.",
+      "Timeout": "AWS n'a pas répondu en 5 secondes. Vérifiez qu'OpsWatch peut joindre AWS STS (réseau, proxy, pare-feu), puis rechargez cette page.",
+      "generic": "Vérifiez les identifiants AWS d'OpsWatch, puis rechargez cette page."
     }
   }
 }

@@ -12,6 +12,8 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/unit/**/*.test.ts'],
     restoreMocks: true,
+    // Set explicitly (to its default) so Vitest does not print a caching hint when a cold run is slow.
+    fsModuleCache: false,
     server: {
       // next-intl's middleware imports `next/server` without an extension;
       // Next.js's own bundler resolves that fine, but Node's native ESM

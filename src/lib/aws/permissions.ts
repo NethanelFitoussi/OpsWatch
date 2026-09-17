@@ -9,8 +9,9 @@ import type { CheckedService, OverallStatus, PermissionTestResult, ServiceCheck 
 import { clientConfig } from './client-config';
 import { awsErrorCode } from './errors';
 import { getCallerIdentity } from './identity';
+import { AWS_CALL_TIMEOUT_MS, withTimeout } from './timeout';
 
-export const CHECK_TIMEOUT_MS = 5000;
+export const CHECK_TIMEOUT_MS = AWS_CALL_TIMEOUT_MS;
 
 export type PermissionTestInput = {
   expectedAccountId: string;
@@ -40,18 +41,6 @@ export function overallStatus(accountMatches: boolean, checks: ServiceCheck[]): 
     return 'failed';
   }
   return failing.length === 0 ? 'ok' : 'degraded';
-}
-
-function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>, timeoutMs: number): Promise<T> {
-  const controller = new AbortController();
-  let timer: NodeJS.Timeout | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(Object.assign(new Error(`Timed out after ${timeoutMs} ms`), { name: 'TimeoutError' }));
-    }, timeoutMs);
-  });
-  return Promise.race([run(controller.signal), timeout]).finally(() => clearTimeout(timer));
 }
 
 async function check(
@@ -119,7 +108,7 @@ export async function runPermissionTest(input: PermissionTestInput): Promise<Per
 
   let identity;
   try {
-    identity = await getCallerIdentity(input.credentials, input.regions[0]);
+    identity = await getCallerIdentity(input.credentials, input.regions[0], timeoutMs);
   } catch (error) {
     return { overall: 'failed', accountMatches: false, identityError: awsErrorCode(error), checks: [], testedAt };
   }

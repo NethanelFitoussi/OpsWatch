@@ -63,6 +63,13 @@ OpsWatch propose trois méthodes. Le guide intégré à l'application détaille 
 3. **Clés d'accès.** La paire de clés d'un utilisateur IAM, chiffrée au repos. À n'utiliser
    que si les deux autres méthodes sont impossibles.
 
+**Launch Stack (expérimental).** Quand `OPSWATCH_TEMPLATE_BUCKET` est défini, la méthode rôle
+propose aussi un bouton « Launch Stack » : OpsWatch envoie le template dans ce bucket (son identité
+a besoin de `s3:PutObject` dessus) et ouvre la console CloudFormation. L'utilisateur de la console
+du compte surveillé doit pouvoir lire l'objet du template, par exemple grâce à une politique de
+bucket accordant `s3:GetObject` sur `opswatch/templates/*`. Cette option n'a pas encore été validée
+sur un vrai compte AWS ; le téléchargement du template est le parcours testé.
+
 Une fois connecté, **Lancer le test** appelle une action en lecture par service et par
 région, et montre ce qu'OpsWatch peut voir ou non.
 
@@ -95,7 +102,7 @@ Signalez les vulnérabilités en privé comme indiqué dans [SECURITY.md](SECURI
 | `OPSWATCH_SECRET` | Oui, 32 caractères minimum | Chiffre les clés d'accès et signe les sessions |
 | `OPSWATCH_DATA_DIR` | Non, `/data` par défaut | Emplacement de la base SQLite |
 | `OPSWATCH_PUBLIC_URL` | Non | URL publique ; active les cookies `Secure` en HTTPS |
-| `OPSWATCH_TEMPLATE_BUCKET` | Non | Bucket S3 qui active le bouton « Launch Stack » |
+| `OPSWATCH_TEMPLATE_BUCKET` | Non | Bucket S3 qui active le bouton expérimental « Launch Stack » |
 | `AWS_*`, `AWS_PROFILE` | Pour les méthodes rôle et ambiante | Identité AWS propre à OpsWatch |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests uniquement | Envoie tous les appels AWS vers un serveur moto |
 

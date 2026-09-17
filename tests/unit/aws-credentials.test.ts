@@ -1,6 +1,6 @@
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 import { mockClient } from 'aws-sdk-client-mock';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCredentialResolver, type AssumeRoleEvent } from '@/lib/aws/credentials';
 
 const sts = mockClient(STSClient);
@@ -24,6 +24,9 @@ function assumeRoleResponse(expiresAt: number) {
 }
 
 beforeEach(() => sts.reset());
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('credential resolver', () => {
   it('assumes the role with the ExternalId, session name and duration', async () => {
@@ -100,6 +103,21 @@ describe('credential resolver', () => {
       ok: false,
       errorCode: 'AccessDenied',
     });
+  });
+
+  it('gives up on AssumeRole after 5 seconds and logs the timeout', async () => {
+    vi.useFakeTimers();
+    sts.on(AssumeRoleCommand).callsFake(() => new Promise(() => {}));
+    const log = vi.fn();
+    const resolver = createCredentialResolver({
+      now: () => T0,
+      ambientProvider: async () => ({ accessKeyId: 'BASE', secretAccessKey: 'base' }),
+      log,
+    });
+    const outcome = expect(resolver.resolve(role, 'eu-west-1')).rejects.toMatchObject({ name: 'TimeoutError' });
+    await vi.advanceTimersByTimeAsync(5000);
+    await outcome;
+    expect(log).toHaveBeenCalledWith({ event: 'assume_role', connectionId: 'abc123def456', ok: false, errorCode: 'TimeoutError' });
   });
 
   it('returns ambient credentials from the provider chain', async () => {

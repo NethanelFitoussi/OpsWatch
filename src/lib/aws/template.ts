@@ -12,8 +12,8 @@ export const templateObjectKey = (connectionId: string) =>
 
 export function buildTemplate(input: TemplateInput): Record<string, unknown> {
   const condition: Record<string, unknown> = { StringEquals: { 'sts:ExternalId': input.externalId } };
-  if (input.trust.principalArnPattern) {
-    condition.ArnLike = { 'aws:PrincipalArn': input.trust.principalArnPattern };
+  if (input.trust.principalArnPatterns?.length) {
+    condition.ArnLike = { 'aws:PrincipalArn': input.trust.principalArnPatterns };
   }
 
   return {

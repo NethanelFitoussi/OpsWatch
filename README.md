@@ -61,6 +61,13 @@ OpsWatch offers three methods. The guide inside the application explains each on
 3. **Access keys.** An IAM user's access key pair, encrypted at rest. Use this only when the
    other two methods are not possible.
 
+**Launch Stack (experimental).** When `OPSWATCH_TEMPLATE_BUCKET` is set, the role method also
+offers a "Launch Stack" button: OpsWatch uploads the template to that bucket (its identity needs
+`s3:PutObject` on it) and opens the CloudFormation console. The console user of the monitored
+account must be able to read the template object, for example through a bucket policy granting
+`s3:GetObject` on `opswatch/templates/*`. This option has not been validated against a real AWS
+account yet; downloading the template is the tested path.
+
 After connecting, **Run test** calls one read-only action per service and region, and shows
 what OpsWatch can and cannot see.
 
@@ -90,7 +97,7 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 | `OPSWATCH_SECRET` | Yes, 32+ characters | Encrypts stored access keys and signs sessions |
 | `OPSWATCH_DATA_DIR` | No, default `/data` | Location of the SQLite database |
 | `OPSWATCH_PUBLIC_URL` | No | Public URL; enables `Secure` cookies over HTTPS |
-| `OPSWATCH_TEMPLATE_BUCKET` | No | S3 bucket that enables the "Launch Stack" button |
+| `OPSWATCH_TEMPLATE_BUCKET` | No | S3 bucket that enables the experimental "Launch Stack" button |
 | `AWS_*`, `AWS_PROFILE` | For role and ambient methods | OpsWatch's own AWS identity |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests only | Sends every AWS call to a moto server |
 

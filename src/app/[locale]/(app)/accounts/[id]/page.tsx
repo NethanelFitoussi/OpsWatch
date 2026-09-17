@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
 import { requireAdmin } from '@/lib/auth/current';
+import { awsErrorCode } from '@/lib/aws/errors';
 import { detectBaseIdentity, type CallerIdentity } from '@/lib/aws/identity';
+import { identityErrorHint } from '@/lib/aws/identity-errors';
 import { deployCommand, roleArnCommand } from '@/lib/aws/template';
 import { ConnectionNotFoundError, getConnection, toView } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
@@ -29,12 +31,25 @@ type Props = {
   searchParams: Promise<{ error?: string }>;
 };
 
-async function safeIdentity(region: string): Promise<CallerIdentity | null> {
+type IdentityLookup = { identity: CallerIdentity; errorCode?: never } | { identity: null; errorCode: string };
+
+async function lookUpIdentity(region: string): Promise<IdentityLookup> {
   try {
-    return await detectBaseIdentity(region);
-  } catch {
-    return null;
+    return { identity: await detectBaseIdentity(region) };
+  } catch (error) {
+    return { identity: null, errorCode: awsErrorCode(error) };
   }
+}
+
+async function IdentityErrorDetails({ code }: { code: string }) {
+  const t = await getTranslations('IdentityErrors');
+  const hint = identityErrorHint(code);
+  return (
+    <>
+      <span className="mt-1 block">{t('title', { code })}</span>
+      <span className="mt-1 block">{hint ? t(`hints.${hint}`) : t('hints.generic')}</span>
+    </>
+  );
 }
 
 function CodeBlock({ value }: { value: string }) {
@@ -65,7 +80,8 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
   const tAccounts = await getTranslations('Accounts');
   const tChecklist = await getTranslations('Checklist');
   const region = view.regions[0];
-  const identity = view.method === 'keys' ? null : await safeIdentity(region);
+  const lookup: IdentityLookup | null = view.method === 'keys' ? null : await lookUpIdentity(region);
+  const identity = lookup?.identity ?? null;
   const ready = view.status !== 'draft';
 
   return (
@@ -96,8 +112,11 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
               ) : (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {t('role.identityMissing')}{' '}
-                    <Link href="/getting-started#step-0" className="underline">{t('role.guideLink')}</Link>
+                    <span className="block">
+                      {t('role.identityMissing')}{' '}
+                      <Link href="/getting-started#step-0" className="underline">{t('role.guideLink')}</Link>
+                    </span>
+                    {lookup?.errorCode && <IdentityErrorDetails code={lookup.errorCode} />}
                   </AlertDescription>
                 </Alert>
               )}
@@ -113,6 +132,9 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
               {view.templateOutdated && (
                 <Alert><AlertDescription>{t('role.outdated')}</AlertDescription></Alert>
               )}
+              {error === 'no_base_identity' && (
+                <Alert variant="destructive"><AlertDescription>{t('role.noBaseIdentity')}</AlertDescription></Alert>
+              )}
               {error === 'launch_failed' && (
                 <Alert variant="destructive"><AlertDescription>{t('role.launchFailed')}</AlertDescription></Alert>
               )}
@@ -122,11 +144,22 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
                 <CodeBlock value={view.externalId ?? ''} />
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button asChild disabled={!identity}>
-                  <a href={identity ? `/api/connections/${view.id}/template` : undefined} aria-disabled={!identity}>
-                    <Download className="size-4" aria-hidden /> {t('role.download')}
-                  </a>
-                </Button>
+                {identity ? (
+                  <Button asChild>
+                    <a href={`/api/connections/${view.id}/template`}>
+                      <Download className="size-4" aria-hidden /> {t('role.download')}
+                    </a>
+                  </Button>
+                ) : (
+                  <>
+                    <Button type="button" disabled aria-describedby="download-unavailable">
+                      <Download className="size-4" aria-hidden /> {t('role.download')}
+                    </Button>
+                    <p id="download-unavailable" className="self-center text-xs text-muted-foreground">
+                      {t('role.downloadUnavailable')}
+                    </p>
+                  </>
+                )}
                 {env().OPSWATCH_TEMPLATE_BUCKET && identity && (
                   <form action={launchStackAction.bind(null, locale, view.id)}>
                     <Button type="submit" variant="outline">
@@ -185,7 +218,12 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
           </CardHeader>
           <CardContent className="text-sm">
             {identity ? <p>{t('ambient.detected', { arn: identity.arn })}</p> : (
-              <Alert variant="destructive"><AlertDescription>{t('ambient.missing')}</AlertDescription></Alert>
+              <Alert variant="destructive">
+                <AlertDescription>
+                  <span className="block">{t('ambient.missing')}</span>
+                  {lookup?.errorCode && <IdentityErrorDetails code={lookup.errorCode} />}
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>

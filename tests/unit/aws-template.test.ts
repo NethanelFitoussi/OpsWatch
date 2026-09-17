@@ -57,14 +57,15 @@ describe('CloudFormation template', () => {
     });
   });
 
-  it('adds a principal ARN condition when the trust spec has a pattern', () => {
+  it('adds a principal ARN condition listing every pattern of the trust spec', () => {
+    const patterns = ['arn:aws:iam::111122223333:role/task', 'arn:aws:iam::111122223333:role/*/task'];
     const t = buildTemplate({
       ...input,
-      trust: { principal: 'arn:aws:iam::111122223333:root', principalArnPattern: 'arn:aws:iam::111122223333:role/*task' },
+      trust: { principal: 'arn:aws:iam::111122223333:root', principalArnPatterns: patterns },
     }) as unknown as Template;
     expect(t.Resources.OpsWatchReadOnlyRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition).toEqual({
       StringEquals: { 'sts:ExternalId': 'ext-1234567890' },
-      ArnLike: { 'aws:PrincipalArn': 'arn:aws:iam::111122223333:role/*task' },
+      ArnLike: { 'aws:PrincipalArn': patterns },
     });
   });
 

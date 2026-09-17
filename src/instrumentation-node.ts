@@ -13,6 +13,11 @@ export async function registerNode() {
     }
     throw error;
   }
+  const { baseCredentialsWarning } = await import('./lib/aws/base-credentials');
+  const warning = baseCredentialsWarning(process.env);
+  if (warning) {
+    console.warn(`[opswatch] ${warning}`);
+  }
   const { getDb } = await import('./lib/db/client');
   getDb();
 }

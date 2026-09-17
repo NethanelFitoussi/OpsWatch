@@ -1,13 +1,21 @@
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { mockClient } from 'aws-sdk-client-mock';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { detectBaseIdentity, resetBaseIdentityCache, trustFor } from '@/lib/aws/identity';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { detectBaseIdentity, getCallerIdentity, resetBaseIdentityCache, trustFor } from '@/lib/aws/identity';
+
+vi.mock('@/lib/aws/base-credentials', () => ({
+  baseCredentials: () => async () => ({ accessKeyId: 'BASE-FROM-ENV', secretAccessKey: 'base' }),
+}));
 
 const sts = mockClient(STSClient);
 
 beforeEach(() => {
   sts.reset();
   resetBaseIdentityCache();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('trustFor', () => {
@@ -17,12 +25,15 @@ describe('trustFor', () => {
     });
   });
 
-  it('trusts an assumed role through the account root restricted to that role name', () => {
+  it('trusts an assumed role through the account root restricted to that exact role name, at any path', () => {
     expect(
       trustFor({ account: '111122223333', arn: 'arn:aws:sts::111122223333:assumed-role/opswatch-task/abc123' }),
     ).toEqual({
       principal: 'arn:aws:iam::111122223333:root',
-      principalArnPattern: 'arn:aws:iam::111122223333:role/*opswatch-task',
+      principalArnPatterns: [
+        'arn:aws:iam::111122223333:role/opswatch-task',
+        'arn:aws:iam::111122223333:role/*/opswatch-task',
+      ],
     });
   });
 
@@ -50,8 +61,37 @@ describe('detectBaseIdentity', () => {
     expect(sts.commandCalls(GetCallerIdentityCommand)).toHaveLength(2);
   });
 
+  it('signs GetCallerIdentity with the base credentials', async () => {
+    sts.on(GetCallerIdentityCommand).resolves({ Account: '111122223333', Arn: 'arn:aws:iam::111122223333:user/o' });
+    await detectBaseIdentity('eu-west-1', 0);
+    const client = sts.commandCalls(GetCallerIdentityCommand)[0].thisValue as STSClient;
+    expect(await (client.config.credentials as () => Promise<unknown>)()).toMatchObject({ accessKeyId: 'BASE-FROM-ENV' });
+  });
+
+  it('caches a failure for 30 seconds', async () => {
+    sts.on(GetCallerIdentityCommand).rejects(Object.assign(new Error('no creds'), { name: 'CredentialsProviderError' }));
+    await expect(detectBaseIdentity('eu-west-1', 0)).rejects.toMatchObject({ name: 'CredentialsProviderError' });
+    await expect(detectBaseIdentity('eu-west-1', 29_000)).rejects.toMatchObject({ name: 'CredentialsProviderError' });
+    expect(sts.commandCalls(GetCallerIdentityCommand)).toHaveLength(1);
+
+    sts.on(GetCallerIdentityCommand).resolves({ Account: '111122223333', Arn: 'arn:aws:iam::111122223333:user/o' });
+    await expect(detectBaseIdentity('eu-west-1', 31_000)).resolves.toMatchObject({ account: '111122223333' });
+    expect(sts.commandCalls(GetCallerIdentityCommand)).toHaveLength(2);
+  });
+
   it('fails when AWS returns no account', async () => {
     sts.on(GetCallerIdentityCommand).resolves({});
     await expect(detectBaseIdentity('eu-west-1', 0)).rejects.toThrow(/no account/);
+  });
+});
+
+describe('getCallerIdentity', () => {
+  it('gives up after 5 seconds', async () => {
+    vi.useFakeTimers();
+    sts.on(GetCallerIdentityCommand).callsFake(() => new Promise(() => {}));
+    const call = getCallerIdentity(undefined, 'eu-west-1');
+    const outcome = expect(call).rejects.toMatchObject({ name: 'TimeoutError' });
+    await vi.advanceTimersByTimeAsync(5000);
+    await outcome;
   });
 });

@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "lint:template": "tsx scripts/write-sample-template.ts && docker run --rm -v \"$PWD/tmp:/data\" python:3.13-slim sh -c \"pip install -q cfn-lint==1.56.3 && cfn-lint /data/opswatch-sample.yaml\"",
+    "lint:template": "tsx scripts/write-sample-template.ts && docker run --rm -v \"$PWD/tmp:/data\" python:3.13-slim sh -c \"pip install -q --root-user-action=ignore --disable-pip-version-check cfn-lint==1.56.3 && cfn-lint /data/opswatch-sample.yaml\"",
     "e2e": "playwright test --config tests/e2e/playwright.config.ts"
   },
   "dependencies": {
