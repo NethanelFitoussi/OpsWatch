@@ -2,6 +2,7 @@
   "Common": {
     "appName": "OpsWatch",
     "tagline": "Observability for your AWS stack",
+    "loading": "Loading…",
     "nav": {
       "gettingStarted": "Getting started",
       "accounts": "Accounts",
@@ -147,6 +148,7 @@
     }
   },
   "AccountDetail": {
+    "metaTitle": "AWS account",
     "back": "All accounts",
     "accountLine": "Account {account} · {regions}",
     "role": {

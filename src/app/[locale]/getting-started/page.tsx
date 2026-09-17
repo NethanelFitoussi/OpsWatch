@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { ConnectionDiagram } from '@/components/getting-started/connection-diagram';
@@ -9,6 +8,7 @@ import { ServiceCards } from '@/components/getting-started/service-cards';
 import { Steps } from '@/components/getting-started/steps';
 import { Troubleshooting } from '@/components/getting-started/troubleshooting';
 import { Button } from '@/components/ui/button';
+import { localizedTitle } from '@/i18n/metadata';
 import { Link } from '@/i18n/navigation';
 import { getCurrentAdminId } from '@/lib/auth/current';
 
@@ -16,11 +16,7 @@ export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ locale: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'GettingStarted' });
-  return { title: t('metaTitle') };
-}
+export const generateMetadata = localizedTitle('GettingStarted.metaTitle');
 
 function Section({ id, title, intro, children }: { id: string; title: string; intro?: string; children: React.ReactNode }) {
   return (

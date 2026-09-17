@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { localizedTitle } from '@/i18n/metadata';
 import { Link } from '@/i18n/navigation';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { listConnections, toView } from '@/lib/connections/repository';
@@ -12,6 +13,8 @@ import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
 
 type Props = { params: Promise<{ locale: string }> };
+
+export const generateMetadata = localizedTitle('Accounts.title');
 
 export default async function AccountsPage({ params }: Props) {
   await initProtectedRoute(params);
