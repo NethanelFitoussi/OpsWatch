@@ -9,3 +9,10 @@ export function awsErrorCode(error: unknown): string {
 export function normalizeAwsErrorCode(code: string): string {
   return code === 'TimeoutError' || code === 'AbortError' ? 'Timeout' : code;
 }
+
+const DENIED = /^(AccessDenied|UnauthorizedOperation|AuthorizationError|NotAuthorized)/;
+
+/** AWS error names that mean "the identity lacks this permission". */
+export function isDeniedErrorCode(code: string): boolean {
+  return DENIED.test(code);
+}

@@ -7,7 +7,7 @@ import { ListAvailableResourceMetricsCommand, PIClient } from '@aws-sdk/client-p
 import { DescribeDBInstancesCommand, RDSClient } from '@aws-sdk/client-rds';
 import type { AwsCredentialIdentity } from '@smithy/types';
 import { clientConfig } from './client-config';
-import { awsErrorCode, normalizeAwsErrorCode } from './errors';
+import { awsErrorCode, isDeniedErrorCode, normalizeAwsErrorCode } from './errors';
 import { lookUpCallerIdentity } from './identity';
 import type { OpsWatchIdentityError } from './identity-errors';
 import type { CheckedService, OverallStatus, PermissionTestResult, ServiceCheck } from './permission-types';
@@ -21,11 +21,9 @@ export type PermissionTestInput = {
   now?: () => Date;
 };
 
-const DENIED = /^(AccessDenied|UnauthorizedOperation|AuthorizationError|NotAuthorized)/;
-
 export function classifyError(error: unknown): { status: 'denied' | 'error'; errorCode: string } {
   const errorCode = normalizeAwsErrorCode(awsErrorCode(error));
-  return { status: DENIED.test(errorCode) ? 'denied' : 'error', errorCode };
+  return { status: isDeniedErrorCode(errorCode) ? 'denied' : 'error', errorCode };
 }
 
 export function overallStatus(accountMatches: boolean, checks: ServiceCheck[]): OverallStatus {

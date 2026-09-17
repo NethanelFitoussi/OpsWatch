@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest';
+import { parseTimeRange, periodForRange, recentWindow, timeWindow } from '@/lib/monitoring/shared/time-range';
+
+const now = Date.parse('2026-09-17T10:07:42.500Z');
+
+describe('time ranges', () => {
+  it('picks the GetMetricData period from the range', () => {
+    expect(['1h', '3h', '12h', '24h', '7d'].map((r) => periodForRange(r as never))).toEqual([60, 60, 300, 300, 3600]);
+  });
+
+  it('parses the query string value, defaulting to 3h', () => {
+    expect(parseTimeRange('7d')).toBe('7d');
+    expect(parseTimeRange(undefined)).toBe('3h');
+    expect(parseTimeRange('2h')).toBe('3h');
+    expect(parseTimeRange(['12h', '1h'])).toBe('12h');
+  });
+
+  it('floors the window end to the minute so cache keys stay stable', () => {
+    expect(timeWindow('3h', now)).toEqual({
+      start: new Date('2026-09-17T07:07:00.000Z'),
+      end: new Date('2026-09-17T10:07:00.000Z'),
+      periodSeconds: 60,
+    });
+    expect(timeWindow('7d', now).periodSeconds).toBe(3600);
+    expect(recentWindow(20, now)).toEqual({
+      start: new Date('2026-09-17T09:47:00.000Z'),
+      end: new Date('2026-09-17T10:07:00.000Z'),
+      periodSeconds: 60,
+    });
+  });
+});
