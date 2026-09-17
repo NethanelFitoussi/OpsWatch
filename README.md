@@ -48,6 +48,31 @@ OpsWatch refuses to start if `OPSWATCH_SECRET` is missing or shorter than 32 cha
 Keep this value safe: it encrypts stored access keys and signs sessions, and changing it
 signs everyone out and makes stored keys unreadable.
 
+## Sign in with Google
+
+Optional. The admin can also sign in with the Google account whose email is the admin email.
+Email and password keep working, and the admin account is still created on the setup page.
+Google sign-in stays off unless `OPSWATCH_GOOGLE_CLIENT_ID`, `OPSWATCH_GOOGLE_CLIENT_SECRET` and
+`OPSWATCH_PUBLIC_URL` are all set.
+
+1. In the Google Cloud console, open "APIs & Services" → "OAuth consent screen". Choose the user
+   type Internal (Google Workspace) or External, name the app OpsWatch and give a support email.
+2. Open "Credentials" → "Create credentials" → "OAuth client ID", with application type
+   "Web application".
+3. Add the authorized redirect URI `<OPSWATCH_PUBLIC_URL>/api/auth/google/callback`. To try it on
+   this machine: `http://localhost:3000/api/auth/google/callback` with
+   `OPSWATCH_PUBLIC_URL=http://localhost:3000`.
+4. Copy the client ID and secret into `.env` as `OPSWATCH_GOOGLE_CLIENT_ID` and
+   `OPSWATCH_GOOGLE_CLIENT_SECRET`, then restart OpsWatch. With Docker, run
+   `docker compose up -d --build`: `OPSWATCH_PUBLIC_URL` is also read when the image is built.
+5. On the sign-in page, choose "Continue with Google" and use the Google account whose email
+   is the OpsWatch admin email.
+
+Only a verified Google email equal to the admin email is accepted. Set
+`OPSWATCH_GOOGLE_ALLOWED_DOMAIN` (for example `example.com`) to also require an account of that
+Google Workspace domain. If the client ID and secret are set without `OPSWATCH_PUBLIC_URL`,
+OpsWatch logs a warning at startup and keeps Google sign-in off.
+
 ## Connecting AWS
 
 ![Connection with its permission checklist](docs/screenshots/connection.png)
@@ -96,6 +121,9 @@ what OpsWatch can and cannot see.
   sign-ins failed in the last minute, OpsWatch checks passwords one at a time, at least
   3 seconds apart, and refuses new attempts while more than 50 are already waiting. The admin
   is never locked out: the right password still works during an attack, after a wait.
+- Optional Google sign-in uses OpenID Connect with PKCE, state and nonce, verifies the ID token,
+  and only accepts the verified admin email. Failed Google sign-ins count toward the global
+  sign-in watch above.
 - Put OpsWatch behind HTTPS and set `OPSWATCH_PUBLIC_URL` so cookies are marked `Secure`.
 
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
@@ -108,6 +136,8 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 | `OPSWATCH_DATA_DIR` | No, default `/data` | Location of the SQLite database |
 | `OPSWATCH_PUBLIC_URL` | No | Public URL; enables `Secure` cookies over HTTPS and lets forms post from that host (also read at build time: rebuild after changing it) |
 | `OPSWATCH_TEMPLATE_BUCKET` | No | S3 bucket that enables the experimental "Launch Stack" button |
+| `OPSWATCH_GOOGLE_CLIENT_ID`, `OPSWATCH_GOOGLE_CLIENT_SECRET` | No | Enable [Sign in with Google](#sign-in-with-google) (also needs `OPSWATCH_PUBLIC_URL`) |
+| `OPSWATCH_GOOGLE_ALLOWED_DOMAIN` | No | Google Workspace domain the Google account must belong to |
 | `AWS_*`, `AWS_PROFILE` | For role and ambient methods | OpsWatch's own AWS identity |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests only | Sends every AWS call to a moto server |
 

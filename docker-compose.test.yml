@@ -20,5 +20,9 @@ services:
       AWS_ACCESS_KEY_ID: testing
       AWS_SECRET_ACCESS_KEY: testing
       AWS_REGION: us-east-1
+      # Dummy Google client: enough to show the button and build the redirect, never used to sign in.
+      OPSWATCH_PUBLIC_URL: http://localhost:3100
+      OPSWATCH_GOOGLE_CLIENT_ID: test-client
+      OPSWATCH_GOOGLE_CLIENT_SECRET: test-secret
     tmpfs:
       - /data:uid=1001,gid=1001

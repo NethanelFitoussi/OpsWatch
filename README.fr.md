@@ -49,6 +49,33 @@ OpsWatch refuse de démarrer si `OPSWATCH_SECRET` est absent ou fait moins de 32
 Conservez cette valeur : elle chiffre les clés d'accès enregistrées et signe les sessions.
 La changer déconnecte tout le monde et rend les clés enregistrées illisibles.
 
+## Connexion avec Google
+
+Facultatif. L'administrateur peut aussi se connecter avec le compte Google dont l'e-mail est
+celui de l'administrateur. L'e-mail et le mot de passe fonctionnent toujours, et le compte
+administrateur se crée toujours sur la page de configuration initiale. La connexion avec Google
+reste désactivée tant que `OPSWATCH_GOOGLE_CLIENT_ID`, `OPSWATCH_GOOGLE_CLIENT_SECRET` et
+`OPSWATCH_PUBLIC_URL` ne sont pas tous définis.
+
+1. Dans la console Google Cloud, ouvrez « APIs & Services » → « OAuth consent screen ». Choisissez
+   le type d'utilisateur Internal (Google Workspace) ou External, nommez l'application OpsWatch
+   et indiquez un e-mail d'assistance.
+2. Ouvrez « Credentials » → « Create credentials » → « OAuth client ID », avec le type
+   d'application « Web application ».
+3. Ajoutez l'URI de redirection autorisée `<OPSWATCH_PUBLIC_URL>/api/auth/google/callback`. Pour
+   un essai sur cette machine : `http://localhost:3000/api/auth/google/callback` avec
+   `OPSWATCH_PUBLIC_URL=http://localhost:3000`.
+4. Copiez l'ID client et le secret dans `.env` sous `OPSWATCH_GOOGLE_CLIENT_ID` et
+   `OPSWATCH_GOOGLE_CLIENT_SECRET`, puis redémarrez OpsWatch. Avec Docker, lancez
+   `docker compose up -d --build` : `OPSWATCH_PUBLIC_URL` est aussi lu à la construction de l'image.
+5. Sur la page de connexion, choisissez « Continuer avec Google » et utilisez le compte Google
+   dont l'e-mail est celui de l'administrateur d'OpsWatch.
+
+Seul un e-mail Google vérifié égal à celui de l'administrateur est accepté. Définissez
+`OPSWATCH_GOOGLE_ALLOWED_DOMAIN` (par exemple `example.com`) pour exiger en plus un compte de ce
+domaine Google Workspace. Si l'ID client et le secret sont définis sans `OPSWATCH_PUBLIC_URL`,
+OpsWatch écrit un avertissement au démarrage et laisse la connexion avec Google désactivée.
+
 ## Connecter AWS
 
 ![Connexion et sa liste de permissions](docs/screenshots/connection.png)
@@ -102,6 +129,9 @@ région, et montre ce qu'OpsWatch peut voir ou non.
   vérifie les mots de passe un par un, à au moins 3 secondes d'intervalle, et refuse les
   nouvelles tentatives tant que plus de 50 sont déjà en attente. L'administrateur n'est jamais
   bloqué : le bon mot de passe fonctionne toujours pendant une attaque, après une attente.
+- La connexion facultative avec Google utilise OpenID Connect avec PKCE, state et nonce, vérifie
+  le jeton d'identité et n'accepte que l'e-mail vérifié de l'administrateur. Les échecs de
+  connexion avec Google comptent dans la surveillance globale ci-dessus.
 - Placez OpsWatch derrière HTTPS et définissez `OPSWATCH_PUBLIC_URL` pour que les cookies
   soient marqués `Secure`.
 
@@ -115,6 +145,8 @@ Signalez les vulnérabilités en privé comme indiqué dans [SECURITY.md](SECURI
 | `OPSWATCH_DATA_DIR` | Non, `/data` par défaut | Emplacement de la base SQLite |
 | `OPSWATCH_PUBLIC_URL` | Non | URL publique ; active les cookies `Secure` en HTTPS ; autorise aussi les formulaires envoyés depuis cet hôte (lu aussi à la construction : reconstruisez l'image après l'avoir modifié) |
 | `OPSWATCH_TEMPLATE_BUCKET` | Non | Bucket S3 qui active le bouton expérimental « Launch Stack » |
+| `OPSWATCH_GOOGLE_CLIENT_ID`, `OPSWATCH_GOOGLE_CLIENT_SECRET` | Non | Activent la [connexion avec Google](#connexion-avec-google) (demande aussi `OPSWATCH_PUBLIC_URL`) |
+| `OPSWATCH_GOOGLE_ALLOWED_DOMAIN` | Non | Domaine Google Workspace auquel le compte Google doit appartenir |
 | `AWS_*`, `AWS_PROFILE` | Pour les méthodes rôle et ambiante | Identité AWS propre à OpsWatch |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests uniquement | Envoie tous les appels AWS vers un serveur moto |
 
