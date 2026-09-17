@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests, template lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run lint:template
+
+  e2e:
+    name: End-to-end tests (moto)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start OpsWatch and moto
+        run: docker compose -f docker-compose.test.yml up -d --build --wait
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+        env:
+          E2E_BASE_URL: http://localhost:3100
+      - name: Container logs
+        if: failure()
+        run: docker compose -f docker-compose.test.yml logs
+      - uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+      - name: Stop the stack
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v
+
+  docker:
+    name: Docker image build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: docker build -t opswatch:ci .
+      - name: Refuses to start without a secret
+        run: |
+          set +e
+          docker run --rm opswatch:ci
+          code=$?
+          set -e
+          test "$code" -eq 1
