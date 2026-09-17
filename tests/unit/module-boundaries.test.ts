@@ -39,6 +39,9 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/evaluate.ts',
   'lib/monitoring/insights.ts',
   'lib/monitoring/overview.ts',
+  'lib/monitoring/logs.ts',
+  'lib/monitoring/query-bindings.ts',
+  'lib/monitoring/logs-route.ts',
 ];
 
 describe('module boundaries', () => {

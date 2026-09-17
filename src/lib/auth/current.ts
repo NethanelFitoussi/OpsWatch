@@ -2,6 +2,7 @@ import 'server-only';
 import { cookies, headers } from 'next/headers';
 import { redirect } from '@/i18n/navigation';
 import { resolveLocale } from '@/i18n/routing';
+import { hashToken } from '../crypto';
 import { getDb } from '../db/client';
 import { env } from '../env';
 import { hasAdmin } from './admin';
@@ -23,9 +24,18 @@ export function cookieOptions(maxAge = COOKIE_MAX_AGE_SECONDS, path = '/') {
   };
 }
 
-export async function getCurrentAdminId(): Promise<number | null> {
+/** The signed-in admin and the id of their session row, or null. */
+export async function getCurrentSession(): Promise<{ adminId: number; sessionId: string } | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  return token ? validateSession(getDb(), token, env().OPSWATCH_SECRET) : null;
+  if (!token) return null;
+  const { OPSWATCH_SECRET } = env();
+  const adminId = validateSession(getDb(), token, OPSWATCH_SECRET);
+  // The stored session id (an HMAC of the token), so the token itself is never kept in memory maps.
+  return adminId === null ? null : { adminId, sessionId: hashToken(token, OPSWATCH_SECRET) };
+}
+
+export async function getCurrentAdminId(): Promise<number | null> {
+  return (await getCurrentSession())?.adminId ?? null;
 }
 
 export async function requireAdmin(requestedLocale: string): Promise<number> {
