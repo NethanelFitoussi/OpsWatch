@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MIN_PASSWORD_LENGTH } from '@/lib/limits';
 import type { SetupState } from './actions';
 
 export function SetupForm({ action }: { action: (prev: SetupState, data: FormData) => Promise<SetupState> }) {
@@ -25,7 +26,7 @@ export function SetupForm({ action }: { action: (prev: SetupState, data: FormDat
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{t('setup.password')}</Label>
-        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={12} required aria-describedby="password-hint" />
+        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} required aria-describedby="password-hint" />
         <p id="password-hint" className="text-xs text-muted-foreground">{t('setup.passwordHint')}</p>
       </div>
       <div className="space-y-2">

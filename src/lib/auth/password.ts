@@ -1,6 +1,5 @@
+import 'server-only';
 import { hash, verify } from '@node-rs/argon2';
-
-export const MIN_PASSWORD_LENGTH = 12;
 
 // @node-rs/argon2 defaults to argon2id. Parameters follow the OWASP minimum
 // (19 MiB memory, 2 iterations, parallelism 1).

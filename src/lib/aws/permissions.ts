@@ -1,3 +1,4 @@
+import 'server-only';
 import { CloudWatchClient, ListMetricsCommand } from '@aws-sdk/client-cloudwatch';
 import { CloudWatchLogsClient, DescribeLogGroupsCommand } from '@aws-sdk/client-cloudwatch-logs';
 import { ECSClient, ListClustersCommand } from '@aws-sdk/client-ecs';

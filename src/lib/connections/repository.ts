@@ -1,3 +1,4 @@
+import 'server-only';
 import { desc, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { TEMPLATE_VERSION } from '../aws/actions';

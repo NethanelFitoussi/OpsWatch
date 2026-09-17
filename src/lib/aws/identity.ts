@@ -1,3 +1,4 @@
+import 'server-only';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { baseCredentials } from './base-credentials';
 import { clientConfig, type AwsCredentials } from './client-config';

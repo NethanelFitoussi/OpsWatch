@@ -1,5 +1,6 @@
 'use server';
 
+import 'server-only';
 import { redirect } from '@/i18n/navigation';
 import { endSession } from './current';
 

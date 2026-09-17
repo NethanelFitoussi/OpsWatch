@@ -1,8 +1,10 @@
+import 'server-only';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Db } from '../db/client';
 import { adminUser } from '../db/schema';
-import { MIN_PASSWORD_LENGTH, hashPassword, verifyPassword } from './password';
+import { MIN_PASSWORD_LENGTH } from '../limits';
+import { hashPassword, verifyPassword } from './password';
 
 export class AdminValidationError extends Error {
   constructor(public readonly code: 'email_invalid' | 'password_too_short') {

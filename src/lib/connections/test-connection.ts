@@ -1,3 +1,4 @@
+import 'server-only';
 import type { AwsCredentialIdentity } from '@smithy/types';
 import type { CredentialResolver } from '../aws/credentials';
 import { awsErrorCode } from '../aws/errors';

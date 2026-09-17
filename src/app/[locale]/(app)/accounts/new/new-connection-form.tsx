@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CONNECTION_NAME_MAX } from '@/lib/limits';
 import { CONNECTION_METHODS, type ConnectionMethod } from '@/lib/connections/types';
-import { AWS_REGIONS } from '@/lib/connections/validation';
+import { AWS_REGIONS } from '@/lib/aws/regions';
 import { cn } from '@/lib/utils';
 import type { FormState } from '../actions';
 
@@ -61,7 +62,7 @@ export function NewConnectionForm({ action }: { action: (prev: FormState, data: 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="name">{t('name')}</Label>
-          <Input id="name" name="name" defaultValue={state.values?.name} placeholder={t('namePlaceholder')} maxLength={80} required />
+          <Input id="name" name="name" defaultValue={state.values?.name} placeholder={t('namePlaceholder')} maxLength={CONNECTION_NAME_MAX} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="awsAccountId">{t('accountId')}</Label>

@@ -1,3 +1,4 @@
+import 'server-only';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 import type { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@smithy/types';
 import { baseCredentials } from './base-credentials';
