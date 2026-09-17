@@ -19,7 +19,7 @@ import type { MetricQuery } from './metrics';
 import type { MonitoringResult } from './result';
 
 export type EcsCluster = { name: string; arn: string; status: string; containerInsights: boolean; activeServices: number; runningTasks: number; pendingTasks: number };
-type EcsDeployment = {
+export type EcsDeployment = {
   id: string;
   status: string;
   rolloutState: string | null;

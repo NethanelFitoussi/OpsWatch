@@ -897,5 +897,36 @@
         "reason": "Raison"
       }
     }
+  },
+  "Insights": {
+    "severity": {
+      "critical": "Critique",
+      "warning": "Avertissement",
+      "info": "Information"
+    },
+    "messages": {
+      "ecs_tasks_below_desired": "{service} exécute {running} tâches sur {desired} depuis au moins 10 minutes.",
+      "ecs_cpu_high": "Le CPU de {service} est en moyenne à {value} sur 15 minutes (seuil {threshold}).",
+      "ecs_memory_high": "La mémoire de {service} est en moyenne à {value} sur 15 minutes (seuil {threshold}).",
+      "ecs_rollout_failed": "Le dernier déploiement de {service} a échoué : {reason}",
+      "ecs_rollout_stuck": "Le déploiement de {service} est en cours depuis {minutes} minutes.",
+      "rds_cpu_high": "Le CPU de {instance} est en moyenne à {value} sur 15 minutes (seuil {threshold}).",
+      "rds_freeable_memory_low": "{instance} n'a plus que {value} de mémoire disponible.",
+      "aurora_replica_lag": "{cluster} : {lagging, plural, one {# lecteur sur {readers} a} other {# lecteurs sur {readers} ont}} plus d'1 s de retard.",
+      "alb_5xx_rate": "{loadBalancer} répond à {rate} des requêtes par une erreur 5xx ({errors} sur {requests} en 15 minutes).",
+      "alb_elb_5xx_count": "{loadBalancer} a lui-même renvoyé {count} erreurs 5xx en 15 minutes.",
+      "alb_unhealthy_hosts": "{targetGroup} sur {loadBalancer} a {count, plural, one {# hôte défaillant} other {# hôtes défaillants}}.",
+      "alarm_firing": "L'alarme {alarm} est à l'état ALARM."
+    },
+    "groups": {
+      "ecs_tasks_below_desired": "{count} services de {cluster} exécutent moins de tâches que souhaité.",
+      "ecs_cpu_high": "{count} services de {cluster} ont un CPU élevé.",
+      "ecs_memory_high": "{count} services de {cluster} ont une utilisation mémoire élevée.",
+      "ecs_rollout_failed": "{count} services de {cluster} ont un déploiement en échec.",
+      "ecs_rollout_stuck": "{count} services de {cluster} ont un déploiement en cours depuis plus de 30 minutes."
+    },
+    "members": {
+      "aurora_replica_lag": "{instance} a en moyenne {value} de retard."
+    }
   }
 }

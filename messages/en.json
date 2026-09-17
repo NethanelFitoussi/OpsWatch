@@ -897,5 +897,36 @@
         "reason": "Reason"
       }
     }
+  },
+  "Insights": {
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "messages": {
+      "ecs_tasks_below_desired": "{service} has run {running} of {desired} tasks for at least 10 minutes.",
+      "ecs_cpu_high": "{service} CPU averages {value} over 15 minutes (threshold {threshold}).",
+      "ecs_memory_high": "{service} memory averages {value} over 15 minutes (threshold {threshold}).",
+      "ecs_rollout_failed": "The last deployment of {service} failed: {reason}",
+      "ecs_rollout_stuck": "The deployment of {service} has been in progress for {minutes} minutes.",
+      "rds_cpu_high": "{instance} CPU averages {value} over 15 minutes (threshold {threshold}).",
+      "rds_freeable_memory_low": "{instance} has only {value} of its memory free.",
+      "aurora_replica_lag": "{cluster}: {lagging} of {readers} readers {lagging, plural, one {lags} other {lag}} more than 1 s.",
+      "alb_5xx_rate": "{loadBalancer} answers {rate} of requests with a 5xx error ({errors} of {requests} in 15 minutes).",
+      "alb_elb_5xx_count": "{loadBalancer} itself returned {count} 5xx errors in 15 minutes.",
+      "alb_unhealthy_hosts": "{targetGroup} on {loadBalancer} has {count, plural, one {# unhealthy host} other {# unhealthy hosts}}.",
+      "alarm_firing": "Alarm {alarm} is in ALARM state."
+    },
+    "groups": {
+      "ecs_tasks_below_desired": "{count} services of {cluster} run fewer tasks than desired.",
+      "ecs_cpu_high": "{count} services of {cluster} have high CPU.",
+      "ecs_memory_high": "{count} services of {cluster} have high memory use.",
+      "ecs_rollout_failed": "{count} services of {cluster} have a failed deployment.",
+      "ecs_rollout_stuck": "{count} services of {cluster} have had a deployment in progress for more than 30 minutes."
+    },
+    "members": {
+      "aurora_replica_lag": "{instance} lags {value} on average."
+    }
   }
 }

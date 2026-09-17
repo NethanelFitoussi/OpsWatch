@@ -36,6 +36,8 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/rds.ts',
   'lib/monitoring/instance-memory.ts',
   'lib/monitoring/pi.ts',
+  'lib/monitoring/evaluate.ts',
+  'lib/monitoring/insights.ts',
 ];
 
 describe('module boundaries', () => {
