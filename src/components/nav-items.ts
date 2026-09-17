@@ -2,7 +2,7 @@ import { BookOpen, Cloud, LayoutDashboard, type LucideIcon } from 'lucide-react'
 import { monitoringPath, parseMonitoringPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
-export type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'accounts';
+type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'accounts';
 export type NavItem = {
   key: NavKey;
   /** A Lucide icon, or the AWS service icon of a section about that service. */

@@ -3,14 +3,25 @@ import { createReadyRoleConnection, NOW } from '../helpers/fixtures';
 import { createTestDb } from '../helpers/db';
 import { saveTestResult } from '@/lib/connections/repository';
 import type { Db } from '@/lib/db/client';
+import type { QueryBindings } from '@/lib/monitoring/query-bindings';
 
 const state = vi.hoisted(() => ({
   db: undefined as unknown as Db,
   session: { adminId: 1, sessionId: 'session-a' } as { adminId: number; sessionId: string } | null,
+  bindings: undefined as unknown as QueryBindings,
 }));
 vi.mock('@/lib/auth/current', () => ({ getCurrentSession: async () => state.session }));
 vi.mock('@/lib/db/client', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/db/client')>()), getDb: () => state.db }));
 vi.mock('@/lib/env', () => ({ env: () => ({ OPSWATCH_SECRET: 'k'.repeat(32), OPSWATCH_PUBLIC_URL: 'http://localhost:3000' }) }));
+// The routes share one process-wide binding store; every test gets its own so none can pass on another's query.
+vi.mock('@/lib/monitoring/query-bindings', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/monitoring/query-bindings')>()),
+  queryBindings: {
+    bind: (queryId, binding) => state.bindings.bind(queryId, binding),
+    matches: (queryId, binding) => state.bindings.matches(queryId, binding),
+    forget: (queryId) => state.bindings.forget(queryId),
+  } satisfies QueryBindings,
+}));
 vi.mock('@/lib/monitoring/target', () => ({
   resolveTarget: vi.fn(async (scope: object) => ({ ok: true, data: { ...scope, credentials: { accessKeyId: 'A', secretAccessKey: 'S' } } })),
 }));
@@ -24,7 +35,7 @@ vi.mock('@/lib/monitoring/logs', async (importOriginal) => ({
 const { POST } = await import('@/app/api/connections/[id]/regions/[region]/logs/query/route');
 const { GET, DELETE } = await import('@/app/api/connections/[id]/regions/[region]/logs/query/[queryId]/route');
 const logs = await import('@/lib/monitoring/logs');
-const { queryBindings } = await import('@/lib/monitoring/query-bindings');
+const { createQueryBindings, queryBindings } = await import('@/lib/monitoring/query-bindings');
 
 const ORIGIN = { origin: 'http://localhost:3000', 'content-type': 'application/json' };
 const nowSeconds = () => Math.floor(Date.now() / 1000);
@@ -47,6 +58,7 @@ let usable: { id: string };
 beforeEach(() => {
   state.db = createTestDb();
   state.session = { adminId: 1, sessionId: 'session-a' };
+  state.bindings = createQueryBindings();
   vi.clearAllMocks();
   usable = usableConnection();
 });
@@ -172,5 +184,18 @@ describe('DELETE /api/connections/[id]/regions/[region]/logs/query/[queryId]', (
   it('hides an unbound query', async () => {
     expect((await del(usable.id, 'eu-west-1', 'q-unbound')).status).toBe(404);
     expect(logs.stopLogsQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe('the binding store of a test', () => {
+  const binding = { connectionId: 'abc123def456', region: 'eu-west-1', sessionId: 'session-a' };
+
+  it('holds what this test bound', () => {
+    queryBindings.bind('q-isolation', binding);
+    expect(queryBindings.matches('q-isolation', binding)).toBe(true);
+  });
+
+  it('never holds what another test bound', () => {
+    expect(queryBindings.matches('q-isolation', binding)).toBe(false);
   });
 });

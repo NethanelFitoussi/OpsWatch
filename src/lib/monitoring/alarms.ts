@@ -21,8 +21,8 @@ export type AlarmSummary = {
   targetTracking: boolean;
 };
 
-export const TARGET_TRACKING_PREFIX = 'TargetTracking-';
-export const isTargetTrackingAlarm = (name: string): boolean => name.startsWith(TARGET_TRACKING_PREFIX);
+const TARGET_TRACKING_PREFIX = 'TargetTracking-';
+const isTargetTrackingAlarm = (name: string): boolean => name.startsWith(TARGET_TRACKING_PREFIX);
 
 const STATES = ['OK', 'ALARM', 'INSUFFICIENT_DATA'] as const;
 const STATE_ORDER: Record<AlarmState, number> = { ALARM: 0, INSUFFICIENT_DATA: 1, OK: 2 };

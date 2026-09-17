@@ -8,7 +8,7 @@ import { env } from '../env';
 import type { AwsTarget, MonitoringScope } from './call';
 import { toFailure, type MonitoringResult } from './result';
 
-export const ASSUME_ROLE_ACTION = 'sts:AssumeRole';
+const ASSUME_ROLE_ACTION = 'sts:AssumeRole';
 
 export type TargetDeps = { db?: Db; secret?: string; resolver?: CredentialResolver };
 

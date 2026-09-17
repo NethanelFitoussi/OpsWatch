@@ -23,7 +23,7 @@ export type InsightKind =
   | 'alb_unhealthy_hosts'
   | 'alarm_firing';
 export type InsightValues = Record<string, string | number>;
-export type InsightMember = { resource: string; severity: InsightSeverity; messageKey: string; values: InsightValues; href: string };
+type InsightMember = { resource: string; severity: InsightSeverity; messageKey: string; values: InsightValues; href: string };
 export type Insight = {
   severity: InsightSeverity;
   kind: InsightKind;

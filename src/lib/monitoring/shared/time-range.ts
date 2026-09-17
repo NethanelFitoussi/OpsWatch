@@ -2,7 +2,7 @@ import { isOneOf } from '@/lib/type-guards';
 
 export const TIME_RANGES = ['1h', '3h', '12h', '24h', '7d'] as const;
 export type TimeRange = (typeof TIME_RANGES)[number];
-export const DEFAULT_TIME_RANGE: TimeRange = '3h';
+const DEFAULT_TIME_RANGE: TimeRange = '3h';
 
 export const RANGE_SECONDS: Record<TimeRange, number> = { '1h': 3600, '3h': 10_800, '12h': 43_200, '24h': 86_400, '7d': 604_800 };
 const PERIOD_SECONDS: Record<TimeRange, number> = { '1h': 60, '3h': 60, '12h': 300, '24h': 300, '7d': 3600 };

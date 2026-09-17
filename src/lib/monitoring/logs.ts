@@ -91,7 +91,7 @@ export function startLogsQuery(target: AwsTarget, input: LogsQueryInput, deps: M
 }
 
 const QUERY_STATUSES = ['Scheduled', 'Running', 'Complete', 'Failed', 'Cancelled', 'Timeout', 'Unknown'] as const;
-export type QueryStatus = (typeof QUERY_STATUSES)[number];
+type QueryStatus = (typeof QUERY_STATUSES)[number];
 export type LogsQueryResults = {
   status: QueryStatus;
   fields: string[];

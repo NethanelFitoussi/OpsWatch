@@ -1,10 +1,10 @@
 import 'server-only';
 
-export const QUERY_BINDING_TTL_MS = 10 * 60_000;
-export const MAX_QUERY_BINDINGS = 1000;
+const QUERY_BINDING_TTL_MS = 10 * 60_000;
+const MAX_QUERY_BINDINGS = 1000;
 
 /** What a Logs Insights query id is allowed to be polled with: one connection, one region, one signed-in session. */
-export type QueryBinding = { connectionId: string; region: string; sessionId: string };
+type QueryBinding = { connectionId: string; region: string; sessionId: string };
 export type QueryBindings = {
   bind(queryId: string, binding: QueryBinding): void;
   matches(queryId: string, binding: QueryBinding): boolean;
@@ -22,8 +22,9 @@ export function createQueryBindings({
     bind(queryId, binding) {
       const t = now();
       for (const [id, entry] of entries) if (entry.expiresAt <= t) entries.delete(id);
-      while (entries.size >= maxEntries) entries.delete(entries.keys().next().value as string);
-      entries.set(queryId, { ...binding, expiresAt: t + ttlMs });
+      // `maxEntries > 0` first: an empty map can never shrink, so without it a cap of zero spins forever.
+      while (maxEntries > 0 && entries.size >= maxEntries) entries.delete(entries.keys().next().value as string);
+      if (maxEntries > 0) entries.set(queryId, { ...binding, expiresAt: t + ttlMs });
     },
     matches(queryId, binding) {
       const entry = entries.get(queryId);

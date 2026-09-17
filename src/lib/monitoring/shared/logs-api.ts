@@ -8,7 +8,7 @@ export type ClientQueryResults = {
   statistics: { recordsMatched: number; recordsScanned: number; bytesScanned: number };
 };
 
-export type ApiOutcome<T> = { ok: true; data: T } | { ok: false; error: LogsClientError };
+type ApiOutcome<T> = { ok: true; data: T } | { ok: false; error: LogsClientError };
 
 export type LogsApi = {
   start(input: { logGroups: string[]; query: string; startSeconds: number; endSeconds: number }): Promise<ApiOutcome<{ queryId: string }>>;

@@ -4,7 +4,7 @@ import { isFailure, type MonitoringResult } from './result';
 export const METRICS_TTL_MS = 60_000;
 export const DESCRIBE_TTL_MS = 60_000;
 export const PI_TTL_MS = 5 * 60_000;
-export const MAX_CACHE_ENTRIES = 500;
+const MAX_CACHE_ENTRIES = 500;
 
 type Entry = { value: Promise<unknown>; expiresAt: number };
 

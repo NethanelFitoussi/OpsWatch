@@ -29,4 +29,10 @@ describe('query bindings', () => {
     bindings.forget('c');
     expect(bindings.matches('c', binding)).toBe(false);
   });
+
+  it('keeps nothing, and does not spin, when no entry is allowed', () => {
+    const bindings = createQueryBindings({ maxEntries: 0 });
+    bindings.bind('a', binding);
+    expect(bindings.matches('a', binding)).toBe(false);
+  });
 });

@@ -7,12 +7,12 @@ import { chunk, runCall, type AwsTarget, type MonitoringDeps } from './call';
 import type { MonitoringResult } from './result';
 import type { TimeWindow } from './shared/time-range';
 
-export const MAX_QUERIES_PER_CALL = 500;
+const MAX_QUERIES_PER_CALL = 500;
 export const METRICS_TIMEOUT_MS = 10_000;
 const MAX_PAGES = 20;
 const ACTION = 'cloudwatch:GetMetricData';
 
-export type MetricStatName = 'Average' | 'Sum' | 'Maximum' | 'Minimum' | 'p95';
+type MetricStatName = 'Average' | 'Sum' | 'Maximum' | 'Minimum' | 'p95';
 export type MetricQuery = { id: string; namespace: string; metricName: string; dimensions: Record<string, string>; stat: MetricStatName; label?: string };
 export type SeriesData = { timestamps: number[]; values: number[] };
 export type MetricSeries = SeriesData & { id: string; label: string };

@@ -10,7 +10,7 @@ import type { MonitoringScope } from './call';
 import { checkSelection } from './selection';
 
 export type MonitoringParams = { locale: string; connectionId: string; region: string };
-export type MonitoringConnection = { id: string; name: string; regions: string[]; status: ConnectionStatus };
+type MonitoringConnection = { id: string; name: string; regions: string[]; status: ConnectionStatus };
 export type MonitoringPageContext = { locale: AppLocale; scope: MonitoringScope; connection: MonitoringConnection };
 
 /**
