@@ -1,6 +1,6 @@
 import { CircleCheck, CircleMinus, CircleX, TriangleAlert } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
-import { AwsIcon, SERVICE_ICONS } from '@/components/aws-icon';
+import { SERVICE_ICONS, ServiceIconImage } from '@/components/aws-icon';
 import { knownIdentityError } from '@/lib/aws/identity-errors';
 import type { CheckStatus, PermissionTestResult } from '@/lib/connections/types';
 import { TONE_BORDER, TONE_SOFT, TONE_TEXT } from '@/lib/ui/tones';
@@ -50,7 +50,7 @@ export async function PermissionChecklist({ result, account }: { result: Permiss
                 const { icon: Icon, className } = ICONS[check.status];
                 return (
                   <li key={check.service} className="flex items-start gap-3 p-3 sm:gap-4 sm:p-4">
-                    <AwsIcon name={SERVICE_ICONS[check.service][0]} size={32} alt="" className="mt-0.5" />
+                    <ServiceIconImage icon={SERVICE_ICONS[check.service][0]} size={32} className="mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <p className="font-medium">{services(check.service)}</p>

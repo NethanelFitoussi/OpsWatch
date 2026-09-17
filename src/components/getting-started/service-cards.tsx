@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { AwsIcon, SERVICE_ICONS } from '@/components/aws-icon';
+import { SERVICE_ICONS, ServiceIconImage } from '@/components/aws-icon';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SERVICE_GROUPS } from '@/lib/aws/actions';
 
@@ -13,8 +13,8 @@ export async function ServiceCards() {
         <Card key={group.id}>
           <CardHeader className="flex items-center gap-3">
             <span className="flex shrink-0 gap-1.5">
-              {SERVICE_ICONS[group.id].map((icon) => (
-                <AwsIcon key={icon} name={icon} size={36} alt="" />
+              {SERVICE_ICONS[group.id].map((icon, index) => (
+                <ServiceIconImage key={index} icon={icon} size={36} />
               ))}
             </span>
             <CardTitle className="text-base font-semibold">{services(group.id)}</CardTitle>
