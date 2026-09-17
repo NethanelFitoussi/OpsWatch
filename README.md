@@ -16,7 +16,7 @@ OpsWatch is built in stages. This release covers the foundations and live monito
 | Stage | Content | Status |
 |-------|---------|--------|
 | 1 | Admin account, AWS connections, permission test, getting started guide (English and French) | Available |
-| 2 | Live monitoring: Overview with automatic insights, Containers (ECS), Databases (RDS, Aurora, Performance Insights), Load balancers (ALB), Alarms | Available |
+| 2 | Live monitoring: Overview with automatic insights, Containers (ECS), Databases (RDS, Aurora, Performance Insights), Load balancers (ALB), Alarms, Logs (CloudWatch Logs Insights) | Available |
 | 3 | History storage and on-demand snapshots | Planned |
 | 4 | Notifications | Planned |
 | 5 | More AWS services (SQS, Lambda, EC2/EBS) and a multi-account overview | Planned |
@@ -115,6 +115,7 @@ Pick a connection in the top bar, then a region. Every page reads AWS live; noth
 - **Databases**: RDS and Aurora instances with role, CPU, connections, free memory and replica lag; per instance charts and Performance Insights top SQL.
 - **Load balancers**: application load balancers with requests, 5xx errors, p95 response time and target health.
 - **Alarms**: CloudWatch alarms by state; target-tracking autoscaling alarms are hidden by default.
+- **Logs**: pick log groups by prefix and run CloudWatch Logs Insights queries over at most 24 hours (1,000 rows); a query stops after 60 seconds or when you leave the page. `logs:StartQuery` is billed per GB of logs scanned.
 
 Charts cover 1 hour to 7 days (`?range=`) and refresh every 2 minutes while the tab is visible; the refresh can be paused. When a permission is missing, the card says which IAM action and links to the permission test; the rest of the page still loads.
 

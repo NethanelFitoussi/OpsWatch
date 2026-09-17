@@ -482,7 +482,8 @@
         "containers": "Conteneurs : services ECS avec tâches, CPU et mémoire, puis pour chaque service ses graphiques, tâches, événements, groupes cibles et groupes de journaux.",
         "databases": "Bases de données : instances RDS et Aurora avec leur rôle, leurs métriques et, si Performance Insights est activé, les requêtes SQL les plus coûteuses.",
         "loadBalancers": "Répartiteurs de charge : requêtes, erreurs 5xx, temps de réponse p95 et santé des cibles de chaque Application Load Balancer.",
-        "alarms": "Alarmes : alarmes CloudWatch par état, les alarmes de suivi de cible de l'autoscaling étant masquées par défaut."
+        "alarms": "Alarmes : alarmes CloudWatch par état, les alarmes de suivi de cible de l'autoscaling étant masquées par défaut.",
+        "logs": "Journaux : choisissez des groupes de journaux et lancez des requêtes CloudWatch Logs Insights sur 24 heures au plus, avec des exemples pour les erreurs, les réponses 5xx et les requêtes lentes."
       },
       "refresh": "Les graphiques couvrent de 1 heure à 7 jours et s'actualisent toutes les 2 minutes tant que l'onglet est visible ; vous pouvez suspendre l'actualisation."
     },
@@ -672,6 +673,41 @@
       "chart": {
         "noData": "Aucune donnée sur cette période",
         "legend": "Séries"
+      },
+      "logs": {
+        "query": "Requête",
+        "range": "Période",
+        "groups": "Groupes sélectionnés",
+        "noGroups": "Sélectionnez au moins un groupe de journaux pour lancer une requête.",
+        "run": "Lancer la requête",
+        "stop": "Arrêter",
+        "examples": {
+          "label": "Exemples",
+          "default": "Derniers messages",
+          "errors": "Erreurs",
+          "serverErrors": "Réponses 5xx",
+          "slowRequests": "Requêtes lentes"
+        },
+        "status": {
+          "running": "En cours… {seconds} s",
+          "complete": "{rows, plural, one {# ligne} other {# lignes}} · {records, plural, one {# enregistrement analysé} other {# enregistrements analysés}}",
+          "stopped": "Requête arrêtée.",
+          "timeout": "La requête a été arrêtée après 60 secondes.",
+          "failed": "La requête s'est terminée avec le statut {status}."
+        },
+        "errors": {
+          "denied": "OpsWatch ne peut pas lancer cette requête (permission {action} manquante).",
+          "throttled": "AWS limite les requêtes Logs Insights. Patientez un instant puis réessayez.",
+          "aws": "AWS a renvoyé une erreur ({code}).",
+          "invalid_query": "La requête ou les groupes de journaux ne sont pas valides.",
+          "range_too_long": "La période ne peut pas dépasser 24 heures.",
+          "unauthorized": "Votre session a expiré. Reconnectez-vous.",
+          "generic": "La requête n'a pas pu être lancée. Veuillez réessayer."
+        },
+        "results": {
+          "label": "Résultats de la requête",
+          "empty": "La requête n'a renvoyé aucune ligne."
+        }
       }
     },
     "common": {
@@ -940,6 +976,19 @@
         "target": "Cible",
         "state": "État",
         "reason": "Raison"
+      }
+    },
+    "logs": {
+      "title": "Journaux",
+      "description": "Requêtes CloudWatch Logs Insights pour {connection} dans {region}.",
+      "picker": {
+        "title": "Groupes de journaux",
+        "prefix": "Préfixe du nom du groupe",
+        "search": "Rechercher",
+        "use": "Utiliser les groupes sélectionnés",
+        "empty": "Aucun groupe de journaux ne commence par ce préfixe.",
+        "limit": "Affichage des {count} premiers groupes. Saisissez un préfixe plus long pour affiner la liste.",
+        "billed": "Les requêtes Logs Insights sont facturées par AWS au Go de journaux analysé."
       }
     }
   },

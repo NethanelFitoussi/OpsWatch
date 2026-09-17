@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-const ITEMS = ['overview', 'containers', 'databases', 'loadBalancers', 'alarms'] as const;
+const ITEMS = ['overview', 'containers', 'databases', 'loadBalancers', 'alarms', 'logs'] as const;
 
 export async function PagesSection() {
   const t = await getTranslations('GettingStarted.pages');

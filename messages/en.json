@@ -482,7 +482,8 @@
         "containers": "Containers: ECS services with tasks, CPU and memory, then per service its charts, tasks, events, target groups and log groups.",
         "databases": "Databases: RDS and Aurora instances with their role, metrics and, when Performance Insights is on, the top SQL statements.",
         "loadBalancers": "Load balancers: requests, 5xx errors, p95 response time and target health of each application load balancer.",
-        "alarms": "Alarms: CloudWatch alarms by state, with target-tracking autoscaling alarms hidden by default."
+        "alarms": "Alarms: CloudWatch alarms by state, with target-tracking autoscaling alarms hidden by default.",
+        "logs": "Logs: pick log groups and run CloudWatch Logs Insights queries over up to 24 hours, with example queries for errors, 5xx responses and slow requests."
       },
       "refresh": "Charts cover 1 hour to 7 days and refresh every 2 minutes while the tab is visible; you can pause the refresh."
     },
@@ -672,6 +673,41 @@
       "chart": {
         "noData": "No data for this period",
         "legend": "Series"
+      },
+      "logs": {
+        "query": "Query",
+        "range": "Time range",
+        "groups": "Selected log groups",
+        "noGroups": "Select at least one log group to run a query.",
+        "run": "Run query",
+        "stop": "Stop",
+        "examples": {
+          "label": "Examples",
+          "default": "Latest messages",
+          "errors": "Errors",
+          "serverErrors": "5xx responses",
+          "slowRequests": "Slow requests"
+        },
+        "status": {
+          "running": "Running… {seconds} s",
+          "complete": "{rows, plural, one {# row} other {# rows}} · {records, plural, one {# record scanned} other {# records scanned}}",
+          "stopped": "Query stopped.",
+          "timeout": "The query was stopped after 60 seconds.",
+          "failed": "The query ended with status {status}."
+        },
+        "errors": {
+          "denied": "OpsWatch cannot run this query (missing {action}).",
+          "throttled": "AWS is limiting Logs Insights queries. Wait a moment and try again.",
+          "aws": "AWS returned an error ({code}).",
+          "invalid_query": "The query or the log groups are not valid.",
+          "range_too_long": "The time range cannot exceed 24 hours.",
+          "unauthorized": "Your session has expired. Sign in again.",
+          "generic": "The query could not be run. Please try again."
+        },
+        "results": {
+          "label": "Query results",
+          "empty": "The query returned no rows."
+        }
       }
     },
     "common": {
@@ -940,6 +976,19 @@
         "target": "Target",
         "state": "State",
         "reason": "Reason"
+      }
+    },
+    "logs": {
+      "title": "Logs",
+      "description": "CloudWatch Logs Insights queries for {connection} in {region}.",
+      "picker": {
+        "title": "Log groups",
+        "prefix": "Log group name prefix",
+        "search": "Search",
+        "use": "Use selected groups",
+        "empty": "No log group starts with this prefix.",
+        "limit": "Showing the first {count} groups. Type a longer prefix to narrow the list.",
+        "billed": "Logs Insights queries are billed by AWS per GB of logs scanned."
       }
     }
   },

@@ -5,6 +5,7 @@ import { FailureNotice } from '@/components/monitoring/failure-notice';
 import { MetricChart, type ChartSeries } from '@/components/monitoring/metric-chart';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { TargetGroupPanel } from '@/components/monitoring/target-group-panel';
+import { Link } from '@/i18n/navigation';
 import type { AwsTarget, MonitoringScope } from '@/lib/monitoring/call';
 import {
   describeService,
@@ -19,6 +20,7 @@ import { describeTargetGroups } from '@/lib/monitoring/elb';
 import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { NO_VALUE } from '@/lib/monitoring/shared/format';
+import { monitoringPath } from '@/lib/monitoring/shared/paths';
 import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { RolloutBadge } from '../../cards';
@@ -262,7 +264,17 @@ export async function LogsCard(ref: ServiceRef) {
         <ul className="space-y-1">
           {logs.data.map((log) => (
             <li key={`${log.container}|${log.logGroup}`} className="font-mono text-xs break-all">
-              {log.region && log.region !== ref.scope.region ? t('logs.otherRegion', { group: log.logGroup, region: log.region }) : log.logGroup}
+              {log.region && log.region !== ref.scope.region ? (
+                t('logs.otherRegion', { group: log.logGroup, region: log.region })
+              ) : (
+                // Only a group of this region can be queried through this page's Logs Insights routes.
+                <Link
+                  href={`${monitoringPath(ref.scope, 'logs')}?group=${encodeURIComponent(log.logGroup)}`}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {log.logGroup}
+                </Link>
+              )}
             </li>
           ))}
         </ul>

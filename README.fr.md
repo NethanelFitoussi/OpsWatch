@@ -16,7 +16,7 @@ OpsWatch est construit par étapes. Cette version couvre les fondations et la su
 | Étape | Contenu | État |
 |-------|---------|------|
 | 1 | Compte administrateur, connexions AWS, test des permissions, guide de démarrage (anglais et français) | Disponible |
-| 2 | Supervision en direct : vue d'ensemble avec analyses automatiques, conteneurs (ECS), bases de données (RDS, Aurora, Performance Insights), répartiteurs de charge (ALB), alarmes | Disponible |
+| 2 | Supervision en direct : vue d'ensemble avec analyses automatiques, conteneurs (ECS), bases de données (RDS, Aurora, Performance Insights), répartiteurs de charge (ALB), alarmes, journaux (CloudWatch Logs Insights) | Disponible |
 | 3 | Stockage de l'historique et sauvegardes à la demande | Prévu |
 | 4 | Notifications | Prévu |
 | 5 | Autres services AWS (SQS, Lambda, EC2/EBS) et vue multi-comptes | Prévu |
@@ -130,6 +130,10 @@ rien n'est enregistré.
   réponse p95 et santé des cibles.
 - **Alarmes** : alarmes CloudWatch par état ; les alarmes de suivi de cible de l'autoscaling sont
   masquées par défaut.
+- **Journaux** : choisissez des groupes de journaux par préfixe et lancez des requêtes
+  CloudWatch Logs Insights sur 24 heures au plus (1 000 lignes) ; une requête s'arrête après
+  60 secondes ou quand vous quittez la page. `logs:StartQuery` est facturée au Go de journaux
+  analysé.
 
 Les graphiques couvrent de 1 heure à 7 jours (`?range=`) et s'actualisent toutes les 2 minutes
 tant que l'onglet est visible ; l'actualisation peut être suspendue. Quand une permission manque,
