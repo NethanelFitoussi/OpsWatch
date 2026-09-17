@@ -6,11 +6,12 @@ import { authenticate } from '@/lib/auth/admin';
 import { clientIp, startSession } from '@/lib/auth/current';
 import { loginLimiter, loginThrottle } from '@/lib/auth/login-limiter';
 import { getDb } from '@/lib/db/client';
+import type { GoogleSignInError } from '@/lib/auth/google';
 import type { ActionState } from '@/lib/forms/action-state';
 import { formString } from '@/lib/forms/form-data';
 
 /** The email is echoed back so the field keeps its value after an error. The password never is. */
-export type LoginState = ActionState<'invalid_credentials' | 'rate_limited', { email: string }>;
+export type LoginState = ActionState<'invalid_credentials' | 'rate_limited' | GoogleSignInError, { email: string }>;
 
 export async function loginAction(locale: string, _prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = formString(formData, 'email');

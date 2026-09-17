@@ -53,7 +53,9 @@
       "description": "Sign in to manage your AWS connections.",
       "email": "Email",
       "password": "Password",
-      "submit": "Sign in"
+      "submit": "Sign in",
+      "or": "or",
+      "google": "Continue with Google"
     },
     "errors": {
       "email_invalid": "Enter a valid email address.",
@@ -61,7 +63,10 @@
       "password_mismatch": "The two passwords do not match.",
       "admin_exists": "An admin account already exists. Sign in instead.",
       "invalid_credentials": "Incorrect email or password.",
-      "rate_limited": "Too many attempts. Wait a minute and try again."
+      "rate_limited": "Too many attempts. Wait a minute and try again.",
+      "google_denied": "Google sign-in was cancelled.",
+      "google_not_allowed": "This Google account is not allowed to sign in to OpsWatch. Use the Google account whose email is the admin email.",
+      "google_failed": "Google sign-in failed. Try again, or sign in with your email and password."
     }
   },
   "Shell": {

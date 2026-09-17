@@ -17,16 +17,19 @@ export function AuthForm<S extends AuthState>({
   action,
   emailLabel,
   submitLabel,
+  initialError,
   children,
 }: {
   action: FormAction<S>;
   emailLabel: string;
   submitLabel: string;
+  /** An error to show before the first submission, such as one a redirect put in the URL. */
+  initialError?: S['error'];
   children: ReactNode;
 }) {
   const t = useTranslations('Auth.errors');
-  // Every field of an action state is optional, so the empty object is a valid initial state.
-  const [state, formAction] = useActionState(action, {} as Awaited<S>);
+  // Every field of an action state is optional, so this object is a valid initial state.
+  const [state, formAction] = useActionState(action, { error: initialError } as Awaited<S>);
 
   return (
     <form action={formAction} className="space-y-4">
