@@ -20,7 +20,7 @@ export class AdminExistsError extends Error {
 
 let dummyHash: Promise<string> | undefined;
 
-export function hasAdmin(db: Db): boolean {
+export function hasAdmin(db: Pick<Db, 'select'>): boolean {
   return db.select({ id: adminUser.id }).from(adminUser).limit(1).get() !== undefined;
 }
 
@@ -40,12 +40,22 @@ export async function createAdmin(
     throw new AdminExistsError();
   }
   const passwordHash = await hashPassword(input.password);
-  const row = db
-    .insert(adminUser)
-    .values({ email, passwordHash, createdAt: now })
-    .returning({ id: adminUser.id })
-    .get();
-  return row.id;
+  // The await above yields the event loop, so two concurrent createAdmin calls can both pass the
+  // hasAdmin check above before either inserts. better-sqlite3 transactions run entirely
+  // synchronously (no await inside the callback), so re-checking and inserting inside one here
+  // cannot interleave with another call's check-then-insert: whichever call's transaction runs
+  // first commits its row before the other call's transaction (and its re-check) can start.
+  return db.transaction((tx) => {
+    if (hasAdmin(tx)) {
+      throw new AdminExistsError();
+    }
+    const row = tx
+      .insert(adminUser)
+      .values({ email, passwordHash, createdAt: now })
+      .returning({ id: adminUser.id })
+      .get();
+    return row.id;
+  });
 }
 
 export async function authenticate(db: Db, email: string, password: string): Promise<number | null> {

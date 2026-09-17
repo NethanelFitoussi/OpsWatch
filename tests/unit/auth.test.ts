@@ -8,6 +8,7 @@ import {
 } from '@/lib/auth/admin';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { SESSION_TTL_MS, createSession, deleteSession, validateSession } from '@/lib/auth/sessions';
+import { adminUser } from '@/lib/db/schema';
 import { createTestDb } from '../helpers/db';
 
 const SECRET = 's'.repeat(32);
@@ -53,6 +54,23 @@ describe('admin account', () => {
     await expect(createAdmin(db, { email: 'a@example.com', password: 'short' })).rejects.toBeInstanceOf(
       AdminValidationError,
     );
+  });
+
+  it('allows only one admin when two setups race', async () => {
+    const db = createTestDb();
+    const results = await Promise.allSettled([
+      createAdmin(db, { email: 'a@example.com', password: PASSWORD }),
+      createAdmin(db, { email: 'b@example.com', password: PASSWORD }),
+    ]);
+
+    const fulfilled = results.filter((r) => r.status === 'fulfilled');
+    const rejected = results.filter((r) => r.status === 'rejected');
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(AdminExistsError);
+
+    const rows = db.select().from(adminUser).all();
+    expect(rows).toHaveLength(1);
   });
 });
 
