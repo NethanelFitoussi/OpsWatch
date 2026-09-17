@@ -1,0 +1,53 @@
+'use client';
+
+import { ChevronsUpDown, Cloud } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Link } from '@/i18n/navigation';
+
+export type ShellConnection = { id: string; name: string; regions: string[] };
+
+export function ConnectionSwitcher({ connections }: { connections: ShellConnection[] }) {
+  const t = useTranslations('Shell');
+  const params = useParams<{ id?: string }>();
+  const current = connections.find((c) => c.id === params.id) ?? connections[0];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="max-w-64 justify-between gap-2" aria-label={t('account')}>
+          <Cloud className="size-4 shrink-0" aria-hidden />
+          <span className="truncate">{current ? current.name : t('noAccounts')}</span>
+          {current && <span className="text-xs text-muted-foreground">{current.regions[0]}</span>}
+          <ChevronsUpDown className="size-4 shrink-0 opacity-50" aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel>{t('account')}</DropdownMenuLabel>
+        {connections.map((c) => (
+          <DropdownMenuItem key={c.id} asChild>
+            <Link href={`/accounts/${c.id}`} className="flex flex-col items-start">
+              <span>{c.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {t('region')}: {c.regions.join(', ')}
+              </span>
+            </Link>
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/accounts">{t('manageAccounts')}</Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

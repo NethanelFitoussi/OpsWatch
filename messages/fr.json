@@ -35,5 +35,63 @@
     "errors": {
       "generic": "Une erreur est survenue. Réessayez."
     }
+  },
+  "Auth": {
+    "setup": {
+      "title": "Créer le compte administrateur",
+      "description": "Cette instance n'a pas encore d'administrateur. Le compte créé ici est le seul à pouvoir gérer les connexions AWS.",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "passwordHint": "Au moins 12 caractères.",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Créer le compte administrateur"
+    },
+    "login": {
+      "title": "Connexion",
+      "description": "Connectez-vous pour gérer vos connexions AWS.",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "submit": "Se connecter"
+    },
+    "errors": {
+      "email_invalid": "Saisissez une adresse e-mail valide.",
+      "password_too_short": "Le mot de passe doit contenir au moins 12 caractères.",
+      "password_mismatch": "Les deux mots de passe ne correspondent pas.",
+      "admin_exists": "Un compte administrateur existe déjà. Connectez-vous.",
+      "invalid_credentials": "E-mail ou mot de passe incorrect.",
+      "rate_limited": "Trop de tentatives. Patientez une minute puis réessayez."
+    }
+  },
+  "Shell": {
+    "openMenu": "Ouvrir le menu",
+    "account": "Compte AWS",
+    "region": "Région",
+    "noAccounts": "Aucun compte AWS connecté",
+    "manageAccounts": "Gérer les comptes"
+  },
+  "Status": {
+    "draft": "Configuration incomplète",
+    "pending": "Non testé",
+    "ok": "Connecté",
+    "degraded": "Accès partiel",
+    "failed": "Échec"
+  },
+  "Accounts": {
+    "title": "Comptes AWS",
+    "description": "Les comptes qu'OpsWatch peut lire, et ce que chacun lui permet de voir.",
+    "add": "Ajouter un compte",
+    "emptyTitle": "Aucun compte AWS connecté",
+    "emptyDescription": "Connectez un compte en quelques minutes. L'accès est en lecture seule et révocable à tout moment.",
+    "emptyGuide": "Lire d'abord le guide",
+    "accountId": "Compte",
+    "method": "Méthode",
+    "regions": "Régions",
+    "lastTested": "Dernier test {date}",
+    "neverTested": "Jamais testé",
+    "methods": {
+      "role": "Rôle IAM",
+      "ambient": "Exécution sur AWS",
+      "keys": "Clés d'accès"
+    }
   }
 }

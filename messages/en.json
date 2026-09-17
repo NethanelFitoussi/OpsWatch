@@ -35,5 +35,63 @@
     "errors": {
       "generic": "Something went wrong. Please try again."
     }
+  },
+  "Auth": {
+    "setup": {
+      "title": "Create the admin account",
+      "description": "This instance has no admin yet. The account you create here is the only one that can manage AWS connections.",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least 12 characters.",
+      "confirmPassword": "Confirm password",
+      "submit": "Create admin account"
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to manage your AWS connections.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in"
+    },
+    "errors": {
+      "email_invalid": "Enter a valid email address.",
+      "password_too_short": "The password must be at least 12 characters long.",
+      "password_mismatch": "The two passwords do not match.",
+      "admin_exists": "An admin account already exists. Sign in instead.",
+      "invalid_credentials": "Incorrect email or password.",
+      "rate_limited": "Too many attempts. Wait a minute and try again."
+    }
+  },
+  "Shell": {
+    "openMenu": "Open menu",
+    "account": "AWS account",
+    "region": "Region",
+    "noAccounts": "No AWS account connected",
+    "manageAccounts": "Manage accounts"
+  },
+  "Status": {
+    "draft": "Setup incomplete",
+    "pending": "Not tested",
+    "ok": "Connected",
+    "degraded": "Partial access",
+    "failed": "Failed"
+  },
+  "Accounts": {
+    "title": "AWS accounts",
+    "description": "Accounts OpsWatch can read, and what each one lets it see.",
+    "add": "Add an account",
+    "emptyTitle": "No AWS account connected yet",
+    "emptyDescription": "Connect an account in a few minutes. Access is read-only and can be revoked at any time.",
+    "emptyGuide": "Read the guide first",
+    "accountId": "Account",
+    "method": "Method",
+    "regions": "Regions",
+    "lastTested": "Last tested {date}",
+    "neverTested": "Never tested",
+    "methods": {
+      "role": "IAM role",
+      "ambient": "Running on AWS",
+      "keys": "Access keys"
+    }
   }
 }
