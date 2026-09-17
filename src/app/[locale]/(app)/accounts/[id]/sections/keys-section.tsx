@@ -10,12 +10,12 @@ export async function KeysSection({ view, locale }: { view: ConnectionView; loca
   const t = await getTranslations('AccountDetail.keys');
   return (
     <SectionCard title={t('title')} contentClassName="space-y-4">
-        <Alert><AlertDescription>{t('warning')}</AlertDescription></Alert>
-        {view.accessKeyHint && <p className="text-sm">{t('savedHint', { hint: view.accessKeyHint })}</p>}
-        {view.keysUnreadable && (
-          <Alert variant="destructive"><AlertDescription>{t('unreadable')}</AlertDescription></Alert>
-        )}
-        <AccessKeysForm action={saveAccessKeysAction.bind(null, locale, view.id)} />
+      <Alert><AlertDescription>{t('warning')}</AlertDescription></Alert>
+      {view.accessKeyHint && <p className="text-sm">{t('savedHint', { hint: view.accessKeyHint })}</p>}
+      {view.keysUnreadable && (
+        <Alert variant="destructive"><AlertDescription>{t('unreadable')}</AlertDescription></Alert>
+      )}
+      <AccessKeysForm action={saveAccessKeysAction.bind(null, locale, view.id)} />
     </SectionCard>
   );
 }

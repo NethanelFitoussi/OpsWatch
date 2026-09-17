@@ -10,14 +10,14 @@ export async function AmbientSection({ region }: { region: string }) {
   const { identity, errorCode } = await lookUpBaseIdentity(region);
   return (
     <SectionCard title={t('title')} description={t('description')} contentClassName="text-sm">
-        {identity ? <p>{t('detected', { arn: identity.arn })}</p> : (
-          <Alert variant="destructive">
-            <AlertDescription>
-              <span className="block">{t('missing')}</span>
-              <IdentityErrorDetails code={errorCode} />
-            </AlertDescription>
-          </Alert>
-        )}
+      {identity ? <p>{t('detected', { arn: identity.arn })}</p> : (
+        <Alert variant="destructive">
+          <AlertDescription>
+            <span className="block">{t('missing')}</span>
+            <IdentityErrorDetails code={errorCode} />
+          </AlertDescription>
+        </Alert>
+      )}
     </SectionCard>
   );
 }
