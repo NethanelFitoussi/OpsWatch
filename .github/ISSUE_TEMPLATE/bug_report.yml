@@ -1,0 +1,46 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include access keys, ExternalIds, role ARNs or account IDs you want to keep private.
+        For security issues, follow SECURITY.md instead.
+  - type: input
+    id: version
+    attributes:
+      label: OpsWatch version
+      description: Image tag or commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: method
+    attributes:
+      label: Connection method
+      options:
+        - IAM role
+        - Ambient credentials
+        - Access keys
+        - Not related to a connection
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Go to …\n2. Click …"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Container logs
+      description: Output of `docker compose logs opswatch`, with secrets removed.
+      render: text
