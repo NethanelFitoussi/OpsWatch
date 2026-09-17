@@ -1,0 +1,10 @@
+.git
+.next
+node_modules
+tmp
+data
+test-results
+playwright-report
+.env
+*.sqlite
+docs

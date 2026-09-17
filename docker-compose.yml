@@ -1,0 +1,15 @@
+services:
+  opswatch:
+    build: .
+    image: opswatch:local
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      - opswatch-data:/data
+      # Optional: use a local AWS profile as OpsWatch's identity (set AWS_PROFILE in .env).
+      # - ${HOME}/.aws:/home/opswatch/.aws:ro
+
+volumes:
+  opswatch-data:
