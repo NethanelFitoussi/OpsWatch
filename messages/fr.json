@@ -670,7 +670,37 @@
     },
     "overview": {
       "title": "Vue d'ensemble",
-      "description": "Synthèse de santé et analyses automatiques pour {connection} dans {region}."
+      "description": "Synthèse de santé et analyses automatiques pour {connection} dans {region}.",
+      "summary": {
+        "label": "Synthèse de santé",
+        "window": "15 dernières minutes",
+        "open": "Ouvrir",
+        "ecs": {
+          "title": "Conteneurs",
+          "value": "{affected} services dégradés sur {total}"
+        },
+        "rds": {
+          "title": "Bases de données",
+          "value": "{affected} instances surchargées sur {total}"
+        },
+        "alb": {
+          "title": "Répartiteurs de charge",
+          "value": "{affected} sur {total} avec des erreurs 5xx"
+        },
+        "alarms": {
+          "title": "Alarmes",
+          "value": "{affected} alarmes déclenchées sur {total}"
+        }
+      },
+      "insights": {
+        "title": "Analyses",
+        "description": "Vérifications automatiques sur les 15 dernières minutes. Les alarmes de suivi de cible sont ignorées.",
+        "listLabel": "Analyses",
+        "none": "Rien à signaler : toutes les vérifications passent.",
+        "unavailable": "Certaines vérifications n'ont pas pu s'exécuter : {families}.",
+        "view": "Voir",
+        "showMembers": "{count, plural, one {Afficher # ressource} other {Afficher # ressources}}"
+      }
     },
     "alarms": {
       "title": "Alarmes",

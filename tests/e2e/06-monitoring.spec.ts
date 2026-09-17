@@ -130,3 +130,25 @@ test('the load balancer page shows traffic charts and its target group', async (
   await expect(page.getByRole('heading', { level: 3, name: /opswatch-e2e-web/ })).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: '10.0.1.10:80' })).toContainText('healthy');
 });
+
+test('the overview shows the seeded alarm insight and leaves target-tracking alarms out', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'overview'));
+  const insights = page.getByRole('list', { name: 'Insights' });
+  const alarm = insights.getByRole('listitem').filter({ hasText: 'Alarm opswatch-e2e-high-cpu is in ALARM state.' });
+  await expect(alarm).toHaveCount(1);
+  await expect(insights).not.toContainText('TargetTracking-');
+  await expect(page.getByText('1 of 2 alarms firing')).toBeVisible();
+  await expect(page.getByText(/of 1 services degraded/)).toBeVisible();
+  await alarm.getByRole('link', { name: 'View' }).click();
+  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/alarms\\?state=ALARM$`));
+});
+
+test('a monitoring page fits a 360 px viewport without sideways scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto(monitoringUrl(connectionId, 'overview'));
+  // Measured once every card has streamed in: the header, the sidebar and the widest card are all laid out.
+  await expect(page.getByText('1 of 2 alarms firing')).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Insights' })).toBeVisible();
+  const root = page.locator('html');
+  expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
+});

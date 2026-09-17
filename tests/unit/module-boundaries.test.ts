@@ -38,6 +38,7 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/pi.ts',
   'lib/monitoring/evaluate.ts',
   'lib/monitoring/insights.ts',
+  'lib/monitoring/overview.ts',
 ];
 
 describe('module boundaries', () => {

@@ -670,7 +670,37 @@
     },
     "overview": {
       "title": "Overview",
-      "description": "Health summary and automatic insights for {connection} in {region}."
+      "description": "Health summary and automatic insights for {connection} in {region}.",
+      "summary": {
+        "label": "Health summary",
+        "window": "Last 15 minutes",
+        "open": "Open",
+        "ecs": {
+          "title": "Containers",
+          "value": "{affected} of {total} services degraded"
+        },
+        "rds": {
+          "title": "Databases",
+          "value": "{affected} of {total} instances hot"
+        },
+        "alb": {
+          "title": "Load balancers",
+          "value": "{affected} of {total} with 5xx errors"
+        },
+        "alarms": {
+          "title": "Alarms",
+          "value": "{affected} of {total} alarms firing"
+        }
+      },
+      "insights": {
+        "title": "Insights",
+        "description": "Automatic checks on the last 15 minutes. Target-tracking alarms are left out.",
+        "listLabel": "Insights",
+        "none": "Nothing to report: every check passes.",
+        "unavailable": "Some checks could not run: {families}.",
+        "view": "View",
+        "showMembers": "{count, plural, one {Show # resource} other {Show # resources}}"
+      }
     },
     "alarms": {
       "title": "Alarms",
