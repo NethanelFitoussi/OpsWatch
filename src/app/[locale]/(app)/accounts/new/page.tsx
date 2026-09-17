@@ -1,15 +1,12 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { requireAdmin } from '@/lib/auth/current';
+import { getTranslations } from 'next-intl/server';
+import { initProtectedRoute } from '@/lib/auth/route';
 import { createConnectionAction } from '../actions';
 import { NewConnectionForm } from './new-connection-form';
 
 type Props = { params: Promise<{ locale: string }> };
 
 export default async function NewConnectionPage({ params }: Props) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-  // The (app) layout also checks, but a layout does not stop this segment from rendering in an RSC request.
-  await requireAdmin(locale);
+  const { locale } = await initProtectedRoute(params);
   const t = await getTranslations('Wizard');
 
   return (

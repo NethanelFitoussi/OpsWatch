@@ -8,7 +8,7 @@ import {
 } from '@/lib/auth/admin';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { SESSION_TTL_MS, createSession, deleteSession, validateSession } from '@/lib/auth/sessions';
-import { adminUser } from '@/lib/db/schema';
+import { adminUser, sessions } from '@/lib/db/schema';
 import { createTestDb } from '../helpers/db';
 
 const SECRET = 's'.repeat(32);
@@ -99,5 +99,16 @@ describe('sessions', () => {
     const token = createSession(db, adminId, SECRET, t0);
     expect(validateSession(db, token, 'o'.repeat(32), t0)).toBeNull();
     expect(validateSession(db, token, SECRET, new Date(t0.getTime() + SESSION_TTL_MS + 1))).toBeNull();
+  });
+
+  it('purges abandoned expired sessions when a new one starts', async () => {
+    const db = createTestDb();
+    const adminId = await createAdmin(db, { email: 'a@example.com', password: PASSWORD });
+    const t0 = new Date('2026-09-17T10:00:00Z');
+    createSession(db, adminId, SECRET, t0);
+    const later = new Date(t0.getTime() + SESSION_TTL_MS + 1);
+    const current = createSession(db, adminId, SECRET, later);
+    expect(db.select().from(sessions).all()).toHaveLength(1);
+    expect(validateSession(db, current, SECRET, later)).toBe(adminId);
   });
 });

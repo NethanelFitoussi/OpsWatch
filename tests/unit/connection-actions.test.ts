@@ -68,6 +68,15 @@ describe('connection actions on a removed connection', () => {
   });
 });
 
+describe('connection actions and the locale argument', () => {
+  it('never redirects to a locale OpsWatch does not have', async () => {
+    expect(await redirectOf(actions.deleteConnectionAction('//evil.example', 'gone00000000'))).toEqual({
+      href: '/accounts',
+      locale: 'en',
+    });
+  });
+});
+
 describe('connection forms echo non-secret values after an error', () => {
   it('keeps the wizard name, account ID and regions', async () => {
     const data = form([

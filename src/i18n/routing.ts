@@ -1,3 +1,4 @@
+import { hasLocale } from 'next-intl';
 import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
@@ -11,3 +12,8 @@ export const routing = defineRouting({
 });
 
 export type AppLocale = (typeof routing.locales)[number];
+
+/** A supported locale, or the default one. Use it on every locale that comes from a request. */
+export function resolveLocale(value: string | undefined): AppLocale {
+  return hasLocale(routing.locales, value) ? value : routing.defaultLocale;
+}

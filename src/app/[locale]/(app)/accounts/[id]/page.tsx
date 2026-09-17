@@ -1,6 +1,6 @@
 import { ArrowLeft, Download, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
 import { CopyButton } from '@/components/copy-button';
 import { PermissionChecklist } from '@/components/permission-checklist';
@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
-import { requireAdmin } from '@/lib/auth/current';
+import { initProtectedRoute } from '@/lib/auth/route';
 import { awsErrorCode } from '@/lib/aws/errors';
 import { detectBaseIdentity, type CallerIdentity } from '@/lib/aws/identity';
 import { identityErrorHint } from '@/lib/aws/identity-errors';
@@ -62,11 +62,9 @@ function CodeBlock({ value }: { value: string }) {
 }
 
 export default async function ConnectionPage({ params, searchParams }: Props) {
-  const { locale, id } = await params;
+  const { locale } = await initProtectedRoute(params);
+  const { id } = await params;
   const { error } = await searchParams;
-  setRequestLocale(locale);
-  // The (app) layout also checks, but a layout does not stop this segment from rendering in an RSC request.
-  await requireAdmin(locale);
 
   let view;
   try {

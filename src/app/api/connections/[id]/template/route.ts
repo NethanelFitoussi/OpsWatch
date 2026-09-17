@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server';
 import { templateFileNameFor } from '@/lib/aws/template';
 import { awsErrorCode } from '@/lib/aws/errors';
 import { getCurrentAdminId } from '@/lib/auth/current';
@@ -10,7 +11,7 @@ import { logConnectionEvent } from '@/lib/log';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // A click on the download link must land on a page, not on a JSON error.
   const browser = isBrowserNavigation(request);
   const locale = browserLocale(request);

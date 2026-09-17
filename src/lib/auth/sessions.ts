@@ -1,12 +1,18 @@
 import 'server-only';
-import { eq } from 'drizzle-orm';
+import { eq, lte } from 'drizzle-orm';
 import { hashToken, randomToken } from '../crypto';
 import type { Db } from '../db/client';
 import { sessions } from '../db/schema';
 
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
+/** Sessions are otherwise only deleted when their token is presented again, so abandoned ones would pile up. */
+function deleteExpiredSessions(db: Db, now: Date): void {
+  db.delete(sessions).where(lte(sessions.expiresAt, now)).run();
+}
+
 export function createSession(db: Db, adminUserId: number, secret: string, now: Date = new Date()): string {
+  deleteExpiredSessions(db, now);
   const token = randomToken();
   db.insert(sessions)
     .values({

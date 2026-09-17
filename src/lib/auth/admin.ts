@@ -6,8 +6,10 @@ import { adminUser } from '../db/schema';
 import { MIN_PASSWORD_LENGTH } from '../limits';
 import { hashPassword, verifyPassword } from './password';
 
+export type AdminValidationErrorCode = 'email_invalid' | 'password_too_short';
+
 export class AdminValidationError extends Error {
-  constructor(public readonly code: 'email_invalid' | 'password_too_short') {
+  constructor(public readonly code: AdminValidationErrorCode) {
     super(code);
     this.name = 'AdminValidationError';
   }

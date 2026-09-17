@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 import { normalizeAwsErrorCode } from '@/lib/aws/errors';
 import { identityErrorHint, knownIdentityError } from '@/lib/aws/identity-errors';
@@ -49,9 +50,9 @@ describe('browser helpers', () => {
   });
 
   it('reads the saved locale, defaulting to English', () => {
-    expect(browserLocale(new Request('http://x/a', { headers: { cookie: 'a=b; NEXT_LOCALE=fr' } }))).toBe('fr');
-    expect(browserLocale(new Request('http://x/a', { headers: { cookie: 'NEXT_LOCALE=de' } }))).toBe('en');
-    expect(browserLocale(new Request('http://x/a'))).toBe('en');
+    expect(browserLocale(new NextRequest('http://x/a', { headers: { cookie: 'a=b; NEXT_LOCALE=fr' } }))).toBe('fr');
+    expect(browserLocale(new NextRequest('http://x/a', { headers: { cookie: 'NEXT_LOCALE=de' } }))).toBe('en');
+    expect(browserLocale(new NextRequest('http://x/a'))).toBe('en');
   });
 
   it('redirects with a relative location', () => {

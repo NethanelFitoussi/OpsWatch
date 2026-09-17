@@ -1,12 +1,13 @@
 import 'server-only';
 import { cookies, headers } from 'next/headers';
 import { redirect } from '@/i18n/navigation';
+import { resolveLocale } from '@/i18n/routing';
 import { getDb } from '../db/client';
 import { env } from '../env';
 import { hasAdmin } from './admin';
 import { createSession, deleteSession, validateSession } from './sessions';
 
-export const SESSION_COOKIE = 'opswatch_session';
+const SESSION_COOKIE = 'opswatch_session';
 
 // The database enforces the 12 h rolling expiry; the cookie only needs to outlive it.
 const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
@@ -26,7 +27,8 @@ export async function getCurrentAdminId(): Promise<number | null> {
   return token ? validateSession(getDb(), token, env().OPSWATCH_SECRET) : null;
 }
 
-export async function requireAdmin(locale: string): Promise<number> {
+export async function requireAdmin(requestedLocale: string): Promise<number> {
+  const locale = resolveLocale(requestedLocale);
   if (!hasAdmin(getDb())) {
     redirect({ href: '/setup', locale });
   }

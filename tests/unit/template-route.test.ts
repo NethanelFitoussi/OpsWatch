@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Db } from '@/lib/db/client';
 import { createConnection } from '@/lib/connections/repository';
@@ -21,7 +22,7 @@ const BROWSER = { accept: 'text/html', cookie: 'NEXT_LOCALE=fr' };
 const SCRIPT = { accept: 'application/json' };
 
 function get(id: string, headers: Record<string, string>) {
-  return GET(new Request(`http://localhost/api/connections/${id}/template`, { headers }), {
+  return GET(new NextRequest(`http://localhost/api/connections/${id}/template`, { headers }), {
     params: Promise.resolve({ id }),
   });
 }
