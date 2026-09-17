@@ -140,11 +140,14 @@ page continue de s'afficher.
 
 `cloudwatch:GetMetricData` est facturée par métrique demandée : environ 0,01 USD pour 1 000
 métriques (voir la tarification CloudWatch de votre région). OpsWatch demande une métrique par
-série affichée, met les résultats en cache pendant 60 secondes pour que les visiteurs et les
-cartes les partagent, et n'actualise que les onglets visibles. Une page Conteneurs avec 30
-services, actualisée toutes les 2 minutes pendant 8 heures, représente environ 30 000 métriques,
-soit environ 0,30 USD. Les appels de description vers ECS, RDS et Elastic Load Balancing ne sont
-pas facturés.
+série affichée et n'actualise que les onglets visibles ; le cache de 60 secondes est plus court
+que l'actualisation de 120 secondes, donc il n'économise des appels que si plusieurs personnes
+regardent la même page en même temps. La liste des conteneurs demande deux métriques par service,
+CPU et mémoire (Container Insights, quand il est activé, n'ajoute des métriques de nombre de
+tâches que sur les pages par service et Vue d'ensemble, pas sur cette liste). Regarder une page
+Conteneurs avec 30 services pendant 8 heures représente 240 actualisations de 60 métriques
+chacune, soit environ 14 400 métriques, environ 0,14 USD. Les appels de description vers ECS, RDS
+et Elastic Load Balancing ne sont pas facturés.
 
 ## Modèle de sécurité
 

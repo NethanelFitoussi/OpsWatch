@@ -120,7 +120,7 @@ Charts cover 1 hour to 7 days (`?range=`) and refresh every 2 minutes while the 
 
 ### What monitoring costs
 
-`cloudwatch:GetMetricData` is billed per metric requested: about USD 0.01 per 1,000 metrics (see CloudWatch pricing for your region). OpsWatch requests one metric per series it shows, caches results for 60 seconds so viewers and cards share them, and refreshes only visible tabs. A Containers page with 30 services refreshing every 2 minutes for 8 hours is roughly 30,000 metrics, about USD 0.30. Describe calls to ECS, RDS and Elastic Load Balancing are not billed.
+`cloudwatch:GetMetricData` is billed per metric requested: about USD 0.01 per 1,000 metrics (see CloudWatch pricing for your region). OpsWatch requests one metric per series it shows and refreshes only visible tabs; the 60-second cache is shorter than the 120-second refresh, so it only saves calls when more than one person watches the same page at once. The Containers list requests two metrics per service, CPU and memory (Container Insights, when enabled, adds task-count metrics only on the per-service and Overview pages, not on this list). Watching a Containers page with 30 services for 8 hours is 240 refreshes of 60 metrics each, about 14,400 metrics, roughly USD 0.14. Describe calls to ECS, RDS and Elastic Load Balancing are not billed.
 
 ## Security model
 
