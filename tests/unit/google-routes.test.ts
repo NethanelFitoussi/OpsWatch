@@ -160,6 +160,13 @@ describe('GET /api/auth/google/callback', () => {
     expect(state.failures).toBe(0);
   });
 
+  it('treats a denial without a valid flow cookie as a failure, not as a cancelled sign-in', async () => {
+    const response = await callbackRequest('error=access_denied', '');
+    expect(response.headers.get('location')).toBe('/en/login?error=google_failed');
+    expectFlowCookieCleared(response);
+    expect(state.failures).toBe(0);
+  });
+
   it('fails on a state mismatch, before any token exchange', async () => {
     state.grant = () => {
       throw new Error('must not be called');
@@ -185,6 +192,7 @@ describe('GET /api/auth/google/callback', () => {
     state.env = loadEnv({ OPSWATCH_SECRET: TEST_SECRET });
     const response = await callbackRequest('code=abc&state=forged');
     expect(response.headers.get('location')).toBe('/fr/login');
+    expectFlowCookieCleared(response);
     expect(state.failures).toBe(0);
     expect(state.sessions).toEqual([]);
   });

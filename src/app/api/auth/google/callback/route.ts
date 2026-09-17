@@ -42,11 +42,11 @@ async function verify(config: GoogleSignInConfig, params: URLSearchParams, flow:
 
 /** Where the browser goes next. */
 async function complete(config: GoogleSignInConfig, params: URLSearchParams, flow: GoogleFlow | null, locale: string): Promise<string> {
-  // A sign-in the user cancelled on Google's page is not a failed attempt.
-  if (params.get('error') === 'access_denied') return `/${locale}/login?error=google_denied`;
   // Without a flow cookie this request is not part of a sign-in: failing it costs the caller nothing,
   // so it must not count toward the global login slowdown either.
   if (!flow) return `/${locale}/login?error=google_failed`;
+  // A sign-in the user cancelled on Google's page is not a failed attempt.
+  if (params.get('error') === 'access_denied') return `/${locale}/login?error=google_denied`;
   const outcome = await verify(config, params, flow);
   if (typeof outcome !== 'number') {
     // Like a wrong password.
@@ -62,16 +62,16 @@ export async function GET(request: NextRequest) {
   const flow = unsealGoogleFlow(request.cookies.get(GOOGLE_FLOW_COOKIE)?.value, env().OPSWATCH_SECRET);
   const locale = flow?.locale ?? browserLocale(request);
   const config = googleSignInConfig(env());
-  if (!config) {
-    return seeOther(`/${locale}/login`);
-  }
 
-  let location;
-  try {
-    location = await complete(config, request.nextUrl.searchParams, flow, locale);
-  } catch (error) {
-    console.error(`[opswatch] Google sign-in could not start a session: ${error instanceof Error ? error.name : 'unknown error'}`);
-    location = `/${locale}/login?error=google_failed`;
+  // Disabled: back to the login page, nothing counted.
+  let location = `/${locale}/login`;
+  if (config) {
+    try {
+      location = await complete(config, request.nextUrl.searchParams, flow, locale);
+    } catch (error) {
+      console.error(`[opswatch] Google sign-in could not start a session: ${error instanceof Error ? error.name : 'unknown error'}`);
+      location = `/${locale}/login?error=google_failed`;
+    }
   }
   const response = seeOther(location);
   // The flow is single use, whatever the outcome.

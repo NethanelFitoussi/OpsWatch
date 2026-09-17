@@ -20,7 +20,10 @@ test('the Google start route redirects to Google with PKCE', async ({ request })
 });
 
 test('a cancelled Google sign-in lands on the login page with a localized message', async ({ page }) => {
-  await page.goto('/api/auth/google/callback?error=access_denied');
+  // Start a sign-in first: the flow cookie is shared with the page, as it would be after Google's page.
+  const started = await page.request.get('/api/auth/google/start?locale=en', { maxRedirects: 0 });
+  const state = new URL(started.headers().location ?? '').searchParams.get('state');
+  await page.goto(`/api/auth/google/callback?error=access_denied&state=${state}`);
   await expect(page).toHaveURL(/\/en\/login\?error=google_denied$/);
   await expect(alert(page)).toHaveText('Google sign-in was cancelled.');
   await page.goto('/fr/login?error=google_not_allowed');
