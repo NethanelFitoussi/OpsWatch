@@ -474,12 +474,27 @@
     },
     "servicesTitle": "What each service needs",
     "servicesIntro": "The role is deliberately narrower than the AWS ReadOnlyAccess policy, which can read the content of S3 buckets. OpsWatch never reads S3, Secrets Manager or SSM Parameter Store.",
+    "pages": {
+      "title": "What OpsWatch shows",
+      "intro": "Once a connection passes its permission test, pick it in the top bar, then a region, to open these pages.",
+      "items": {
+        "overview": "Overview: health summary and automatic insights on the last 15 minutes (tasks below desired, high CPU or memory, failed deployments, database CPU and memory, Aurora replica lag, load balancer 5xx errors and unhealthy hosts, alarms firing).",
+        "containers": "Containers: ECS services with tasks, CPU and memory, then per service its charts, tasks, events, target groups and log groups.",
+        "databases": "Databases: RDS and Aurora instances with their role, metrics and, when Performance Insights is on, the top SQL statements.",
+        "loadBalancers": "Load balancers: requests, 5xx errors, p95 response time and target health of each application load balancer.",
+        "alarms": "Alarms: CloudWatch alarms by state, with target-tracking autoscaling alarms hidden by default."
+      },
+      "refresh": "Charts cover 1 hour to 7 days and refresh every 2 minutes while the tab is visible; you can pause the refresh."
+    },
     "serviceCards": {
       "actions": "IAM actions",
       "why": "Why",
       "unlocks": "Unlocks",
       "without": "Without it",
-      "billed": "{action} is billed by AWS per GB of logs scanned.",
+      "billed": {
+        "logs": "{action} is billed by AWS per GB of logs scanned.",
+        "cloudwatch": "{action} is billed by AWS per metric requested (about USD 0.01 per 1,000 metrics)."
+      },
       "groups": {
         "ecs": {
           "why": "List clusters, services and tasks, and read their definitions.",

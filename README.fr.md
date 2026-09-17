@@ -11,15 +11,15 @@ Rien ne quitte votre réseau : pas de SaaS, aucun agent à installer dans vos ap
 
 ## État du projet
 
-OpsWatch est construit par étapes. Cette version couvre les fondations :
+OpsWatch est construit par étapes. Cette version couvre les fondations et la supervision en direct :
 
 | Étape | Contenu | État |
 |-------|---------|------|
 | 1 | Compte administrateur, connexions AWS, test des permissions, guide de démarrage (anglais et français) | Disponible |
-| 2 | Conteneurs : clusters, services et tâches ECS, load balancers | Prévu |
-| 3 | Bases de données : métriques RDS et Aurora, Performance Insights | Prévu |
-| 4 | Journaux : recherche CloudWatch Logs et Logs Insights | Prévu |
-| 5 | Analyses automatiques et sauvegardes à la demande depuis le tableau de bord | Prévu |
+| 2 | Supervision en direct : vue d'ensemble avec analyses automatiques, conteneurs (ECS), bases de données (RDS, Aurora, Performance Insights), répartiteurs de charge (ALB), alarmes | Disponible |
+| 3 | Stockage de l'historique et sauvegardes à la demande | Prévu |
+| 4 | Notifications | Prévu |
+| 5 | Autres services AWS (SQS, Lambda, EC2/EBS) et vue multi-comptes | Prévu |
 
 ## Démarrage rapide
 
@@ -108,6 +108,43 @@ sur un vrai compte AWS ; le téléchargement du modèle est le parcours testé.
 
 Une fois connecté, **Lancer le test** appelle une action en lecture par service et par
 région, et montre ce qu'OpsWatch peut voir ou non.
+
+## Pages de supervision
+
+![Vue d'ensemble avec analyses automatiques](docs/screenshots/overview.png)
+
+Choisissez une connexion dans la barre du haut, puis une région. Chaque page lit AWS en direct ;
+rien n'est enregistré.
+
+- **Vue d'ensemble** : synthèse de santé et analyses automatiques sur les 15 dernières minutes
+  (tâches en dessous du nombre souhaité, CPU ou mémoire au-dessus de 85 %, déploiements en échec
+  ou bloqués, CPU des bases au-dessus de 80 %, mémoire libre en dessous de 5 %, retard de
+  réplication Aurora au-dessus d'1 s, erreurs 5xx et hôtes défaillants des répartiteurs de charge,
+  alarmes à l'état ALARM). Un seuil doit tenir 3 minutes consécutives pour déclencher une analyse.
+- **Conteneurs** : clusters et services ECS (jusqu'à 100 par cluster, avec recherche), puis pour
+  chaque service ses graphiques de CPU et mémoire, ses tâches en cours, ses événements récents,
+  ses groupes cibles et ses groupes de journaux.
+- **Bases de données** : instances RDS et Aurora avec rôle, CPU, connexions, mémoire libre et
+  retard de réplication ; par instance, graphiques et top SQL de Performance Insights.
+- **Répartiteurs de charge** : application load balancers avec requêtes, erreurs 5xx, temps de
+  réponse p95 et santé des cibles.
+- **Alarmes** : alarmes CloudWatch par état ; les alarmes de suivi de cible de l'autoscaling sont
+  masquées par défaut.
+
+Les graphiques couvrent de 1 heure à 7 jours (`?range=`) et s'actualisent toutes les 2 minutes
+tant que l'onglet est visible ; l'actualisation peut être suspendue. Quand une permission manque,
+la carte indique l'action IAM concernée et renvoie vers le test des permissions ; le reste de la
+page continue de s'afficher.
+
+### Ce que coûte la supervision
+
+`cloudwatch:GetMetricData` est facturée par métrique demandée : environ 0,01 USD pour 1 000
+métriques (voir la tarification CloudWatch de votre région). OpsWatch demande une métrique par
+série affichée, met les résultats en cache pendant 60 secondes pour que les visiteurs et les
+cartes les partagent, et n'actualise que les onglets visibles. Une page Conteneurs avec 30
+services, actualisée toutes les 2 minutes pendant 8 heures, représente environ 30 000 métriques,
+soit environ 0,30 USD. Les appels de description vers ECS, RDS et Elastic Load Balancing ne sont
+pas facturés.
 
 ## Modèle de sécurité
 

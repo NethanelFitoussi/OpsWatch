@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ASSUME_ROLE_DURATION_SECONDS, BASE_IDENTITY_POLICY, SERVICE_GROUPS, allActions, readOnlyPolicyDocument } from '@/lib/aws/actions';
+import { ASSUME_ROLE_DURATION_SECONDS, BASE_IDENTITY_POLICY, SERVICE_GROUPS, TEMPLATE_VERSION, allActions, readOnlyPolicyDocument } from '@/lib/aws/actions';
 
 describe('IAM action catalogue', () => {
   it('lists the 37 read-only actions of the spec without duplicates', () => {
@@ -20,8 +20,15 @@ describe('IAM action catalogue', () => {
     }
   });
 
-  it('flags logs:StartQuery as billed', () => {
-    expect(SERVICE_GROUPS.find((g) => g.id === 'logs')?.billedActions).toEqual(['logs:StartQuery']);
+  it('flags the billed actions without changing the template version', () => {
+    expect(SERVICE_GROUPS.filter((g) => g.billedActions.length > 0).map((g) => [g.id, g.billedActions])).toEqual([
+      ['cloudwatch', ['cloudwatch:GetMetricData']],
+      ['logs', ['logs:StartQuery']],
+    ]);
+    expect(TEMPLATE_VERSION).toBe(1);
+    for (const group of SERVICE_GROUPS) {
+      for (const action of group.billedActions) expect(group.actions).toContain(action);
+    }
   });
 
   it('limits OpsWatch base identity to assuming OpsWatch roles', () => {

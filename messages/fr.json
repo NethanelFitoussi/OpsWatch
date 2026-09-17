@@ -474,12 +474,27 @@
     },
     "servicesTitle": "Ce dont chaque service a besoin",
     "servicesIntro": "Le rôle est volontairement plus restreint que la politique AWS ReadOnlyAccess, qui peut lire le contenu des buckets S3. OpsWatch ne lit jamais S3, Secrets Manager ni SSM Parameter Store.",
+    "pages": {
+      "title": "Ce qu'OpsWatch affiche",
+      "intro": "Dès qu'une connexion réussit son test des permissions, choisissez-la dans la barre du haut puis choisissez une région pour ouvrir ces pages.",
+      "items": {
+        "overview": "Vue d'ensemble : synthèse de santé et analyses automatiques sur les 15 dernières minutes (tâches manquantes, CPU ou mémoire élevés, déploiements en échec, CPU et mémoire des bases, retard de réplication Aurora, erreurs 5xx et hôtes défaillants des répartiteurs, alarmes déclenchées).",
+        "containers": "Conteneurs : services ECS avec tâches, CPU et mémoire, puis pour chaque service ses graphiques, tâches, événements, groupes cibles et groupes de journaux.",
+        "databases": "Bases de données : instances RDS et Aurora avec leur rôle, leurs métriques et, si Performance Insights est activé, les requêtes SQL les plus coûteuses.",
+        "loadBalancers": "Répartiteurs de charge : requêtes, erreurs 5xx, temps de réponse p95 et santé des cibles de chaque Application Load Balancer.",
+        "alarms": "Alarmes : alarmes CloudWatch par état, les alarmes de suivi de cible de l'autoscaling étant masquées par défaut."
+      },
+      "refresh": "Les graphiques couvrent de 1 heure à 7 jours et s'actualisent toutes les 2 minutes tant que l'onglet est visible ; vous pouvez suspendre l'actualisation."
+    },
     "serviceCards": {
       "actions": "Actions IAM",
       "why": "Pourquoi",
       "unlocks": "Débloque",
       "without": "Sans elle",
-      "billed": "{action} est facturée par AWS au Go de logs scanné.",
+      "billed": {
+        "logs": "{action} est facturée par AWS au Go de journaux analysé.",
+        "cloudwatch": "{action} est facturée par AWS par métrique demandée (environ 0,01 USD pour 1 000 métriques)."
+      },
       "groups": {
         "ecs": {
           "why": "Lister les clusters, services et tâches, et lire leurs définitions.",

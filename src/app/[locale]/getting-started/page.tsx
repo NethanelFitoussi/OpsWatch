@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
 import { ConnectionDiagram } from '@/components/getting-started/connection-diagram';
 import { MethodCards } from '@/components/getting-started/method-cards';
+import { PagesSection } from '@/components/getting-started/pages-section';
 import { SectionHeading } from '@/components/getting-started/section-heading';
 import { SecuritySection } from '@/components/getting-started/security-section';
 import { ServiceCards } from '@/components/getting-started/service-cards';
@@ -60,6 +61,10 @@ export default async function GettingStartedPage({ params }: Props) {
 
         <Section id="services" title={t('servicesTitle')} intro={t('servicesIntro')}>
           <ServiceCards />
+        </Section>
+
+        <Section id="pages" title={t('pages.title')} intro={t('pages.intro')}>
+          <PagesSection />
         </Section>
 
         <Section id="security" title={t('security.title')}>

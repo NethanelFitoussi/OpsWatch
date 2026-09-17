@@ -46,7 +46,7 @@ export async function ServiceCards() {
             </div>
             {group.billedActions.map((action) => (
               <p key={action} className="rounded-md bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                {t('billed', { action })}
+                {t(`billed.${group.id}`, { action })}
               </p>
             ))}
           </CardContent>

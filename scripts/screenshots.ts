@@ -27,6 +27,13 @@ async function main() {
   await page.waitForURL(/\/en\/accounts\/[0-9a-f]{12}$/);
   await page.getByText('Connected', { exact: true }).waitFor();
   await page.screenshot({ path: `${outDir}/connection.png`, fullPage: true });
+
+  // Overview with automatic insights, from the same seeded moto connection.
+  const connectionId = page.url().split('/').pop();
+  await page.goto(`/en/c/${connectionId}/us-east-1/overview`);
+  await page.getByRole('list', { name: 'Insights' }).waitFor();
+  await page.screenshot({ path: `${outDir}/overview.png` });
+
   await browser.close();
 }
 

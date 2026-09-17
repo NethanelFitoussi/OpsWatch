@@ -76,7 +76,7 @@ export const SERVICE_GROUPS: readonly ServiceGroup[] = [
   {
     id: 'cloudwatch',
     actions: ['cloudwatch:GetMetricData', 'cloudwatch:ListMetrics', 'cloudwatch:DescribeAlarms'],
-    billedActions: [],
+    billedActions: ['cloudwatch:GetMetricData'],
   },
   {
     id: 'logs',

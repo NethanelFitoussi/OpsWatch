@@ -41,6 +41,12 @@ test('step 0 explains both identities and answers the Identity Center question',
   await expect(step0.getByText('arn:aws:iam::*:role/OpsWatchReadOnly-*').first()).toBeVisible();
 });
 
+test('the guide lists the monitoring pages and the billed CloudWatch action', async ({ page }) => {
+  await page.goto('/en/getting-started');
+  await expect(page.getByRole('heading', { level: 2, name: 'What OpsWatch shows' })).toBeVisible();
+  await expect(page.getByText('cloudwatch:GetMetricData is billed by AWS per metric requested', { exact: false })).toBeVisible();
+});
+
 test('the guide shows the AWS service icons, with alt text only where the name is not written', async ({ page }) => {
   await page.goto('/en/getting-started');
   await expect(page.getByRole('img', { name: 'AWS CloudFormation' }).first()).toBeVisible();

@@ -11,15 +11,15 @@ Nothing leaves your network: no SaaS, no agent to install in your workloads.
 
 ## Status
 
-OpsWatch is built in stages. This release covers the foundations:
+OpsWatch is built in stages. This release covers the foundations and live monitoring:
 
 | Stage | Content | Status |
 |-------|---------|--------|
 | 1 | Admin account, AWS connections, permission test, getting started guide (English and French) | Available |
-| 2 | Containers: ECS clusters, services, tasks, load balancers | Planned |
-| 3 | Databases: RDS and Aurora metrics, Performance Insights | Planned |
-| 4 | Logs: CloudWatch Logs search and Logs Insights | Planned |
-| 5 | Automatic analyses and on-demand snapshots saved from the dashboard | Planned |
+| 2 | Live monitoring: Overview with automatic insights, Containers (ECS), Databases (RDS, Aurora, Performance Insights), Load balancers (ALB), Alarms | Available |
+| 3 | History storage and on-demand snapshots | Planned |
+| 4 | Notifications | Planned |
+| 5 | More AWS services (SQS, Lambda, EC2/EBS) and a multi-account overview | Planned |
 
 ## Quick start
 
@@ -103,6 +103,24 @@ account yet; downloading the template is the tested path.
 
 After connecting, **Run test** calls one read-only action per service and region, and shows
 what OpsWatch can and cannot see.
+
+## Monitoring pages
+
+![Overview with automatic insights](docs/screenshots/overview.png)
+
+Pick a connection in the top bar, then a region. Every page reads AWS live; nothing is stored.
+
+- **Overview**: health summary and automatic insights on the last 15 minutes (tasks below desired, CPU or memory above 85 %, failed or stuck deployments, database CPU above 80 %, free memory below 5 %, Aurora replica lag above 1 s, load balancer 5xx errors, unhealthy hosts, alarms in ALARM state). A threshold must hold for 3 consecutive minutes to raise an insight.
+- **Containers**: ECS clusters and services (up to 100 per cluster, with search), then per service CPU and memory charts, running tasks, recent events, target groups and log groups.
+- **Databases**: RDS and Aurora instances with role, CPU, connections, free memory and replica lag; per instance charts and Performance Insights top SQL.
+- **Load balancers**: application load balancers with requests, 5xx errors, p95 response time and target health.
+- **Alarms**: CloudWatch alarms by state; target-tracking autoscaling alarms are hidden by default.
+
+Charts cover 1 hour to 7 days (`?range=`) and refresh every 2 minutes while the tab is visible; the refresh can be paused. When a permission is missing, the card says which IAM action and links to the permission test; the rest of the page still loads.
+
+### What monitoring costs
+
+`cloudwatch:GetMetricData` is billed per metric requested: about USD 0.01 per 1,000 metrics (see CloudWatch pricing for your region). OpsWatch requests one metric per series it shows, caches results for 60 seconds so viewers and cards share them, and refreshes only visible tabs. A Containers page with 30 services refreshing every 2 minutes for 8 hours is roughly 30,000 metrics, about USD 0.30. Describe calls to ECS, RDS and Elastic Load Balancing are not billed.
 
 ## Security model
 
