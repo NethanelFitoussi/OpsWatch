@@ -12,4 +12,6 @@ export async function register() {
     }
     throw error;
   }
+  const { getDb } = await import('./lib/db/client');
+  getDb();
 }
