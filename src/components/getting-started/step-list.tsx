@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { StepNumber } from '@/components/step-number';
 import { SectionHeading } from './section-heading';
 
 export type SubStep = { content: ReactNode; extra?: ReactNode };
@@ -16,9 +17,7 @@ export function Step({ id, number, title, purpose, children }: { id?: string; nu
   return (
     <li id={id} className="scroll-mt-20">
       <div className="flex items-center gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground tabular-nums">
-          {number}
-        </span>
+        <StepNumber number={number} />
         <h4 className="text-lg leading-snug font-semibold">{title}</h4>
       </div>
       <div className="mt-3 min-w-0 space-y-5 sm:ml-4 sm:border-l sm:pb-2 sm:pl-8">

@@ -1,9 +1,9 @@
 import { Download, ExternalLink, RefreshCw } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { CodeBlock } from '@/components/code-block';
+import { SectionCard } from '@/components/section-card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
 import type { AppLocale } from '@/i18n/routing';
 import { lookUpBaseIdentity } from '@/lib/aws/identity';
@@ -23,11 +23,7 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle><h2><span aria-hidden>① </span>{t('identityTitle')}</h2></CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+      <SectionCard step={1} title={t('identityTitle')} contentClassName="space-y-2 text-sm">
           {identity ? (
             <p>{t('identityDetected', { arn: identity.arn })}</p>
           ) : (
@@ -35,21 +31,15 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
               <AlertDescription>
                 <span className="block">
                   {t('identityMissing')}{' '}
-                  <Link href="/getting-started#step-0" className="underline">{t('guideLink')}</Link>
+                  <Link href="/getting-started#step-0" className="font-medium underline underline-offset-4">{t('guideLink')}</Link>
                 </span>
                 <IdentityErrorDetails code={errorCode} />
               </AlertDescription>
             </Alert>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle><h2><span aria-hidden>② </span>{t('deployTitle')}</h2></CardTitle>
-          <CardDescription>{t('deployHelp', { account: view.awsAccountId })}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <SectionCard step={2} title={t('deployTitle')} description={t('deployHelp', { account: view.awsAccountId })} contentClassName="space-y-5">
           {view.templateOutdated && (
             <Alert><AlertDescription>{t('outdated')}</AlertDescription></Alert>
           )}
@@ -99,8 +89,7 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
             </Button>
             <span className="text-xs text-muted-foreground">{t('regenerateHelp')}</span>
           </form>
-        </CardContent>
-      </Card>
+      </SectionCard>
     </>
   );
 }
@@ -109,15 +98,9 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
 export async function RoleArnCard({ view, locale }: SectionProps) {
   const t = await getTranslations('AccountDetail.role');
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle><h2><span aria-hidden>③ </span>{t('roleArnTitle')}</h2></CardTitle>
-        <CardDescription>{t('roleArnHelp')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SectionCard step={3} title={t('roleArnTitle')} description={t('roleArnHelp')} contentClassName="space-y-4">
         <CodeBlock value={roleArnCommand(view.id, view.regions[0])} />
         <RoleArnForm action={saveRoleArnAction.bind(null, locale, view.id)} defaultValue={view.roleArn ?? ''} />
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 }

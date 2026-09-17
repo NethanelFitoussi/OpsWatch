@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { ChevronRight, Cloud, Plus } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
 import { PageHeader } from '@/components/page-header';
@@ -38,12 +38,15 @@ export default async function AccountsPage({ params }: Props) {
       />
 
       {views.length === 0 ? (
-        <Card className="border-dashed">
-          <CardHeader className="items-center text-center">
-            <CardTitle>{t('emptyTitle')}</CardTitle>
-            <CardDescription>{t('emptyDescription')}</CardDescription>
+        <Card className="border border-dashed py-10 ring-0">
+          <CardHeader className="justify-items-center text-center">
+            <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Cloud className="size-6" aria-hidden />
+            </span>
+            <CardTitle className="text-lg font-semibold">{t('emptyTitle')}</CardTitle>
+            <CardDescription className="max-w-md">{t('emptyDescription')}</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center gap-3">
+          <CardContent className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild>
               <Link href="/accounts/new">{t('add')}</Link>
             </Button>
@@ -56,11 +59,17 @@ export default async function AccountsPage({ params }: Props) {
         <ul className="grid gap-4 md:grid-cols-2">
           {views.map((c) => (
             <li key={c.id}>
-              <Link href={`/accounts/${c.id}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-ring">
-                <Card className="h-full transition-colors hover:border-primary/40">
-                  <CardHeader className="flex-row items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>{c.name}</CardTitle>
+              <Link
+                href={`/accounts/${c.id}`}
+                className="group block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <Card className="h-full transition-shadow group-hover:shadow-md group-hover:ring-primary/40">
+                  <CardHeader className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="flex items-center gap-1 text-base font-semibold">
+                        <span className="truncate">{c.name}</span>
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
+                      </CardTitle>
                       <CardDescription>
                         {t('accountId')} {c.awsAccountId} · {t(`methods.${c.method}`)}
                       </CardDescription>
@@ -77,7 +86,7 @@ export default async function AccountsPage({ params }: Props) {
                     </div>
                     <ConnectionStatusBadge status={c.status} />
                   </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground">
+                  <CardContent className="mt-auto border-t pt-3 text-sm text-muted-foreground">
                     <p>{t('regions')}: {c.regions.join(', ')}</p>
                     <p>
                       {c.lastTest

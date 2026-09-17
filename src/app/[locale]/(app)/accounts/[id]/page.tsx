@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
 import { PageHeader } from '@/components/page-header';
 import { PermissionChecklist } from '@/components/permission-checklist';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SectionCard } from '@/components/section-card';
 import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
@@ -44,7 +44,10 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <Link href="/accounts" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        href="/accounts"
+        className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
         <ArrowLeft className="size-4" aria-hidden /> {t('back')}
       </Link>
 
@@ -75,15 +78,9 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         </Suspense>
       )}
 
-      <Card>
-        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
-          <CardTitle><h2>{tChecklist('title')}</h2></CardTitle>
-          {view.status !== 'draft' && <TestButton connectionId={view.id} />}
-        </CardHeader>
-        <CardContent>
-          <PermissionChecklist result={view.lastTest} account={view.awsAccountId} />
-        </CardContent>
-      </Card>
+      <SectionCard title={tChecklist('title')} action={view.status !== 'draft' && <TestButton connectionId={view.id} />}>
+        <PermissionChecklist result={view.lastTest} account={view.awsAccountId} />
+      </SectionCard>
 
       <DangerZone connectionId={view.id} locale={locale} />
     </div>

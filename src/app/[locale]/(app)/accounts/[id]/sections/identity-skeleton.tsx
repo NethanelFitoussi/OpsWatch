@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { SECTION_CARD_SPACING } from '@/components/section-card';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 /** Shown while OpsWatch's own AWS identity is looked up, which can take up to 5 seconds. */
@@ -8,7 +9,7 @@ export async function IdentitySkeleton({ cards = 1 }: { cards?: number }) {
     <div role="status" className="space-y-6">
       <span className="sr-only">{t('loading')}</span>
       {Array.from({ length: cards }, (_, index) => (
-        <Card key={index} aria-hidden>
+        <Card key={index} aria-hidden className={SECTION_CARD_SPACING}>
           <CardHeader>
             <div className="h-5 w-48 animate-pulse rounded-md bg-muted" />
           </CardHeader>
