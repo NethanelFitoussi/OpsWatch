@@ -1,0 +1,39 @@
+{
+  "Common": {
+    "appName": "OpsWatch",
+    "tagline": "L'observabilité de votre stack AWS",
+    "nav": {
+      "gettingStarted": "Premiers pas",
+      "accounts": "Comptes",
+      "containers": "Conteneurs",
+      "databases": "Bases de données",
+      "logs": "Logs",
+      "comingSoon": "Bientôt",
+      "signOut": "Se déconnecter",
+      "mainNavigation": "Navigation principale"
+    },
+    "language": {
+      "label": "Langue",
+      "en": "English",
+      "fr": "Français"
+    },
+    "theme": {
+      "label": "Thème",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "actions": {
+      "copy": "Copier",
+      "copied": "Copié",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "continue": "Continuer",
+      "back": "Retour",
+      "download": "Télécharger"
+    },
+    "errors": {
+      "generic": "Une erreur est survenue. Réessayez."
+    }
+  }
+}
