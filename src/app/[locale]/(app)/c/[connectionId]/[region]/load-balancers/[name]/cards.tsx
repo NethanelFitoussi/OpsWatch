@@ -9,7 +9,7 @@ import { findLoadBalancer, listTargetGroups, loadBalancerLatencyQuery, loadBalan
 import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { NO_VALUE } from '@/lib/monitoring/shared/format';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 
 type Ref = { scope: MonitoringScope; name: string };
@@ -58,14 +58,14 @@ export async function LoadBalancerSummaryCard(ref: Ref) {
   );
 }
 
-export async function LoadBalancerChartsCard({ range, ...ref }: Ref & { range: TimeRange }) {
+export async function LoadBalancerChartsCard({ range, nowMs, ...ref }: Ref & { range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.loadBalancers');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const title = t('charts.title');
   const loaded = await loadLoadBalancer(ref, title);
   if (!loaded.ok) return loaded.card;
   const { target, lb } = loaded;
-  const window = currentWindow(range);
+  const window = timeWindow(range, nowMs);
   const [main, p95] = await Promise.all([
     getMetricSeries(target, loadBalancerQueries(lb, 'l0'), window),
     // Percentile queries always go in their own request (moto fact 2).
@@ -105,7 +105,7 @@ export async function LoadBalancerChartsCard({ range, ...ref }: Ref & { range: T
   );
 }
 
-export async function TargetGroupsSection({ range, ...ref }: Ref & { range: TimeRange }) {
+export async function TargetGroupsSection({ range, nowMs, ...ref }: Ref & { range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.loadBalancers');
   const title = t('targetGroups.title');
   const loaded = await loadLoadBalancer(ref, title);
@@ -120,7 +120,7 @@ export async function TargetGroupsSection({ range, ...ref }: Ref & { range: Time
       ) : (
         <div className="space-y-8">
           {groups.data.map((group) => (
-            <TargetGroupPanel key={group.arn} scope={ref.scope} group={group} range={range} />
+            <TargetGroupPanel key={group.arn} scope={ref.scope} group={group} range={range} nowMs={nowMs} />
           ))}
         </div>
       )}

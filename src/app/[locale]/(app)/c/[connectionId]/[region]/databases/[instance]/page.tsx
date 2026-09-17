@@ -8,7 +8,7 @@ import { Link } from '@/i18n/navigation';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { isDbInstanceId } from '@/lib/monitoring/shared/names';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { parseTimeRange } from '@/lib/monitoring/shared/time-range';
+import { pageNow, parseTimeRange } from '@/lib/monitoring/shared/time-range';
 import { InstanceChartsCard, InstanceSummaryCard, TopSqlCard } from './cards';
 
 type Props = {
@@ -23,6 +23,8 @@ export default async function DatabaseInstancePage({ params, searchParams }: Pro
   const { instance } = await params;
   if (!isDbInstanceId(instance)) notFound();
   const range = parseTimeRange((await searchParams).range);
+  // One clock for the whole page: every card below shares the same window, and with it its cache entries.
+  const nowMs = pageNow();
   const t = await getTranslations('Monitoring.databases');
   const { scope } = context;
   const ref = { scope, instanceId: instance };
@@ -39,10 +41,10 @@ export default async function DatabaseInstancePage({ params, searchParams }: Pro
         <InstanceSummaryCard {...ref} />
       </SuspenseCard>
       <SuspenseCard key={`charts|${range}`} title={t('charts.title')} variant="chart">
-        <InstanceChartsCard {...ref} range={range} />
+        <InstanceChartsCard {...ref} range={range} nowMs={nowMs} />
       </SuspenseCard>
       <SuspenseCard key={`top-sql|${range}`} title={t('topSql.title')} variant="table">
-        <TopSqlCard {...ref} range={range} />
+        <TopSqlCard {...ref} range={range} nowMs={nowMs} />
       </SuspenseCard>
     </div>
   );

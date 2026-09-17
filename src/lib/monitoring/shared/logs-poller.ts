@@ -58,7 +58,11 @@ export async function runLogsQuery(options: {
       return { kind: 'aborted' };
     }
     const polled = await api.poll(queryId);
-    if (!polled.ok) return { kind: 'error', error: polled.error };
+    if (!polled.ok) {
+      // Whatever made the poll fail, the query keeps scanning on AWS until it is stopped, and that scan is billed.
+      await stop(queryId);
+      return { kind: 'error', error: polled.error };
+    }
     onProgress(polled.data, now() - startedAt);
     if (polled.data.status === COMPLETE) return { kind: 'complete', results: polled.data };
     if (ENDED.has(polled.data.status)) return { kind: 'ended', status: polled.data.status, results: polled.data };

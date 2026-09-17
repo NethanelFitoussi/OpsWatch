@@ -32,13 +32,6 @@ export const INSIGHT_FETCH_MINUTES = 20;
 
 const RDS_INSIGHT_METRICS: RdsMetric[] = ['CPUUtilization', 'FreeableMemory'];
 
-/**
- * The clock of one card render. Server components render once per request, so reading the clock is safe, but
- * the react-hooks purity lint forbids `Date.now()` inside a component: each card reads it here instead, and
- * the insights card reads it once for its four families so they share their cache keys.
- */
-export const insightsNow = (): number => Date.now();
-
 type Loaded = { window: TimeWindow; ctx: RuleContext };
 
 function loaded(target: AwsTarget, nowMs: number): Loaded {

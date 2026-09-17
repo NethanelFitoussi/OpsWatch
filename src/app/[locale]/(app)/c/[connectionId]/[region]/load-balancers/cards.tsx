@@ -17,13 +17,13 @@ import {
 import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_TEXT } from '@/lib/ui/tones';
 
 const sum = (series: readonly MetricSeries[], id: string) => seriesById(series, id).values.reduce((a, b) => a + b, 0);
 
-export async function LoadBalancersCard({ scope, range }: { scope: MonitoringScope; range: TimeRange }) {
+export async function LoadBalancersCard({ scope, range, nowMs }: { scope: MonitoringScope; range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.loadBalancers');
   const locale = await getLocale();
   const title = t('cardTitle');
@@ -60,7 +60,7 @@ export async function LoadBalancersCard({ scope, range }: { scope: MonitoringSco
   const allGroups = groupsResult.ok ? groupsResult.data : [];
   const checkedGroups = allGroups.slice(0, MAX_TARGET_GROUPS_WITH_HEALTH);
 
-  const window = currentWindow(range);
+  const window = timeWindow(range, nowMs);
   const [main, p95, healthResults] = await Promise.all([
     getMetricSeries(target.data, lbs.flatMap((lb, index) => loadBalancerQueries(lb, `l${index}`)), window),
     // Percentile queries always go in their own request (moto fact 2).

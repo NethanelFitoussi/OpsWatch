@@ -150,8 +150,19 @@ regardent la même page en même temps. La liste des conteneurs demande deux mé
 CPU et mémoire (Container Insights, quand il est activé, n'ajoute des métriques de nombre de
 tâches que sur les pages par service et Vue d'ensemble, pas sur cette liste). Regarder une page
 Conteneurs avec 30 services pendant 8 heures représente 240 actualisations de 60 métriques
-chacune, soit environ 14 400 métriques, environ 0,14 USD. Les appels de description vers ECS, RDS
-et Elastic Load Balancing ne sont pas facturés.
+chacune, soit environ 14 400 métriques, environ 0,14 USD. La Vue d'ensemble, ouverte par défaut,
+coûte plus cher car elle couvre tous les services à la fois : elle demande deux métriques par
+service ECS (quatre quand Container Insights est activé, qui ajoute les tâches en cours et
+souhaitées), deux à trois par instance de base de données (CPU et mémoire libre, plus le retard de
+réplication pour un lecteur Aurora), trois par répartiteur de charge et une par groupe cible ; les
+alarmes ne sont lues que par des appels de description. Pour un compte avec environ 30 services,
+9 instances de base de données et 4 répartiteurs de charge, cela fait environ 160 métriques par
+actualisation, soit environ 38 400 métriques pour 8 heures sur la Vue d'ensemble, environ
+0,38 USD. Ses quatre cartes de synthèse et sa liste d'analyses partagent une seule récupération par
+famille, mais deux onglets sur des pages différentes ne partagent jamais d'entrée de cache :
+chaque page demande son propre jeu de métriques, donc regarder la Vue d'ensemble et la liste des
+conteneurs côte à côte coûte la somme des deux. Les appels de description vers ECS, RDS et
+Elastic Load Balancing ne sont pas facturés.
 
 ## Modèle de sécurité
 

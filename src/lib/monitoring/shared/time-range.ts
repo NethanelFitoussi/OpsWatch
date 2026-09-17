@@ -27,10 +27,12 @@ export function timeWindow(range: TimeRange, nowMs: number): TimeWindow {
   return { start: new Date(end - RANGE_SECONDS[range] * 1000), end: new Date(end), periodSeconds: periodForRange(range) };
 }
 
-/** The window of a page range ending at the current minute. Server components render once per request, so reading the clock there is safe. */
-export function currentWindow(range: TimeRange): TimeWindow {
-  return timeWindow(range, Date.now());
-}
+/**
+ * The clock of one page render. Server components render once per request, so reading the clock there is safe,
+ * but the react-hooks purity lint forbids `Date.now()` inside a component: a page reads it here once and passes
+ * the value to its cards, so every card of one render shares one window, and with it one cache entry.
+ */
+export const pageNow = (): number => Date.now();
 
 /** The last `minutes` whole minutes, used by the Overview insights. */
 export function recentWindow(minutes: number, nowMs: number, periodSeconds = 60): TimeWindow {

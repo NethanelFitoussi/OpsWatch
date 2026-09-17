@@ -6,11 +6,11 @@ import { MetricChart, type ChartSeries } from '@/components/monitoring/metric-ch
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import type { AwsTarget, MonitoringScope } from '@/lib/monitoring/call';
 import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
-import { currentPiWindow, topSql } from '@/lib/monitoring/pi';
+import { piWindow, topSql } from '@/lib/monitoring/pi';
 import { RDS_METRIC_UNITS, detailMetrics, findInstance, rdsMetricQueries, type RdsInstance, type RdsMetric } from '@/lib/monitoring/rds';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 
 type InstanceRef = { scope: MonitoringScope; instanceId: string };
@@ -71,14 +71,14 @@ export async function InstanceSummaryCard(ref: InstanceRef) {
   );
 }
 
-export async function InstanceChartsCard({ range, ...ref }: InstanceRef & { range: TimeRange }) {
+export async function InstanceChartsCard({ range, nowMs, ...ref }: InstanceRef & { range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.databases');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const title = t('charts.title');
   const loaded = await loadInstance(ref, title);
   if (!loaded.ok) return loaded.card;
   const metrics = detailMetrics(loaded.instance);
-  const result = await getMetricSeries(loaded.target, rdsMetricQueries(loaded.instance.id, metrics, 'm'), currentWindow(range));
+  const result = await getMetricSeries(loaded.target, rdsMetricQueries(loaded.instance.id, metrics, 'm'), timeWindow(range, nowMs));
   if (!result.ok) {
     return (
       <MonitoringCard title={title}>
@@ -147,7 +147,7 @@ function Statement({ statement, showFull }: { statement: string; showFull: strin
   );
 }
 
-export async function TopSqlCard({ range, ...ref }: InstanceRef & { range: TimeRange }) {
+export async function TopSqlCard({ range, nowMs, ...ref }: InstanceRef & { range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.databases');
   const title = t('topSql.title');
   const description = t('topSql.description');
@@ -162,7 +162,7 @@ export async function TopSqlCard({ range, ...ref }: InstanceRef & { range: TimeR
     );
   }
   const locale = await getLocale();
-  const statements = await topSql(loaded.target, instance.resourceId, currentPiWindow(range));
+  const statements = await topSql(loaded.target, instance.resourceId, piWindow(range, nowMs));
   return (
     <MonitoringCard title={title} description={description}>
       {!statements.ok ? (

@@ -21,7 +21,7 @@ import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { NO_VALUE } from '@/lib/monitoring/shared/format';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { RolloutBadge } from '../../cards';
 
@@ -102,7 +102,7 @@ export async function ServiceSummaryCard(ref: ServiceRef) {
   );
 }
 
-export async function ServiceChartsCard({ range, ...ref }: ServiceRef & { range: TimeRange }) {
+export async function ServiceChartsCard({ range, nowMs, ...ref }: ServiceRef & { range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.containers');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const target = await resolveTarget(ref.scope);
@@ -120,7 +120,7 @@ export async function ServiceChartsCard({ range, ...ref }: ServiceRef & { range:
     ...serviceUtilizationQueries(ref.cluster, ref.service, 'u'),
     ...(containerInsights ? serviceTaskCountQueries(ref.cluster, ref.service, 'u') : []),
   ];
-  const metrics = await getMetricSeries(target.data, queries, currentWindow(range));
+  const metrics = await getMetricSeries(target.data, queries, timeWindow(range, nowMs));
   if (!metrics.ok) {
     return (
       <MonitoringCard title={t('charts.title')}>
@@ -146,7 +146,7 @@ export async function ServiceChartsCard({ range, ...ref }: ServiceRef & { range:
   );
 }
 
-export async function TargetGroupsCard({ range, ...ref }: ServiceRef & { range: TimeRange }) {
+export async function TargetGroupsCard({ range, nowMs, ...ref }: ServiceRef & { range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.containers');
   const title = t('targetGroups.title');
   const loaded = await loadService(ref, title);
@@ -168,7 +168,7 @@ export async function TargetGroupsCard({ range, ...ref }: ServiceRef & { range: 
       ) : (
         <div className="space-y-8">
           {groups.data.map((group) => (
-            <TargetGroupPanel key={group.arn} scope={ref.scope} group={group} range={range} />
+            <TargetGroupPanel key={group.arn} scope={ref.scope} group={group} range={range} nowMs={nowMs} />
           ))}
         </div>
       )}

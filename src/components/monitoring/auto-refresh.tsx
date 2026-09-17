@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
-import { AUTO_REFRESH_MS, createRefreshTimer, type RefreshTimer } from '@/lib/monitoring/shared/refresh-timer';
+import { AUTO_REFRESH_MS, mountRefreshTimer, type RefreshTimer } from '@/lib/monitoring/shared/refresh-timer';
 
 /** Re-renders the page's server components every two minutes while the tab is visible, unless paused. */
 export function AutoRefresh() {
@@ -13,24 +13,30 @@ export function AutoRefresh() {
   const router = useRouter();
   const [paused, setPaused] = useState(false);
   const timer = useRef<RefreshTimer | null>(null);
+  // Refs rather than dependencies: a re-run of the mount effect below would otherwise resume a paused
+  // page while the button still says paused, and restart the interval on every router identity change.
+  const pausedRef = useRef(paused);
+  const routerRef = useRef(router);
 
   useEffect(() => {
-    const created = createRefreshTimer({
-      onTick: () => router.refresh(),
-      visible: document.visibilityState === 'visible',
-      paused: false,
-    });
-    timer.current = created;
-    const onVisibility = () => created.setVisible(document.visibilityState === 'visible');
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      created.dispose();
-      timer.current = null;
-    };
+    routerRef.current = router;
   }, [router]);
 
   useEffect(() => {
+    const mounted = mountRefreshTimer({
+      onTick: () => routerRef.current.refresh(),
+      isPaused: () => pausedRef.current,
+      target: document,
+    });
+    timer.current = mounted.timer;
+    return () => {
+      mounted.dispose();
+      timer.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    pausedRef.current = paused;
     timer.current?.setPaused(paused);
   }, [paused]);
 

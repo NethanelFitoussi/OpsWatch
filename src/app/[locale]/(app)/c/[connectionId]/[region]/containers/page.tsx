@@ -5,7 +5,7 @@ import { MonitoringHeader } from '@/components/monitoring/monitoring-header';
 import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
-import { parseTimeRange } from '@/lib/monitoring/shared/time-range';
+import { pageNow, parseTimeRange } from '@/lib/monitoring/shared/time-range';
 import { ClusterSections } from './cards';
 
 type Props = {
@@ -21,6 +21,8 @@ export default async function ContainersPage({ params, searchParams }: Props) {
   const context = await initMonitoringRoute(params);
   const sp = await searchParams;
   const range = parseTimeRange(sp.range);
+  // One clock for the whole page: every card below shares the same window, and with it its cache entries.
+  const nowMs = pageNow();
   const search = ((Array.isArray(sp.q) ? sp.q[0] : sp.q) ?? '').trim().slice(0, SEARCH_MAX);
   const t = await getTranslations('Monitoring.containers');
   return (
@@ -40,7 +42,7 @@ export default async function ContainersPage({ params, searchParams }: Props) {
         <Button type="submit">{t('search.submit')}</Button>
       </form>
       <SuspenseCard key={`${range}|${search}`} title={t('clustersTitle')} variant="table">
-        <ClusterSections scope={context.scope} range={range} search={search} />
+        <ClusterSections scope={context.scope} range={range} nowMs={nowMs} search={search} />
       </SuspenseCard>
     </div>
   );

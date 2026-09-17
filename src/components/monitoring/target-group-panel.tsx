@@ -5,7 +5,7 @@ import type { MonitoringScope } from '@/lib/monitoring/call';
 import { targetGroupLatencyQuery, targetGroupQueries, targetHealth, type TargetGroup } from '@/lib/monitoring/elb';
 import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import { NO_VALUE } from '@/lib/monitoring/shared/format';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_SOFT } from '@/lib/ui/tones';
 import { FailureNotice } from './failure-notice';
@@ -17,7 +17,7 @@ const MUTED_BADGE_CLASS = 'bg-muted text-muted-foreground';
 const chartSeries = (series: readonly MetricSeries[], id: string, label: string): ChartSeries => ({ id, label, ...seriesById(series, id) });
 
 /** Target health and the ALB metrics of one target group. Reused by the containers and load balancer pages. */
-export async function TargetGroupPanel({ scope, group, range }: { scope: MonitoringScope; group: TargetGroup; range: TimeRange }) {
+export async function TargetGroupPanel({ scope, group, range, nowMs }: { scope: MonitoringScope; group: TargetGroup; range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.targetGroup');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const headingId = `target-group-${group.name}`;
@@ -39,7 +39,7 @@ export async function TargetGroupPanel({ scope, group, range }: { scope: Monitor
   }
 
   const latencyQuery = targetGroupLatencyQuery(group, 'g');
-  const window = currentWindow(range);
+  const window = timeWindow(range, nowMs);
   const [health, main, p95] = await Promise.all([
     targetHealth(target.data, group.arn),
     latencyQuery ? getMetricSeries(target.data, targetGroupQueries(group, 'g'), window) : null,

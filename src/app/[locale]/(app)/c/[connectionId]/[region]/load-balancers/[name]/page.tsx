@@ -8,7 +8,7 @@ import { Link } from '@/i18n/navigation';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { isLoadBalancerName } from '@/lib/monitoring/shared/names';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { parseTimeRange } from '@/lib/monitoring/shared/time-range';
+import { pageNow, parseTimeRange } from '@/lib/monitoring/shared/time-range';
 import { LoadBalancerChartsCard, LoadBalancerSummaryCard, TargetGroupsSection } from './cards';
 
 type Props = {
@@ -23,6 +23,8 @@ export default async function LoadBalancerPage({ params, searchParams }: Props) 
   const { name } = await params;
   if (!isLoadBalancerName(name)) notFound();
   const range = parseTimeRange((await searchParams).range);
+  // One clock for the whole page: every card below shares the same window, and with it its cache entries.
+  const nowMs = pageNow();
   const t = await getTranslations('Monitoring.loadBalancers');
   const { scope } = context;
   const ref = { scope, name };
@@ -39,10 +41,10 @@ export default async function LoadBalancerPage({ params, searchParams }: Props) 
         <LoadBalancerSummaryCard {...ref} />
       </SuspenseCard>
       <SuspenseCard key={`charts|${range}`} title={t('charts.title')} variant="chart">
-        <LoadBalancerChartsCard {...ref} range={range} />
+        <LoadBalancerChartsCard {...ref} range={range} nowMs={nowMs} />
       </SuspenseCard>
       <SuspenseCard key={`target-groups|${range}`} title={t('targetGroups.title')} variant="table">
-        <TargetGroupsSection {...ref} range={range} />
+        <TargetGroupsSection {...ref} range={range} nowMs={nowMs} />
       </SuspenseCard>
     </div>
   );

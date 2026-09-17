@@ -9,7 +9,7 @@ import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/l
 import { listDatabases, rdsMetricQueries, type RdsInstance, type RdsMetric } from '@/lib/monitoring/rds';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 
 const LIST_METRICS: RdsMetric[] = ['CPUUtilization', 'DatabaseConnections', 'FreeableMemory'];
@@ -18,7 +18,7 @@ const LIST_METRICS: RdsMetric[] = ['CPUUtilization', 'DatabaseConnections', 'Fre
 const listMetrics = (instance: RdsInstance): RdsMetric[] =>
   instance.aurora && instance.role === 'reader' ? [...LIST_METRICS, 'AuroraReplicaLag'] : LIST_METRICS;
 
-export async function DatabasesCard({ scope, range }: { scope: MonitoringScope; range: TimeRange }) {
+export async function DatabasesCard({ scope, range, nowMs }: { scope: MonitoringScope; range: TimeRange; nowMs: number }) {
   const t = await getTranslations('Monitoring.databases');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const tCommon = await getTranslations('Monitoring.common');
@@ -51,7 +51,7 @@ export async function DatabasesCard({ scope, range }: { scope: MonitoringScope; 
   }
 
   const queries = instances.flatMap((instance, index) => rdsMetricQueries(instance.id, listMetrics(instance), `d${index}`));
-  const metrics = await getMetricSeries(target.data, queries, currentWindow(range));
+  const metrics = await getMetricSeries(target.data, queries, timeWindow(range, nowMs));
   const series: MetricSeries[] = metrics.ok ? metrics.data : [];
 
   const cell = (id: string, metric: RdsMetric, index: number, unit: 'percent' | 'count' | 'bytes' | 'milliseconds', label: string, max?: number) => {

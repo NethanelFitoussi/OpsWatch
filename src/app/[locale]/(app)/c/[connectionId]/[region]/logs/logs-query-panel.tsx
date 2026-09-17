@@ -85,7 +85,9 @@ export function LogsQueryPanel({
         setElapsed(elapsedMs);
       },
     });
-    queryIdRef.current = null;
+    // Only an outcome AWS ended by itself proves the query is over. After a timeout, an abort or a poll error
+    // the poller asked for a stop that may have failed, so the id stays and `pagehide` can ask once more.
+    if (outcome.kind === 'complete' || outcome.kind === 'ended') queryIdRef.current = null;
     setPhase('done');
 
     const errorText = ({ code, action, awsCode }: LogsClientError): string => {

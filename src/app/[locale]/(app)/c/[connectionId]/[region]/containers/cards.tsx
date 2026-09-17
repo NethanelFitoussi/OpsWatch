@@ -12,7 +12,7 @@ import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/l
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { currentWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
+import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_SOFT } from '@/lib/ui/tones';
 
@@ -31,7 +31,7 @@ export async function RolloutBadge({ state }: { state: string | null }) {
   return <Badge className={ROLLOUT_BADGE_CLASS[state]}>{t(`rollout.${state}`)}</Badge>;
 }
 
-export async function ClusterSections({ scope, range, search }: { scope: MonitoringScope; range: TimeRange; search: string }) {
+export async function ClusterSections({ scope, range, nowMs, search }: { scope: MonitoringScope; range: TimeRange; nowMs: number; search: string }) {
   const t = await getTranslations('Monitoring.containers');
   const target = await resolveTarget(scope);
   const clusters = target.ok ? await listClusters(target.data) : target;
@@ -53,14 +53,14 @@ export async function ClusterSections({ scope, range, search }: { scope: Monitor
     <div className="space-y-6">
       {clusters.data.map((cluster) => (
         <SuspenseCard key={cluster.arn} title={cluster.name} variant="table">
-          <ServicesCard scope={scope} cluster={cluster} range={range} search={search} />
+          <ServicesCard scope={scope} cluster={cluster} range={range} nowMs={nowMs} search={search} />
         </SuspenseCard>
       ))}
     </div>
   );
 }
 
-async function ServicesCard({ scope, cluster, range, search }: { scope: MonitoringScope; cluster: EcsCluster; range: TimeRange; search: string }) {
+async function ServicesCard({ scope, cluster, range, nowMs, search }: { scope: MonitoringScope; cluster: EcsCluster; range: TimeRange; nowMs: number; search: string }) {
   const t = await getTranslations('Monitoring.containers');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const tCommon = await getTranslations('Monitoring.common');
@@ -79,7 +79,7 @@ async function ServicesCard({ scope, cluster, range, search }: { scope: Monitori
 
   const { services, matched, truncated } = listed.data;
   const queries = services.flatMap((s, i) => serviceUtilizationQueries(cluster.name, s.name, `s${i}`));
-  const metrics = queries.length > 0 ? await getMetricSeries(target.data, queries, currentWindow(range)) : null;
+  const metrics = queries.length > 0 ? await getMetricSeries(target.data, queries, timeWindow(range, nowMs)) : null;
   const series: MetricSeries[] = metrics?.ok ? metrics.data : [];
 
   const utilization = (id: string, metric: string) => {

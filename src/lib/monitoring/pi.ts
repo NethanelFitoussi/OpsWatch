@@ -18,11 +18,6 @@ export function piWindow(range: TimeRange, nowMs: number): TimeWindow {
   return { start: new Date(end - RANGE_SECONDS[range] * 1000), end: new Date(end), periodSeconds: periodForRange(range) };
 }
 
-/** The PI window of a page range. Server components render once per request, so reading the clock there is safe. */
-export function currentPiWindow(range: TimeRange): TimeWindow {
-  return piWindow(range, Date.now());
-}
-
 /** The tokenized statements with the highest average active sessions (`db.load.avg`) over the window. */
 export function topSql(target: AwsTarget, resourceId: string, window: TimeWindow, deps: MonitoringDeps = {}): Promise<MonitoringResult<TopSqlEntry[]>> {
   return describeCall(

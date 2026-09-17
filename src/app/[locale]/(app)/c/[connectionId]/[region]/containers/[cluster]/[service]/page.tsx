@@ -8,7 +8,7 @@ import { Link } from '@/i18n/navigation';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { isEcsName } from '@/lib/monitoring/shared/names';
 import { monitoringPath } from '@/lib/monitoring/shared/paths';
-import { parseTimeRange } from '@/lib/monitoring/shared/time-range';
+import { pageNow, parseTimeRange } from '@/lib/monitoring/shared/time-range';
 import { EventsCard, LogsCard, ServiceChartsCard, ServiceSummaryCard, TargetGroupsCard, TasksCard } from './cards';
 
 type Props = {
@@ -23,6 +23,8 @@ export default async function ServicePage({ params, searchParams }: Props) {
   const { cluster, service } = await params;
   if (!isEcsName(cluster) || !isEcsName(service)) notFound();
   const range = parseTimeRange((await searchParams).range);
+  // One clock for the whole page: every card below shares the same window, and with it its cache entries.
+  const nowMs = pageNow();
   const t = await getTranslations('Monitoring.containers');
   const { scope } = context;
   const ref = { scope, cluster, service };
@@ -39,10 +41,10 @@ export default async function ServicePage({ params, searchParams }: Props) {
         <ServiceSummaryCard {...ref} />
       </SuspenseCard>
       <SuspenseCard key={`charts|${range}`} title={t('charts.title')} variant="chart">
-        <ServiceChartsCard {...ref} range={range} />
+        <ServiceChartsCard {...ref} range={range} nowMs={nowMs} />
       </SuspenseCard>
       <SuspenseCard key={`target-groups|${range}`} title={t('targetGroups.title')} variant="chart">
-        <TargetGroupsCard {...ref} range={range} />
+        <TargetGroupsCard {...ref} range={range} nowMs={nowMs} />
       </SuspenseCard>
       <SuspenseCard title={t('tasks.title')} variant="table">
         <TasksCard {...ref} />

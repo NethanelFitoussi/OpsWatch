@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { currentWindow, parseTimeRange, periodForRange, recentWindow, timeWindow } from '@/lib/monitoring/shared/time-range';
+import { pageNow, parseTimeRange, periodForRange, recentWindow, timeWindow } from '@/lib/monitoring/shared/time-range';
 
 const now = Date.parse('2026-09-17T10:07:42.500Z');
 
@@ -8,9 +8,10 @@ afterEach(() => {
 });
 
 describe('time ranges', () => {
-  it('builds the current window from the clock', () => {
+  it('reads the page clock once, for the whole render', () => {
     vi.useFakeTimers({ now });
-    expect(currentWindow('1h')).toEqual(timeWindow('1h', now));
+    expect(pageNow()).toBe(now);
+    expect(timeWindow('1h', pageNow())).toEqual(timeWindow('1h', now));
   });
 
   it('picks the GetMetricData period from the range', () => {

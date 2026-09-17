@@ -53,7 +53,7 @@ describe('runLogsQuery', () => {
     expect(s.api.stop).toHaveBeenCalledWith('q-1');
   });
 
-  it('returns start and poll errors without polling further', async () => {
+  it('returns start and poll errors without polling further, and stops a query a failed poll left running', async () => {
     const s = setup([]);
     vi.mocked(s.api.start).mockResolvedValueOnce({ ok: false, error: { code: 'aws_denied', action: 'logs:StartQuery', awsCode: 'AccessDeniedException' } });
     expect(await runLogsQuery({ ...s, input, signal: s.controller.signal })).toEqual({
@@ -61,9 +61,19 @@ describe('runLogsQuery', () => {
       error: { code: 'aws_denied', action: 'logs:StartQuery', awsCode: 'AccessDeniedException' },
     });
     expect(s.api.poll).not.toHaveBeenCalled();
+    // Nothing started, so there is nothing to stop.
+    expect(s.api.stop).not.toHaveBeenCalled();
 
+    // A started query keeps scanning (and billing) until it is stopped, whatever made the poll fail.
     const p = setup([]);
     vi.mocked(p.api.poll).mockResolvedValueOnce({ ok: false, error: { code: 'not_found' } });
     expect(await runLogsQuery({ ...p, input, signal: p.controller.signal })).toEqual({ kind: 'error', error: { code: 'not_found' } });
+    expect(p.api.stop).toHaveBeenCalledWith('q-1');
+
+    // A failing stop is swallowed: the outcome stays the poll error.
+    const f = setup([]);
+    vi.mocked(f.api.poll).mockResolvedValueOnce({ ok: false, error: { code: 'not_found' } });
+    vi.mocked(f.api.stop).mockRejectedValueOnce(new Error('moto has no StopQuery'));
+    expect(await runLogsQuery({ ...f, input, signal: f.controller.signal })).toEqual({ kind: 'error', error: { code: 'not_found' } });
   });
 });

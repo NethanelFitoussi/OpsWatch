@@ -5,7 +5,7 @@ import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { Link } from '@/i18n/navigation';
 import type { MonitoringScope } from '@/lib/monitoring/call';
 import { sortInsights, type InsightSeverity } from '@/lib/monitoring/insights';
-import { INSIGHT_FAMILIES, insightsNow, loadFamily, type InsightFamily } from '@/lib/monitoring/overview';
+import { INSIGHT_FAMILIES, loadFamily, type InsightFamily } from '@/lib/monitoring/overview';
 import { monitoringPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_BORDER } from '@/lib/ui/tones';
@@ -14,7 +14,7 @@ const SECTION: Record<InsightFamily, MonitoringSection> = { ecs: 'containers', r
 const NAV_KEY: Record<InsightFamily, string> = { ecs: 'containers', rds: 'databases', alb: 'loadBalancers', alarms: 'alarms' };
 const SEVERITY_BORDER: Partial<Record<InsightSeverity, string>> = { critical: TONE_BORDER.danger, warning: TONE_BORDER.warning };
 
-export async function SummaryCard({ scope, family }: { scope: MonitoringScope; family: InsightFamily }) {
+export async function SummaryCard({ scope, family, nowMs }: { scope: MonitoringScope; family: InsightFamily; nowMs: number }) {
   const t = await getTranslations('Monitoring.overview');
   const title = t(`summary.${family}.title`);
 
@@ -27,7 +27,7 @@ export async function SummaryCard({ scope, family }: { scope: MonitoringScope; f
     );
   }
 
-  const result = await loadFamily(family, target.data, insightsNow());
+  const result = await loadFamily(family, target.data, nowMs);
   if (!result.ok) {
     return (
       <MonitoringCard title={title}>
@@ -49,7 +49,7 @@ export async function SummaryCard({ scope, family }: { scope: MonitoringScope; f
   );
 }
 
-export async function InsightsCard({ scope }: { scope: MonitoringScope }) {
+export async function InsightsCard({ scope, nowMs }: { scope: MonitoringScope; nowMs: number }) {
   const t = await getTranslations('Monitoring.overview');
   const tNav = await getTranslations('Common.nav');
   const format = await getFormatter();
@@ -64,9 +64,8 @@ export async function InsightsCard({ scope }: { scope: MonitoringScope }) {
     );
   }
 
-  // Every family is loaded again here: within one minute the cache serves the summary cards' own calls.
-  const now = insightsNow();
-  const results = await Promise.all(INSIGHT_FAMILIES.map((family) => loadFamily(family, target.data, now)));
+  // Every family is loaded again here: the page's clock keeps the window identical, so the cache serves the summary cards' own calls.
+  const results = await Promise.all(INSIGHT_FAMILIES.map((family) => loadFamily(family, target.data, nowMs)));
   const insights = sortInsights(results.flatMap((r) => (r.ok ? r.data.insights : [])));
   const unavailable = INSIGHT_FAMILIES.filter((_, index) => !results[index].ok);
 
