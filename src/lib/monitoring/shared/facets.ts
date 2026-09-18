@@ -10,6 +10,14 @@ export type FacetAccessors<T> = Record<string, (item: T) => string | null>;
 /** The longest facet value kept from the URL. */
 export const FACET_VALUE_MAX = 40;
 
+/**
+ * How many values one group, and the whole selection, keep from the URL. A real facet group offers a handful
+ * of values; these bounds only exist because the URL is attacker-controlled and `applyFacets` costs items ×
+ * selected values on every render. Anything past them is dropped silently — there is nothing to tell the user.
+ */
+export const FACET_VALUES_PER_GROUP_MAX = 50;
+export const FACET_VALUES_TOTAL_MAX = 200;
+
 export function countFacets<T>(items: readonly T[], accessors: FacetAccessors<T>): FacetGroup[] {
   return Object.entries(accessors)
     .map(([id, read]) => {
@@ -29,18 +37,29 @@ export function countFacets<T>(items: readonly T[], accessors: FacetAccessors<T>
     .filter((group) => group.values.length > 0);
 }
 
-/** Reads only the known groups, deduplicates, trims blanks and bounds each value to `FACET_VALUE_MAX`. */
+/**
+ * Reads only the known groups, deduplicates, trims blanks, bounds each value to `FACET_VALUE_MAX` and bounds
+ * how many values are kept per group and in total.
+ */
 export function parseFacetSelection(params: Record<string, string | string[] | undefined>, groupIds: readonly string[]): FacetSelection {
   const selection: FacetSelection = {};
+  let budget = FACET_VALUES_TOTAL_MAX;
   for (const id of groupIds) {
+    if (budget === 0) break;
     const raw = params[id];
     if (raw === undefined) continue;
-    const values = new Set(
-      (Array.isArray(raw) ? raw : [raw])
-        .map((value) => value.trim().slice(0, FACET_VALUE_MAX))
-        .filter((value) => value.length > 0),
-    );
-    if (values.size > 0) selection[id] = [...values];
+    const keep = Math.min(FACET_VALUES_PER_GROUP_MAX, budget);
+    const values = new Set<string>();
+    for (const value of Array.isArray(raw) ? raw : [raw]) {
+      const trimmed = value.trim().slice(0, FACET_VALUE_MAX);
+      if (trimmed.length === 0) continue;
+      values.add(trimmed);
+      if (values.size === keep) break;
+    }
+    if (values.size > 0) {
+      selection[id] = [...values];
+      budget -= values.size;
+    }
   }
   return selection;
 }

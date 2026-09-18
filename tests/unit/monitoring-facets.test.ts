@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { applyFacets, clearFacetsQuery, countFacets, isFacetSelected, parseFacetSelection, toggleFacetQuery } from '@/lib/monitoring/shared/facets';
+import {
+  FACET_VALUES_PER_GROUP_MAX,
+  FACET_VALUES_TOTAL_MAX,
+  applyFacets,
+  clearFacetsQuery,
+  countFacets,
+  isFacetSelected,
+  parseFacetSelection,
+  toggleFacetQuery,
+} from '@/lib/monitoring/shared/facets';
 
 type Row = { name: string; engine: string; role: string; pi: boolean };
 const rows: Row[] = [
@@ -34,6 +43,23 @@ describe('parseFacetSelection', () => {
     expect(parseFacetSelection({ engine: ['mysql', 'mysql'], role: 'writer', other: 'x' }, ['engine', 'role'])).toEqual({ engine: ['mysql'], role: ['writer'] });
     expect(parseFacetSelection({ engine: 'x'.repeat(60) }, ['engine']).engine[0]).toHaveLength(40);
     expect(parseFacetSelection({}, ['engine'])).toEqual({});
+  });
+
+  it('caps how many values one group keeps, dropping the rest silently', () => {
+    const many = Array.from({ length: FACET_VALUES_PER_GROUP_MAX + 10 }, (_, i) => `v${i}`);
+    const kept = parseFacetSelection({ engine: many }, ['engine']).engine;
+    expect(kept).toHaveLength(FACET_VALUES_PER_GROUP_MAX);
+    expect(kept[0]).toBe('v0');
+    expect(kept).not.toContain(`v${FACET_VALUES_PER_GROUP_MAX}`);
+  });
+
+  it('caps how many values the whole selection keeps, so filtering stays bounded', () => {
+    const groupIds = Array.from({ length: Math.ceil(FACET_VALUES_TOTAL_MAX / FACET_VALUES_PER_GROUP_MAX) + 2 }, (_, i) => `g${i}`);
+    const many = Array.from({ length: FACET_VALUES_PER_GROUP_MAX }, (_, i) => `v${i}`);
+    const selection = parseFacetSelection(Object.fromEntries(groupIds.map((id) => [id, many])), groupIds);
+    expect(Object.values(selection).flat()).toHaveLength(FACET_VALUES_TOTAL_MAX);
+    expect(selection[groupIds[0]]).toHaveLength(FACET_VALUES_PER_GROUP_MAX);
+    expect(selection[groupIds.at(-1) as string]).toBeUndefined(); // the groups past the budget are dropped whole
   });
 });
 

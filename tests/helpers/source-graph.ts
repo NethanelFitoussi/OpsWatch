@@ -12,6 +12,11 @@ function sourceFiles(dir: string = SRC): string[] {
   });
 }
 
+/** Every TypeScript file under `src/<relative>`, whether or not anything imports it. */
+export function sourceFilesUnder(relative: string): string[] {
+  return sourceFiles(path.join(SRC, relative)).sort();
+}
+
 export const readSource = (file: string) => fs.readFileSync(file, 'utf8');
 
 const directive = (source: string) => source.match(/^\s*['"]use (client|server)['"]/)?.[1];
@@ -37,8 +42,12 @@ function resolveLocal(from: string, specifier: string): string | null {
   return candidates.find((candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile()) ?? null;
 }
 
-/** Every file that runs in the browser: 'use client' modules and what they import, stopping at Server Action modules. */
-export function clientModuleGraph(): { modules: Set<string>; packages: Map<string, string> } {
+/**
+ * The entries plus everything they import, following local specifiers and stopping at Server Action modules
+ * (a 'use server' module is an RPC stub on the other side, so its own imports do not travel). Every external
+ * specifier met on the way is collected with the file that pulled it in.
+ */
+export function moduleGraph(entries: readonly string[]): { modules: Set<string>; packages: Map<string, string> } {
   const modules = new Set<string>();
   const packages = new Map<string, string>();
   const visit = (file: string, entry: boolean) => {
@@ -52,8 +61,11 @@ export function clientModuleGraph(): { modules: Set<string>; packages: Map<strin
       else if (!specifier.startsWith('.') && !specifier.startsWith('@/')) packages.set(`${specifier} <- ${path.relative(ROOT, file)}`, specifier);
     }
   };
-  for (const file of sourceFiles()) {
-    if (directive(readSource(file)) === 'client') visit(file, true);
-  }
+  for (const entry of entries) visit(entry, true);
   return { modules, packages };
+}
+
+/** Every file that runs in the browser: 'use client' modules and what they import. */
+export function clientModuleGraph(): { modules: Set<string>; packages: Map<string, string> } {
+  return moduleGraph(sourceFiles().filter((file) => directive(readSource(file)) === 'client'));
 }
