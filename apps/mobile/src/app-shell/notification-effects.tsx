@@ -28,6 +28,11 @@ const isWeb = Platform.OS === 'web';
 
 let currentPrefs: NotificationPreferences | null = null;
 
+/** Read by the module-level notification handler, which lives outside React. */
+function setPresentationPreferences(preferences: NotificationPreferences): void {
+  currentPrefs = preferences;
+}
+
 if (!isWeb) {
   Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
@@ -84,10 +89,12 @@ export function NotificationEffects() {
   const { settings } = useSettings();
   const signedIn = state.status === 'signed-in';
   const signedInRef = useRef(signedIn);
-  signedInRef.current = signedIn;
   const clientRef = useRef(client);
-  clientRef.current = client;
-  currentPrefs = settings.notifications;
+  useEffect(() => {
+    signedInRef.current = signedIn;
+    clientRef.current = client;
+    setPresentationPreferences(settings.notifications);
+  }, [signedIn, client, settings.notifications]);
 
   // Taps, including the one that cold-started the app.
   useEffect(() => {

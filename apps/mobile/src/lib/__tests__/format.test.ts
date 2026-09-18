@@ -1,0 +1,51 @@
+import { formatDuration, formatMetric, formatPercentFraction, formatRelative, logPreview, NO_DATA, prettyLog } from '../format';
+
+describe('formatMetric', () => {
+  it('never renders null as zero', () => {
+    expect(formatMetric(null, 'percent')).toBe(NO_DATA);
+    expect(formatMetric(undefined, 'ms')).toBe(NO_DATA);
+    expect(formatMetric(Number.NaN, 'count')).toBe(NO_DATA);
+  });
+  it('formats units', () => {
+    expect(formatMetric(6.8, 'percent')).toBe('6.8 %');
+    expect(formatMetric(1240, 'ms')).toBe('1.24 s');
+    expect(formatMetric(180, 'ms')).toBe('180 ms');
+    expect(formatMetric(1850, 'per_minute')).toBe('1,850/min');
+    expect(formatMetric(0, 'count')).toBe('0');
+  });
+});
+
+describe('formatPercentFraction', () => {
+  it('keeps two decimals near 100 %', () => {
+    expect(formatPercentFraction(0.9962)).toBe('99.62 %');
+    expect(formatPercentFraction(1)).toBe('100 %');
+    expect(formatPercentFraction(null)).toBe(NO_DATA);
+  });
+});
+
+describe('formatRelative', () => {
+  const now = 1_000_000_000_000;
+  it('rounds down so data never looks fresher than it is', () => {
+    expect(formatRelative(now - 10_000, now)).toBe('just now');
+    expect(formatRelative(now - 119_000, now)).toBe('1 min ago');
+    expect(formatRelative(now - 3 * 3_600_000 - 59 * 60_000, now)).toBe('3 h ago');
+    expect(formatRelative(now + 12 * 86_400_000, now)).toBe('in 12 d');
+  });
+});
+
+describe('formatDuration', () => {
+  it('uses the two largest units', () => {
+    expect(formatDuration(90 * 60_000)).toBe('1 h 30 min');
+    expect(formatDuration(45_000)).toBe('45 s');
+  });
+});
+
+describe('log helpers', () => {
+  it('pretty-prints JSON lines and previews their message', () => {
+    const line = '{"level":"error","msg":"boom","n":1}';
+    expect(prettyLog(line).isJson).toBe(true);
+    expect(prettyLog(line).pretty).toContain('\n');
+    expect(logPreview(line)).toBe('boom');
+    expect(prettyLog('plain text').isJson).toBe(false);
+  });
+});

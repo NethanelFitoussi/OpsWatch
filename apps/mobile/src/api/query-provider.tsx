@@ -12,8 +12,9 @@ import { focusManager, onlineManager, QueryCache, QueryClient, MutationCache, ty
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
+import { authEvents } from './auth-events';
 import { isApiError } from './errors';
 import { PREF_KEYS } from '@/state/storage';
 import { useSession } from '@/state/session';
@@ -54,9 +55,9 @@ const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: PREF
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const { expire, onSessionEnd, state } = useSession();
-  const expireRef = useRef(expire);
-  expireRef.current = expire;
-  const client = useMemo(() => createQueryClient(() => expireRef.current()), []);
+  const [client] = useState(() => createQueryClient(authEvents.emitUnauthorized));
+
+  useEffect(() => authEvents.onUnauthorized(expire), [expire]);
 
   useEffect(
     () =>

@@ -51,6 +51,20 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
+/**
+ * The session token in memory. One per app (there is one SessionProvider); the HTTP client reads it at call time, so
+ * a new or cleared token applies to the very next request. The durable copy lives in secure storage.
+ */
+const sessionToken = (() => {
+  let value: string | null = null;
+  return {
+    get: (): string | null => value,
+    set: (next: string | null): void => {
+      value = next;
+    },
+  };
+})();
+
 /** A client that fails every call, used before a server is chosen. */
 const noServerClient: OpsWatchClient = new Proxy({} as OpsWatchClient, {
   get: (_target, prop) => (prop === 'mode' ? 'http' : () => Promise.reject(new ApiError('network', { message: 'No server configured' }))),
@@ -70,12 +84,11 @@ function defaultCreateClient(locale: string) {
 
 export function SessionProvider({ children, locale, createClient }: SessionProviderProps) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
-  const tokenRef = useRef<string | null>(null);
   const listeners = useRef(new Set<SessionEndListener>());
   const build = useMemo(() => createClient ?? defaultCreateClient(locale), [createClient, locale]);
 
   const server = state.status === 'signed-in' || state.status === 'signed-out' ? state.server : null;
-  const client = useMemo(() => (server ? build(server, () => tokenRef.current) : noServerClient), [server, build]);
+  const client = useMemo(() => (server ? build(server, sessionToken.get) : noServerClient), [server, build]);
 
   const notifyEnd = useCallback(async (reason: Parameters<SessionEndListener>[0]) => {
     await Promise.all([...listeners.current].map(async (listener) => {
@@ -105,7 +118,7 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
       }
       const token = await secureStore.get(sessionKey(serverConfig.url));
       if (cancelled) return;
-      tokenRef.current = token;
+      sessionToken.set(token);
       setState(token && user ? { status: 'signed-in', server: serverConfig, user } : { status: 'signed-out', server: serverConfig, reason: null });
     })();
     return () => {
@@ -121,17 +134,17 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
   const connect = useCallback<SessionContextValue['connect']>(
     async (config) => {
       const next: ServerConfig = { ...config, demo: false };
-      tokenRef.current = await secureStore.get(sessionKey(next.url));
-      if (tokenRef.current) {
+      sessionToken.set(await secureStore.get(sessionKey(next.url)));
+      if (sessionToken.get()) {
         // A token from an earlier visit to this server is not trusted blindly: it must still work.
         try {
-          const user = await build(next, () => tokenRef.current).me();
+          const user = await build(next, sessionToken.get).me();
           await persistServer(next, user);
           setState({ status: 'signed-in', server: next, user });
           return;
         } catch {
           await secureStore.remove(sessionKey(next.url));
-          tokenRef.current = null;
+          sessionToken.set(null);
         }
       }
       await persistServer(next);
@@ -152,7 +165,7 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
   const completeSignIn = useCallback(
     async (config: ServerConfig, token: string, user: User) => {
       await secureStore.set(sessionKey(config.url), token);
-      tokenRef.current = token;
+      sessionToken.set(token);
       await persistServer(config, user);
       setState({ status: 'signed-in', server: config, user });
     },
@@ -195,7 +208,7 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
         await client.logout().catch((error: unknown) => log.debug('Server-side logout failed', error));
       }
       await secureStore.remove(sessionKey(server.url));
-      tokenRef.current = null;
+      sessionToken.set(null);
       await persistServer(server);
       if (server.demo) {
         await prefs.remove(PREF_KEYS.server);
@@ -224,7 +237,7 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
   const forgetServer = useCallback(async () => {
     if (state.status === 'signed-in') await signOut();
     if (server) await secureStore.remove(sessionKey(server.url));
-    tokenRef.current = null;
+    sessionToken.set(null);
     pendingLink.clear();
     await prefs.remove(PREF_KEYS.server);
     await notifyEnd('server-changed');

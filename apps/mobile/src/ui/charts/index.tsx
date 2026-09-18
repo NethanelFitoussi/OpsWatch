@@ -42,8 +42,12 @@ export const TrendChart = memo(function TrendChart({ series, height = 150, testI
   const [width, onLayout] = useWidth();
   const [active, setActive] = useState<number | null>(null);
   const points = useMemo(() => downsample(series.points, MAX_POINTS), [series.points]);
-  const thresholdValues = [series.thresholds?.warning, series.thresholds?.critical].filter((v): v is number => v !== undefined);
-  const domain = useMemo(() => domainOf(points, thresholdValues), [points, thresholdValues.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const warningAt = series.thresholds?.warning;
+  const criticalAt = series.thresholds?.critical;
+  const domain = useMemo(
+    () => domainOf(points, [warningAt, criticalAt].filter((v): v is number => v !== undefined)),
+    [points, warningAt, criticalAt],
+  );
   const stats = useMemo(() => summary(series.points), [series.points]);
   const fmt = (v: number | null) => formatMetric(v, series.unit);
 

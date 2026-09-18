@@ -10,7 +10,9 @@ import { useTheme } from '@/ui/theme-provider';
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
 function tabIcon(name: IconName, focusedName: IconName) {
-  return ({ color, focused, size }: { color: ColorValue; focused: boolean; size: number }) => <Ionicons name={focused ? focusedName : name} size={size} color={color as string} />;
+  return function TabIcon({ color, focused, size }: { color: ColorValue; focused: boolean; size: number }) {
+    return <Ionicons name={focused ? focusedName : name} size={size} color={color as string} />;
+  };
 }
 
 export default function TabsLayout() {
