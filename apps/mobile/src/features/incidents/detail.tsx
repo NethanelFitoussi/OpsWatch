@@ -10,7 +10,6 @@ import { Card, Divider, Section } from '@/ui/layout';
 import { QueryScreen } from '@/ui/screen';
 import { Text } from '@/ui/text';
 import { AffectedServices, IncidentHeader, IncidentNotes, IncidentTimeline } from './components';
-import { canSummarize } from './helpers';
 
 export function IncidentDetailView({ id }: { id: string }) {
   const { t } = useI18n();
@@ -24,9 +23,7 @@ export function IncidentDetailView({ id }: { id: string }) {
             <IncidentHeader incident={incident} />
           </Card>
 
-          {canSummarize(incident) ? (
-            <AskAiButton context={{ type: 'incident', id: incident.id }} label={t('incidents.summarize')} question={t('incidents.summarizeQuestion')} />
-          ) : null}
+          <AskAiButton context={{ type: 'incident', id: incident.id }} label={t('incidents.summarize')} question={t('incidents.summarizeQuestion')} />
 
           {incident.resolution ? (
             <DetailCard title={t('incidents.resolution')}>

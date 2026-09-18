@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { NotFoundState } from '@/features/alerts/building-blocks';
+import { NotFoundState } from '@/ui/rows';
 import { SyntheticDetailView } from '@/features/synthetics/detail';
 import { useI18n } from '@/i18n';
 import { isSafeId } from '@/lib/deep-links';

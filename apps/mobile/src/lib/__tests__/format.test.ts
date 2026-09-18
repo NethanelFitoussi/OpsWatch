@@ -1,4 +1,4 @@
-import { formatDuration, formatMetric, formatPercentFraction, formatRelative, logPreview, NO_DATA, prettyLog } from '../format';
+import { formatDuration, formatMetric, formatPercentFraction, formatRelative, logPreview, NO_DATA, prettyLog, setFormatLocale } from '../format';
 
 describe('formatMetric', () => {
   it('never renders null as zero', () => {
@@ -47,5 +47,15 @@ describe('log helpers', () => {
     expect(prettyLog(line).pretty).toContain('\n');
     expect(logPreview(line)).toBe('boom');
     expect(prettyLog('plain text').isJson).toBe(false);
+  });
+});
+
+describe('French formatting', () => {
+  afterEach(() => setFormatLocale('en'));
+  it('uses French units and number grouping', () => {
+    setFormatLocale('fr');
+    expect(formatDuration(26 * 3_600_000)).toBe('1 j 2 h');
+    expect(formatRelative(0, 3 * 86_400_000)).toBe('3 j ago');
+    expect(formatMetric(1850, 'per_minute')).toMatch(/^1\s850\/min$/);
   });
 });

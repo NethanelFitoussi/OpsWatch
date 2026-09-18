@@ -7,7 +7,6 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import type { Change, Environment, Family, Health, HealthStatus, ProblemSummary } from '@/api/contract';
 import { useI18n, type MessageKey } from '@/i18n';
-import { formatRelative } from '@/lib/format';
 import { HealthBadge, SeverityBadge, TONE_ICONS } from '@/ui/badges';
 import { Button } from '@/ui/controls';
 import { Card, Divider, Row, type IconName } from '@/ui/layout';
@@ -216,9 +215,10 @@ export function SyntheticsStrip({ synthetics }: { synthetics: NonNullable<Health
 
 export function GeneratedAt({ at, now }: { at: number; now: number }) {
   const { t } = useI18n();
+  const relative = useRelativeTime();
   return (
     <Text variant="caption" tone="faint">
-      {t('brief.period', { time: formatRelative(at, now, { now: t('time.justNow'), ago: (amount) => t('time.ago', { amount }), in: (amount) => t('time.in', { amount }) }) })}
+      {t('brief.period', { time: relative(at, now) })}
     </Text>
   );
 }

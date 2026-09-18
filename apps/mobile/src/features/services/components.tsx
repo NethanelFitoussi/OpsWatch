@@ -16,7 +16,7 @@ import { Text } from '@/ui/text';
 import { spacing, TOUCH_TARGET } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
 import { HEALTH_FILTERS, type HealthFilter } from './helpers';
-import { CompactMetric } from './parts';
+import { CompactMetric } from '@/ui/data';
 
 /** Open problems and firing alerts, only the counts the server knows (null is left out, not shown as 0). */
 export function serviceCounts(service: Pick<ServiceSummary, 'openProblems' | 'firingAlerts'>, t: Translate): string[] {

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { IncidentDetail, IncidentSummary } from '@/api/contract';
-import { RichRow, StatusBadge, TimedItem } from '@/features/alerts/building-blocks';
+import { RichRow, StatusBadge, TimedItem } from '@/ui/rows';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n } from '@/i18n';
 import { formatClock, formatDateTime } from '@/lib/format';

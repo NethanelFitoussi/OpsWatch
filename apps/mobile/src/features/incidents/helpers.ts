@@ -1,7 +1,7 @@
 /**
  * Pure helpers for the incident screens: status presentation, duration text and timeline ordering.
  */
-import type { IncidentDetail, IncidentSummary } from '@/api/contract';
+import type { IncidentSummary } from '@/api/contract';
 import type { MessageKey } from '@/i18n';
 import { formatDuration } from '@/lib/format';
 import type { IconName } from '@/ui/layout';
@@ -59,8 +59,4 @@ export function chronological<T extends { at: number }>(items: T[]): T[] {
 
 export function serviceNames(incident: Pick<IncidentSummary, 'affectedServices'>): string {
   return incident.affectedServices.map((s) => s.label ?? s.id).join(', ');
-}
-
-export function canSummarize(incident: Pick<IncidentDetail, 'allowedActions'>): boolean {
-  return incident.allowedActions.includes('ai.summarize');
 }

@@ -1,16 +1,16 @@
 /**
- * Small building blocks reused by the Services, Infrastructure and Deployments screens.
+ * Data building blocks: rows grouped in one card, a stack of trend charts, a compact label/value metric.
  */
 import { Fragment, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { MetricValue, Series } from '@/api/contract';
 import { useI18n } from '@/i18n';
 import { formatMetric } from '@/lib/format';
-import { TrendChart } from '@/ui/charts';
-import { Card, Divider } from '@/ui/layout';
-import { Text } from '@/ui/text';
-import { spacing } from '@/ui/theme';
-import { useTheme } from '@/ui/theme-provider';
+import { TrendChart } from './charts';
+import { Card, Divider } from './layout';
+import { Text } from './text';
+import { spacing } from './theme';
+import { useTheme } from './theme-provider';
 
 /** Items drawn as rows of one grouped card, separated by hairlines. */
 export function CardList<T>({ items, keyOf, render }: { items: T[]; keyOf: (item: T) => string; render: (item: T) => ReactNode }) {

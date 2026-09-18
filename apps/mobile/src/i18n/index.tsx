@@ -4,6 +4,7 @@
  */
 import { getLocales } from 'expo-localization';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { setFormatLocale } from '@/lib/format';
 import { en, type MessageKey } from './en';
 import { fr } from './fr';
 
@@ -32,6 +33,8 @@ type I18n = { locale: Locale; t: Translate };
 const I18nContext = createContext<I18n>({ locale: 'en', t: (key, params) => translate('en', key, params) });
 
 export function I18nProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
+  // Before children render, so every formatted number and duration in this render uses the right language.
+  setFormatLocale(locale);
   const value = useMemo<I18n>(() => ({ locale, t: (key, params) => translate(locale, key, params) }), [locale]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

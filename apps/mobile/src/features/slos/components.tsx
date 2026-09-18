@@ -4,7 +4,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SloSummary } from '@/api/contract';
-import { RichRow, StatusBadge } from '@/features/alerts/building-blocks';
+import { RichRow, StatusBadge } from '@/ui/rows';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n } from '@/i18n';
 import { BudgetBar } from '@/ui/charts';

@@ -15,7 +15,7 @@ import { QueryScreen } from '@/ui/screen';
 import { useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
-import { StatusBadge } from '@/features/alerts/building-blocks';
+import { StatusBadge } from '@/ui/rows';
 import { AvailabilityStrip, FailureList, SslBlock, useSyntheticStatus } from './components';
 
 export function SyntheticDetailView({ id }: { id: string }) {

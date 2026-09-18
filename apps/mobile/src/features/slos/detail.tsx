@@ -5,7 +5,7 @@
 import { Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSlo } from '@/api/queries';
-import { StatusBadge } from '@/features/alerts/building-blocks';
+import { StatusBadge } from '@/ui/rows';
 import { DetailCard, MetricTile, TileGrid } from '@/features/shared/components';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n } from '@/i18n';

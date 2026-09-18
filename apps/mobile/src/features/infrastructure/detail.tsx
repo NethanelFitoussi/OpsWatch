@@ -8,7 +8,7 @@ import { MetricTile, ProblemRow, TileGrid } from '@/features/shared/components';
 import { useI18n } from '@/i18n';
 import { Card, KeyValue, Section } from '@/ui/layout';
 import { QueryScreen } from '@/ui/screen';
-import { CardList, SeriesCharts } from '../services/parts';
+import { CardList, SeriesCharts } from '@/ui/data';
 import { AnomalyList, InfraHeader, RelatedList } from './components';
 
 export function InfraDetailScreen({ id }: { id: string }) {

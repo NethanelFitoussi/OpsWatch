@@ -157,7 +157,10 @@ export function EvidenceSections({ evidence, locale }: { evidence: Evidence[]; l
   );
 }
 
-/** Contextual "Ask OpsWatch" entry: shown only when the server has AI. Sends a reference, never raw data. */
+/**
+ * Contextual "Ask OpsWatch" entry. Shown whenever the server has AI (`features.ai`); who may ask is enforced by the
+ * server on POST /ai/ask (a 403 is shown on the Ask screen). Sends a reference, never raw data.
+ */
 export function AskAiButton({ context, label, question }: { context: Ref; label: string; question: string }) {
   const router = useRouter();
   const enabled = useFeature('ai');

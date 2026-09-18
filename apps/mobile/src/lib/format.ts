@@ -6,6 +6,19 @@ import type { MetricUnit } from '@/api/contract';
 
 export const NO_DATA = '—';
 
+type FormatLocale = 'en' | 'fr';
+const UNITS: Record<FormatLocale, { s: string; min: string; h: string; d: string; numberLocale: string }> = {
+  en: { s: 's', min: 'min', h: 'h', d: 'd', numberLocale: 'en-US' },
+  fr: { s: 's', min: 'min', h: 'h', d: 'j', numberLocale: 'fr-FR' },
+};
+let formatLocale: FormatLocale = 'en';
+
+/** Set once by the i18n provider: formatting follows the app language. Pure helpers stay locale-free to call. */
+export function setFormatLocale(locale: FormatLocale): void {
+  formatLocale = locale;
+}
+const units = () => UNITS[formatLocale];
+
 const MIN = 60_000;
 const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
@@ -19,7 +32,7 @@ export function formatCompact(value: number): string {
   if (abs >= 1e9) return `${trimNumber(value / 1e9, 1)}B`;
   if (abs >= 1e6) return `${trimNumber(value / 1e6, 1)}M`;
   if (abs >= 1e4) return `${trimNumber(value / 1e3, 1)}k`;
-  if (abs >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (abs >= 1000) return value.toLocaleString(units().numberLocale, { maximumFractionDigits: 0 });
   if (abs >= 100) return trimNumber(value, 0);
   if (abs >= 10) return trimNumber(value, 1);
   return trimNumber(value, 2);
@@ -68,17 +81,18 @@ export function formatBytes(value: number): string {
 }
 
 export function formatDuration(ms: number): string {
+  const u = units();
   const abs = Math.max(0, ms);
-  if (abs < MIN) return `${Math.round(abs / 1000)} s`;
-  if (abs < HOUR) return `${Math.round(abs / MIN)} min`;
+  if (abs < MIN) return `${Math.round(abs / 1000)} ${u.s}`;
+  if (abs < HOUR) return `${Math.round(abs / MIN)} ${u.min}`;
   if (abs < DAY) {
     const h = Math.floor(abs / HOUR);
     const m = Math.round((abs % HOUR) / MIN);
-    return m ? `${h} h ${m} min` : `${h} h`;
+    return m ? `${h} ${u.h} ${m} ${u.min}` : `${h} ${u.h}`;
   }
   const d = Math.floor(abs / DAY);
   const h = Math.round((abs % DAY) / HOUR);
-  return h ? `${d} d ${h} h` : `${d} d`;
+  return h ? `${d} ${u.d} ${h} ${u.h}` : `${d} ${u.d}`;
 }
 
 export type RelativeTimeLabels = { now: string; ago: (amount: string) => string; in: (amount: string) => string };
@@ -90,10 +104,11 @@ export function formatRelative(at: number, now: number, labels: RelativeTimeLabe
   const diff = now - at;
   const abs = Math.abs(diff);
   if (abs < 45_000) return labels.now;
+  const u = units();
   let amount: string;
-  if (abs < HOUR) amount = `${Math.floor(abs / MIN)} min`;
-  else if (abs < DAY) amount = `${Math.floor(abs / HOUR)} h`;
-  else amount = `${Math.floor(abs / DAY)} d`;
+  if (abs < HOUR) amount = `${Math.floor(abs / MIN)} ${u.min}`;
+  else if (abs < DAY) amount = `${Math.floor(abs / HOUR)} ${u.h}`;
+  else amount = `${Math.floor(abs / DAY)} ${u.d}`;
   return diff >= 0 ? labels.ago(amount) : labels.in(amount);
 }
 

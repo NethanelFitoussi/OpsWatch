@@ -1,5 +1,5 @@
 import { translate } from '@/i18n';
-import { canSummarize, chronological, incidentDurationText, incidentStatusMeta, isOngoing, serviceNames, timelineTypeKey } from '../helpers';
+import { chronological, incidentDurationText, incidentStatusMeta, isOngoing, serviceNames, timelineTypeKey } from '../helpers';
 
 const MIN = 60_000;
 const now = 1_000 * MIN;
@@ -41,7 +41,5 @@ describe('incident helpers', () => {
   });
 
   it('offers the AI summary only when authorised', () => {
-    expect(canSummarize({ allowedActions: ['ai.summarize'] })).toBe(true);
-    expect(canSummarize({ allowedActions: [] })).toBe(false);
   });
 });

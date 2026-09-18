@@ -17,7 +17,7 @@ import { useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { CardList } from '../services/parts';
+import { CardList } from '@/ui/data';
 import { DeploymentStatusBadge, EvidenceRow, ProblemsAfterDeployment } from './components';
 
 export function DeploymentDetailScreen({ id }: { id: string }) {

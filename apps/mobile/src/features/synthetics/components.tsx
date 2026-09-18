@@ -4,7 +4,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SyntheticDetail, SyntheticSummary } from '@/api/contract';
-import { RichRow, StatusBadge, TimedItem } from '@/features/alerts/building-blocks';
+import { RichRow, StatusBadge, TimedItem } from '@/ui/rows';
 import { FavoriteButton } from '@/features/shared/components';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n } from '@/i18n';

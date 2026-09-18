@@ -13,7 +13,7 @@ import { Card, Row, type IconName } from '@/ui/layout';
 import { Text } from '@/ui/text';
 import { radius, spacing, TOUCH_TARGET } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { CardList, CompactMetric } from '../services/parts';
+import { CardList, CompactMetric } from '@/ui/data';
 import { CATEGORY_ICONS, CATEGORY_LABELS, healthSummaryParts, type CategoryFilter } from './helpers';
 
 export function CategoryChips({ categories, value, onChange }: { categories: CategoryFilter[]; value: CategoryFilter; onChange: (v: CategoryFilter) => void }) {

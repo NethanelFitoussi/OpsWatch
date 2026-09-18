@@ -40,8 +40,6 @@ export function ErrorHeader({ error }: { error: ErrorDetail }) {
 export function ErrorNextSteps({ error }: { error: ErrorDetail }) {
   const { t } = useI18n();
   const openRef = useOpenRef();
-  const canExplain = error.allowedActions.includes('ai.explain');
-  if (!error.problemId && !canExplain) return null;
   return (
     <View style={{ gap: spacing.sm }}>
       {error.problemId ? (
@@ -55,7 +53,7 @@ export function ErrorNextSteps({ error }: { error: ErrorDetail }) {
           />
         </Card>
       ) : null}
-      {canExplain ? <AskAiButton context={{ type: 'error', id: error.id }} label={t('errors.explain')} question={t('errors.explainQuestion')} /> : null}
+      <AskAiButton context={{ type: 'error', id: error.id }} label={t('errors.explain')} question={t('errors.explainQuestion')} />
     </View>
   );
 }

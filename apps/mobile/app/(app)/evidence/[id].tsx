@@ -7,10 +7,11 @@ import { visibleHighlights } from '@/features/investigations/helpers';
 import { AskAiButton } from '@/features/shared/components';
 import { useI18n } from '@/i18n';
 import { isSafeId } from '@/lib/deep-links';
+import { NotFoundState } from '@/ui/rows';
 import { CodeBlock, DiffView } from '@/ui/code';
 import { Card, Section } from '@/ui/layout';
 import { QueryScreen } from '@/ui/screen';
-import { EmptyState, FeatureGate } from '@/ui/states';
+import { FeatureGate } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
@@ -18,7 +19,7 @@ import { useTheme } from '@/ui/theme-provider';
 export default function EvidenceScreen() {
   const { t } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
-  if (!isSafeId(id)) return <EmptyState title={t('error.not_found')} icon="help-circle-outline" />;
+  if (!isSafeId(id)) return <NotFoundState />;
   return (
     <FeatureGate feature="repository" label={t('nav.evidence')}>
       <EvidenceDetail id={id} />

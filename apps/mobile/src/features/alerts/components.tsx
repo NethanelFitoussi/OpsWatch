@@ -15,7 +15,7 @@ import { errorMessageKey, useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { RichRow, StatusBadge, TimedItem } from './building-blocks';
+import { RichRow, StatusBadge, TimedItem } from '@/ui/rows';
 import { alertDurationMs, alertStatusMeta, canAcknowledge, chronologicalHistory } from './helpers';
 
 export function useAlertStatusMeta() {

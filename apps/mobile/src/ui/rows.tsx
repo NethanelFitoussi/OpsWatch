@@ -1,17 +1,17 @@
 /**
- * Small building blocks reused by the alerts, incidents, synthetics and SLO screens: a list row with a meta line and a
- * one-line detail, a status badge, a not-found state and a timestamped list item.
+ * Rich list rows and small shared pieces: a row with a meta line and a one-line detail, a status badge from a
+ * tone/icon/label triple, the not-found state of detail screens, and a timestamped list item.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { memo, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useI18n } from '@/i18n';
-import { Badge } from '@/ui/badges';
-import type { IconName } from '@/ui/layout';
-import { EmptyState } from '@/ui/states';
-import { Text } from '@/ui/text';
-import { spacing, TOUCH_TARGET, type Tone } from '@/ui/theme';
-import { useTheme } from '@/ui/theme-provider';
+import { Badge } from './badges';
+import type { IconName } from './layout';
+import { EmptyState } from './states';
+import { Text } from './text';
+import { spacing, TOUCH_TARGET, type Tone } from './theme';
+import { useTheme } from './theme-provider';
 
 export type StatusMeta = { tone: Tone; icon: IconName; label: string };
 
@@ -72,9 +72,10 @@ export const RichRow = memo(function RichRow({ title, meta, detail, left, right,
   );
 });
 
-export function NotFoundState() {
+/** Detail screens show this for an id that fails validation or no longer exists. */
+export function NotFoundState({ title }: { title?: string }) {
   const { t } = useI18n();
-  return <EmptyState icon="search-outline" title={t('error.not_found')} />;
+  return <EmptyState icon="search-outline" title={title ?? t('error.not_found')} />;
 }
 
 /** One entry of a chronological list: time on the left, content on the right. */

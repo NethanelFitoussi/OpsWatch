@@ -12,10 +12,10 @@ import { pendingLink } from '@/state/pending-link';
 import { useSettings } from '@/state/settings';
 
 export function SessionEffects() {
-  const { state, refreshServerInfo } = useSession();
+  const { state, refreshServerInfo, onSessionEnd } = useSession();
   const router = useRouter();
   const previous = useRef(state.status);
-  const { settings, update } = useSettings();
+  const { settings, update, resetServerScoped } = useSettings();
   const environments = useEnvironments();
 
   useEffect(() => {
@@ -32,6 +32,15 @@ export function SessionEffects() {
       pendingLink.clear();
     }
   }, [state.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Environment, recent searches and local favorites belong to one server: forget them when the server changes.
+  useEffect(
+    () =>
+      onSessionEnd((reason) => {
+        if (reason === 'server-changed') resetServerScoped();
+      }),
+    [onSessionEnd, resetServerScoped],
+  );
 
   // Default to the first production environment; drop a selection that no longer exists.
   useEffect(() => {

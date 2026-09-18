@@ -130,6 +130,7 @@ export const TrendChart = memo(function TrendChart({ series, height = 150, testI
 /** One bar per period: up, down, or no data (grey, never counted as up). */
 export const UptimeBar = memo(function UptimeBar({ buckets, height = 28 }: { buckets: { at: number; up: boolean | null }[]; height?: number }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [width, onLayout] = useWidth();
   const down = buckets.filter((b) => b.up === false).length;
   const unknown = buckets.filter((b) => b.up === null).length;
@@ -141,7 +142,7 @@ export const UptimeBar = memo(function UptimeBar({ buckets, height = 28 }: { buc
       onLayout={onLayout}
       accessible
       accessibilityRole="image"
-      accessibilityLabel={`${buckets.length - down - unknown} up, ${down} down, ${unknown} no data`}
+      accessibilityLabel={t('a11y.uptime', { up: buckets.length - down - unknown, down, unknown })}
     >
       {width > 0 ? (
         <Svg width={width} height={height}>

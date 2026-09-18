@@ -16,7 +16,7 @@ import { QueryScreen } from '@/ui/screen';
 import { Text } from '@/ui/text';
 import { CATEGORY_ICONS } from '../infrastructure/helpers';
 import { AlertLine, ServiceHeader } from './components';
-import { CardList, SeriesCharts } from './parts';
+import { CardList, SeriesCharts } from '@/ui/data';
 
 const MAX_PROBLEMS = 5;
 
