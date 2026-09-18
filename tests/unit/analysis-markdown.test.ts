@@ -1,17 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { escapeMarkdownCell, markdownFilename, renderMarkdown } from '@/lib/analysis/markdown';
+import { MARKDOWN_VALUE_MAX, escapeMarkdownText, markdownFilename, renderMarkdown } from '@/lib/analysis/markdown';
 
-describe('escapeMarkdownCell', () => {
+/** One AWS error message carrying every character that could break out of its block. */
+const HOSTILE = 'boom `tick` <img src=x onerror="alert(1)"> | pipe\nsecond line';
+const ESCAPED = 'boom &#96;tick&#96; &lt;img src=x onerror="alert(1)"&gt; \\| pipe second line';
+
+describe('escapeMarkdownText', () => {
   it('keeps a pipe from breaking the table and flattens newlines', () => {
-    expect(escapeMarkdownCell('a | b')).toBe('a \\| b');
-    expect(escapeMarkdownCell('line one\nline two')).toBe('line one line two');
-    expect(escapeMarkdownCell('back\\slash')).toBe('back\\\\slash');
-    expect(escapeMarkdownCell('  padded  ')).toBe('padded');
-    expect(escapeMarkdownCell('')).toBe('');
+    expect(escapeMarkdownText('a | b')).toBe('a \\| b');
+    expect(escapeMarkdownText('line one\nline two')).toBe('line one line two');
+    expect(escapeMarkdownText('back\\slash')).toBe('back\\\\slash');
+    expect(escapeMarkdownText('  padded  ')).toBe('padded');
+    expect(escapeMarkdownText('')).toBe('');
   });
   it('leaves SQL and AWS identifiers readable', () => {
-    expect(escapeMarkdownCell('SELECT * FROM orders WHERE id = ?')).toBe('SELECT * FROM orders WHERE id = ?');
-    expect(escapeMarkdownCell('arn:aws:ecs:eu-west-1:1:service/web')).toBe('arn:aws:ecs:eu-west-1:1:service/web');
+    expect(escapeMarkdownText('SELECT * FROM orders WHERE id = ?')).toBe('SELECT * FROM orders WHERE id = ?');
+    expect(escapeMarkdownText('arn:aws:ecs:eu-west-1:1:service/web')).toBe('arn:aws:ecs:eu-west-1:1:service/web');
+  });
+  it('neutralises backticks and angle brackets so an error shaped like a tag stays text', () => {
+    expect(escapeMarkdownText(HOSTILE)).toBe(ESCAPED);
+    expect(escapeMarkdownText('a & b')).toBe('a &amp; b');
+    expect(escapeMarkdownText('`rm -rf`')).toBe('&#96;rm -rf&#96;');
+  });
+  it('caps a single value at MARKDOWN_VALUE_MAX characters and marks the cut', () => {
+    const long = 'x'.repeat(MARKDOWN_VALUE_MAX);
+    expect(escapeMarkdownText(long)).toBe(long);
+    expect(escapeMarkdownText(`${long}y`)).toBe(`${long}…`);
+    expect(escapeMarkdownText('y'.repeat(MARKDOWN_VALUE_MAX * 3))).toHaveLength(MARKDOWN_VALUE_MAX + 1);
   });
 });
 
@@ -55,6 +70,26 @@ describe('renderMarkdown', () => {
     expect(out).toContain('| a\\|b | c |\n');
     expect(out).toContain('| x\\|y |  |\n');
     expect(out).toContain('| p | q |\n');   // extra cells are dropped, never widening the table
+  });
+
+  it('escapes the title, the subtitle, the heading, the paragraph, the bullet and the cell alike', () => {
+    const out = renderMarkdown({
+      title: HOSTILE,
+      subtitle: HOSTILE,
+      sections: [{ heading: HOSTILE, paragraphs: [HOSTILE], bullets: [HOSTILE], table: { headers: ['h'], rows: [[HOSTILE]] } }],
+    });
+    expect(out).toBe(
+      `# ${ESCAPED}\n\n${ESCAPED}\n\n## ${ESCAPED}\n\n${ESCAPED}\n\n- ${ESCAPED}\n\n| h |\n| --- |\n| ${ESCAPED} |\n`,
+    );
+    expect(out).not.toContain('<img');
+    expect(out).not.toContain('`');
+  });
+
+  it('caps every long value, whoever it reaches the document through', () => {
+    const long = 'x'.repeat(MARKDOWN_VALUE_MAX * 2);
+    const out = renderMarkdown({ title: long, sections: [{ heading: 'H', paragraphs: [long], table: { headers: ['h'], rows: [[long]] } }] });
+    expect(out).not.toContain('x'.repeat(MARKDOWN_VALUE_MAX + 1));
+    expect([...out.matchAll(/…/g)]).toHaveLength(3);
   });
 
   it('ends with exactly one newline', () => {
