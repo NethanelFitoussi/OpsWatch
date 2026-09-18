@@ -16,6 +16,11 @@ function flatten(tree: Tree, prefix = ''): Record<string, string> {
   }, {});
 }
 
+/** The `{name}` placeholders a message interpolates, order-independent. */
+function placeholders(value: string): string[] {
+  return [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
+}
+
 describe('message catalogues', () => {
   const enKeys = flatten(en as Tree);
   const frKeys = flatten(fr as Tree);
@@ -27,6 +32,17 @@ describe('message catalogues', () => {
   it('have no empty strings', () => {
     for (const [key, value] of Object.entries({ ...enKeys, ...frKeys })) {
       expect(value.trim(), key).not.toBe('');
+    }
+  });
+
+  it('use the same placeholders in English and French for every change and window message', () => {
+    // A translated template is free to reorder or drop grammatical agreement around a placeholder (the
+    // French change templates do, to avoid agreeing with {window}'s gender), but it must still interpolate
+    // the same variables the caller supplies.
+    const prefixes = ['Monitoring.common.change.', 'Monitoring.common.window.'];
+    for (const key of Object.keys(enKeys)) {
+      if (!prefixes.some((prefix) => key.startsWith(prefix))) continue;
+      expect(placeholders(frKeys[key]), key).toEqual(placeholders(enKeys[key]));
     }
   });
 

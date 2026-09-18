@@ -730,10 +730,10 @@
       },
       "sparkline": "{metric} sur la période choisie, dernière valeur {value}",
       "change": {
-        "up": "En hausse de {percent} par rapport aux {window} précédentes",
-        "down": "En baisse de {percent} par rapport aux {window} précédentes",
-        "flat": "Stable par rapport aux {window} précédentes",
-        "new": "Aucune valeur sur les {window} précédentes",
+        "up": "+{percent} par rapport à la période précédente ({window})",
+        "down": "-{percent} par rapport à la période précédente ({window})",
+        "flat": "Stable par rapport à la période précédente ({window})",
+        "new": "Aucune valeur sur la période précédente ({window})",
         "unavailable": "Comparaison indisponible",
         "label": "Évolution"
       },
