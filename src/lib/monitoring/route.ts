@@ -6,12 +6,14 @@ import { initProtectedRoute } from '../auth/route';
 import { findConnection } from '../connections/repository';
 import type { ConnectionStatus } from '../connections/types';
 import { getDb } from '../db/client';
+import { appSettings } from '../settings/repository';
+import type { AppSettings } from '../settings/shared';
 import type { MonitoringScope } from './call';
 import { checkSelection } from './selection';
 
 export type MonitoringParams = { locale: string; connectionId: string; region: string };
 type MonitoringConnection = { id: string; name: string; regions: string[]; status: ConnectionStatus };
-export type MonitoringPageContext = { locale: AppLocale; scope: MonitoringScope; connection: MonitoringConnection };
+export type MonitoringPageContext = { locale: AppLocale; scope: MonitoringScope; connection: MonitoringConnection; settings: AppSettings };
 
 /**
  * First statement of every monitoring page. Session first, then a database-only check of the connection and
@@ -20,9 +22,11 @@ export type MonitoringPageContext = { locale: AppLocale; scope: MonitoringScope;
 export async function initMonitoringRoute(params: Promise<MonitoringParams>): Promise<MonitoringPageContext> {
   const { locale } = await initProtectedRoute(params);
   const { connectionId, region } = await params;
-  const check = checkSelection(findConnection(getDb(), connectionId), region);
+  const db = getDb();
+  const check = checkSelection(findConnection(db, connectionId), region);
   if (check.kind === 'not_found') notFound();
   if (check.kind === 'unusable') return redirect({ href: `/accounts/${check.connectionId}`, locale });
   const { id, name, regions, status } = check.row;
-  return { locale, scope: { connectionId: id, region }, connection: { id, name, regions, status } };
+  // Cached for 60 s, so a page and all its cards read the settings at most once.
+  return { locale, scope: { connectionId: id, region }, connection: { id, name, regions, status }, settings: appSettings.read(db) };
 }

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveTestResult } from '@/lib/connections/repository';
+import { DEFAULT_SETTINGS } from '@/lib/settings/shared';
 import type { Db } from '@/lib/db/client';
 import { createTestDb } from '../helpers/db';
 import { NOW, createReadyRoleConnection } from '../helpers/fixtures';
@@ -70,6 +71,8 @@ describe('initMonitoringRoute', () => {
       locale: 'en',
       scope: { connectionId: row.id, region: 'eu-west-1' },
       connection: { id: row.id, name: 'production', regions: ['eu-west-1'], status: 'degraded' },
+      // Every page reads the instance settings from the context, so no card pays its own round trip.
+      settings: DEFAULT_SETTINGS,
     });
   });
 });

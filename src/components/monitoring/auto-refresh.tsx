@@ -5,10 +5,14 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
-import { AUTO_REFRESH_MS, mountRefreshTimer, type RefreshTimer } from '@/lib/monitoring/shared/refresh-timer';
+import { mountRefreshTimer, type RefreshTimer } from '@/lib/monitoring/shared/refresh-timer';
 
-/** Re-renders the page's server components every two minutes while the tab is visible, unless paused. */
-export function AutoRefresh() {
+/**
+ * Re-renders the page's server components at the interval chosen in Settings, while the tab is visible
+ * and not paused. An interval of 0 is "off": no timer is mounted, and the control says so instead of
+ * offering a pause for something that never runs.
+ */
+export function AutoRefresh({ intervalMs }: { intervalMs: number }) {
   const t = useTranslations('Monitoring.client');
   const router = useRouter();
   const [paused, setPaused] = useState(false);
@@ -23,22 +27,36 @@ export function AutoRefresh() {
   }, [router]);
 
   useEffect(() => {
+    if (intervalMs <= 0) return;
     const mounted = mountRefreshTimer({
       onTick: () => routerRef.current.refresh(),
       isPaused: () => pausedRef.current,
       target: document,
+      intervalMs,
     });
     timer.current = mounted.timer;
     return () => {
       mounted.dispose();
       timer.current = null;
     };
-  }, []);
+  }, [intervalMs]);
 
   useEffect(() => {
     pausedRef.current = paused;
     timer.current?.setPaused(paused);
   }, [paused]);
+
+  if (intervalMs <= 0) {
+    return (
+      <span className="text-xs text-muted-foreground" aria-live="polite">
+        {t('refresh.off')}
+      </span>
+    );
+  }
+
+  // Whole minutes read as minutes; anything shorter (30 s) reads as seconds.
+  const cadence =
+    intervalMs % 60_000 === 0 ? t('refresh.every', { minutes: intervalMs / 60_000 }) : t('refresh.everySeconds', { seconds: intervalMs / 1000 });
 
   return (
     <div className="flex items-center gap-2">
@@ -47,7 +65,7 @@ export function AutoRefresh() {
         {paused ? t('refresh.resume') : t('refresh.pause')}
       </Button>
       <span className="text-xs text-muted-foreground" aria-live="polite">
-        {paused ? t('refresh.paused') : t('refresh.every', { minutes: AUTO_REFRESH_MS / 60_000 })}
+        {paused ? t('refresh.paused') : cadence}
       </span>
     </div>
   );

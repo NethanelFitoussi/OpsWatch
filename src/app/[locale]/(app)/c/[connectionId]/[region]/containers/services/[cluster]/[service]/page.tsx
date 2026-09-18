@@ -22,7 +22,7 @@ export default async function ServicePage({ params, searchParams }: Props) {
   const context = await initMonitoringRoute(params);
   const { cluster, service } = await params;
   if (!isEcsName(cluster) || !isEcsName(service)) notFound();
-  const range = parseTimeRange((await searchParams).range);
+  const range = parseTimeRange((await searchParams).range, context.settings.defaultRange);
   // One clock for the whole page: every card below shares the same window, and with it its cache entries.
   const nowMs = pageNow();
   const t = await getTranslations('Monitoring.containers');

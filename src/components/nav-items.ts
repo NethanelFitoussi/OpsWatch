@@ -1,9 +1,9 @@
-import { BookOpen, Cloud, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import { BookOpen, Cloud, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
 import { defaultSubsection } from '@/lib/monitoring/shared/sections';
 import { parseMonitoringPath, subsectionPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
-type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'accounts';
+type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'settings' | 'accounts';
 export type NavItem = {
   key: NavKey;
   /** A Lucide icon, or the AWS service icon of a section about that service. */
@@ -28,6 +28,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'alarms', kind: 'monitoring', section: 'alarms', icon: 'alarm' },
   { key: 'logs', kind: 'monitoring', section: 'logs', icon: 'logs' },
   { key: 'gettingStarted', kind: 'static', href: '/getting-started', icon: BookOpen },
+  { key: 'settings', kind: 'static', href: '/settings', icon: Settings },
   { key: 'accounts', kind: 'static', href: '/accounts', icon: Cloud },
 ];
 

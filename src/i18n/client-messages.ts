@@ -14,6 +14,7 @@ export const CLIENT_NAMESPACES = [
   'ErrorPage',
   'GettingStarted.diagram',
   'Monitoring.client',
+  'Settings',
 ] as const;
 
 type Tree = { [key: string]: unknown };

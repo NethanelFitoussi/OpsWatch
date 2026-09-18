@@ -10,11 +10,14 @@ vi.mock('next-intl/server', () => ({
   getLocale: async () => 'en',
   setRequestLocale: () => undefined,
 }));
+/** The instance settings a page reads from its context; a test changes `defaultRange` to see it applied. */
+const settings = vi.hoisted(() => ({ value: { refreshIntervalMs: 120_000, defaultRange: '3h' } }));
 vi.mock('@/lib/monitoring/route', () => ({
   initMonitoringRoute: async () => ({
     locale: 'en',
     scope: SCOPE,
     connection: { id: SCOPE.connectionId, name: 'production', regions: [SCOPE.region], status: 'ok' },
+    settings: settings.value,
   }),
 }));
 
@@ -67,5 +70,33 @@ describe('one clock per page render', () => {
     const page = await ContainersPage({ params: params(), searchParams: Promise.resolve({ range: '1h' }) });
     expectOneWindow(clocks(page), '1h', 1);
     expect(clock).toHaveBeenCalledTimes(1);
+  });
+});
+
+/** The `range` every element of the tree carries: the layout's, the filter form's and each card's. */
+function ranges(node: ReactNode): unknown[] {
+  if (Array.isArray(node)) return node.flatMap(ranges);
+  if (!isValidElement(node)) return [];
+  const props = node.props as { range?: unknown; children?: ReactNode };
+  return [...(props.range === undefined ? [] : [props.range]), ...ranges(props.children)];
+}
+
+describe('the default time range from the settings', () => {
+  afterEach(() => {
+    settings.value = { refreshIntervalMs: 120_000, defaultRange: '3h' };
+  });
+
+  it('opens a page without ?range on the configured range', async () => {
+    settings.value = { refreshIntervalMs: 120_000, defaultRange: '24h' };
+    tickingClock();
+    const page = await ContainersPage({ params: params(), searchParams: Promise.resolve({}) });
+    expect(new Set(ranges(page))).toEqual(new Set(['24h']));
+  });
+
+  it('still lets ?range win over it', async () => {
+    settings.value = { refreshIntervalMs: 120_000, defaultRange: '24h' };
+    tickingClock();
+    const page = await ContainersPage({ params: params(), searchParams: Promise.resolve({ range: '7d' }) });
+    expect(new Set(ranges(page))).toEqual(new Set(['7d']));
   });
 });

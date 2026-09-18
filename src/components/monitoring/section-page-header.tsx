@@ -54,7 +54,7 @@ export async function SectionPageHeader({
         <div className="flex flex-wrap items-center gap-2">
           <RegionSelector regions={context.connection.regions} current={context.scope.region} />
           {range && <TimeRangeSelector current={range} ranges={ranges} />}
-          {autoRefresh && <AutoRefresh />}
+          {autoRefresh && <AutoRefresh intervalMs={context.settings.refreshIntervalMs} />}
           {actions}
         </div>
       </div>

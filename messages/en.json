@@ -5,6 +5,7 @@
     "loading": "Loading…",
     "nav": {
       "gettingStarted": "Getting started",
+      "settings": "Settings",
       "accounts": "Accounts",
       "containers": "Containers",
       "databases": "Databases",
@@ -672,6 +673,8 @@
         "pause": "Pause auto-refresh",
         "resume": "Resume auto-refresh",
         "every": "Refreshes every {minutes} min",
+        "everySeconds": "Refreshes every {seconds} s",
+        "off": "Auto-refresh off",
         "paused": "Auto-refresh paused"
       },
       "chart": {
@@ -1132,6 +1135,36 @@
       "search": "Search",
       "volume": "Volume",
       "endpoints": "Endpoints"
+    }
+  },
+  "Settings": {
+    "title": "Settings",
+    "description": "Options that apply to every page of this OpsWatch.",
+    "refresh": {
+      "title": "Auto-refresh",
+      "label": "Refresh interval",
+      "description": "How often a page that refreshes itself asks AWS for new data again.",
+      "options": {
+        "0": "Off",
+        "30000": "30 seconds",
+        "60000": "1 minute",
+        "120000": "2 minutes",
+        "300000": "5 minutes",
+        "600000": "10 minutes"
+      },
+      "cost": "At this interval a page of about {services} services requests about {metrics} metrics per hour, roughly {usd} per hour: GetMetricData is billed per metric requested.",
+      "costOff": "Off costs nothing beyond the metrics of the first page load."
+    },
+    "range": {
+      "title": "Time range",
+      "label": "Default time range",
+      "description": "The range a monitoring page opens with. A range in the address bar still wins."
+    },
+    "save": "Save settings",
+    "saved": "Settings saved.",
+    "errors": {
+      "refresh_invalid": "Choose one of the offered refresh intervals.",
+      "range_invalid": "Choose one of the offered time ranges."
     }
   }
 }

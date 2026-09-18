@@ -19,7 +19,7 @@ export const generateMetadata = localizedTitle('Monitoring.containers.title');
 export default async function ContainersPage({ params, searchParams }: Props) {
   const context = await initMonitoringRoute(params);
   const sp = await searchParams;
-  const range = parseTimeRange(sp.range);
+  const range = parseTimeRange(sp.range, context.settings.defaultRange);
   // One clock for the whole page: every card below shares the same window, and with it its cache entries.
   const nowMs = pageNow();
   const search = ((Array.isArray(sp.q) ? sp.q[0] : sp.q) ?? '').trim().slice(0, SEARCH_MAX);

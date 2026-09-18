@@ -22,7 +22,7 @@ export default async function DatabaseInstancePage({ params, searchParams }: Pro
   const context = await initMonitoringRoute(params);
   const { instance } = await params;
   if (!isDbInstanceId(instance)) notFound();
-  const range = parseTimeRange((await searchParams).range);
+  const range = parseTimeRange((await searchParams).range, context.settings.defaultRange);
   // One clock for the whole page: every card below shares the same window, and with it its cache entries.
   const nowMs = pageNow();
   const t = await getTranslations('Monitoring.databases');

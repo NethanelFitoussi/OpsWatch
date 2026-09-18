@@ -5,6 +5,7 @@
     "loading": "Chargement…",
     "nav": {
       "gettingStarted": "Premiers pas",
+      "settings": "Paramètres",
       "accounts": "Comptes",
       "containers": "Conteneurs",
       "databases": "Bases de données",
@@ -672,6 +673,8 @@
         "pause": "Suspendre l'actualisation automatique",
         "resume": "Reprendre l'actualisation automatique",
         "every": "Actualisé toutes les {minutes} min",
+        "everySeconds": "Actualisé toutes les {seconds} s",
+        "off": "Actualisation automatique désactivée",
         "paused": "Actualisation automatique suspendue"
       },
       "chart": {
@@ -1132,6 +1135,36 @@
       "search": "Recherche",
       "volume": "Volume",
       "endpoints": "Points d'entrée"
+    }
+  },
+  "Settings": {
+    "title": "Paramètres",
+    "description": "Options qui s'appliquent à toutes les pages de cet OpsWatch.",
+    "refresh": {
+      "title": "Actualisation automatique",
+      "label": "Intervalle d'actualisation",
+      "description": "À quelle fréquence une page qui s'actualise seule redemande ses données à AWS.",
+      "options": {
+        "0": "Désactivée",
+        "30000": "30 secondes",
+        "60000": "1 minute",
+        "120000": "2 minutes",
+        "300000": "5 minutes",
+        "600000": "10 minutes"
+      },
+      "cost": "À cet intervalle, une page d'environ {services} services demande environ {metrics} métriques par heure, soit à peu près {usd} par heure : GetMetricData est facturé par métrique demandée.",
+      "costOff": "Désactivée, elle ne coûte rien au-delà des métriques du premier chargement."
+    },
+    "range": {
+      "title": "Période",
+      "label": "Période par défaut",
+      "description": "La période avec laquelle une page de supervision s'ouvre. Une période dans l'adresse reste prioritaire."
+    },
+    "save": "Enregistrer les paramètres",
+    "saved": "Paramètres enregistrés.",
+    "errors": {
+      "refresh_invalid": "Choisissez l'un des intervalles d'actualisation proposés.",
+      "range_invalid": "Choisissez l'une des périodes proposées."
     }
   }
 }

@@ -4,8 +4,25 @@ import { NAV_ITEMS, isNavActive, navHref } from '@/components/nav-items';
 const item = (key: string) => NAV_ITEMS.find((i) => i.key === key)!;
 
 describe('navigation items', () => {
-  it('lists the monitoring sections first, all enabled', () => {
-    expect(NAV_ITEMS.map((i) => i.key)).toEqual(['overview', 'containers', 'databases', 'loadBalancers', 'alarms', 'logs', 'gettingStarted', 'accounts']);
+  it('lists the monitoring sections first, then the guide, the settings and the accounts', () => {
+    expect(NAV_ITEMS.map((i) => i.key)).toEqual([
+      'overview',
+      'containers',
+      'databases',
+      'loadBalancers',
+      'alarms',
+      'logs',
+      'gettingStarted',
+      'settings',
+      'accounts',
+    ]);
+  });
+
+  it('keeps the settings at the bottom, just above the accounts', () => {
+    const keys = NAV_ITEMS.map((i) => i.key);
+    expect(keys.indexOf('settings')).toBe(keys.indexOf('accounts') - 1);
+    expect(navHref(item('settings'), '/c/abc123def456/eu-west-1/alarms')).toBe('/settings');
+    expect(isNavActive(item('settings'), '/settings')).toBe(true);
   });
 
   it('keeps the selected connection and region in monitoring links, opening the section default sub-page', () => {
