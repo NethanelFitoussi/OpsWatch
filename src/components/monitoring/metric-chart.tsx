@@ -2,7 +2,8 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useId, useMemo } from 'react';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import type { ThresholdBand } from '@/lib/monitoring/shared/bands';
 import { mergeSeriesRows } from '@/lib/monitoring/shared/chart-data';
 import { formatAxisTime, formatMetricValue, type MetricUnit } from '@/lib/monitoring/shared/format';
 import type { TimeRange } from '@/lib/monitoring/shared/time-range';
@@ -11,15 +12,49 @@ export type ChartSeries = { id: string; label: string; timestamps: number[]; val
 
 const SERIES_COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)'];
 
-export function MetricChart({ title, unit, range, series }: { title: string; unit: MetricUnit; range: TimeRange; series: ChartSeries[] }) {
+/**
+ * The bands as a sentence, for a reader who cannot see the shading behind the line. Only a rising set
+ * (healthy first, from zero) can be worded from the two messages this stage has; a falling set returns
+ * nothing rather than a sentence that reads backwards, and needs its own message the day one is charted.
+ */
+function bandSentence(
+  bands: ThresholdBand[],
+  unit: MetricUnit,
+  locale: string,
+  t: (key: string, values: Record<string, string>) => string,
+): string | null {
+  const healthy = bands.find((band) => band.tone === 'success');
+  if (!healthy || healthy.from !== 0 || healthy.to === null) return null;
+  const warning = formatMetricValue(healthy.to, unit, locale);
+  const critical = bands.find((band) => band.tone === 'danger');
+  return critical
+    ? t('chart.bands', { warning, critical: formatMetricValue(critical.from, unit, locale) })
+    : t('chart.bandsWarningOnly', { warning });
+}
+
+export function MetricChart({
+  title,
+  unit,
+  range,
+  series,
+  bands,
+}: {
+  title: string;
+  unit: MetricUnit;
+  range: TimeRange;
+  series: ChartSeries[];
+  bands?: ThresholdBand[];
+}) {
   const t = useTranslations('Monitoring.client');
   const locale = useLocale();
   const captionId = useId();
   const rows = useMemo(() => mergeSeriesRows(series), [series]);
+  const sentence = bands && bands.length > 0 ? bandSentence(bands, unit, locale, t) : null;
   return (
     <figure aria-labelledby={captionId} className="min-w-0 space-y-2">
       <figcaption id={captionId} className="text-sm font-medium">
         {title}
+        {sentence && <span className="sr-only"> {sentence}</span>}
       </figcaption>
       {rows.length === 0 ? (
         <p className="flex h-48 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">{t('chart.noData')}</p>
@@ -42,6 +77,18 @@ export function MetricChart({ title, unit, range, series }: { title: string; uni
                 labelFormatter={(v) => formatAxisTime(Number(v), range, locale)}
                 formatter={(v) => formatMetricValue(Number(v), unit, locale)}
               />
+              {/* Behind the lines, and clipped to the axis rather than dropped when a band runs past it. */}
+              {bands?.map((band) => (
+                <ReferenceArea
+                  key={`${band.tone}-${band.from}`}
+                  y1={band.from}
+                  y2={band.to ?? undefined}
+                  fill={`var(--tone-${band.tone})`}
+                  fillOpacity={0.08}
+                  strokeOpacity={0}
+                  ifOverflow="hidden"
+                />
+              ))}
               {series.map((s, i) => (
                 <Line
                   key={s.id}

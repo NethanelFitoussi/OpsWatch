@@ -672,7 +672,9 @@
       },
       "chart": {
         "noData": "Aucune donnée sur cette période",
-        "legend": "Séries"
+        "legend": "Séries",
+        "bands": "Bandes : sain jusqu'à {warning}, avertissement jusqu'à {critical}, critique au-delà.",
+        "bandsWarningOnly": "Bandes : sain jusqu'à {warning}, avertissement au-delà."
       },
       "logs": {
         "query": "Requête",
@@ -775,6 +777,19 @@
       },
       "statusBar": {
         "label": "Ressources par état"
+      },
+      "heat": {
+        "success": "Sain",
+        "warning": "Avertissement",
+        "danger": "Critique",
+        "unknown": "Aucune donnée"
+      },
+      "kpi": {
+        "window": "sur les {window} écoulées"
+      },
+      "topN": {
+        "label": "{metric}, du plus élevé au plus faible",
+        "row": "{name} : {value}"
       }
     },
     "overview": {

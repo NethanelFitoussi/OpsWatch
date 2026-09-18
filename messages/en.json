@@ -672,7 +672,9 @@
       },
       "chart": {
         "noData": "No data for this period",
-        "legend": "Series"
+        "legend": "Series",
+        "bands": "Bands: healthy up to {warning}, warning up to {critical}, critical above.",
+        "bandsWarningOnly": "Bands: healthy up to {warning}, warning above."
       },
       "logs": {
         "query": "Query",
@@ -775,6 +777,19 @@
       },
       "statusBar": {
         "label": "Resources by state"
+      },
+      "heat": {
+        "success": "Healthy",
+        "warning": "Warning",
+        "danger": "Critical",
+        "unknown": "No data"
+      },
+      "kpi": {
+        "window": "over the last {window}"
+      },
+      "topN": {
+        "label": "{metric}, highest first",
+        "row": "{name}: {value}"
       }
     },
     "overview": {

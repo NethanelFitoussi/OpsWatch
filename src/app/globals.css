@@ -78,6 +78,11 @@
   --series-2: oklch(0.66 0.17 50);
   --series-3: oklch(0.6 0.13 165);
   --series-4: oklch(0.58 0.2 25);
+  /* Threshold bands behind a chart line, drawn at 8 % opacity. The hues the TONE_* badge classes use
+     (emerald, amber and red 500), so a band and the badge beside it read as one status. */
+  --tone-success: oklch(0.696 0.17 162.48);
+  --tone-warning: oklch(0.769 0.188 70.08);
+  --tone-danger: oklch(0.637 0.237 25.331);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -117,6 +122,10 @@
   --series-2: oklch(0.78 0.14 60);
   --series-3: oklch(0.75 0.12 165);
   --series-4: oklch(0.72 0.16 25);
+  /* The 400 shades, as the dark badge classes use, so a band stays visible on the dark chart background. */
+  --tone-success: oklch(0.765 0.177 163.223);
+  --tone-warning: oklch(0.828 0.189 84.429);
+  --tone-danger: oklch(0.704 0.191 22.216);
   --sidebar: oklch(0.18 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.72 0.13 262);
