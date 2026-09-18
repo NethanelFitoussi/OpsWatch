@@ -63,8 +63,10 @@ export async function SectionLayout({
   }));
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
-      <div className="min-w-0 lg:col-start-2 lg:row-start-1">
+    // The last row takes the leftover height, so the section menu's separator runs to the bottom of a
+    // short page without the header's row stretching with it.
+    <div className="grid flex-1 grid-rows-[auto_auto_1fr] lg:grid-cols-[auto_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+      <div className="min-w-0 px-4 pt-6 md:px-6 lg:col-start-2 lg:row-start-1">
         <SectionPageHeader
           context={context}
           section={section}
@@ -78,11 +80,12 @@ export async function SectionLayout({
         />
       </div>
       {/* Second in the document below 1024 px — a strip between the header and the filters — and the
-          left column from there up, where it spans the header and the content. */}
-      <div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          far-left column from there up: flush against the rail, with no gutter of its own, spanning the
+          header and the content down to the bottom of the page and separated from it by one hairline. */}
+      <div className="min-w-0 border-b border-border/60 px-4 py-2 md:px-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:border-r lg:border-b-0 lg:px-0 lg:py-6">
         <SectionPanel sectionLabel={nav(SECTION_NAV_KEY[section])} subsection={subsection} links={links} />
       </div>
-      <div className="min-w-0 space-y-6 lg:col-start-2 lg:row-start-2">
+      <div className="min-w-0 space-y-6 px-4 py-6 md:px-6 lg:col-start-2 lg:row-start-2">
         {filters && <div className="rounded-md border p-3">{filters}</div>}
         {children}
       </div>

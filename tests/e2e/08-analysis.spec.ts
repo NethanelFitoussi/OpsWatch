@@ -54,16 +54,30 @@ test('the section menu is a scrollable strip at 360 px and nothing overflows', a
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });
 
-test('the section menu collapse is remembered per browser', async ({ page }) => {
+test('the section menu sits at the far left of the content and has no collapse of its own', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/en/c/${connectionId}/us-east-1/alarms/list`);
-  await page.getByRole('button', { name: 'Collapse the section menu' }).click();
   const nav = page.getByRole('navigation', { name: 'Alarms pages' });
-  await page.reload();
-  await expect(page.getByRole('button', { name: 'Expand the section menu' })).toHaveAttribute('aria-pressed', 'true');
-  // Collapsed, the entry is an icon, but the sr-only label keeps naming it.
+  // The rail is what collapses, with one control at its foot; the section menu never does.
+  await expect(page.getByRole('button', { name: 'Collapse the section menu' })).toHaveCount(0);
   await expect(nav.getByRole('link', { name: 'Alarms' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/alarms/list`);
-  await expect(nav.locator('[aria-disabled="true"]')).toContainText('Report');
+
+  // Flush against the rail: the menu's column starts exactly where the rail ends, with no gap.
+  const railRight = await page.locator('aside').evaluate((el) => el.getBoundingClientRect().right);
+  const menuLeft = await nav.evaluate((el) => (el.parentElement as HTMLElement).getBoundingClientRect().left);
+  expect(Math.abs(menuLeft - railRight)).toBeLessThanOrEqual(1);
+});
+
+test('a page fills the width of the screen, with no centred column and no horizontal scrollbar', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1000 });
+  await page.goto(`/en/c/${connectionId}/us-east-1/alarms/list`);
+  const width = (locator: ReturnType<typeof page.locator>) => locator.evaluate((el) => el.getBoundingClientRect().width);
+  expect((await width(page.locator('main'))) + (await width(page.locator('aside')))).toBeGreaterThanOrEqual(1919);
+  // The table takes the width it gains instead of stopping at a maximum.
+  const tableRight = await page.getByRole('table').first().evaluate((el) => el.getBoundingClientRect().right);
+  expect(tableRight).toBeGreaterThan(1800);
+  const root = page.locator('html');
+  expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });
 
 test('the main rail collapses to icons and is remembered', async ({ page }) => {

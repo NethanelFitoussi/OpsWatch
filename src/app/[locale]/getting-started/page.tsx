@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
+import { PageBody } from '@/components/page-body';
 import { ConnectionDiagram } from '@/components/getting-started/connection-diagram';
 import { MethodCards } from '@/components/getting-started/method-cards';
 import { PagesSection } from '@/components/getting-started/pages-section';
@@ -38,7 +39,7 @@ export default async function GettingStartedPage({ params }: Props) {
 
   return (
     <AppShell signedIn={signedIn}>
-      <div className="space-y-16">
+      <PageBody className="mx-auto max-w-6xl space-y-16">
         <header className="rounded-2xl border bg-gradient-to-br from-primary/10 via-background to-background px-6 py-10 md:px-10">
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{t('title')}</h1>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">{t('subtitle')}</p>
@@ -74,7 +75,7 @@ export default async function GettingStartedPage({ params }: Props) {
         <Section id="troubleshooting" title={t('troubleshooting.title')}>
           <Troubleshooting />
         </Section>
-      </div>
+      </PageBody>
     </AppShell>
   );
 }

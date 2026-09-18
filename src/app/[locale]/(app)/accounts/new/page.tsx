@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
@@ -14,9 +15,9 @@ export default async function NewConnectionPage({ params }: Props) {
   const t = await getTranslations('Wizard');
 
   return (
-    <div className="space-y-6">
+    <PageBody>
       <PageHeader title={t('title')} description={t('description')} />
       <NewConnectionForm action={createConnectionAction.bind(null, locale)} />
-    </div>
+    </PageBody>
   );
 }

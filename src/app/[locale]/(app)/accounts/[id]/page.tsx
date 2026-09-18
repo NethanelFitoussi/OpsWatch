@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
+import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { PermissionChecklist } from '@/components/permission-checklist';
 import { SectionCard } from '@/components/section-card';
@@ -43,7 +44,7 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
   const tChecklist = await getTranslations('Checklist');
 
   return (
-    <div className="space-y-6">
+    <PageBody>
       <Link
         href="/accounts"
         className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -83,6 +84,6 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
       </SectionCard>
 
       <DangerZone connectionId={view.id} locale={locale} />
-    </div>
+    </PageBody>
   );
 }

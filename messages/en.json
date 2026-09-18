@@ -737,10 +737,7 @@
       },
       "sectionNav": {
         "label": "{section} pages",
-        "collapse": "Collapse the section menu",
-        "expand": "Expand the section menu",
-        "comingSoon": "Coming soon",
-        "comingSoonFor": "{page} — coming soon"
+        "comingSoon": "Coming soon"
       }
     },
     "common": {

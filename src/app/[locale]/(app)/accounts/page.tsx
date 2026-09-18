@@ -1,6 +1,7 @@
 import { ChevronRight, Cloud, Plus } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { ConnectionStatusBadge } from '@/components/connection-status-badge';
+import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ export default async function AccountsPage({ params }: Props) {
   const views = listConnections(getDb()).map((row) => toView(row, env().OPSWATCH_SECRET));
 
   return (
-    <div className="space-y-6">
+    <PageBody>
       <PageHeader
         title={t('title')}
         description={t('description')}
@@ -56,7 +57,7 @@ export default async function AccountsPage({ params }: Props) {
           </CardContent>
         </Card>
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {views.map((c) => (
             <li key={c.id}>
               <Link
@@ -100,6 +101,6 @@ export default async function AccountsPage({ params }: Props) {
           ))}
         </ul>
       )}
-    </div>
+    </PageBody>
   );
 }

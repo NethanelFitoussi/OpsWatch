@@ -16,7 +16,10 @@ export function AppShell({
       <Sidebar signedIn={signedIn} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar signedIn={signedIn} connections={connections} />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-8">{children}</main>
+        {/* No maximum width and no padding of its own: a wide screen is filled, and a monitoring page's
+            section menu sits flush against the rail. Each page brings its own gutter, through `PageBody`
+            or, for a monitoring sub-page, through `SectionLayout`. */}
+        <main className="flex min-w-0 flex-1 flex-col">{children}</main>
       </div>
     </div>
   );

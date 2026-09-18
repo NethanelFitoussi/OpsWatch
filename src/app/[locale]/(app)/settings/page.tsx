@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
@@ -16,9 +17,9 @@ export default async function SettingsPage({ params }: Props) {
   const { locale } = await initProtectedRoute(params);
   const t = await getTranslations('Settings');
   return (
-    <div className="space-y-6">
+    <PageBody>
       <PageHeader title={t('title')} description={t('description')} />
       <SettingsForm action={saveSettingsAction.bind(null, locale)} current={appSettings.read(getDb())} />
-    </div>
+    </PageBody>
   );
 }
