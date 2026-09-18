@@ -686,7 +686,8 @@
           "filter": "Nom du groupe de journaux",
           "searchAws": "Rechercher « {text} » dans AWS",
           "searchAll": "Afficher tous les groupes",
-          "empty": "Aucun groupe de journaux ne commence par ce préfixe.",
+          "caseSensitive": "AWS cherche ce texte partout dans un nom, mais la casse doit correspondre.",
+          "empty": "Aucun nom de groupe de journaux ne contient ce texte.",
           "noMatch": "Aucun groupe chargé ne contient ce texte.",
           "limit": "Affichage des {count} premiers groupes. Recherchez dans AWS pour aller au-delà.",
           "max": "Vous pouvez interroger au maximum {count} groupes de journaux à la fois."

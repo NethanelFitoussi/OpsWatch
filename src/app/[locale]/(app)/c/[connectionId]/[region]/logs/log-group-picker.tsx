@@ -9,14 +9,14 @@ import { resolveTarget } from '@/lib/monitoring/target';
 import { LogGroupList } from './log-group-list';
 
 /**
- * The log groups of one prefix, fetched on the server. The list itself is interactive: the prefix is what AWS
- * was asked for, and the browser filters and selects inside what came back.
+ * The log groups of one search, fetched on the server. The list itself is interactive: the search text is
+ * what AWS was asked for, and the browser filters and selects inside what came back.
  */
-export async function LogGroupPicker({ scope, prefix, range }: { scope: MonitoringScope; prefix: string; range: LogsTimeRange }) {
+export async function LogGroupPicker({ scope, search, range }: { scope: MonitoringScope; search: string; range: LogsTimeRange }) {
   const t = await getTranslations('Monitoring.logs');
   const title = t('picker.title');
   const target = await resolveTarget(scope);
-  const groups = target.ok ? await searchLogGroups(target.data, prefix) : target;
+  const groups = target.ok ? await searchLogGroups(target.data, search) : target;
   if (!groups.ok) {
     return (
       <MonitoringCard title={title}>
@@ -25,14 +25,18 @@ export async function LogGroupPicker({ scope, prefix, range }: { scope: Monitori
     );
   }
 
-  // Sizes are formatted here so the browser needs neither the raw bytes nor a second locale.
+  // Sizes are formatted here so the browser needs neither the raw bytes nor a second locale. A search answers
+  // with names only (logGroupNamePattern), so those groups have no size to show rather than a dash each.
   const locale = await getLocale();
   return (
     <MonitoringCard title={title}>
       <div className="space-y-4">
         <LogGroupList
-          groups={groups.data.map((group) => ({ name: group.name, size: formatMetricValue(group.storedBytes, 'bytes', locale) }))}
-          prefix={prefix}
+          groups={groups.data.map((group) => ({
+            name: group.name,
+            size: group.storedBytes === null ? null : formatMetricValue(group.storedBytes, 'bytes', locale),
+          }))}
+          search={search}
           range={range}
           truncated={groups.data.length === LOG_GROUP_SEARCH_LIMIT}
         />

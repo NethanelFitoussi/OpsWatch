@@ -98,12 +98,13 @@ test('the picker keeps the selection across an AWS search', async ({ page }) => 
   await page.getByRole('button', { name: /Search AWS for/ }).click();
   await expect(page).toHaveURL(/prefix=zzz/);
   await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
-  await expect(page.getByText('No log group starts with this prefix.')).toBeVisible();
+  // moto ignores logGroupNamePattern and answers with every log group, so here it is the browser filter that
+  // empties the list, and the message says exactly that. Against AWS the answer itself would hold no group.
+  await expect(page.getByText('No loaded log group contains this text.')).toBeVisible();
   await expect(page.getByRole('list', { name: 'Selected log groups' }).getByText('/ecs/opswatch-web')).toBeVisible();
 
-  // Back to the whole list: the group selected under the earlier prefix is still ticked and still selected.
+  // Clearing the field shows that answer's groups again, with the group selected before the search still ticked.
   await page.getByLabel('Log group name').fill('');
-  await page.getByRole('button', { name: 'Show all log groups' }).click();
   await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toBeChecked();
   await page.getByRole('checkbox', { name: /\/aws\/lambda\/opswatch-e2e-worker/ }).check();
 

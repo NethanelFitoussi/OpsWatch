@@ -26,16 +26,22 @@ const PTR_FIELD = '@ptr';
 
 export type LogGroup = { name: string; storedBytes: number | null; retentionDays: number | null };
 
-export function searchLogGroups(target: AwsTarget, prefix: string, deps: MonitoringDeps = {}): Promise<MonitoringResult<LogGroup[]>> {
+/**
+ * The log groups whose name contains `search`, or the first groups of the region when it is blank.
+ * `logGroupNamePattern` matches anywhere in the name, as the picker's own filter does, but AWS documents it
+ * as a case-sensitive substring search and refuses it alongside `logGroupNamePrefix`. A pattern answer also
+ * carries names only, so `storedBytes` comes back null for a searched group.
+ */
+export function searchLogGroups(target: AwsTarget, search: string, deps: MonitoringDeps = {}): Promise<MonitoringResult<LogGroup[]>> {
   return describeCall(
     target,
     'logs:DescribeLogGroups',
-    { prefix },
+    { search },
     async () => {
       const client = new CloudWatchLogsClient(clientConfig(target.region, target.credentials));
       const out = await sendWithTimeout(
         client,
-        new DescribeLogGroupsCommand({ ...(prefix ? { logGroupNamePrefix: prefix } : {}), limit: LOG_GROUP_SEARCH_LIMIT }),
+        new DescribeLogGroupsCommand({ ...(search ? { logGroupNamePattern: search } : {}), limit: LOG_GROUP_SEARCH_LIMIT }),
         describeTimeout(deps),
       );
       return (out.logGroups ?? [])

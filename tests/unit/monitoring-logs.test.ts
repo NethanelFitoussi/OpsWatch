@@ -62,10 +62,11 @@ describe('parseLogsQueryInput', () => {
 });
 
 describe('searchLogGroups', () => {
-  it('searches by prefix, maps the groups and caches the answer', async () => {
+  it('searches names by substring, maps the groups and caches the answer', async () => {
     logs.on(DescribeLogGroupsCommand).resolves({ logGroups: [{ logGroupName: '/ecs/web', storedBytes: 1024, retentionInDays: 30 }, { logGroupName: '/ecs/api' }] });
-    const result = await searchLogGroups(target, '/ecs', deps);
-    expect(logs.commandCalls(DescribeLogGroupsCommand).map((c) => c.args[0].input)).toEqual([{ logGroupNamePrefix: '/ecs', limit: 50 }]);
+    const result = await searchLogGroups(target, 'ecs', deps);
+    // logGroupNamePattern matches anywhere in the name, and AWS refuses it together with logGroupNamePrefix.
+    expect(logs.commandCalls(DescribeLogGroupsCommand).map((c) => c.args[0].input)).toEqual([{ logGroupNamePattern: 'ecs', limit: 50 }]);
     expect(result).toEqual({
       ok: true,
       data: [
@@ -73,11 +74,11 @@ describe('searchLogGroups', () => {
         { name: '/ecs/api', storedBytes: null, retentionDays: null },
       ],
     });
-    await searchLogGroups(target, '/ecs', deps);
+    await searchLogGroups(target, 'ecs', deps);
     expect(logs.commandCalls(DescribeLogGroupsCommand)).toHaveLength(1);
   });
 
-  it('lists without a prefix filter for an empty prefix', async () => {
+  it('lists without any name filter for an empty search', async () => {
     logs.on(DescribeLogGroupsCommand).resolves({ logGroups: [] });
     expect(await searchLogGroups(target, '', deps)).toEqual({ ok: true, data: [] });
     expect(logs.commandCalls(DescribeLogGroupsCommand)[0].args[0].input).toEqual({ limit: 50 });

@@ -686,7 +686,8 @@
           "filter": "Log group name",
           "searchAws": "Search AWS for “{text}”",
           "searchAll": "Show all log groups",
-          "empty": "No log group starts with this prefix.",
+          "caseSensitive": "AWS looks for this text anywhere in a name, but capitals have to match.",
+          "empty": "No log group name contains this text.",
           "noMatch": "No loaded log group contains this text.",
           "limit": "Showing the first {count} groups. Search AWS to look beyond them.",
           "max": "You can query up to {count} log groups at a time."

@@ -23,7 +23,8 @@ export default async function LogsPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   // The URL is user input: the selection is deduplicated and bounded exactly like the API bounds it.
   const groups = [...new Set(toArray(sp.group))].filter((group) => group.length > 0 && group.length <= 512).slice(0, LOGS_MAX_GROUPS);
-  const prefix = first(sp.prefix)?.trim().slice(0, 512) ?? '';
+  // `?prefix=` kept its name so older links still work; it now matches anywhere in a log group name.
+  const search = first(sp.prefix)?.trim().slice(0, 512) ?? '';
   const rangeParam = first(sp.range);
   const range: LogsTimeRange = isOneOf(LOGS_TIME_RANGES, rangeParam) ? rangeParam : '1h';
   const t = await getTranslations('Monitoring.logs');
@@ -39,8 +40,8 @@ export default async function LogsPage({ params, searchParams }: Props) {
       {/* The picker and the editor share one selection, so a ticked group reaches the editor at once. */}
       <LogsSelectionProvider initial={groups} max={LOGS_MAX_GROUPS}>
         <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-          <SuspenseCard key={prefix} title={t('picker.title')} variant="table" rows={6}>
-            <LogGroupPicker scope={context.scope} prefix={prefix} range={range} />
+          <SuspenseCard key={search} title={t('picker.title')} variant="table" rows={6}>
+            <LogGroupPicker scope={context.scope} search={search} range={range} />
           </SuspenseCard>
           <LogsQueryPanel
             connectionId={context.scope.connectionId}
