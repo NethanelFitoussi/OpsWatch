@@ -2,7 +2,7 @@ import { DescribeDimensionKeysCommand, PIClient } from '@aws-sdk/client-pi';
 import { mockClient } from 'aws-sdk-client-mock';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { createTtlCache } from '@/lib/monitoring/cache';
-import { TOP_SQL_LIMIT, piWindow, topSql } from '@/lib/monitoring/pi';
+import { FLEET_SQL_LIMIT, TOP_SQL_LIMIT, piWindow, topDimensionKeys, topSql } from '@/lib/monitoring/pi';
 
 const pi = mockClient(PIClient);
 const target = { connectionId: 'abc123def456', region: 'eu-west-1', credentials: { accessKeyId: 'ASIA', secretAccessKey: 's' } };
@@ -79,5 +79,65 @@ describe('topSql', () => {
     pi.on(DescribeDimensionKeysCommand).rejects(Object.assign(new Error('no'), { name: 'NotAuthorizedException' }));
     expect(await topSql(target, 'db-ORDERS1', piWindow('1h', t), deps)).toEqual({ ok: false, reason: 'denied', code: 'NotAuthorizedException', action: 'pi:DescribeDimensionKeys' });
     expect(deps.log).toHaveBeenCalledWith({ event: 'monitoring_call', connectionId: 'abc123def456', region: 'eu-west-1', action: 'pi:DescribeDimensionKeys', reason: 'denied', code: 'NotAuthorizedException' });
+  });
+});
+
+describe('topDimensionKeys', () => {
+  it('groups by db.user with its own dimensions and the requested limit', async () => {
+    pi.on(DescribeDimensionKeysCommand).resolves({
+      Keys: [
+        { Dimensions: { 'db.user.id': 'u1', 'db.user.name': 'app_rw' }, Total: 2.5 },
+        { Dimensions: { 'db.user.id': 'u2', 'db.user.name': 'reporting' }, Total: 0.5 },
+      ],
+    });
+    const window = piWindow('3h', t);
+    const result = await topDimensionKeys(target, 'db-ORDERS1', window, 'user', 25, deps);
+    expect(pi.commandCalls(DescribeDimensionKeysCommand)[0].args[0].input).toEqual({
+      ServiceType: 'RDS',
+      Identifier: 'db-ORDERS1',
+      StartTime: window.start,
+      EndTime: window.end,
+      PeriodInSeconds: 60,
+      Metric: 'db.load.avg',
+      GroupBy: { Group: 'db.user', Dimensions: ['db.user.id', 'db.user.name'], Limit: 25 },
+    });
+    expect(result).toEqual({ ok: true, data: [{ id: 'u1', label: 'app_rw', load: 2.5 }, { id: 'u2', label: 'reporting', load: 0.5 }] });
+  });
+
+  it('groups by db.host', async () => {
+    pi.on(DescribeDimensionKeysCommand).resolves({ Keys: [{ Dimensions: { 'db.host.id': 'h1', 'db.host.name': '10.0.3.7' }, Total: 1 }] });
+    await topDimensionKeys(target, 'db-ORDERS1', piWindow('3h', t), 'host', 25, deps);
+    expect(pi.commandCalls(DescribeDimensionKeysCommand)[0].args[0].input.GroupBy).toEqual({
+      Group: 'db.host',
+      Dimensions: ['db.host.id', 'db.host.name'],
+      Limit: 25,
+    });
+  });
+
+  it('sorts by load, truncates to the limit and keeps a key with no id', async () => {
+    pi.on(DescribeDimensionKeysCommand).resolves({
+      Keys: [
+        { Dimensions: { 'db.sql_tokenized.statement': 'SELECT 1' }, Total: 9 },
+        { Dimensions: { 'db.sql_tokenized.id': 'A', 'db.sql_tokenized.statement': 'SELECT 2' }, Total: 3 },
+        { Dimensions: { 'db.sql_tokenized.id': 'B', 'db.sql_tokenized.statement': 'SELECT 3' }, Total: 5 },
+      ],
+    });
+    const result = await topDimensionKeys(target, 'db-ORDERS1', piWindow('3h', t), 'sql', 2, deps);
+    expect(result).toEqual({ ok: true, data: [{ id: null, label: 'SELECT 1', load: 9 }, { id: 'B', label: 'SELECT 3', load: 5 }] });
+  });
+
+  it('caches a different grouping and a different limit separately', async () => {
+    pi.on(DescribeDimensionKeysCommand).resolves({ Keys: [] });
+    const window = piWindow('3h', t);
+    await topDimensionKeys(target, 'db-ORDERS1', window, 'sql', 25, deps);
+    await topDimensionKeys(target, 'db-ORDERS1', window, 'sql', 25, deps);
+    await topDimensionKeys(target, 'db-ORDERS1', window, 'user', 25, deps);
+    await topDimensionKeys(target, 'db-ORDERS1', window, 'sql', 10, deps);
+    expect(pi.commandCalls(DescribeDimensionKeysCommand)).toHaveLength(3);
+  });
+
+  it('keeps the fleet limit at 25 and the instance limit at 10', () => {
+    expect(FLEET_SQL_LIMIT).toBe(25);
+    expect(TOP_SQL_LIMIT).toBe(10);
   });
 });
