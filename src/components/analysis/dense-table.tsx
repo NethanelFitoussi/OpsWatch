@@ -36,15 +36,18 @@ const ariaSort = (column: DenseColumn, sort: SortState | undefined) => {
 
 /**
  * The dense list table: one compact row per resource, sorted through the URL so the view stays shareable.
- * `sortHref` builds the link of a sortable header from the page's own search params (a server component
- * cannot read them itself); it is required as soon as `sort` is given.
+ *
+ * Sorting is one prop, not two. The state and the link builder are useless apart — a state with no builder
+ * renders headers that say they are sorted but cannot be clicked, a builder with no state renders links that
+ * never show which column is active — so they are passed together and the type makes either half impossible.
+ * `href` builds the link of a sortable header from the page's own search params, which a server component
+ * cannot read for itself.
  */
 export async function DenseTable({
   caption,
   columns,
   rows,
-  sort,
-  sortHref,
+  sorting,
   shown,
   total,
   emptyKey,
@@ -52,8 +55,7 @@ export async function DenseTable({
   caption: string;
   columns: readonly DenseColumn[];
   rows: readonly DenseRow[];
-  sort?: SortState;
-  sortHref?: (column: string) => string;
+  sorting?: { state: SortState; href: (column: string) => string };
   shown: number;
   total: number;
   emptyKey: string;
@@ -67,16 +69,16 @@ export async function DenseTable({
         <TableHeader>
           <TableRow>
             {columns.map((column) => {
-              const active = sort?.column === column.id;
+              const active = sorting?.state.column === column.id;
               return (
                 <TableHead
                   key={column.id}
-                  aria-sort={ariaSort(column, sort)}
+                  aria-sort={ariaSort(column, sorting?.state)}
                   className={cn('px-2 py-1.5 text-xs', columnClass(column.priority), alignClass(column))}
                 >
-                  {column.sortable && sort && sortHref ? (
+                  {column.sortable && sorting ? (
                     <Link
-                      href={sortHref(column.id)}
+                      href={sorting.href(column.id)}
                       aria-label={tCommon('table.sortBy', { column: column.label })}
                       className={cn(
                         'group inline-flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring',
@@ -85,7 +87,7 @@ export async function DenseTable({
                     >
                       {column.label}
                       {active ? (
-                        sort.direction === 'asc' ? (
+                        sorting.state.direction === 'asc' ? (
                           <ChevronUp className="size-3" aria-hidden />
                         ) : (
                           <ChevronDown className="size-3" aria-hidden />

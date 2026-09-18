@@ -3,7 +3,7 @@ import { MARKDOWN_VALUE_MAX, escapeMarkdownText, markdownFilename, renderMarkdow
 
 /** One AWS error message carrying every character that could break out of its block. */
 const HOSTILE = 'boom `tick` <img src=x onerror="alert(1)"> | pipe\nsecond line';
-const ESCAPED = 'boom &#96;tick&#96; &lt;img src=x onerror="alert(1)"&gt; \\| pipe second line';
+const ESCAPED = 'boom &#96;tick&#96; &lt;img src=x onerror="alert\\(1\\)"&gt; \\| pipe second line';
 
 describe('escapeMarkdownText', () => {
   it('keeps a pipe from breaking the table and flattens newlines', () => {
@@ -21,6 +21,13 @@ describe('escapeMarkdownText', () => {
     expect(escapeMarkdownText(HOSTILE)).toBe(ESCAPED);
     expect(escapeMarkdownText('a & b')).toBe('a &amp; b');
     expect(escapeMarkdownText('`rm -rf`')).toBe('&#96;rm -rf&#96;');
+  });
+  it('neutralises brackets so a resource name shaped like a link stays text', () => {
+    expect(escapeMarkdownText('[click me](https://evil.example/pwn)')).toBe('\\[click me\\]\\(https://evil.example/pwn\\)');
+    expect(escapeMarkdownText('![alt](x)')).toBe('!\\[alt\\]\\(x\\)');
+    expect(escapeMarkdownText('[text][ref]')).toBe('\\[text\\]\\[ref\\]');
+    // The escapes are single backslashes, not doubled ones: a reader of the raw file still reads the name.
+    expect(escapeMarkdownText('web-1 (eu-west-1)')).toBe('web-1 \\(eu-west-1\\)');
   });
   it('caps a single value at MARKDOWN_VALUE_MAX characters and marks the cut', () => {
     const long = 'x'.repeat(MARKDOWN_VALUE_MAX);

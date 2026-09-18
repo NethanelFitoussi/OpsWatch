@@ -13,7 +13,8 @@ export const MARKDOWN_VALUE_MAX = 500;
  * render Markdown with raw HTML, so a message shaped like `<img onerror=…>` must stay text: the ampersand and
  * the angle brackets become entities and the backtick becomes one too (it would otherwise open a code span).
  * The backslash and the pipe are escaped, and newlines are flattened so no value can break out of its block or
- * out of its table cell.
+ * out of its table cell. The brackets are escaped for the same reason: a resource name shaped like
+ * `[text](https://…)` would otherwise become a real link in the reader's ticket system.
  */
 export function escapeMarkdownText(value: string): string {
   const capped = value.length > MARKDOWN_VALUE_MAX ? `${value.slice(0, MARKDOWN_VALUE_MAX)}…` : value;
@@ -21,6 +22,7 @@ export function escapeMarkdownText(value: string): string {
     .replace(/&/g, '&amp;')
     .replace(/\\/g, '\\\\')
     .replace(/\|/g, '\\|')
+    .replace(/[[\]()]/g, '\\$&')
     .replace(/`/g, '&#96;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
