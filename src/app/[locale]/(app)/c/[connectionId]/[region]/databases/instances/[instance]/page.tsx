@@ -1,13 +1,13 @@
 import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { MonitoringHeader } from '@/components/monitoring/monitoring-header';
+import { SectionLayout } from '@/components/monitoring/section-layout';
 import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { Link } from '@/i18n/navigation';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { isDbInstanceId } from '@/lib/monitoring/shared/names';
-import { monitoringPath } from '@/lib/monitoring/shared/paths';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { pageNow, parseTimeRange } from '@/lib/monitoring/shared/time-range';
 import { InstanceChartsCard, InstanceSummaryCard, TopSqlCard } from './cards';
 
@@ -29,23 +29,31 @@ export default async function DatabaseInstancePage({ params, searchParams }: Pro
   const { scope } = context;
   const ref = { scope, instanceId: instance };
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Link
-        href={`${monitoringPath(scope, 'databases')}?range=${range}`}
+        href={`${subsectionPath(scope, 'databases', 'instances')}?range=${range}`}
         className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <ArrowLeft className="size-4" aria-hidden /> {t('back')}
       </Link>
-      <MonitoringHeader context={context} title={instance} description={t('instanceDescription')} range={range} />
-      <SuspenseCard title={t('summary.title')} variant="stat">
-        <InstanceSummaryCard {...ref} />
-      </SuspenseCard>
-      <SuspenseCard key={`charts|${range}`} title={t('charts.title')} variant="chart">
-        <InstanceChartsCard {...ref} range={range} nowMs={nowMs} />
-      </SuspenseCard>
-      <SuspenseCard key={`top-sql|${range}`} title={t('topSql.title')} variant="table">
-        <TopSqlCard {...ref} range={range} nowMs={nowMs} />
-      </SuspenseCard>
+      <SectionLayout
+        context={context}
+        section="databases"
+        subsection="instances"
+        title={instance}
+        description={t('instanceDescription')}
+        range={range}
+      >
+        <SuspenseCard title={t('summary.title')} variant="stat">
+          <InstanceSummaryCard {...ref} />
+        </SuspenseCard>
+        <SuspenseCard key={`charts|${range}`} title={t('charts.title')} variant="chart">
+          <InstanceChartsCard {...ref} range={range} nowMs={nowMs} />
+        </SuspenseCard>
+        <SuspenseCard key={`top-sql|${range}`} title={t('topSql.title')} variant="table">
+          <TopSqlCard {...ref} range={range} nowMs={nowMs} />
+        </SuspenseCard>
+      </SectionLayout>
     </div>
   );
 }

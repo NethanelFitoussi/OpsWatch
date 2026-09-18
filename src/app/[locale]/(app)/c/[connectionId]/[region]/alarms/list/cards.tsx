@@ -6,7 +6,7 @@ import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { Link } from '@/i18n/navigation';
 import { COMPARISON_SYMBOLS, filterAlarms, listAlarms, type AlarmFilter, type AlarmState } from '@/lib/monitoring/alarms';
 import type { MonitoringScope } from '@/lib/monitoring/call';
-import { monitoringPath } from '@/lib/monitoring/shared/paths';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_SOFT } from '@/lib/ui/tones';
 
@@ -45,7 +45,7 @@ export async function AlarmsCard({ scope, filter }: { scope: MonitoringScope; fi
   const hiddenHref = () => {
     const params = new URLSearchParams({ tt: '1', state: filter.state });
     if (filter.search) params.set('q', filter.search);
-    return `${monitoringPath(scope, 'alarms')}?${params.toString()}`;
+    return `${subsectionPath(scope, 'alarms', 'list')}?${params.toString()}`;
   };
 
   return (

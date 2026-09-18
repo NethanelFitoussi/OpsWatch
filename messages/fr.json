@@ -77,7 +77,11 @@
     "region": "Région",
     "noAccounts": "Aucun compte AWS connecté",
     "manageAccounts": "Gérer les comptes",
-    "notMonitorable": "Réussissez le test des permissions pour surveiller ce compte"
+    "notMonitorable": "Réussissez le test des permissions pour surveiller ce compte",
+    "rail": {
+      "collapse": "Réduire le menu",
+      "expand": "Déplier le menu"
+    }
   },
   "Status": {
     "draft": "Configuration incomplète",
@@ -727,6 +731,11 @@
         "label": "Filtres",
         "clear": "Effacer les filtres",
         "active": "{count, plural, one {# filtre} other {# filtres}}"
+      },
+      "sectionNav": {
+        "label": "Pages {section}",
+        "collapse": "Réduire le menu de section",
+        "expand": "Déplier le menu de section"
       }
     },
     "common": {
@@ -791,6 +800,9 @@
       "topN": {
         "label": "{metric}, du plus élevé au plus faible",
         "row": "{name} : {value}"
+      },
+      "breadcrumb": {
+        "label": "Fil d'Ariane"
       }
     },
     "overview": {

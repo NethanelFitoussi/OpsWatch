@@ -11,7 +11,7 @@ import { MAX_SERVICES, listClusters, listServices, serviceUtilizationQueries, ty
 import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
-import { monitoringPath } from '@/lib/monitoring/shared/paths';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_SOFT } from '@/lib/ui/tones';
@@ -119,7 +119,7 @@ async function ServicesCard({ scope, cluster, range, nowMs, search }: { scope: M
               <TableRow key={s.arn || s.name}>
                 <TableCell>
                   <Link
-                    href={`${monitoringPath(scope, 'containers', cluster.name, s.name)}?range=${range}`}
+                    href={`${subsectionPath(scope, 'containers', 'services', cluster.name, s.name)}?range=${range}`}
                     className="font-medium text-primary underline-offset-4 hover:underline"
                   >
                     {s.name}

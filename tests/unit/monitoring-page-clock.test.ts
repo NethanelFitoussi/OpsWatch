@@ -18,9 +18,9 @@ vi.mock('@/lib/monitoring/route', () => ({
   }),
 }));
 
-const { default: OverviewPage } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/overview/page');
-const { default: LoadBalancerPage } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/load-balancers/[name]/page');
-const { default: ContainersPage } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/containers/page');
+const { default: OverviewPage } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/overview/insights/page');
+const { default: LoadBalancerPage } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/load-balancers/list/[name]/page');
+const { default: ContainersPage } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/containers/services/page');
 
 /** Every `nowMs` a page hands to a card, wherever it sits in the returned element tree. */
 function clocks(node: ReactNode): number[] {

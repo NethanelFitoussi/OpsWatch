@@ -20,7 +20,7 @@ import { describeTargetGroups } from '@/lib/monitoring/elb';
 import { getMetricSeries, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { NO_VALUE } from '@/lib/monitoring/shared/format';
-import { monitoringPath } from '@/lib/monitoring/shared/paths';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { RolloutBadge } from '../../cards';
@@ -269,7 +269,7 @@ export async function LogsCard(ref: ServiceRef) {
               ) : (
                 // Only a group of this region can be queried through this page's Logs Insights routes.
                 <Link
-                  href={`${monitoringPath(ref.scope, 'logs')}?group=${encodeURIComponent(log.logGroup)}`}
+                  href={`${subsectionPath(ref.scope, 'logs', 'search')}?group=${encodeURIComponent(log.logGroup)}`}
                   className="text-primary underline-offset-4 hover:underline"
                 >
                   {log.logGroup}

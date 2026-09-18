@@ -46,7 +46,7 @@ test('the logs page filters the loaded groups as you type and applies a tick at 
   // Next.js prefetches the sidebar sections on its own; what must not happen is a request carrying the
   // typed text or the selection, which is the only way the server could have done the filtering.
   expect(requests.filter((url) => url.includes('prefix=') || url.includes('group='))).toEqual([]);
-  await expect(page).toHaveURL(`/en/c/${id}/${MOTO_REGION}/logs`);
+  await expect(page).toHaveURL(`/en/c/${id}/${MOTO_REGION}/logs/search`);
   page.off('request', record);
 
   // Ticking applies immediately: the editor lists the group, Run is enabled and the URL stays shareable.
@@ -59,7 +59,7 @@ test('the logs page filters the loaded groups as you type and applies a tick at 
 test('the logs page runs a query and shows rows', async ({ page }) => {
   await login(page);
   const id = await ensureMonitoringConnection(page);
-  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs/search`);
   await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
   await expect(page.getByLabel('Query', { exact: true })).toHaveValue('fields @timestamp, @message | sort @timestamp desc | limit 100');
   await page.getByRole('button', { name: 'Run query' }).click();
@@ -79,16 +79,16 @@ test('the logs page runs a query and shows rows', async ({ page }) => {
 test('the service page links to its log group', async ({ page }) => {
   await login(page);
   const id = await ensureMonitoringConnection(page);
-  await page.goto(`/en/c/${id}/${MOTO_REGION}/containers/opswatch-e2e/web`);
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/containers/services/opswatch-e2e/web`);
   await page.getByRole('link', { name: '/ecs/opswatch-web' }).click();
-  await expect(page).toHaveURL(new RegExp(`/c/${id}/${MOTO_REGION}/logs\\?group=%2Fecs%2Fopswatch-web$`));
+  await expect(page).toHaveURL(new RegExp(`/c/${id}/${MOTO_REGION}/logs/search\\?group=%2Fecs%2Fopswatch-web$`));
   await expect(page.getByText('/ecs/opswatch-web').first()).toBeVisible();
 });
 
 test('the picker keeps the selection across an AWS search', async ({ page }) => {
   await login(page);
   const id = await ensureMonitoringConnection(page);
-  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs/search`);
   await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
   await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
 
@@ -116,7 +116,7 @@ test('the picker and the editor fit a 360 px viewport', async ({ page }) => {
   await login(page);
   const id = await ensureMonitoringConnection(page);
   await page.setViewportSize({ width: 360, height: 740 });
-  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs/search`);
   await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
   // The widest things the picker can show: a selected group name and the search action carrying the typed text.
   await page.getByLabel('Log group name').fill('/aws/lambda/a-very-long-log-group-name-that-nobody-has');

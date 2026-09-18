@@ -33,8 +33,12 @@ vi.mock('next/navigation', () => ({
     throw new NotFoundSignal();
   },
 }));
+vi.mock('@/lib/monitoring/route', () => ({
+  initMonitoringRoute: async () => ({ locale: 'en', scope: { connectionId: 'abc123def456', region: 'eu-west-1' } }),
+}));
 
 const { default: MonitoringRedirect } = await import('@/app/[locale]/(app)/[section]/page');
+const { sectionRedirect } = await import('@/app/[locale]/(app)/c/[connectionId]/[region]/section-redirect');
 
 const params = (section: string) => ({ params: Promise.resolve({ locale: 'en', section }) });
 
@@ -57,12 +61,36 @@ describe('monitoring section redirect', () => {
     const id = createReadyRoleConnection(state.db, { regions: ['eu-west-3', 'eu-west-1'] }).id;
     saveTestResult(state.db, id, { overall: 'ok', accountMatches: true, checks: [], testedAt: NOW.toISOString() }, NOW);
     await expect(MonitoringRedirect(params('alarms'))).rejects.toMatchObject({
-      target: { href: `/c/${id}/eu-west-3/alarms`, locale: 'en' },
+      target: { href: `/c/${id}/eu-west-3/alarms/list`, locale: 'en' },
+    });
+  });
+
+  it('opens Search for Logs, the sub-page the section landed on before it had any others', async () => {
+    const id = createReadyRoleConnection(state.db, { regions: ['eu-west-3'] }).id;
+    saveTestResult(state.db, id, { overall: 'ok', accountMatches: true, checks: [], testedAt: NOW.toISOString() }, NOW);
+    await expect(MonitoringRedirect(params('logs'))).rejects.toMatchObject({
+      target: { href: `/c/${id}/eu-west-3/logs/search`, locale: 'en' },
     });
   });
 
   it('checks the session before the section', async () => {
     state.signedIn = false;
     await expect(MonitoringRedirect(params('nope'))).rejects.toMatchObject({ target: { href: '/login', locale: 'en' } });
+  });
+});
+
+describe('section root redirect', () => {
+  const open = (section: 'databases' | 'logs', searchParams: Record<string, string | string[] | undefined> = {}) =>
+    sectionRedirect(section)({ params: Promise.resolve({ locale: 'en', connectionId: 'abc123def456', region: 'eu-west-1' }), searchParams: Promise.resolve(searchParams) });
+
+  it('opens the section\'s first sub-page', async () => {
+    await expect(open('databases')).rejects.toMatchObject({ target: { href: '/c/abc123def456/eu-west-1/databases/instances', locale: 'en' } });
+  });
+
+  it('keeps the whole query string, including a repeated parameter', async () => {
+    // A shared link carries the time range, and the Logs selection carries one `group` per log group.
+    await expect(open('logs', { range: '12h', group: ['/ecs/a', '/ecs/b'] })).rejects.toMatchObject({
+      target: { href: '/c/abc123def456/eu-west-1/logs/search?range=12h&group=%2Fecs%2Fa&group=%2Fecs%2Fb', locale: 'en' },
+    });
   });
 });

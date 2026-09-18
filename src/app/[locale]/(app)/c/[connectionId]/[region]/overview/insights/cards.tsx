@@ -6,7 +6,8 @@ import { Link } from '@/i18n/navigation';
 import type { MonitoringScope } from '@/lib/monitoring/call';
 import { INSIGHT_WINDOW_MINUTES, TASKS_WINDOW_MINUTES, sortInsights, type InsightSeverity } from '@/lib/monitoring/insights';
 import { INSIGHT_FAMILIES, loadFamily, type InsightFamily } from '@/lib/monitoring/overview';
-import { monitoringPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
+import { subsectionPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
+import { defaultSubsection } from '@/lib/monitoring/shared/sections';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { TONE_BORDER } from '@/lib/ui/tones';
 
@@ -44,7 +45,7 @@ export async function SummaryCard({ scope, family, nowMs }: { scope: MonitoringS
   return (
     <MonitoringCard title={title} description={t('summary.window', WINDOWS)} className={worst && SEVERITY_BORDER[worst.severity]}>
       <p className="text-2xl font-semibold">{t(`summary.${family}.value`, { affected, total })}</p>
-      <Link href={monitoringPath(scope, SECTION[family])} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+      <Link href={subsectionPath(scope, SECTION[family], defaultSubsection(SECTION[family]))} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
         {t('summary.open')}
       </Link>
     </MonitoringCard>

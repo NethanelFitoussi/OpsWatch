@@ -77,7 +77,11 @@
     "region": "Region",
     "noAccounts": "No AWS account connected",
     "manageAccounts": "Manage accounts",
-    "notMonitorable": "Pass the permission test to monitor this account"
+    "notMonitorable": "Pass the permission test to monitor this account",
+    "rail": {
+      "collapse": "Collapse the menu",
+      "expand": "Expand the menu"
+    }
   },
   "Status": {
     "draft": "Setup incomplete",
@@ -727,6 +731,11 @@
         "label": "Filters",
         "clear": "Clear filters",
         "active": "{count, plural, one {# filter} other {# filters}}"
+      },
+      "sectionNav": {
+        "label": "{section} pages",
+        "collapse": "Collapse the section menu",
+        "expand": "Expand the section menu"
       }
     },
     "common": {
@@ -791,6 +800,9 @@
       "topN": {
         "label": "{metric}, highest first",
         "row": "{name}: {value}"
+      },
+      "breadcrumb": {
+        "label": "Breadcrumb"
       }
     },
     "overview": {

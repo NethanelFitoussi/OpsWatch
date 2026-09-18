@@ -10,6 +10,16 @@ export type NavItem = {
   icon: LucideIcon | AwsIconName;
 } & ({ kind: 'monitoring'; section: MonitoringSection } | { kind: 'static'; href: string });
 
+/** A section's own `Common.nav` key, so its name is written once for the rail, the breadcrumb and the section menu. */
+export const SECTION_NAV_KEY: Record<MonitoringSection, NavKey> = {
+  overview: 'overview',
+  containers: 'containers',
+  databases: 'databases',
+  'load-balancers': 'loadBalancers',
+  alarms: 'alarms',
+  logs: 'logs',
+};
+
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'overview', kind: 'monitoring', section: 'overview', icon: LayoutDashboard },
   { key: 'containers', kind: 'monitoring', section: 'containers', icon: 'ecs' },

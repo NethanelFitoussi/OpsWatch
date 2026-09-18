@@ -8,7 +8,7 @@ import type { MonitoringScope } from '@/lib/monitoring/call';
 import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import { listDatabases, rdsMetricQueries, type RdsInstance, type RdsMetric } from '@/lib/monitoring/rds';
 import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
-import { monitoringPath } from '@/lib/monitoring/shared/paths';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
 
@@ -91,7 +91,7 @@ export async function DatabasesCard({ scope, range, nowMs }: { scope: Monitoring
             <TableRow key={instance.arn ?? instance.id}>
               <TableCell>
                 <Link
-                  href={`${monitoringPath(scope, 'databases', instance.id)}?range=${range}`}
+                  href={`${subsectionPath(scope, 'databases', 'instances', instance.id)}?range=${range}`}
                   className="font-medium text-primary underline-offset-4 hover:underline"
                 >
                   {instance.id}

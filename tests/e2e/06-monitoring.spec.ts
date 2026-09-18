@@ -10,15 +10,15 @@ test.beforeEach(async ({ page }) => {
 
 test('a monitoring section without a selection opens the first usable connection', async ({ page }) => {
   await page.goto('/en/overview');
-  await expect(page).toHaveURL(/\/en\/c\/[0-9a-f]{12}\/us-east-1\/overview$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+  await expect(page).toHaveURL(/\/en\/c\/[0-9a-f]{12}\/us-east-1\/overview\/insights$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Insights' })).toBeVisible();
   await expect(page).toHaveTitle('Overview · OpsWatch');
 });
 
 test('sidebar links keep the connection and region, and auto-refresh can be paused', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'overview'));
+  await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  await expect(nav.getByRole('link', { name: 'Containers' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/containers`);
+  await expect(nav.getByRole('link', { name: 'Containers' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/containers/services`);
   await expect(nav.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByText('Refreshes every 2 min')).toBeVisible();
   await page.getByRole('button', { name: 'Pause auto-refresh' }).click();
@@ -27,13 +27,13 @@ test('sidebar links keep the connection and region, and auto-refresh can be paus
 });
 
 test('a region the connection does not use is not found', async ({ page }) => {
-  const response = await page.goto(`/en/c/${connectionId}/eu-west-3/overview`);
+  const response = await page.goto(`/en/c/${connectionId}/eu-west-3/overview/insights`);
   expect(response?.status()).toBe(404);
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
 });
 
 test('an RSC request without a session leaks nothing from a monitoring page', async ({ page, playwright, baseURL }) => {
-  const path = monitoringUrl(connectionId, 'overview');
+  const path = monitoringUrl(connectionId, 'overview', 'insights');
   const headers = rscHeaders(['(app)', 'accounts']);
   expect(await (await page.request.get(path, { headers })).text()).toContain(MONITORING_CONNECTION);
   const anonymous = await playwright.request.newContext({ baseURL });
@@ -42,7 +42,7 @@ test('an RSC request without a session leaks nothing from a monitoring page', as
 });
 
 test('the alarms page hides target-tracking alarms until asked', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'alarms'));
+  await page.goto(monitoringUrl(connectionId, 'alarms', 'list'));
   await expect(page).toHaveTitle('Alarms · OpsWatch');
   const high = page.getByRole('row').filter({ hasText: 'opswatch-e2e-high-cpu' });
   await expect(high).toContainText('In alarm');
@@ -54,7 +54,7 @@ test('the alarms page hides target-tracking alarms until asked', async ({ page }
 });
 
 test('the state filter keeps only alarms in alarm', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'alarms'));
+  await page.goto(monitoringUrl(connectionId, 'alarms', 'list'));
   await expect(page.getByRole('row').filter({ hasText: 'opswatch-e2e-db-connections' })).toContainText('OK');
   await page.getByLabel('State').selectOption('ALARM');
   await page.getByRole('button', { name: 'Apply' }).click();
@@ -64,7 +64,7 @@ test('the state filter keeps only alarms in alarm', async ({ page }) => {
 });
 
 test('the containers page lists the seeded service with its task counts and sparklines', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'containers'));
+  await page.goto(monitoringUrl(connectionId, 'containers', 'services'));
   await expect(page).toHaveTitle('Containers · OpsWatch');
   await expect(page.getByRole('heading', { level: 2, name: 'opswatch-e2e', exact: true })).toBeVisible();
   await expect(page.getByText('Container Insights on')).toBeVisible();
@@ -76,16 +76,16 @@ test('the containers page lists the seeded service with its task counts and spar
 });
 
 test('the time range is kept in the URL', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'containers'));
+  await page.goto(monitoringUrl(connectionId, 'containers', 'services'));
   await page.getByRole('navigation', { name: 'Time range' }).getByRole('link', { name: '12 h' }).click();
   await expect(page).toHaveURL(/range=12h/);
   await expect(page.getByRole('navigation', { name: 'Time range' }).getByRole('link', { name: '12 h' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('the service page shows charts, target health and the log group', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'containers'));
+  await page.goto(monitoringUrl(connectionId, 'containers', 'services'));
   await page.getByRole('link', { name: 'web', exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/containers/opswatch-e2e/web`));
+  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/containers/services/opswatch-e2e/web`));
   await expect(page.getByRole('figure', { name: 'CPU utilization' }).locator('.recharts-line-curve')).toHaveCount(1);
   await expect(page.getByRole('figure', { name: 'Tasks' }).locator('.recharts-line-curve')).toHaveCount(2);
   await expect(page.getByRole('heading', { level: 3, name: /opswatch-e2e-web/ })).toBeVisible();
@@ -97,7 +97,7 @@ test('the service page shows charts, target health and the log group', async ({ 
 });
 
 test('the databases page lists the seeded instance', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'databases'));
+  await page.goto(monitoringUrl(connectionId, 'databases', 'instances'));
   await expect(page).toHaveTitle('Databases · OpsWatch');
   const row = page.getByRole('row').filter({ has: page.getByRole('link', { name: 'opswatch-e2e-db' }) });
   await expect(row).toContainText('db.t3.medium');
@@ -106,7 +106,7 @@ test('the databases page lists the seeded instance', async ({ page }) => {
 });
 
 test('the instance page shows charts and explains that Performance Insights is off', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'databases'));
+  await page.goto(monitoringUrl(connectionId, 'databases', 'instances'));
   await page.getByRole('link', { name: 'opswatch-e2e-db' }).click();
   await expect(page.getByRole('figure', { name: 'CPU utilization' }).locator('.recharts-line-curve')).toHaveCount(1);
   await expect(page.getByRole('figure', { name: 'IOPS' }).locator('.recharts-line-curve')).toHaveCount(2);
@@ -115,7 +115,7 @@ test('the instance page shows charts and explains that Performance Insights is o
 });
 
 test('the load balancers page lists the seeded ALB with its requests and hosts', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'load-balancers'));
+  await page.goto(monitoringUrl(connectionId, 'load-balancers', 'list'));
   await expect(page).toHaveTitle('Load balancers · OpsWatch');
   const row = page.getByRole('row').filter({ has: page.getByRole('link', { name: 'opswatch-e2e-alb' }) });
   await expect(row).toContainText('3,600'); // 30 datapoints of 120 requests
@@ -126,7 +126,7 @@ test('the load balancers page lists the seeded ALB with its requests and hosts',
 });
 
 test('the load balancer page shows traffic charts and its target group', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'load-balancers'));
+  await page.goto(monitoringUrl(connectionId, 'load-balancers', 'list'));
   await page.getByRole('link', { name: 'opswatch-e2e-alb' }).click();
   await expect(page.getByRole('figure', { name: 'Requests' }).first().locator('.recharts-line-curve')).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 3, name: /opswatch-e2e-web/ })).toBeVisible();
@@ -134,7 +134,7 @@ test('the load balancer page shows traffic charts and its target group', async (
 });
 
 test('the overview shows the seeded alarm insight and leaves target-tracking alarms out', async ({ page }) => {
-  await page.goto(monitoringUrl(connectionId, 'overview'));
+  await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
   const insights = page.getByRole('list', { name: 'Insights' });
   const alarm = insights.getByRole('listitem').filter({ hasText: 'Alarm opswatch-e2e-high-cpu is in ALARM state.' });
   await expect(alarm).toHaveCount(1);
@@ -142,12 +142,12 @@ test('the overview shows the seeded alarm insight and leaves target-tracking ala
   await expect(page.getByText('1 of 2 alarms firing')).toBeVisible();
   await expect(page.getByText(/of 1 services degraded/)).toBeVisible();
   await alarm.getByRole('link', { name: 'View' }).click();
-  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/alarms\\?state=ALARM$`));
+  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/alarms/list\\?state=ALARM$`));
 });
 
 test('a monitoring page fits a 360 px viewport without sideways scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
-  await page.goto(monitoringUrl(connectionId, 'overview'));
+  await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
   // Measured once every card has streamed in: the header, the sidebar and the widest card are all laid out.
   await expect(page.getByText('1 of 2 alarms firing')).toBeVisible();
   await expect(page.getByRole('list', { name: 'Insights' })).toBeVisible();

@@ -66,4 +66,6 @@ export async function ensureMonitoringConnection(page: Page): Promise<string> {
   return id;
 }
 
-export const monitoringUrl = (connectionId: string, section: string, suffix = '') => `/en/c/${connectionId}/${MOTO_REGION}/${section}${suffix}`;
+/** A monitoring URL; without a sub-page it is the section root, which redirects to the section's first sub-page. */
+export const monitoringUrl = (connectionId: string, section: string, subsection?: string) =>
+  `/en/c/${connectionId}/${MOTO_REGION}/${section}${subsection ? `/${subsection}` : ''}`;
