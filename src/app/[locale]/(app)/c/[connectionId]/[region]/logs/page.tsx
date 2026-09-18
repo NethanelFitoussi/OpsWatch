@@ -8,6 +8,7 @@ import { LOGS_TIME_RANGES, type LogsTimeRange } from '@/lib/monitoring/shared/lo
 import { isOneOf } from '@/lib/type-guards';
 import { LogGroupPicker } from './log-group-picker';
 import { LogsQueryPanel } from './logs-query-panel';
+import { LogsSelectionProvider } from './logs-selection';
 
 type Param = string | string[] | undefined;
 type Props = { params: Promise<MonitoringParams>; searchParams: Promise<{ group?: Param; prefix?: Param; range?: Param }> };
@@ -35,18 +36,20 @@ export default async function LogsPage({ params, searchParams }: Props) {
         description={t('description', { connection: context.connection.name, region: context.scope.region })}
         autoRefresh={false}
       />
-      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-        <SuspenseCard key={prefix} title={t('picker.title')} variant="table" rows={6}>
-          <LogGroupPicker scope={context.scope} prefix={prefix} selected={groups} range={range} />
-        </SuspenseCard>
-        <LogsQueryPanel
-          connectionId={context.scope.connectionId}
-          region={context.scope.region}
-          groups={groups}
-          range={range}
-          maxQueryLength={LOGS_MAX_QUERY_LENGTH}
-        />
-      </div>
+      {/* The picker and the editor share one selection, so a ticked group reaches the editor at once. */}
+      <LogsSelectionProvider initial={groups} max={LOGS_MAX_GROUPS}>
+        <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
+          <SuspenseCard key={prefix} title={t('picker.title')} variant="table" rows={6}>
+            <LogGroupPicker scope={context.scope} prefix={prefix} range={range} />
+          </SuspenseCard>
+          <LogsQueryPanel
+            connectionId={context.scope.connectionId}
+            region={context.scope.region}
+            range={range}
+            maxQueryLength={LOGS_MAX_QUERY_LENGTH}
+          />
+        </div>
+      </LogsSelectionProvider>
     </div>
   );
 }

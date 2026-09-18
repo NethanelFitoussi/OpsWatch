@@ -682,6 +682,15 @@
         "noGroups": "Select at least one log group to run a query.",
         "run": "Run query",
         "stop": "Stop",
+        "picker": {
+          "filter": "Log group name",
+          "searchAws": "Search AWS for “{text}”",
+          "searchAll": "Show all log groups",
+          "empty": "No log group starts with this prefix.",
+          "noMatch": "No loaded log group contains this text.",
+          "limit": "Showing the first {count} groups. Search AWS to look beyond them.",
+          "max": "You can query up to {count} log groups at a time."
+        },
         "examples": {
           "label": "Examples",
           "default": "Latest messages",
@@ -984,11 +993,6 @@
       "description": "CloudWatch Logs Insights queries for {connection} in {region}.",
       "picker": {
         "title": "Log groups",
-        "prefix": "Log group name prefix",
-        "search": "Search",
-        "use": "Use selected groups",
-        "empty": "No log group starts with this prefix.",
-        "limit": "Showing the first {count} groups. Type a longer prefix to narrow the list.",
         "billed": "Logs Insights queries are billed by AWS per GB of logs scanned."
       }
     }

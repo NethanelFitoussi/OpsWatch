@@ -23,16 +23,44 @@ test('the Logs Insights routes check origin, session and query ownership', async
   expect((await page.request.post(`/api/connections/${id}/regions/eu-west-3/logs/query`, { data, headers: { origin: baseURL as string } })).status()).toBe(404);
 });
 
-test('the logs page searches groups, runs a query and shows rows', async ({ page }) => {
+test('the logs page filters the loaded groups as you type and applies a tick at once', async ({ page }) => {
   await login(page);
   const id = await ensureMonitoringConnection(page);
   await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
   await expect(page).toHaveTitle('Logs · OpsWatch');
-  await page.getByLabel('Log group name prefix').fill('/ecs');
-  await page.getByRole('button', { name: 'Search' }).click();
+  const run = page.getByRole('button', { name: 'Run query' });
+  // Run is disabled before anything is selected, and says so next to the button.
+  await expect(run).toBeDisabled();
+  await expect(page.getByText('Select at least one log group to run a query.')).toBeVisible();
+
+  // Typing filters the groups already loaded, in the browser: nothing is requested and the URL does not change.
+  const requests: string[] = [];
+  const record = (request: { url(): string }) => requests.push(request.url());
+  page.on('request', record);
+  const field = page.getByLabel('Log group name');
+  await field.fill('lambda');
+  await expect(page.getByRole('checkbox', { name: /\/aws\/lambda\/opswatch-e2e-worker/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toHaveCount(0);
+  await field.fill('');
+  await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toBeVisible();
+  // Next.js prefetches the sidebar sections on its own; what must not happen is a request carrying the
+  // typed text or the selection, which is the only way the server could have done the filtering.
+  expect(requests.filter((url) => url.includes('prefix=') || url.includes('group='))).toEqual([]);
+  await expect(page).toHaveURL(`/en/c/${id}/${MOTO_REGION}/logs`);
+  page.off('request', record);
+
+  // Ticking applies immediately: the editor lists the group, Run is enabled and the URL stays shareable.
   await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
-  await page.getByRole('button', { name: 'Use selected groups' }).click();
+  await expect(page.getByRole('list', { name: 'Selected log groups' }).getByText('/ecs/opswatch-web')).toBeVisible();
+  await expect(run).toBeEnabled();
   await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
+});
+
+test('the logs page runs a query and shows rows', async ({ page }) => {
+  await login(page);
+  const id = await ensureMonitoringConnection(page);
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
+  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
   await expect(page.getByLabel('Query', { exact: true })).toHaveValue('fields @timestamp, @message | sort @timestamp desc | limit 100');
   await page.getByRole('button', { name: 'Run query' }).click();
   const results = page.getByRole('table', { name: 'Query results' });
@@ -57,24 +85,41 @@ test('the service page links to its log group', async ({ page }) => {
   await expect(page.getByText('/ecs/opswatch-web').first()).toBeVisible();
 });
 
-test('the picker keeps a group selected under an earlier prefix', async ({ page }) => {
+test('the picker keeps the selection across an AWS search', async ({ page }) => {
   await login(page);
   const id = await ensureMonitoringConnection(page);
   await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
-
-  await page.getByLabel('Log group name prefix').fill('/ecs');
-  await page.getByRole('button', { name: 'Search' }).click();
   await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
-  await page.getByRole('button', { name: 'Use selected groups' }).click();
   await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
 
-  await page.getByLabel('Log group name prefix').fill('/aws/lambda');
-  await page.getByRole('button', { name: 'Search' }).click();
-  // The first group is no longer on screen, so only the hidden inputs can carry it into the next submit.
-  await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toHaveCount(0);
+  // Nothing loaded matches, so the server search is offered; it keeps the selection and the range in the URL.
+  await page.getByLabel('Log group name').fill('zzz');
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+  await page.getByRole('button', { name: /Search AWS for/ }).click();
+  await expect(page).toHaveURL(/prefix=zzz/);
+  await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
+  await expect(page.getByText('No log group starts with this prefix.')).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Selected log groups' }).getByText('/ecs/opswatch-web')).toBeVisible();
+
+  // Back to the whole list: the group selected under the earlier prefix is still ticked and still selected.
+  await page.getByLabel('Log group name').fill('');
+  await page.getByRole('button', { name: 'Show all log groups' }).click();
+  await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toBeChecked();
   await page.getByRole('checkbox', { name: /\/aws\/lambda\/opswatch-e2e-worker/ }).check();
-  await page.getByRole('button', { name: 'Use selected groups' }).click();
 
   await expect(page.getByRole('button', { name: 'Run query' })).toBeEnabled();
   expect(new URL(page.url()).searchParams.getAll('group').sort()).toEqual(['/aws/lambda/opswatch-e2e-worker', '/ecs/opswatch-web']);
+});
+
+test('the picker and the editor fit a 360 px viewport', async ({ page }) => {
+  await login(page);
+  const id = await ensureMonitoringConnection(page);
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto(`/en/c/${id}/${MOTO_REGION}/logs`);
+  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  // The widest things the picker can show: a selected group name and the search action carrying the typed text.
+  await page.getByLabel('Log group name').fill('/aws/lambda/a-very-long-log-group-name-that-nobody-has');
+  await expect(page.getByRole('button', { name: /Search AWS for/ })).toBeVisible();
+  const root = page.locator('html');
+  expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });

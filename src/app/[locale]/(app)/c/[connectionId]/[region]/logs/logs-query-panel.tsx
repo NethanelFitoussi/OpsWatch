@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,8 +17,10 @@ import {
   LOGS_TIME_RANGES,
   type LogsTimeRange,
 } from '@/lib/monitoring/shared/logs-queries';
+import { withGroups } from '@/lib/monitoring/shared/logs-selection';
 import { RANGE_SECONDS } from '@/lib/monitoring/shared/time-range';
 import { isOneOf } from '@/lib/type-guards';
+import { useLogsSelection } from './logs-selection';
 
 type Phase = 'idle' | 'running' | 'done';
 type Message = { kind: 'status' | 'error'; text: string };
@@ -30,24 +31,26 @@ const SIMPLE_ERROR_CODES = ['invalid_query', 'range_too_long', 'unauthorized'] a
 /** How often the elapsed time reaches the live region, whatever the poll interval is. */
 const ANNOUNCE_EVERY_MS = 5000;
 
+/** One editor per page, so its labels can be named once. */
+const GROUPS_LABEL_ID = 'logs-selected-groups';
+const RUN_HINT_ID = 'logs-run-hint';
+
 /** The query editor: it starts a Logs Insights query, polls it and shows its rows as text. */
 export function LogsQueryPanel({
   connectionId,
   region,
-  groups,
   range,
   maxQueryLength,
 }: {
   connectionId: string;
   region: string;
-  groups: string[];
   range: LogsTimeRange;
   maxQueryLength: number;
 }) {
   const t = useTranslations('Monitoring.client');
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { selected: groups } = useLogsSelection();
   const [query, setQuery] = useState(DEFAULT_LOGS_QUERY);
   const [phase, setPhase] = useState<Phase>('idle');
   const [elapsed, setElapsed] = useState(0);
@@ -70,7 +73,8 @@ export function LogsQueryPanel({
 
   /** The range lives in the URL, so the picker's links and this editor can never disagree about it. */
   const selectRange = (value: string) => {
-    const next = new URLSearchParams(searchParams.toString());
+    // Read from the address bar and rewritten from the selection: a tick updates the URL without the router.
+    const next = new URLSearchParams(withGroups(window.location.search, groups));
     next.set('range', value);
     router.replace(`${pathname}?${next.toString()}`);
   };
@@ -141,12 +145,13 @@ export function LogsQueryPanel({
     <div className="space-y-6">
       <MonitoringCard title={t('logs.editor')}>
         <div className="space-y-4">
-          <div className="space-y-2">
-            <span className="text-sm font-medium">{t('logs.groups')}</span>
-            {groups.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('logs.noGroups')}</p>
-            ) : (
-              <ul className="flex flex-wrap gap-2">
+          {/* Ticking a group in the picker adds it here at once; with nothing selected the hint sits by Run. */}
+          {groups.length > 0 && (
+            <div className="space-y-2">
+              <span id={GROUPS_LABEL_ID} className="text-sm font-medium">
+                {t('logs.groups')}
+              </span>
+              <ul aria-labelledby={GROUPS_LABEL_ID} className="flex flex-wrap gap-2">
                 {groups.map((group) => (
                   <li key={group}>
                     <Badge variant="secondary" className="max-w-full font-mono break-all">
@@ -155,8 +160,8 @@ export function LogsQueryPanel({
                   </li>
                 ))}
               </ul>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="logs-query">{t('logs.query')}</Label>
@@ -187,13 +192,24 @@ export function LogsQueryPanel({
                 ))}
               </select>
             </div>
-            <Button type="button" onClick={() => void run()} disabled={groups.length === 0 || running}>
+            <Button
+              type="button"
+              onClick={() => void run()}
+              disabled={groups.length === 0 || running}
+              aria-describedby={groups.length === 0 ? RUN_HINT_ID : undefined}
+            >
               {t('logs.run')}
             </Button>
             {running && (
               <Button type="button" variant="outline" onClick={() => controllerRef.current?.abort()}>
                 {t('logs.stop')}
               </Button>
+            )}
+            {/* A disabled Run always says why, right where it is pressed. */}
+            {groups.length === 0 && (
+              <p id={RUN_HINT_ID} className="pb-2 text-sm text-muted-foreground">
+                {t('logs.noGroups')}
+              </p>
             )}
           </div>
 

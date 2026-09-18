@@ -682,6 +682,15 @@
         "noGroups": "Sélectionnez au moins un groupe de journaux pour lancer une requête.",
         "run": "Lancer la requête",
         "stop": "Arrêter",
+        "picker": {
+          "filter": "Nom du groupe de journaux",
+          "searchAws": "Rechercher « {text} » dans AWS",
+          "searchAll": "Afficher tous les groupes",
+          "empty": "Aucun groupe de journaux ne commence par ce préfixe.",
+          "noMatch": "Aucun groupe chargé ne contient ce texte.",
+          "limit": "Affichage des {count} premiers groupes. Recherchez dans AWS pour aller au-delà.",
+          "max": "Vous pouvez interroger au maximum {count} groupes de journaux à la fois."
+        },
         "examples": {
           "label": "Exemples",
           "default": "Derniers messages",
@@ -984,11 +993,6 @@
       "description": "Requêtes CloudWatch Logs Insights pour {connection} dans {region}.",
       "picker": {
         "title": "Groupes de journaux",
-        "prefix": "Préfixe du nom du groupe",
-        "search": "Rechercher",
-        "use": "Utiliser les groupes sélectionnés",
-        "empty": "Aucun groupe de journaux ne commence par ce préfixe.",
-        "limit": "Affichage des {count} premiers groupes. Saisissez un préfixe plus long pour affiner la liste.",
         "billed": "Les requêtes Logs Insights sont facturées par AWS au Go de journaux analysé."
       }
     }
