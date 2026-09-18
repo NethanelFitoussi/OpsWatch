@@ -807,6 +807,26 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
     mostImportant: problems[0]!,
   };
 
+  // Nested objects are summaries, as in the contract. This also keeps the dataset free of reference cycles, so it
+  // serialises to JSON exactly like a real server response would.
+  const toProblemSummary = ({ id, title, severity, status, category, service, resource, firstSeenAt, lastSeenAt, occurrences, trend, summary }: ProblemDetail) => ({
+    id, title, severity, status, category, service, resource, firstSeenAt, lastSeenAt, occurrences, trend, summary,
+  });
+  const toDeploymentSummary = ({ id, service, environment, version, at, status, commit, repository }: DeploymentDetail) => ({
+    id, service, environment, version, at, status, commit, repository,
+  });
+  for (const problem of problems) {
+    problem.deployments = problem.deployments.map((d) => ({ ...d, deployment: toDeploymentSummary(d.deployment as DeploymentDetail) }));
+  }
+  for (const deployment of deployments) {
+    deployment.relatedProblems = deployment.relatedProblems.map((r) => ({ ...r, problem: toProblemSummary(r.problem as ProblemDetail) }));
+  }
+  for (const incident of incidents) incident.problems = incident.problems.map((p) => toProblemSummary(p as ProblemDetail));
+  for (const service of servicesList) service.problems = service.problems.map((p) => toProblemSummary(p as ProblemDetail));
+  for (const resource of infrastructure) resource.problems = resource.problems.map((p) => toProblemSummary(p as ProblemDetail));
+  health.topProblem = health.topProblem && toProblemSummary(health.topProblem as ProblemDetail);
+  brief.mostImportant = brief.mostImportant && toProblemSummary(brief.mostImportant as ProblemDetail);
+
   return {
     server: {
       product: 'opswatch',

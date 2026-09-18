@@ -1,6 +1,13 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { AboutSection, AccountAndServerSections, PreferenceSections, SecuritySection } from '@/features/settings/sections';
+import { ScrollScreen } from '@/ui/screen';
 
-export default function Screen() {
-  return <EmptyState title="settings/index" icon="construct-outline" />;
+export default function SettingsRoute() {
+  return (
+    <ScrollScreen testID="settings-screen">
+      <AccountAndServerSections />
+      <PreferenceSections />
+      <SecuritySection />
+      <AboutSection />
+    </ScrollScreen>
+  );
 }

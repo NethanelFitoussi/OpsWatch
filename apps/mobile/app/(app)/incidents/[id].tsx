@@ -1,6 +1,12 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { useLocalSearchParams } from 'expo-router';
+import { NotFoundState } from '@/features/alerts/building-blocks';
+import { IncidentDetailView } from '@/features/incidents/detail';
+import { useI18n } from '@/i18n';
+import { isSafeId } from '@/lib/deep-links';
+import { FeatureGate } from '@/ui/states';
 
-export default function Screen() {
-  return <EmptyState title="incidents/[id]" icon="construct-outline" />;
+export default function IncidentScreen() {
+  const { t } = useI18n();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <FeatureGate feature="incidents" label={t('nav.incidents')}>{isSafeId(id) ? <IncidentDetailView id={id} /> : <NotFoundState />}</FeatureGate>;
 }

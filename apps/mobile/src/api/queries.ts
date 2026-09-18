@@ -2,7 +2,7 @@
  * Data hooks. Screens use these and nothing else to reach the server. Keys start with a resource root (used by the
  * persistence allow-list in query-provider.tsx), then `list` or `detail`, then the environment scope.
  */
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters, Scope } from './client';
 import type { Favorite, InfraCategory, Page, Ref } from './contract';
@@ -74,6 +74,8 @@ export function useProblems(filters: ProblemFilters) {
   const scope = useScope();
   return useInfiniteQuery({
     queryKey: keys.problems(scope, filters),
+    // Changing a filter keeps the previous rows on screen until the new ones arrive.
+    placeholderData: keepPreviousData,
     queryFn: ({ pageParam }) => client.problems(scope, filters, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
@@ -92,6 +94,8 @@ export function useErrors(filters: ErrorFilters) {
   const scope = useScope();
   return useInfiniteQuery({
     queryKey: keys.errors(scope, filters),
+    // Changing a filter keeps the previous rows on screen until the new ones arrive.
+    placeholderData: keepPreviousData,
     queryFn: ({ pageParam }) => client.errors(scope, filters, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
@@ -120,7 +124,9 @@ export function useService(id: string) {
 export function useInfrastructure(category?: InfraCategory) {
   const { client } = useSession();
   const scope = useScope();
-  return useQuery({ queryKey: keys.infrastructure(scope, category), queryFn: () => client.infrastructure(scope, category), enabled: useSignedIn() });
+  return useQuery({ queryKey: keys.infrastructure(scope, category),
+    // Changing a filter keeps the previous rows on screen until the new ones arrive.
+    placeholderData: keepPreviousData, queryFn: () => client.infrastructure(scope, category), enabled: useSignedIn() });
 }
 
 export function useInfrastructureResource(id: string) {
@@ -167,6 +173,8 @@ export function useAlerts(filters: AlertFilters) {
   const scope = useScope();
   return useInfiniteQuery({
     queryKey: keys.alerts(scope, filters),
+    // Changing a filter keeps the previous rows on screen until the new ones arrive.
+    placeholderData: keepPreviousData,
     queryFn: ({ pageParam }) => client.alerts(scope, filters, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
@@ -257,7 +265,9 @@ export function useSearch(text: string) {
   const { client } = useSession();
   const scope = useScope();
   const q = text.trim();
-  return useQuery({ queryKey: keys.search(scope, q), queryFn: () => client.search(scope, q), enabled: useSignedIn() && q.length >= 2, staleTime: 30_000 });
+  return useQuery({ queryKey: keys.search(scope, q),
+    // Changing a filter keeps the previous rows on screen until the new ones arrive.
+    placeholderData: keepPreviousData, queryFn: () => client.search(scope, q), enabled: useSignedIn() && q.length >= 2, staleTime: 30_000 });
 }
 
 /** AI answers are mutations: never cached, never persisted, never retried automatically. */

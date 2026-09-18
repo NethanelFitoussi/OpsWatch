@@ -43,3 +43,4 @@ dist-web/
 playwright-report/
 test-results/
 coverage/
+*.keystore

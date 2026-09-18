@@ -1,3 +1,27 @@
 import type { infrastructure as source } from '../en/infrastructure';
 
-export const infrastructure: Record<keyof typeof source, string> = {};
+export const infrastructure: Record<keyof typeof source, string> = {
+  'infrastructure.categoryFilter': 'Filtrer par catégorie',
+  'infrastructure.category.ecs': 'ECS',
+  'infrastructure.category.ec2': 'EC2',
+  'infrastructure.category.rds': 'RDS',
+  'infrastructure.category.redis': 'Redis',
+  'infrastructure.category.load-balancer': 'Répartiteurs de charge',
+  'infrastructure.category.storage': 'Stockage',
+  'infrastructure.category.network': 'Réseau',
+  'infrastructure.category.other': 'Autres',
+  'infrastructure.summaryPart': '{count} {status}',
+  'infrastructure.summaryEmpty': 'Aucune ressource',
+  'infrastructure.summaryLabel': 'Ressources par état de santé',
+  'infrastructure.empty': 'Aucune ressource signalée',
+  'infrastructure.anomalies': '{count} anomalie(s)',
+  'infrastructure.anomaliesTitle': 'Anomalies',
+  'infrastructure.providerStatus': 'État chez le fournisseur',
+  'infrastructure.category': 'Catégorie',
+  'infrastructure.keyMetrics': 'Indicateurs clés',
+  'infrastructure.charts': 'Tendances',
+  'infrastructure.properties': 'Propriétés',
+  'infrastructure.related': 'Objets liés',
+  'infrastructure.problems': 'Problèmes',
+  'infrastructure.notFound': 'Ce lien de ressource n’est pas valide.',
+};

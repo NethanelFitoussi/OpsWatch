@@ -1,0 +1,12 @@
+# Acknowledge is offered only when the server allows it, and disappears once done.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: start-demo
+- openLink: opswatch://alerts/al-checkout-5xx
+- tapOn:
+    id: alert-acknowledge
+- assertNotVisible:
+    id: alert-acknowledge

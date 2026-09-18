@@ -1,6 +1,5 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { FavoritesScreen } from '@/features/settings/favorites-screen';
 
-export default function Screen() {
-  return <EmptyState title="settings/favorites" icon="construct-outline" />;
+export default function FavoritesRoute() {
+  return <FavoritesScreen />;
 }

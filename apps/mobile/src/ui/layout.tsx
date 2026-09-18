@@ -11,10 +11,11 @@ import { useTheme } from './theme-provider';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
-export function Card({ children, style, padded = true, accent }: { children: ReactNode; style?: StyleProp<ViewStyle>; padded?: boolean; accent?: string }) {
+export function Card({ children, style, padded = true, accent, testID }: { children: ReactNode; style?: StyleProp<ViewStyle>; padded?: boolean; accent?: string; testID?: string }) {
   const { colors } = useTheme();
   return (
     <View
+      testID={testID}
       style={[
         styles.card,
         { backgroundColor: colors.surface, borderColor: colors.border },

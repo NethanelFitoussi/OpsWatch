@@ -1,6 +1,5 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { EnvironmentScreen } from '@/features/settings/environment-screen';
 
-export default function Screen() {
-  return <EmptyState title="settings/environment" icon="construct-outline" />;
+export default function EnvironmentRoute() {
+  return <EnvironmentScreen />;
 }

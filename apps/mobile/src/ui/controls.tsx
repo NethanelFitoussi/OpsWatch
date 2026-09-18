@@ -49,7 +49,7 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
   );
 }
 
-export function Chip({ label, selected, onPress, icon, count, testID }: { label: string; selected: boolean; onPress: () => void; icon?: IconName; count?: number; testID?: string }) {
+export function Chip({ label, selected, onPress, icon, count, testID, accessibilityHint }: { label: string; selected: boolean; onPress: () => void; icon?: IconName; count?: number; testID?: string; accessibilityHint?: string }) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -57,6 +57,7 @@ export function Chip({ label, selected, onPress, icon, count, testID }: { label:
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={count === undefined ? label : `${label}, ${count}`}
+      accessibilityHint={accessibilityHint}
       testID={testID}
       hitSlop={{ top: 6, bottom: 6 }}
       style={[
@@ -74,19 +75,21 @@ export function Chip({ label, selected, onPress, icon, count, testID }: { label:
 
 export type ChipOption<T extends string> = { value: T; label: string; icon?: IconName };
 
-/** A horizontally scrolling single-choice chip row, used for filters. */
-export function ChipGroup<T extends string>({ options, value, onChange, accessibilityLabel }: { options: ChipOption<T>[]; value: T; onChange: (value: T) => void; accessibilityLabel: string }) {
+/**
+ * A horizontally scrolling single-choice chip row, used for filters. `testIDPrefix` keeps chip test ids unique when a screen has several groups (`<prefix>-<value>`, default `chip`).
+ */
+export function ChipGroup<T extends string>({ options, value, onChange, accessibilityLabel, testIDPrefix = 'chip' }: { options: ChipOption<T>[]; value: T; onChange: (value: T) => void; accessibilityLabel: string; testIDPrefix?: string }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel={accessibilityLabel} accessibilityRole="radiogroup">
       {options.map((option) => (
-        <Chip key={option.value} label={option.label} icon={option.icon} selected={option.value === value} onPress={() => onChange(option.value)} testID={`chip-${option.value}`} />
+        <Chip key={option.value} label={option.label} icon={option.icon} selected={option.value === value} onPress={() => onChange(option.value)} testID={`${testIDPrefix}-${option.value}`} />
       ))}
     </ScrollView>
   );
 }
 
 /** Multi-choice variant: an empty selection means "all". */
-export function MultiChipGroup<T extends string>({ options, values, onChange, accessibilityLabel }: { options: ChipOption<T>[]; values: T[]; onChange: (values: T[]) => void; accessibilityLabel: string }) {
+export function MultiChipGroup<T extends string>({ options, values, onChange, accessibilityLabel, testIDPrefix = 'chip' }: { options: ChipOption<T>[]; values: T[]; onChange: (values: T[]) => void; accessibilityLabel: string; testIDPrefix?: string }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel={accessibilityLabel}>
       {options.map((option) => {
@@ -97,7 +100,7 @@ export function MultiChipGroup<T extends string>({ options, values, onChange, ac
             label={option.label}
             icon={option.icon}
             selected={selected}
-            testID={`chip-${option.value}`}
+            testID={`${testIDPrefix}-${option.value}`}
             onPress={() => onChange(selected ? values.filter((v) => v !== option.value) : [...values, option.value])}
           />
         );

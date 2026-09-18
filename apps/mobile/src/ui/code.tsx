@@ -31,6 +31,8 @@ export const CodeBlock = memo(function CodeBlock({
   testID?: string;
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
+  const highlightLabel = t('code.highlighted');
   const gutter = String(startLine + lines.length - 1).length;
   const highlighted = useMemo(() => new Set(highlight), [highlight]);
   return (
@@ -51,7 +53,7 @@ export const CodeBlock = memo(function CodeBlock({
                 <Text style={[MONO, { color: colors.textFaint, width: gutter * 8 + 10, textAlign: 'right' }]} selectable={false}>
                   {number}
                 </Text>
-                <Text style={[MONO, { color: isHighlighted ? colors.warning : colors.textFaint, width: 14 }]} accessibilityLabel={isHighlighted ? 'highlighted' : undefined}>
+                <Text style={[MONO, { color: isHighlighted ? colors.warning : colors.textFaint, width: 14 }]} accessibilityLabel={isHighlighted ? highlightLabel : undefined}>
                   {isHighlighted ? '▶' : ' '}
                 </Text>
                 <Text style={[MONO, { color: colors.codeText }]} selectable>
@@ -73,6 +75,7 @@ function frameLocation(frame: StackFrame): string {
 
 const FrameRow = memo(function FrameRow({ frame, index }: { frame: StackFrame; index: number }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [open, setOpen] = useState(frame.inApp && index === 0);
   const hasContext = !!frame.context?.length;
   return (
@@ -82,13 +85,13 @@ const FrameRow = memo(function FrameRow({ frame, index }: { frame: StackFrame; i
         disabled={!hasContext}
         accessibilityRole={hasContext ? 'button' : 'text'}
         accessibilityState={hasContext ? { expanded: open } : undefined}
-        accessibilityLabel={`${frame.inApp ? 'Application frame' : 'Library frame'}: ${frame.function ?? 'anonymous'} ${frameLocation(frame)}`}
+        accessibilityLabel={`${t(frame.inApp ? 'code.appFrame' : 'code.libraryFrame')}: ${frame.function ?? t('code.anonymous')} ${frameLocation(frame)}`}
         style={styles.frameHead}
       >
         {hasContext ? <Ionicons name={open ? 'chevron-down' : 'chevron-forward'} size={14} color={colors.textMuted} importantForAccessibility="no" /> : <View style={{ width: 14 }} />}
         <View style={{ flex: 1 }}>
           <Text variant="small" weight={frame.inApp ? '700' : '400'} tone={frame.inApp ? 'default' : 'muted'} style={{ fontFamily: monoFont }} numberOfLines={2}>
-            {frame.function ?? '<anonymous>'}
+            {frame.function ?? `<${t('code.anonymous')}>`}
           </Text>
           {frame.file ? (
             <Text variant="caption" tone="faint" style={{ fontFamily: monoFont }} numberOfLines={2}>
@@ -99,7 +102,7 @@ const FrameRow = memo(function FrameRow({ frame, index }: { frame: StackFrame; i
         {frame.inApp ? (
           <View style={[styles.appTag, { backgroundColor: colors.infoBg }]}>
             <Text variant="caption" weight="700" style={{ color: colors.info }}>
-              APP
+              {t('code.appTag')}
             </Text>
           </View>
         ) : null}
@@ -153,7 +156,7 @@ export function StackTraceViewer({ frames, rawStack, testID }: { frames: StackFr
           <View style={styles.row}>
             <Pressable onPress={() => setShowRaw((s) => !s)} accessibilityRole="button" style={styles.toggle}>
               <Text variant="small" weight="600" tone="primary">
-                {showRaw ? 'Frames' : 'Raw'}
+                {showRaw ? t('code.frames') : t('code.raw')}
               </Text>
             </Pressable>
             <CopyButton text={rawStack} />
@@ -161,7 +164,7 @@ export function StackTraceViewer({ frames, rawStack, testID }: { frames: StackFr
         ) : null}
       </View>
       {showRaw && rawStack ? (
-        <CodeBlock lines={rawStack.split('\n')} title="stack" />
+        <CodeBlock lines={rawStack.split('\n')} title={t('code.stack')} />
       ) : (
         groups.map((group) =>
           group.kind === 'frame' ? (
@@ -174,7 +177,7 @@ export function StackTraceViewer({ frames, rawStack, testID }: { frames: StackFr
               style={[styles.folded, { borderColor: colors.border }]}
             >
               <Text variant="caption" tone="muted">
-                ··· {group.count} library frame{group.count > 1 ? 's' : ''}
+                ··· {t(group.count > 1 ? 'code.libraryFrames' : 'code.libraryFrame1', { count: group.count })}
               </Text>
             </Pressable>
           ),

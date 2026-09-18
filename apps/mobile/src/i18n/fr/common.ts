@@ -134,6 +134,17 @@ export const common: Record<keyof typeof source, string> = {
   'metric.occurrences': 'Occurrences',
   'metric.noData': 'Pas de données',
 
+  'code.appFrame': 'Cadre de l’application',
+  'code.libraryFrame': 'Cadre de bibliothèque',
+  'code.anonymous': 'anonyme',
+  'code.appTag': 'APP',
+  'code.frames': 'Cadres',
+  'code.raw': 'Brut',
+  'code.libraryFrame1': '1 cadre de bibliothèque',
+  'code.libraryFrames': '{count} cadres de bibliothèque',
+  'code.stack': 'Pile d’appels',
+  'code.highlighted': 'ligne mise en évidence',
+
   'ai.generated': "Généré par IA. Vérifiez les preuves citées avant d'agir.",
   'ai.askAbout': 'Demander à OpsWatch',
 };

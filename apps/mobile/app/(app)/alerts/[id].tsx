@@ -1,6 +1,12 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { useLocalSearchParams } from 'expo-router';
+import { AlertDetailView } from '@/features/alerts/detail';
+import { NotFoundState } from '@/features/alerts/building-blocks';
+import { useI18n } from '@/i18n';
+import { isSafeId } from '@/lib/deep-links';
+import { FeatureGate } from '@/ui/states';
 
-export default function Screen() {
-  return <EmptyState title="alerts/[id]" icon="construct-outline" />;
+export default function AlertScreen() {
+  const { t } = useI18n();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <FeatureGate feature="alerts" label={t('tab.alerts')}>{isSafeId(id) ? <AlertDetailView id={id} /> : <NotFoundState />}</FeatureGate>;
 }

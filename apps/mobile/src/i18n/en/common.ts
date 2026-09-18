@@ -132,6 +132,17 @@ export const common = {
   'metric.occurrences': 'Occurrences',
   'metric.noData': 'No data',
 
+  'code.appFrame': 'Application frame',
+  'code.libraryFrame': 'Library frame',
+  'code.anonymous': 'anonymous',
+  'code.appTag': 'APP',
+  'code.frames': 'Frames',
+  'code.raw': 'Raw',
+  'code.libraryFrame1': '1 library frame',
+  'code.libraryFrames': '{count} library frames',
+  'code.stack': 'Stack trace',
+  'code.highlighted': 'highlighted line',
+
   'ai.generated': 'AI-generated. Check the cited evidence before acting.',
   'ai.askAbout': 'Ask OpsWatch',
 } as const;

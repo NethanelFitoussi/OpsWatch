@@ -1,0 +1,33 @@
+# Every tab and the main secondary screens open without errors.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: start-demo
+- tapOn:
+    id: tab-problems
+- assertVisible: "checkout-api is returning HTTP 5xx"
+- tapOn:
+    id: tab-alerts
+- assertVisible: "checkout-5xx-high"
+- tapOn:
+    id: tab-services
+- assertVisible: "checkout-api"
+- tapOn:
+    id: tab-more
+- tapOn:
+    id: more-errors
+- assertVisible: "TypeError"
+- back
+- tapOn:
+    id: more-synthetics
+- assertVisible: "Checkout API"
+- back
+- tapOn:
+    id: more-incidents
+- assertVisible: "INC-2291"
+- back
+- tapOn:
+    id: more-slos
+- assertVisible: "Checkout availability"

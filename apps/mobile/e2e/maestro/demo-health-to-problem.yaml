@@ -1,0 +1,22 @@
+# Launch → demo → "Is production healthy?" → most important problem → investigation → back.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: start-demo
+- assertVisible:
+    id: status-title
+- assertVisible:
+    id: demo-banner
+- assertVisible:
+    id: action-verdict
+- tapOn:
+    id: investigate-top-problem
+- assertVisible: "checkout-api is returning HTTP 5xx"
+- scrollUntilVisible:
+    element:
+      id: evidence-section-hypothesis
+- back
+- assertVisible:
+    id: status-title

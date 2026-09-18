@@ -1,0 +1,12 @@
+# A deep link opens the object directly; an unknown link falls back to Home.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: start-demo
+- openLink: opswatch://alerts/al-checkout-5xx
+- assertVisible: "checkout-5xx-high"
+- openLink: opswatch://not-a-route/x
+- assertVisible:
+    id: status-title

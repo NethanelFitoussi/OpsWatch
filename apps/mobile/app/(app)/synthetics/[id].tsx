@@ -1,6 +1,12 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { useLocalSearchParams } from 'expo-router';
+import { NotFoundState } from '@/features/alerts/building-blocks';
+import { SyntheticDetailView } from '@/features/synthetics/detail';
+import { useI18n } from '@/i18n';
+import { isSafeId } from '@/lib/deep-links';
+import { FeatureGate } from '@/ui/states';
 
-export default function Screen() {
-  return <EmptyState title="synthetics/[id]" icon="construct-outline" />;
+export default function SyntheticScreen() {
+  const { t } = useI18n();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <FeatureGate feature="synthetics" label={t('nav.synthetics')}>{isSafeId(id) ? <SyntheticDetailView id={id} /> : <NotFoundState />}</FeatureGate>;
 }

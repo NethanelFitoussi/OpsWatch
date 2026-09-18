@@ -1,6 +1,5 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { NotificationsScreen } from '@/features/settings/notifications-screen';
 
-export default function Screen() {
-  return <EmptyState title="settings/notifications" icon="construct-outline" />;
+export default function NotificationsRoute() {
+  return <NotificationsScreen />;
 }

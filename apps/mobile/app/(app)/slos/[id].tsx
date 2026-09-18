@@ -1,6 +1,12 @@
-// TEMPORARY STUB: replaced by the feature implementation.
-import { EmptyState } from '@/ui/states';
+import { useLocalSearchParams } from 'expo-router';
+import { NotFoundState } from '@/features/alerts/building-blocks';
+import { SloDetailView } from '@/features/slos/detail';
+import { useI18n } from '@/i18n';
+import { isSafeId } from '@/lib/deep-links';
+import { FeatureGate } from '@/ui/states';
 
-export default function Screen() {
-  return <EmptyState title="slos/[id]" icon="construct-outline" />;
+export default function SloScreen() {
+  const { t } = useI18n();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <FeatureGate feature="slos" label={t('nav.slos')}>{isSafeId(id) ? <SloDetailView id={id} /> : <NotFoundState />}</FeatureGate>;
 }

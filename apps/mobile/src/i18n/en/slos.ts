@@ -1,1 +1,22 @@
-export const slos = {} as const;
+export const slos = {
+  'slos.status.healthy': 'Healthy',
+  'slos.status.at_risk': 'At risk',
+  'slos.status.breached': 'Breached',
+  'slos.status.unknown': 'Unknown',
+  'slos.empty': 'No SLOs',
+  'slos.emptyBody': 'No service level objective is defined for this environment.',
+  'slos.targetCurrent': 'target {target} · current {current}',
+  'slos.target': 'Target',
+  'slos.current': 'Current',
+  'slos.window': 'Window',
+  'slos.budgetRemaining': 'Error budget remaining',
+  'slos.budgetLeft': '{value} of the error budget left',
+  'slos.budgetExhausted': 'Budget exhausted',
+  'slos.burnRate': 'Burn rate',
+  'slos.burnRateFast': '×{rate} means the budget would last 1/{rate} of the window.',
+  'slos.burnRateSlow': '×{rate} means the budget is used no faster than planned: it lasts the whole window.',
+  'slos.burnRateNoData': 'No burn rate yet: not enough data.',
+  'slos.performance': 'Performance',
+  'slos.budgetChart': 'Error budget over time',
+  'slos.noSeries': 'No data yet for this SLO.',
+} as const;

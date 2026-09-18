@@ -1,0 +1,109 @@
+/**
+ * Small building blocks reused by the alerts, incidents, synthetics and SLO screens: a list row with a meta line and a
+ * one-line detail, a status badge, a not-found state and a timestamped list item.
+ */
+import { Ionicons } from '@expo/vector-icons';
+import { memo, type ReactNode } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useI18n } from '@/i18n';
+import { Badge } from '@/ui/badges';
+import type { IconName } from '@/ui/layout';
+import { EmptyState } from '@/ui/states';
+import { Text } from '@/ui/text';
+import { spacing, TOUCH_TARGET, type Tone } from '@/ui/theme';
+import { useTheme } from '@/ui/theme-provider';
+
+export type StatusMeta = { tone: Tone; icon: IconName; label: string };
+
+export function StatusBadge({ meta, size, testID }: { meta: StatusMeta; size?: 'small' | 'large'; testID?: string }) {
+  return <Badge tone={meta.tone} icon={meta.icon} label={meta.label} size={size} testID={testID} />;
+}
+
+type RichRowProps = {
+  title: string;
+  /** Second line: who/what/when. */
+  meta?: string;
+  /** Third line, truncated to one line. */
+  detail?: string;
+  left?: ReactNode;
+  /** Shown outside the pressable area, for independent controls. */
+  right?: ReactNode;
+  /** Extra content under the text (a budget bar, a warning badge). */
+  extra?: ReactNode;
+  onPress: () => void;
+  accessibilityLabel: string;
+  testID?: string;
+};
+
+/** A pressable list row with up to three lines of text; at least one touch target tall. */
+export const RichRow = memo(function RichRow({ title, meta, detail, left, right, extra, onPress, accessibilityLabel, testID }: RichRowProps) {
+  const { colors } = useTheme();
+  // `right` sits outside the pressable so its own controls (a favorite star) stay reachable by screen readers.
+  return (
+    <View style={styles.container}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfaceAlt }]}
+      >
+        {left ? <View style={styles.left}>{left}</View> : null}
+        <View style={styles.text}>
+          <Text variant="body" weight="600" numberOfLines={2}>
+            {title}
+          </Text>
+          {meta ? (
+            <Text variant="small" tone="muted" numberOfLines={2}>
+              {meta}
+            </Text>
+          ) : null}
+          {detail ? (
+            <Text variant="small" tone="faint" numberOfLines={1}>
+              {detail}
+            </Text>
+          ) : null}
+          {extra}
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textFaint} importantForAccessibility="no" />
+      </Pressable>
+      {right ? <View style={styles.right}>{right}</View> : null}
+    </View>
+  );
+});
+
+export function NotFoundState() {
+  const { t } = useI18n();
+  return <EmptyState icon="search-outline" title={t('error.not_found')} />;
+}
+
+/** One entry of a chronological list: time on the left, content on the right. */
+export function TimedItem({ time, children, testID }: { time: string; children: ReactNode; testID?: string }) {
+  return (
+    <View style={styles.timed} testID={testID}>
+      <Text variant="small" weight="700" style={styles.time}>
+        {time}
+      </Text>
+      <View style={styles.timedBody}>{children}</View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flexDirection: 'row', alignItems: 'center' },
+  right: { paddingRight: spacing.md },
+  row: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: TOUCH_TARGET + 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
+  },
+  left: { alignSelf: 'flex-start', paddingTop: 2 },
+  text: { flex: 1, gap: 2 },
+  timed: { flexDirection: 'row', gap: spacing.md, paddingVertical: spacing.xs },
+  time: { minWidth: 52, fontVariant: ['tabular-nums'] },
+  timedBody: { flex: 1, gap: 2 },
+});
