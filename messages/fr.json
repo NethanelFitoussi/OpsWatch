@@ -719,6 +719,11 @@
           "label": "Résultats de la requête",
           "empty": "La requête n'a renvoyé aucune ligne."
         }
+      },
+      "facets": {
+        "label": "Filtres",
+        "clear": "Effacer les filtres",
+        "active": "{count, plural, one {# filtre} other {# filtres}}"
       }
     },
     "common": {
@@ -763,6 +768,13 @@
         "throttled": "AWS a limité la requête",
         "error": "AWS a renvoyé une erreur",
         "code": "({action} : {code})"
+      },
+      "table": {
+        "showing": "{shown} sur {total} affichés",
+        "sortBy": "Trier par {column}"
+      },
+      "statusBar": {
+        "label": "Ressources par état"
       }
     },
     "overview": {

@@ -719,6 +719,11 @@
           "label": "Query results",
           "empty": "The query returned no rows."
         }
+      },
+      "facets": {
+        "label": "Filters",
+        "clear": "Clear filters",
+        "active": "{count, plural, one {# filter} other {# filters}}"
       }
     },
     "common": {
@@ -763,6 +768,13 @@
         "throttled": "AWS throttled the request",
         "error": "AWS returned an error",
         "code": "({action}: {code})"
+      },
+      "table": {
+        "showing": "Showing {shown} of {total}",
+        "sortBy": "Sort by {column}"
+      },
+      "statusBar": {
+        "label": "Resources by state"
       }
     },
     "overview": {

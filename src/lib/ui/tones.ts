@@ -26,7 +26,16 @@ export const TONE_BORDER = {
 
 /** Small status dots. */
 export const TONE_DOT = {
+  info: 'bg-sky-500',
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',
   danger: 'bg-red-500',
-} as const satisfies Partial<Record<Tone, string>>;
+} as const satisfies Record<Tone, string>;
+
+/** The 2 px left edge of a dense table row that carries a tone. */
+export const TONE_EDGE = {
+  info: 'border-l-sky-500',
+  success: 'border-l-emerald-500',
+  warning: 'border-l-amber-500',
+  danger: 'border-l-red-500',
+} as const satisfies Record<Tone, string>;
