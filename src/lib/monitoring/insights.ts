@@ -6,7 +6,7 @@ import { MIN_CONSECUTIVE, average, breachActive, sliceSince, sum, thresholdLevel
 import type { SeriesData } from './metrics';
 import type { RdsCluster, RdsInstance } from './rds';
 import { GIB, formatMetricValue, type MetricUnit } from './shared/format';
-import { monitoringPath, type ScopeRef } from './shared/paths';
+import { subsectionPath, type ScopeRef } from './shared/paths';
 
 export type InsightSeverity = 'critical' | 'warning' | 'info';
 export type InsightKind =
@@ -85,7 +85,7 @@ function alignedPairs(running: SeriesData, desired: SeriesData, since: number): 
 
 function ecsServiceInsights(cluster: string, s: EcsServiceSignals, ctx: RuleContext): Insight[] {
   const name = s.service.name;
-  const href = monitoringPath(ctx.scope, 'containers', cluster, name);
+  const href = subsectionPath(ctx.scope, 'containers', 'services', cluster, name);
   const out: Insight[] = [];
   const make = (severity: InsightSeverity, kind: InsightKind, values: InsightValues): Insight => ({
     severity,
@@ -142,7 +142,7 @@ export function ecsInsights(clusters: readonly EcsClusterSignals[], ctx: RuleCon
           resource: cluster,
           messageKey: `groups.${kind}`,
           values: { cluster, count: list.length },
-          href: monitoringPath(ctx.scope, 'containers'),
+          href: subsectionPath(ctx.scope, 'containers', 'services'),
           members,
         },
       ];
@@ -154,7 +154,7 @@ export function ecsInsights(clusters: readonly EcsClusterSignals[], ctx: RuleCon
 
 function rdsInstanceInsights(s: RdsInstanceSignals, ctx: RuleContext): Insight[] {
   const id = s.instance.id;
-  const href = monitoringPath(ctx.scope, 'databases', id);
+  const href = subsectionPath(ctx.scope, 'databases', 'instances', id);
   const since = minutesAgo(ctx, INSIGHT_WINDOW_MINUTES);
   const out: Insight[] = [];
   const make = (severity: InsightSeverity, kind: InsightKind, values: InsightValues): Insight => ({
@@ -202,7 +202,7 @@ function replicaLagInsights(clusters: readonly RdsCluster[], instances: readonly
           severity: 'warning',
           messageKey: 'members.aurora_replica_lag',
           values: { instance: s.id, value: average(window.values) as number },
-          href: monitoringPath(ctx.scope, 'databases', s.id),
+          href: subsectionPath(ctx.scope, 'databases', 'instances', s.id),
         },
       ];
     });
@@ -214,7 +214,7 @@ function replicaLagInsights(clusters: readonly RdsCluster[], instances: readonly
         resource: cluster,
         messageKey: 'messages.aurora_replica_lag',
         values: { cluster, lagging: members.length, readers: list.length },
-        href: monitoringPath(ctx.scope, 'databases'),
+        href: subsectionPath(ctx.scope, 'databases', 'instances'),
         members: members.sort(byResource),
       },
     ];
@@ -256,7 +256,7 @@ function albRateInsight(s: AlbSignals, ctx: RuleContext, since: number): Insight
       resource: s.loadBalancer.name,
       messageKey: 'messages.alb_5xx_rate',
       values: { loadBalancer: s.loadBalancer.name, rate, errors, requests: total },
-      href: monitoringPath(ctx.scope, 'load-balancers', s.loadBalancer.name),
+      href: subsectionPath(ctx.scope, 'load-balancers', 'list', s.loadBalancer.name),
     },
   ];
 }
@@ -265,7 +265,7 @@ export function albInsights(input: readonly AlbSignals[], ctx: RuleContext): Ins
   const since = minutesAgo(ctx, INSIGHT_WINDOW_MINUTES);
   return input.flatMap((s): Insight[] => {
     const name = s.loadBalancer.name;
-    const href = monitoringPath(ctx.scope, 'load-balancers', name);
+    const href = subsectionPath(ctx.scope, 'load-balancers', 'list', name);
     const out = albRateInsight(s, ctx, since);
 
     // Independent of RequestCount: errors the load balancer returned itself never reached a target.
@@ -312,7 +312,7 @@ export function alarmInsights(alarms: readonly AlarmSummary[], ctx: RuleContext)
       resource: a.name,
       messageKey: 'messages.alarm_firing',
       values: { alarm: a.name },
-      href: `${monitoringPath(ctx.scope, 'alarms')}?state=ALARM`,
+      href: `${subsectionPath(ctx.scope, 'alarms', 'list')}?state=ALARM`,
     }));
 }
 

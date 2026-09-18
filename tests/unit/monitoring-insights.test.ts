@@ -182,7 +182,7 @@ describe('ecsInsights', () => {
         resource: 'web',
         messageKey: 'messages.ecs_cpu_high',
         values: { service: 'web', value: 90, threshold: 85 },
-        href: '/c/abc123def456/eu-west-1/containers/prod/web',
+        href: '/c/abc123def456/eu-west-1/containers/services/prod/web',
       },
     ]);
     expect(ecsInsights([{ cluster: 'prod', services: [signals({ memory: series(repeat(96, 15)) })] }], ctx)).toEqual([
@@ -192,7 +192,7 @@ describe('ecsInsights', () => {
         resource: 'web',
         messageKey: 'messages.ecs_memory_high',
         values: { service: 'web', value: 96, threshold: 95 },
-        href: '/c/abc123def456/eu-west-1/containers/prod/web',
+        href: '/c/abc123def456/eu-west-1/containers/services/prod/web',
       },
     ]);
   });
@@ -205,7 +205,7 @@ describe('ecsInsights', () => {
         resource: 'web',
         messageKey: 'messages.ecs_tasks_below_desired',
         values: { service: 'web', running: 1, desired: 2 },
-        href: '/c/abc123def456/eu-west-1/containers/prod/web',
+        href: '/c/abc123def456/eu-west-1/containers/services/prod/web',
       },
     ]);
     expect(ecsInsights([{ cluster: 'prod', services: [signals({ running: series([...repeat(1, 10), 2]), desired: series(repeat(2, 11)) })] }], ctx)).toEqual([]);
@@ -224,7 +224,7 @@ describe('ecsInsights', () => {
         resource: 'web',
         messageKey: 'messages.ecs_tasks_below_desired',
         values: { service: 'web', running: 1, desired: 2 },
-        href: '/c/abc123def456/eu-west-1/containers/prod/web',
+        href: '/c/abc123def456/eu-west-1/containers/services/prod/web',
       },
     ]);
     const recent = signals({
@@ -244,7 +244,7 @@ describe('ecsInsights', () => {
         resource: 'web',
         messageKey: 'messages.ecs_rollout_failed',
         values: { service: 'web', reason: 'circuit breaker' },
-        href: '/c/abc123def456/eu-west-1/containers/prod/web',
+        href: '/c/abc123def456/eu-west-1/containers/services/prod/web',
       },
     ]);
     const stuck = signals({ service: service({ primaryDeployment: deployment({ rolloutState: 'IN_PROGRESS', createdAt: NOW - 31 * 60_000 }) }) });
@@ -255,7 +255,7 @@ describe('ecsInsights', () => {
         resource: 'web',
         messageKey: 'messages.ecs_rollout_stuck',
         values: { service: 'web', minutes: 31 },
-        href: '/c/abc123def456/eu-west-1/containers/prod/web',
+        href: '/c/abc123def456/eu-west-1/containers/services/prod/web',
       },
     ]);
     const fresh = signals({ service: service({ primaryDeployment: deployment({ rolloutState: 'IN_PROGRESS', createdAt: NOW - 29 * 60_000 }) }) });
@@ -273,7 +273,7 @@ describe('ecsInsights', () => {
       resource: 'prod',
       messageKey: 'groups.ecs_cpu_high',
       values: { cluster: 'prod', count: 4 },
-      href: '/c/abc123def456/eu-west-1/containers',
+      href: '/c/abc123def456/eu-west-1/containers/services',
     });
     expect(grouped[0].members?.map((member) => member.resource)).toEqual(['a', 'b', 'c', 'd']);
     expect(new Set(grouped[0].members?.map((member) => member.messageKey))).toEqual(new Set(['messages.ecs_cpu_high']));
@@ -297,7 +297,7 @@ describe('rdsInsights', () => {
         resource: 'orders-1',
         messageKey: 'messages.rds_cpu_high',
         values: { instance: 'orders-1', value: 81, threshold: 80 },
-        href: '/c/abc123def456/eu-west-1/databases/orders-1',
+        href: '/c/abc123def456/eu-west-1/databases/instances/orders-1',
       },
     ]);
     expect(rdsInsights({ clusters: [], instances: [dbSignals({ freeableMemory: series(repeat(0.5 * 1024 ** 3, 15)) })] }, ctx)).toEqual([
@@ -307,7 +307,7 @@ describe('rdsInsights', () => {
         resource: 'orders-1',
         messageKey: 'messages.rds_freeable_memory_low',
         values: { instance: 'orders-1', value: 3.125 },
-        href: '/c/abc123def456/eu-west-1/databases/orders-1',
+        href: '/c/abc123def456/eu-west-1/databases/instances/orders-1',
       },
     ]);
     const unknownMemory = dbSignals({ instance: instance({ memoryGiB: null }), freeableMemory: series(repeat(0.5 * 1024 ** 3, 15)) });
@@ -324,14 +324,14 @@ describe('rdsInsights', () => {
         resource: 'orders',
         messageKey: 'messages.aurora_replica_lag',
         values: { cluster: 'orders', lagging: 1, readers: 2 },
-        href: '/c/abc123def456/eu-west-1/databases',
+        href: '/c/abc123def456/eu-west-1/databases/instances',
         members: [
           {
             resource: 'orders-2',
             severity: 'warning',
             messageKey: 'members.aurora_replica_lag',
             values: { instance: 'orders-2', value: 1500 },
-            href: '/c/abc123def456/eu-west-1/databases/orders-2',
+            href: '/c/abc123def456/eu-west-1/databases/instances/orders-2',
           },
         ],
       },
@@ -349,7 +349,7 @@ describe('albInsights', () => {
       kind: 'alb_5xx_rate',
       resource: 'api',
       messageKey: 'messages.alb_5xx_rate',
-      href: '/c/abc123def456/eu-west-1/load-balancers/api',
+      href: '/c/abc123def456/eu-west-1/load-balancers/list/api',
     });
     expect(warning[0].values).toMatchObject({ loadBalancer: 'api', errors: 15, requests: 900 });
     expect(warning[0].values.rate).toBeCloseTo(1.667, 3);
@@ -369,7 +369,7 @@ describe('albInsights', () => {
         resource: 'api',
         messageKey: 'messages.alb_elb_5xx_count',
         values: { loadBalancer: 'api', count: 10 },
-        href: '/c/abc123def456/eu-west-1/load-balancers/api',
+        href: '/c/abc123def456/eu-west-1/load-balancers/list/api',
       },
     ]);
     expect(albInsights([albSignals({ elb5xx: series([...repeat(0, 6), ...repeat(1, 9)]) })], ctx)).toEqual([]);
@@ -387,7 +387,7 @@ describe('albInsights', () => {
         resource: 'api/web',
         messageKey: 'messages.alb_unhealthy_hosts',
         values: { loadBalancer: 'api', targetGroup: 'web', count: 1 },
-        href: '/c/abc123def456/eu-west-1/load-balancers/api',
+        href: '/c/abc123def456/eu-west-1/load-balancers/list/api',
       },
     ]);
     const recovered = albSignals({ targetGroups: [{ group: targetGroup, unhealthy: series([...repeat(0, 12), 1, 1, 0]) }] });
@@ -405,7 +405,7 @@ describe('alarmInsights', () => {
         resource: 'db-cpu',
         messageKey: 'messages.alarm_firing',
         values: { alarm: 'db-cpu' },
-        href: '/c/abc123def456/eu-west-1/alarms?state=ALARM',
+        href: '/c/abc123def456/eu-west-1/alarms/list?state=ALARM',
       },
     ]);
   });

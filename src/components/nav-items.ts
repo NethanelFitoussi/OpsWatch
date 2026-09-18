@@ -1,5 +1,6 @@
 import { BookOpen, Cloud, LayoutDashboard, type LucideIcon } from 'lucide-react';
-import { monitoringPath, parseMonitoringPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
+import { defaultSubsection } from '@/lib/monitoring/shared/sections';
+import { parseMonitoringPath, subsectionPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
 type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'accounts';
@@ -20,11 +21,11 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'accounts', kind: 'static', href: '/accounts', icon: Cloud },
 ];
 
-/** Monitoring links keep the current connection and region; elsewhere they open the section's redirect. */
+/** Monitoring links keep the current connection and region and open the section's default sub-page; elsewhere they open the section's redirect. */
 export function navHref(item: NavItem, pathname: string): string {
   if (item.kind === 'static') return item.href;
   const current = parseMonitoringPath(pathname);
-  return current ? monitoringPath(current, item.section) : `/${item.section}`;
+  return current ? subsectionPath(current, item.section, defaultSubsection(item.section)) : `/${item.section}`;
 }
 
 export function isNavActive(item: NavItem, pathname: string): boolean {

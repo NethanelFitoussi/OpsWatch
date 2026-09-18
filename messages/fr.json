@@ -1091,5 +1091,33 @@
     "members": {
       "aurora_replica_lag": "{instance} a en moyenne {value} de retard."
     }
+  },
+  "Sections": {
+    "overview": {
+      "insights": "Analyses",
+      "audit": "Audit"
+    },
+    "containers": {
+      "services": "Services",
+      "report": "Rapport"
+    },
+    "databases": {
+      "instances": "Instances",
+      "queries": "Requêtes",
+      "report": "Rapport"
+    },
+    "load-balancers": {
+      "list": "Répartiteurs",
+      "report": "Rapport"
+    },
+    "alarms": {
+      "list": "Alarmes",
+      "report": "Rapport"
+    },
+    "logs": {
+      "search": "Recherche",
+      "volume": "Volume",
+      "endpoints": "Points d'entrée"
+    }
   }
 }
