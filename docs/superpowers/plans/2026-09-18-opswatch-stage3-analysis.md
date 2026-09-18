@@ -12,7 +12,7 @@
 
 **Spec:** `.superpowers/sdd/stage3-analysis-spec.md`. Section 8 ("Amendments after peer review") is binding and overrides the earlier sections wherever they conflict; every task below cites the amendments it implements by number.
 
-**Branch:** `feat/stage-3-analysis`, created from the current head of `feat/step-1-foundations` (which already contains Stage 1 and Stage 2). Phase 2 starts only after the Phase 1 checkpoint (Task 7) is clean; Phase 3 only after the Phase 2 checkpoint (Task 17). If time runs short the cut goes from the end of Phase 3 backwards (amendment 12).
+**Branch:** `feat/step-1-foundations` itself, by controller ruling: Stage 1, Stage 2 and this stage share one branch that has never been pushed, and the owner reviews it as a whole. Phase 2 starts only after the Phase 1 checkpoint (Task 7) is clean; Phase 3 only after the Phase 2 checkpoint (Task 17). If time runs short, cut the Logs Endpoints pages (Tasks 23 and 24) first, then the remaining reports. The audit (Tasks 26 and 27) is the feature the owner asked for most explicitly, so it is built last but cut last too.
 
 ## Global Constraints
 
@@ -20,7 +20,7 @@ Binding for every task.
 
 - Node.js 22, npm, project root `/var/www/html/opswatch`, TypeScript strict, alias `@/*` → `src/*`. Vitest config is `vitest.config.mts` (it aliases `server-only` to a stub).
 - **Session first in every page, route and action.** Every monitoring page's first statement is `await initMonitoringRoute(params)` (which calls `initProtectedRoute` → `requireAdmin` and then checks the connection and region from the database only, before any `<Suspense>`, so an unknown selection still answers 404). Every redirect page calls `initProtectedRoute` first. Every route handler checks, in this order: `Origin` when the method mutates, then the session, then the connection and region, then AWS. Every server action calls `requireAdmin` before reading anything.
-- **Origin checks on mutating routes.** `isSameOrigin(request, env().OPSWATCH_PUBLIC_URL)` on POST, PUT and DELETE; failure answers 403 `forbidden_origin`. A GET route handler (the audit Markdown download, Task 24) performs no Origin check because it mutates nothing, but still checks the session first. Server actions rely on Next.js's built-in Server Action origin verification *and* re-check the session and the connection themselves.
+- **Origin checks on mutating routes.** `isSameOrigin(request, env().OPSWATCH_PUBLIC_URL)` on POST, PUT and DELETE; failure answers 403 `forbidden_origin`. A GET route handler (the audit Markdown download, Task 27) performs no Origin check because it mutates nothing, but still checks the session first. Server actions rely on Next.js's built-in Server Action origin verification *and* re-check the session and the connection themselves.
 - **Server-only data modules.** Every file in `src/lib/analysis/` and every file in `src/lib/monitoring/` except `src/lib/monitoring/shared/**` starts with `import 'server-only';` and is listed in `SERVER_ONLY_MODULES` of `tests/unit/module-boundaries.test.ts`. Files in `src/lib/monitoring/shared/` import nothing from AWS, zod, Node, the database, `next-intl/server` or `server-only`, so client components may use them. An `AwsTarget` (it holds credentials) is never passed as a prop to a client component.
 - **No user-facing string in code.** Every label, heading, sentence, empty state, aria-label, tooltip, button and Markdown heading is a message in `messages/en.json` and `messages/fr.json`. AWS identifiers are never translated: IAM actions, ARNs, resource names, AWS status values (`ACTIVE`, `ALARM`, `healthy`, `IN_PROGRESS`), statistic names (`p95`, `Sum`), metric and namespace names (`IncomingBytes`, `AWS/Logs`), Performance Insights dimension names (`db.sql_tokenized.id`), Logs Insights query text, and log field names the user typed.
 - **EN/FR parity.** Identical key sets, no empty string; enforced by `tests/unit/i18n-messages.test.ts`. Namespaces read by client components are listed in `CLIENT_NAMESPACES` (`src/i18n/client-messages.ts`) and checked by `tests/unit/client-messages.test.ts`; all client-side strings of this stage live under `Monitoring.client`.
@@ -3993,7 +3993,7 @@ it('caps at 300 groups', async () => {
 - [ ] **Step 4: Write `listLogGroups`, `logGroupVolumeQuery`, `logs-dashboard.ts`, the page and the cards.**
 - [ ] **Step 5: Flip the Logs sub-page order**
 
-In `src/lib/monitoring/shared/sections.ts` change `logs` to `['volume', 'search', 'endpoints']` and remove the comment Task 8 left. Update `tests/unit/monitoring-sections.test.ts` (the `SUBSECTIONS` equality and `defaultSubsection('logs')`), `tests/unit/monitoring-paths.test.ts` (any `withRegion` case on a bare `/logs`) and any e2e assertion that `/logs` redirects to `search` — it now redirects to `volume`.
+Leave `src/lib/monitoring/shared/sections.ts` as it is: `logs` stays `['search', 'volume', 'endpoints']` by controller ruling, because the owner opens Logs to search. Do not change `defaultSubsection('logs')` and update the comment Task 8 left so it states the ruling: Logs is the one section whose landing sub-page is not its dashboard, because the owner opens it to search. Every existing assertion that `/logs` redirects to `search` stays as it is.
 
 - [ ] **Step 6: Add the messages**
 
@@ -4042,7 +4042,7 @@ Add to `tests/e2e/09-dashboards.spec.ts`:
 ```ts
 test('the logs section opens on the volume dashboard', async ({ page }) => {
   await page.goto(`/en/c/${connectionId}/us-east-1/logs`);
-  await expect(page).toHaveURL(`/en/c/${connectionId}/us-east-1/logs/volume`);
+  await expect(page).toHaveURL(`/en/c/${connectionId}/us-east-1/logs/search`);
 });
 
 test('the volume dashboard ranks the log groups and links each one to the search', async ({ page }) => {
