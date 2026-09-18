@@ -51,7 +51,6 @@ describe('the sub-pages no task has built yet', () => {
     expect([...UNBUILT_SUBSECTIONS].sort()).toEqual([
       'alarms/report',
       'containers/report',
-      'databases/queries',
       'databases/report',
       'load-balancers/report',
       'logs/endpoints',
@@ -69,7 +68,7 @@ describe('the sub-pages no task has built yet', () => {
 
   it('marks a segment built or not', () => {
     expect(isSubsectionBuilt('databases', 'instances')).toBe(true);
-    expect(isSubsectionBuilt('databases', 'queries')).toBe(false);
+    expect(isSubsectionBuilt('databases', 'queries')).toBe(true);
     expect(isSubsectionBuilt('logs', 'search')).toBe(true);
     expect(isSubsectionBuilt('logs', 'volume')).toBe(false);
   });

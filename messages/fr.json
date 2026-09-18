@@ -1019,6 +1019,39 @@
         }
       }
     },
+    "queries": {
+      "title": "Requêtes",
+      "description": "La charge de toutes les instances, fusionnée, avec l'origine de chaque entrée.",
+      "cardTitle": "Charge sur l'ensemble du parc",
+      "scopeNote": "Il s'agit des requêtes visibles dans le top {limit} de chaque instance, pas d'un classement garanti sur tout le parc.",
+      "shareNote": "Part des requêtes affichées, et non de la charge totale de chaque instance.",
+      "topLabel": "Entrées les plus lourdes",
+      "groupBy": {
+        "label": "Regrouper par",
+        "sql": "Requêtes",
+        "user": "Utilisateurs",
+        "host": "Hôtes clients",
+        "note": "Un seul regroupement à la fois : chaque vue coûte un appel Performance Insights par instance."
+      },
+      "sortBy": {
+        "label": "Trier par",
+        "load": "Charge totale",
+        "instances": "Plus d'instances touchées"
+      },
+      "columns": {
+        "statement": "Entrée",
+        "load": "Charge totale",
+        "share": "Part",
+        "instances": "Instances",
+        "origins": "Origine"
+      },
+      "origin": "<link>{instance}</link> — {load} — {share}",
+      "expand": "Afficher le texte complet",
+      "notCoveredTitle": "Instances non couvertes",
+      "empty": "Aucune instance de cette région n'a Performance Insights activé.",
+      "emptyButUncovered": "Aucune requête n'a été renvoyée pour les instances lisibles.",
+      "tableCaption": "Charge de base de données par {group}"
+    },
     "loadBalancers": {
       "title": "Répartiteurs de charge",
       "description": "Application Load Balancers de {connection} dans {region}.",

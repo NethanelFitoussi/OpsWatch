@@ -20,9 +20,8 @@ test('the section menu lists the sub-pages, marks the active one and keeps the r
   await page.goto(`/en/c/${connectionId}/us-east-1/databases/instances?range=12h`);
   const nav = page.getByRole('navigation', { name: 'Databases pages' });
   await expect(nav.getByRole('link', { name: 'Instances' })).toHaveAttribute('aria-current', 'page');
-  // Queries and Report arrive in later tasks: until then the menu shows where they will be, disabled.
-  await expect(nav.getByRole('link', { name: 'Queries' })).toHaveCount(0);
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Queries' })).toContainText('Coming soon');
+  // Queries is built, so the menu links to it; Report arrives in a later task and stays disabled until then.
+  await expect(nav.getByRole('link', { name: 'Queries' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/databases/queries?range=12h`);
   await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Report' })).toContainText('Coming soon');
   await expect(page.getByRole('heading', { level: 1, name: 'Instances' })).toBeVisible();
 });
@@ -96,4 +95,32 @@ test('switching region keeps the sub-page', async ({ page }) => {
   await page.getByRole('button', { name: 'Region' }).click();
   // The menu item is the link itself: DropdownMenuItem renders as its child.
   await expect(page.getByRole('menuitem', { name: 'us-east-1' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/databases/instances?range=12h`);
+});
+
+test('the databases queries page names its scope and lists the instances it could not cover', async ({ page }) => {
+  await page.goto(`/en/c/${connectionId}/us-east-1/databases/queries?range=3h`);
+  await expect(page).toHaveTitle('Queries · OpsWatch');
+  await expect(page.getByRole('heading', { level: 1, name: 'Queries' })).toBeVisible();
+  // moto never reports PerformanceInsightsEnabled, so the seeded instance is always "not covered".
+  await expect(page.getByText("These are the statements visible in each instance's top 25", { exact: false })).toBeVisible();
+  await expect(page.getByText('Covering 0 of 1 database instances.')).toBeVisible();
+  const notCovered = page.getByRole('heading', { name: 'Instances not covered' });
+  await expect(notCovered).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'opswatch-e2e-db' })).toContainText('Performance Insights is disabled');
+  await expect(page.getByText('No statement was returned for the instances that could be read.')).toBeVisible();
+});
+
+test('the grouping and the sort ride in the URL and keep the range', async ({ page }) => {
+  await page.goto(`/en/c/${connectionId}/us-east-1/databases/queries?range=3h`);
+  await expect(page.getByRole('link', { name: 'Statements' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: 'Database users' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/databases/queries?range=3h&group=user`);
+  await page.getByRole('link', { name: 'Most instances affected' }).click();
+  await expect(page).toHaveURL(`/en/c/${connectionId}/us-east-1/databases/queries?range=3h&sort=instances`);
+  await expect(page.getByRole('link', { name: 'Most instances affected' })).toHaveAttribute('aria-current', 'page');
+});
+
+test('the section menu reaches the queries page from the instances list', async ({ page }) => {
+  await page.goto(`/en/c/${connectionId}/us-east-1/databases/instances?range=12h`);
+  await page.getByRole('navigation', { name: 'Databases pages' }).getByRole('link', { name: 'Queries' }).click();
+  await expect(page).toHaveURL(`/en/c/${connectionId}/us-east-1/databases/queries?range=12h`);
 });

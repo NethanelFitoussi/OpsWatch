@@ -1019,6 +1019,39 @@
         }
       }
     },
+    "queries": {
+      "title": "Queries",
+      "description": "Every instance's database load, merged, with where each entry comes from.",
+      "cardTitle": "Load across the fleet",
+      "scopeNote": "These are the statements visible in each instance's top {limit}, not a guaranteed fleet-wide ranking.",
+      "shareNote": "Share of the statements shown, not of each instance's total database load.",
+      "topLabel": "Heaviest entries",
+      "groupBy": {
+        "label": "Group by",
+        "sql": "Statements",
+        "user": "Database users",
+        "host": "Client hosts",
+        "note": "One grouping at a time: each view costs one Performance Insights call per instance."
+      },
+      "sortBy": {
+        "label": "Sort by",
+        "load": "Total load",
+        "instances": "Most instances affected"
+      },
+      "columns": {
+        "statement": "Entry",
+        "load": "Total load",
+        "share": "Share",
+        "instances": "Instances",
+        "origins": "Where it comes from"
+      },
+      "origin": "<link>{instance}</link> — {load} — {share}",
+      "expand": "Show the full text",
+      "notCoveredTitle": "Instances not covered",
+      "empty": "No database instance in this region has Performance Insights enabled.",
+      "emptyButUncovered": "No statement was returned for the instances that could be read.",
+      "tableCaption": "Database load by {group}"
+    },
     "loadBalancers": {
       "title": "Load balancers",
       "description": "Application load balancers of {connection} in {region}.",
