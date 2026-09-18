@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useId, useMemo } from 'react';
 import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import type { ThresholdBand } from '@/lib/monitoring/shared/bands';
+import { bandSentence, type ThresholdBand } from '@/lib/monitoring/shared/bands';
 import { mergeSeriesRows } from '@/lib/monitoring/shared/chart-data';
 import { formatAxisTime, formatMetricValue, type MetricUnit } from '@/lib/monitoring/shared/format';
 import type { TimeRange } from '@/lib/monitoring/shared/time-range';
@@ -11,26 +11,6 @@ import type { TimeRange } from '@/lib/monitoring/shared/time-range';
 export type ChartSeries = { id: string; label: string; timestamps: number[]; values: number[] };
 
 const SERIES_COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)'];
-
-/**
- * The bands as a sentence, for a reader who cannot see the shading behind the line. Only a rising set
- * (healthy first, from zero) can be worded from the two messages this stage has; a falling set returns
- * nothing rather than a sentence that reads backwards, and needs its own message the day one is charted.
- */
-function bandSentence(
-  bands: ThresholdBand[],
-  unit: MetricUnit,
-  locale: string,
-  t: (key: string, values: Record<string, string>) => string,
-): string | null {
-  const healthy = bands.find((band) => band.tone === 'success');
-  if (!healthy || healthy.from !== 0 || healthy.to === null) return null;
-  const warning = formatMetricValue(healthy.to, unit, locale);
-  const critical = bands.find((band) => band.tone === 'danger');
-  return critical
-    ? t('chart.bands', { warning, critical: formatMetricValue(critical.from, unit, locale) })
-    : t('chart.bandsWarningOnly', { warning });
-}
 
 export function MetricChart({
   title,

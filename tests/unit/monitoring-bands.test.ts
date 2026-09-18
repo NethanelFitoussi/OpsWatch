@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { bandsFor, cpuBand, toneForValue, volumeBand } from '@/lib/monitoring/shared/bands';
+import { bandSentence, bandsFor, cpuBand, toneForValue, volumeBand } from '@/lib/monitoring/shared/bands';
+import en from '../../messages/en.json';
 
 const cpu = { warning: 85, critical: 95, direction: 'above' } as const;
 const memory = { warning: 5, direction: 'below' } as const;
+
+/** The real catalogue behind the minimal `t` the component passes in, so a renamed key fails the test. */
+const t = (key: string, values: Record<string, string>): string => {
+  const message = `Monitoring.client.${key}`.split('.').reduce<unknown>((node, step) => (node as Record<string, unknown>)?.[step], en);
+  if (typeof message !== 'string') throw new Error(`missing message Monitoring.client.${key}`);
+  return message.replaceAll(/\{(\w+)\}/g, (whole, name: string) => values[name] ?? whole);
+};
 
 describe('bandsFor', () => {
   it('builds healthy, warning and critical bands for an upward threshold', () => {
@@ -35,6 +43,28 @@ describe('toneForValue', () => {
     expect(toneForValue(4, memory)).toBe('warning');
     expect(toneForValue(6, memory)).toBe('success');
     expect(toneForValue(null, cpu)).toBeNull();
+  });
+});
+
+describe('bandSentence', () => {
+  it('words a rising set with a critical band', () => {
+    expect(bandSentence(bandsFor(cpu, 100), 'percent', 'en', t)).toBe('Bands: healthy up to 85%, warning up to 95%, critical above.');
+  });
+  it('words a rising set without a critical band, whose last band is open-ended', () => {
+    expect(bandSentence(bandsFor({ warning: 1, direction: 'above' }, null), 'count', 'en', t)).toBe('Bands: healthy up to 1, warning above.');
+  });
+  it('words a falling set, where healthy is the top band', () => {
+    expect(bandSentence(bandsFor(memory, 100), 'percent', 'en', t)).toBe('Bands: warning below 5%, healthy above.');
+    // Open-ended above, as a free-memory chart with no known maximum is.
+    expect(bandSentence(bandsFor({ warning: 5 * 1024 ** 3, direction: 'below' }, null), 'bytes', 'en', t)).toBe(
+      'Bands: warning below 5 GB, healthy above.',
+    );
+  });
+  it('says nothing when no band is healthy, rather than a sentence that reads backwards', () => {
+    expect(bandSentence([], 'percent', 'en', t)).toBeNull();
+    expect(bandSentence([{ from: 0, to: 50, tone: 'warning' }], 'percent', 'en', t)).toBeNull();
+    // Healthy from zero and open-ended: the whole axis is healthy, so there is no threshold to name.
+    expect(bandSentence([{ from: 0, to: null, tone: 'success' }], 'percent', 'en', t)).toBeNull();
   });
 });
 

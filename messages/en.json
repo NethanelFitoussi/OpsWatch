@@ -674,7 +674,8 @@
         "noData": "No data for this period",
         "legend": "Series",
         "bands": "Bands: healthy up to {warning}, warning up to {critical}, critical above.",
-        "bandsWarningOnly": "Bands: healthy up to {warning}, warning above."
+        "bandsWarningOnly": "Bands: healthy up to {warning}, warning above.",
+        "bandsBelow": "Bands: warning below {warning}, healthy above."
       },
       "logs": {
         "query": "Query",

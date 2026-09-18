@@ -674,7 +674,8 @@
         "noData": "Aucune donnée sur cette période",
         "legend": "Séries",
         "bands": "Bandes : sain jusqu'à {warning}, avertissement jusqu'à {critical}, critique au-delà.",
-        "bandsWarningOnly": "Bandes : sain jusqu'à {warning}, avertissement au-delà."
+        "bandsWarningOnly": "Bandes : sain jusqu'à {warning}, avertissement au-delà.",
+        "bandsBelow": "Bandes : avertissement en dessous de {warning}, sain au-delà."
       },
       "logs": {
         "query": "Requête",

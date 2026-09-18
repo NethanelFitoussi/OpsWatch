@@ -31,6 +31,16 @@ const ICON_TONE: Record<Change['kind'], string> = {
  *
  * Colour and an icon are never the only signal: the percentage is written out, and a screen reader is given
  * the whole sentence ("Up 20% against the previous 12 hours") exactly once.
+ *
+ * Every kind therefore renders something visible and announces its sentence once; only *what is visible*
+ * differs, and it differs on purpose:
+ * - `up` and `down` have a figure, and the figure is what a dense cell wants — the sentence goes to the
+ *   accessibility tree alone, so a sighted reader is not given a line of prose per row.
+ * - `flat` and `new` have no figure to show (`+0.4%` under a flat window would contradict "Unchanged"), but
+ *   they do state a fact about the window, so that fact is the visible text and repeating it below would be
+ *   read twice by a screen reader.
+ * - `unavailable` states no fact — the comparison simply could not be made — so it shows `NO_VALUE`, the dash
+ *   this app writes wherever a value is missing, and keeps its sentence hidden like the figures do.
  */
 export async function ChangeArrow({ change, rangeKey }: { change: Change; rangeKey: ReportRange }): Promise<React.JSX.Element> {
   const t = await getTranslations('Monitoring.common');
@@ -38,8 +48,7 @@ export async function ChangeArrow({ change, rangeKey }: { change: Change; rangeK
   const percent = changeText(change, locale);
   const sentence = t(`change.${change.kind}`, { percent, window: t(`window.${rangeKey}`) });
   const Icon = ICONS[change.kind];
-  // `flat` and `new` have no number to show, so their own message is the visible text and reading it twice
-  // would be noise; the other kinds show the percentage and keep the sentence for assistive technology.
+  // The two kinds whose sentence is the visible text; see the rule above the component.
   const spellsItself = change.kind === 'flat' || change.kind === 'new';
   return (
     <span className={cn('inline-flex items-center gap-1 text-xs tabular-nums', ICON_TONE[change.kind])}>

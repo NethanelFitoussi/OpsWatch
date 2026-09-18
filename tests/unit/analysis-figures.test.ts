@@ -88,6 +88,33 @@ describe('ChangeArrow', () => {
     expect(announced(missing)).toBe('No comparison available');
     expect(missing).toContain('—'); // the cell is never simply blank
   });
+
+  it('shows something visible and announces one sentence, whichever kind it is', async () => {
+    const changes = [
+      { kind: 'up', ratio: 0.2 },
+      { kind: 'down', ratio: -0.2 },
+      { kind: 'flat', ratio: 0 },
+      { kind: 'new' },
+      { kind: 'unavailable' },
+    ] as const;
+    for (const change of changes) {
+      const html = await render(await ChangeArrow({ change, rangeKey: '24h' }));
+      const sentence = announced(html);
+      expect(sentence).not.toBe(''); // never silent
+      expect(html.replaceAll(/<[^>]+>/g, ' ').replaceAll(/\s+/g, ' ').trim()).not.toBe(''); // never blank on screen
+      // The sentence is announced exactly once, whether it is the visible text or only the hidden one.
+      expect(html.split(sentence)).toHaveLength(2);
+    }
+  });
+
+  it('spells out the kinds that have no figure and shows the figure for the kinds that have one', async () => {
+    const isNew = await render(await ChangeArrow({ change: { kind: 'new' }, rangeKey: '24h' }));
+    expect(isNew).toContain('No value in the previous 24 hours'); // the fact itself is the visible text
+    expect(isNew).not.toContain('sr-only');
+    const down = await render(await ChangeArrow({ change: { kind: 'down', ratio: -0.2 }, rangeKey: '24h' }));
+    expect(down).toContain('<span aria-hidden="true">-20%</span>'); // the figure carries the cell
+    expect(down).toContain('sr-only');
+  });
 });
 
 describe('HeatGrid', () => {

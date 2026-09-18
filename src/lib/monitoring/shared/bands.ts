@@ -2,6 +2,7 @@
 // no AWS, zod, Node, database, server-only or next-intl/server import.
 
 import type { Tone } from '@/lib/ui/tones';
+import { formatMetricValue, type MetricUnit } from './format';
 
 export type ThresholdLevels = { warning: number; critical?: number; direction: 'above' | 'below' };
 export type ThresholdBand = { from: number; to: number | null; tone: Tone };
@@ -24,6 +25,32 @@ export function toneForValue(value: number | null, levels: ThresholdLevels): Ton
   const past = (t: number) => (levels.direction === 'above' ? value > t : value < t);
   if (levels.critical !== undefined && past(levels.critical)) return 'danger';
   return past(levels.warning) ? 'warning' : 'success';
+}
+
+/**
+ * The bands as a sentence, for a reader who cannot see the shading behind the line — the shading is an 8 %
+ * tint that carries no contrast of its own, so this sentence, not the colour, is what states the thresholds.
+ *
+ * A rising set (healthy from zero up to the warning threshold) and a falling set (healthy above it, as free
+ * memory or healthy hosts are) each have their own wording, so neither reads backwards. A set with no healthy
+ * band, or one whose healthy band covers the whole axis, has no threshold to name and returns nothing.
+ */
+export function bandSentence(
+  bands: readonly ThresholdBand[],
+  unit: MetricUnit,
+  locale: string,
+  t: (key: string, values: Record<string, string>) => string,
+): string | null {
+  const healthy = bands.find((band) => band.tone === 'success');
+  if (!healthy) return null;
+  const value = (n: number) => formatMetricValue(n, unit, locale);
+  if (healthy.from === 0) {
+    if (healthy.to === null) return null;
+    const warning = value(healthy.to);
+    const critical = bands.find((band) => band.tone === 'danger');
+    return critical ? t('chart.bands', { warning, critical: value(critical.from) }) : t('chart.bandsWarningOnly', { warning });
+  }
+  return t('chart.bandsBelow', { warning: value(healthy.from) });
 }
 
 export const CPU_BANDS = [10, 50, 85] as const;
