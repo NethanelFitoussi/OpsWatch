@@ -29,6 +29,27 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
   return value !== undefined && subsectionsOf(section).includes(value);
 }
 
+/**
+ * `<section>/<segment>` of every sub-page the plan still has to build. They stay in the catalogue so the
+ * section menu shows where they will be, but the menu disables them and labels them "coming soon" rather
+ * than linking to a page that answers "not found". This is the single list behind that treatment: the task
+ * that builds a page deletes its line here and nothing else. A section's default segment is never in it.
+ */
+export const UNBUILT_SUBSECTIONS: readonly string[] = [
+  'overview/audit',
+  'containers/report',
+  'databases/queries',
+  'databases/report',
+  'load-balancers/report',
+  'alarms/report',
+  'logs/volume',
+  'logs/endpoints',
+];
+
+export function isSubsectionBuilt(section: MonitoringSection, subsection: string): boolean {
+  return !UNBUILT_SUBSECTIONS.includes(`${section}/${subsection}`);
+}
+
 export function subsectionLabelKey(section: MonitoringSection, subsection: string): string {
   return `Sections.${section}.${subsection}`;
 }

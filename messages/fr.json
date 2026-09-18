@@ -735,7 +735,9 @@
       "sectionNav": {
         "label": "Pages {section}",
         "collapse": "Réduire le menu de section",
-        "expand": "Déplier le menu de section"
+        "expand": "Déplier le menu de section",
+        "comingSoon": "Bientôt disponible",
+        "comingSoonFor": "{page} — bientôt disponible"
       }
     },
     "common": {

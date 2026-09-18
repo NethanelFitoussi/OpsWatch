@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { MONITORING_SECTIONS } from '@/lib/monitoring/shared/paths';
-import { SUBSECTIONS, SUBSECTION_ICONS, defaultSubsection, isSubsectionOf, subsectionLabelKey, subsectionsOf } from '@/lib/monitoring/shared/sections';
+import {
+  SUBSECTIONS,
+  SUBSECTION_ICONS,
+  UNBUILT_SUBSECTIONS,
+  defaultSubsection,
+  isSubsectionBuilt,
+  isSubsectionOf,
+  subsectionLabelKey,
+  subsectionsOf,
+} from '@/lib/monitoring/shared/sections';
 
 describe('the sub-section catalogue', () => {
   it('matches the spec table exactly', () => {
@@ -33,5 +42,40 @@ describe('the sub-section catalogue', () => {
     for (const section of MONITORING_SECTIONS) {
       for (const sub of subsectionsOf(section)) expect(SUBSECTION_ICONS[sub]).toBeDefined();
     }
+  });
+});
+
+describe('the sub-pages no task has built yet', () => {
+  it('names every segment that has no page, and only those', () => {
+    // One list drives the whole "coming soon" treatment: the task that builds a page deletes its line here.
+    expect([...UNBUILT_SUBSECTIONS].sort()).toEqual([
+      'alarms/report',
+      'containers/report',
+      'databases/queries',
+      'databases/report',
+      'load-balancers/report',
+      'logs/endpoints',
+      'logs/volume',
+      'overview/audit',
+    ]);
+  });
+
+  it('only names segments the catalogue still has, so a rename cannot leave a stale entry', () => {
+    for (const entry of UNBUILT_SUBSECTIONS) {
+      const [section, subsection] = entry.split('/') as [never, string];
+      expect(subsectionsOf(section), entry).toContain(subsection);
+    }
+  });
+
+  it('marks a segment built or not', () => {
+    expect(isSubsectionBuilt('databases', 'instances')).toBe(true);
+    expect(isSubsectionBuilt('databases', 'queries')).toBe(false);
+    expect(isSubsectionBuilt('logs', 'search')).toBe(true);
+    expect(isSubsectionBuilt('logs', 'volume')).toBe(false);
+  });
+
+  it('never leaves a section pointing at a page that does not exist', () => {
+    // `/<section>` and every connection or region switch land on the default segment, so it must be built.
+    for (const section of MONITORING_SECTIONS) expect(isSubsectionBuilt(section, defaultSubsection(section)), section).toBe(true);
   });
 });

@@ -2,19 +2,28 @@ import { getTranslations } from 'next-intl/server';
 import { SECTION_NAV_KEY } from '@/components/nav-items';
 import type { MonitoringPageContext } from '@/lib/monitoring/route';
 import { subsectionPath, type MonitoringSection, type ScopeRef } from '@/lib/monitoring/shared/paths';
-import { subsectionsOf } from '@/lib/monitoring/shared/sections';
+import { isSubsectionBuilt, subsectionsOf } from '@/lib/monitoring/shared/sections';
 import type { TimeRange } from '@/lib/monitoring/shared/time-range';
 import { SectionPanel } from './section-panel';
 import { SectionPageHeader } from './section-page-header';
 
 /**
- * The section menu's links. Only the time range follows a move between sub-pages: a sort, a facet or a
- * search belongs to one table, and carrying it to a sibling page would filter the wrong thing.
+ * The section menu's entries. Only the time range follows a move between sub-pages: a sort, a facet or a
+ * search belongs to one table, and carrying it to a sibling page would filter the wrong thing. A sub-page
+ * no task has built yet is marked `comingSoon`, and the menu shows it disabled rather than linking to a 404.
  */
-export function sectionLinks(scope: ScopeRef, section: MonitoringSection, search: string): { subsection: string; href: string }[] {
+export function sectionLinks(
+  scope: ScopeRef,
+  section: MonitoringSection,
+  search: string,
+): { subsection: string; href: string; comingSoon: boolean }[] {
   const range = new URLSearchParams(search).get('range');
   const query = range ? `?range=${encodeURIComponent(range)}` : '';
-  return subsectionsOf(section).map((subsection) => ({ subsection, href: `${subsectionPath(scope, section, subsection)}${query}` }));
+  return subsectionsOf(section).map((subsection) => ({
+    subsection,
+    href: `${subsectionPath(scope, section, subsection)}${query}`,
+    comingSoon: !isSubsectionBuilt(section, subsection),
+  }));
 }
 
 /**
