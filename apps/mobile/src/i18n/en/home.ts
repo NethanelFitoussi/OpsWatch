@@ -7,6 +7,7 @@ export const home = {
   'home.count.critical': 'critical',
   'home.count.warning': 'warnings',
   'home.count.healthyServices': 'healthy services',
+  'home.count.healthyOfTotal': 'of {total} healthy services',
   'home.count.healthyOf': '{healthy} of {total}',
   'home.mostImportant': 'Most important problem',
   'home.noProblem': 'No open problem. Nothing needs you right now.',

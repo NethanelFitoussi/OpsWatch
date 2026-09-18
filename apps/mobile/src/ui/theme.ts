@@ -2,6 +2,7 @@
  * Design tokens. Two palettes with the same keys; components read colours only through `useTheme()`.
  * Status colours meet WCAG AA against their `*Bg` tint and are always paired with an icon and a word.
  */
+import { Platform } from 'react-native';
 import type { HealthStatus, Severity } from '@/api/contract';
 
 export type Palette = {
@@ -124,7 +125,8 @@ export const radius = { sm: 6, md: 10, lg: 14, pill: 999 } as const;
 export const TOUCH_TARGET = 48;
 
 export const fontSize = { caption: 12, small: 13, body: 15, subtitle: 17, title: 20, headline: 26, hero: 32 } as const;
-export const monoFont = 'Menlo';
+/** Menlo exists only on iOS; Android and web need the generic family, or they fall back to a serif face. */
+export const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
 
 export type Tone = 'critical' | 'warning' | 'healthy' | 'info' | 'unknown';
 

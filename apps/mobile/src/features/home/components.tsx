@@ -64,12 +64,13 @@ export function StatusHero({ health, environment }: { health: Pick<Health, 'stat
 export function CountsRow({ counts }: { counts: Health['counts'] }) {
   const { t } = useI18n();
   const { colors } = useTheme();
-  const healthy =
-    counts.healthyServices === null ? t('state.noData') : counts.totalServices === null ? String(counts.healthyServices) : t('home.count.healthyOf', { healthy: counts.healthyServices, total: counts.totalServices });
+  // "15" over "of 18 healthy services": a short value never truncates on small phones.
+  const healthyValue = counts.healthyServices === null ? t('state.noData') : String(counts.healthyServices);
+  const healthyLabel = counts.healthyServices !== null && counts.totalServices !== null ? t('home.count.healthyOfTotal', { total: counts.totalServices }) : t('home.count.healthyServices');
   const items: { value: string; label: string; icon: IconName; color: string; testID: string }[] = [
     { value: String(counts.critical), label: t('home.count.critical'), icon: 'alert-circle', color: counts.critical ? colors.critical : colors.textFaint, testID: 'count-critical' },
     { value: String(counts.warning), label: t('home.count.warning'), icon: 'warning', color: counts.warning ? colors.warning : colors.textFaint, testID: 'count-warning' },
-    { value: healthy, label: t('home.count.healthyServices'), icon: 'checkmark-circle', color: colors.healthy, testID: 'count-healthy' },
+    { value: healthyValue, label: healthyLabel, icon: 'checkmark-circle', color: colors.healthy, testID: 'count-healthy' },
   ];
   return (
     <View style={styles.counts}>

@@ -96,14 +96,16 @@ export const EvidenceItem = memo(function EvidenceItem({ item, locale }: { item:
           style={styles.evidenceHead}
         >
           <Ionicons name={meta.icon} size={16} color={colors.textMuted} importantForAccessibility="no" />
-          <Text variant="body" weight="600" style={{ flex: 1 }}>
-            {item.title}
-          </Text>
-          {item.confidence ? (
-            <Text variant="caption" tone="muted">
-              {t(`investigations.confidence.${item.confidence}`)}
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="body" weight="600">
+              {item.title}
             </Text>
-          ) : null}
+            {item.confidence ? (
+              <Text variant="caption" tone="muted">
+                {t(`investigations.confidence.${item.confidence}`)}
+              </Text>
+            ) : null}
+          </View>
         </Pressable>
         {expanded && item.detail ? <Text tone="muted">{item.detail}</Text> : null}
         {expanded && item.series ? <TrendChart series={item.series} height={110} /> : null}

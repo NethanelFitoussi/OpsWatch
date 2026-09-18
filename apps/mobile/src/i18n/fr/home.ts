@@ -9,6 +9,7 @@ export const home: Record<keyof typeof source, string> = {
   'home.count.critical': 'critiques',
   'home.count.warning': 'avertissements',
   'home.count.healthyServices': 'services sains',
+  'home.count.healthyOfTotal': 'services sains sur {total}',
   'home.count.healthyOf': '{healthy} sur {total}',
   'home.mostImportant': 'Problème le plus important',
   'home.noProblem': 'Aucun problème ouvert. Rien ne demande votre attention.',
