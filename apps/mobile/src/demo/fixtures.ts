@@ -833,6 +833,7 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       version: '0.1.0-demo',
       apiVersion: 1,
       name: 'OpsWatch demo',
+      demo: true,
       auth: { password: true, google: false },
       features: {
         health: true, brief: true, problems: true, errors: true, services: true, infrastructure: true, logs: true, alerts: true,

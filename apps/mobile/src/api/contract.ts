@@ -128,6 +128,8 @@ export const serverInfoSchema = z.object({
   version: z.string(),
   apiVersion: z.number().int(),
   name: z.string().optional(),
+  /** True when the instance answers from fixtures rather than from a real account (the app then shows DEMO DATA). */
+  demo: z.boolean().optional().default(false),
   auth: z.object({ password: z.boolean(), google: z.boolean() }),
   features: featureFlags,
 });

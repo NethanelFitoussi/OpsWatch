@@ -137,7 +137,7 @@ export function DemoBanner() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const { state } = useSession();
-  if (state.status !== 'signed-in' || !state.server.demo) return null;
+  if (state.status !== 'signed-in' || !(state.server.demo || state.server.info?.demo)) return null;
   return (
     <View style={[styles.demo, { backgroundColor: colors.demoBg }]} accessibilityRole="text" testID="demo-banner">
       <Ionicons name="flask" size={14} color={colors.demo} importantForAccessibility="no" />
