@@ -31,6 +31,7 @@ const SERVER_ONLY_MODULES = [
   'lib/connections/test-connection.ts',
   'lib/connections/template.ts',
   'lib/db/client.ts',
+  'lib/settings/repository.ts',
   'lib/monitoring/result.ts',
   'lib/monitoring/cache.ts',
   'lib/monitoring/call.ts',

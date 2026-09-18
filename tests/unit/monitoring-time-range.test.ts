@@ -25,6 +25,12 @@ describe('time ranges', () => {
     expect(parseTimeRange(['12h', '1h'])).toBe('12h');
   });
 
+  it('falls back to the range configured in Settings, which ?range still overrides', () => {
+    expect(parseTimeRange(undefined, '24h')).toBe('24h');
+    expect(parseTimeRange('2h', '24h')).toBe('24h');
+    expect(parseTimeRange('1h', '24h')).toBe('1h');
+  });
+
   it('floors the window end to the minute so cache keys stay stable', () => {
     expect(timeWindow('3h', now)).toEqual({
       start: new Date('2026-09-17T07:07:00.000Z'),

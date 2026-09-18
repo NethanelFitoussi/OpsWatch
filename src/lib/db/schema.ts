@@ -37,4 +37,15 @@ export const connections = sqliteTable('connections', {
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
+/**
+ * The instance's own settings. One admin, so one row, always `SETTINGS_ROW_ID`: no key column and no
+ * per-user fan-out. Added on its own, next to `connections`, which this table never touches.
+ */
+export const settings = sqliteTable('settings', {
+  id: integer('id').primaryKey(),
+  refreshIntervalMs: integer('refresh_interval_ms').notNull(),
+  defaultRange: text('default_range').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 export type ConnectionRow = typeof connections.$inferSelect;
