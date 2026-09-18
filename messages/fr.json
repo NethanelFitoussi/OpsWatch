@@ -742,6 +742,27 @@
         "12h": "12 heures",
         "24h": "24 heures",
         "7d": "7 jours"
+      },
+      "coverage": {
+        "covered": "Couvre {covered} {resource} sur {total}.",
+        "truncated": "Le budget de requêtes a arrêté l'analyse à {covered} ; réduisez la région ou la fenêtre pour voir le reste.",
+        "resource": {
+          "services": "services",
+          "instances": "instances de base de données",
+          "loadBalancers": "répartiteurs de charge",
+          "logGroups": "groupes de journaux",
+          "alarms": "alarmes"
+        }
+      },
+      "notCovered": {
+        "cap": "écarté par le budget de requêtes",
+        "pi_disabled": "Performance Insights est désactivé",
+        "no_resource_id": "AWS n'a renvoyé aucun identifiant de ressource Performance Insights",
+        "unknown_class": "cette classe d'instance ne figure pas dans la table mémoire",
+        "denied": "OpsWatch n'est pas autorisé à le lire",
+        "throttled": "AWS a limité la requête",
+        "error": "AWS a renvoyé une erreur",
+        "code": "({action} : {code})"
       }
     },
     "overview": {

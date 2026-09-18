@@ -742,6 +742,27 @@
         "12h": "12 hours",
         "24h": "24 hours",
         "7d": "7 days"
+      },
+      "coverage": {
+        "covered": "Covering {covered} of {total} {resource}.",
+        "truncated": "The query budget stopped the scan at {covered}; narrow the region or the window to see the rest.",
+        "resource": {
+          "services": "services",
+          "instances": "database instances",
+          "loadBalancers": "load balancers",
+          "logGroups": "log groups",
+          "alarms": "alarms"
+        }
+      },
+      "notCovered": {
+        "cap": "left out by the query budget",
+        "pi_disabled": "Performance Insights is disabled",
+        "no_resource_id": "AWS returned no Performance Insights resource id",
+        "unknown_class": "this instance class is not in the memory table",
+        "denied": "OpsWatch is not allowed to read it",
+        "throttled": "AWS throttled the request",
+        "error": "AWS returned an error",
+        "code": "({action}: {code})"
       }
     },
     "overview": {
