@@ -44,6 +44,7 @@ const SERVER_ONLY_MODULES = [
   'lib/monitoring/logs-route.ts',
   'lib/analysis/window.ts',
   'lib/analysis/coverage.ts',
+  'lib/analysis/markdown.ts',
 ];
 
 describe('module boundaries', () => {
