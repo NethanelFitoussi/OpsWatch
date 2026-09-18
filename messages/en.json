@@ -728,7 +728,21 @@
         "throttled": "AWS is limiting requests right now. The data loads again on the next refresh.",
         "error": "AWS returned an error ({code})."
       },
-      "sparkline": "{metric} over the selected period, latest {value}"
+      "sparkline": "{metric} over the selected period, latest {value}",
+      "change": {
+        "up": "Up {percent} against the previous {window}",
+        "down": "Down {percent} against the previous {window}",
+        "flat": "Unchanged against the previous {window}",
+        "new": "No value in the previous {window}",
+        "unavailable": "No comparison available",
+        "label": "Change"
+      },
+      "window": {
+        "3h": "3 hours",
+        "12h": "12 hours",
+        "24h": "24 hours",
+        "7d": "7 days"
+      }
     },
     "overview": {
       "title": "Overview",

@@ -728,7 +728,21 @@
         "throttled": "AWS limite les requêtes en ce moment. Les données se rechargeront à la prochaine actualisation.",
         "error": "AWS a renvoyé une erreur ({code})."
       },
-      "sparkline": "{metric} sur la période choisie, dernière valeur {value}"
+      "sparkline": "{metric} sur la période choisie, dernière valeur {value}",
+      "change": {
+        "up": "En hausse de {percent} par rapport aux {window} précédentes",
+        "down": "En baisse de {percent} par rapport aux {window} précédentes",
+        "flat": "Stable par rapport aux {window} précédentes",
+        "new": "Aucune valeur sur les {window} précédentes",
+        "unavailable": "Comparaison indisponible",
+        "label": "Évolution"
+      },
+      "window": {
+        "3h": "3 heures",
+        "12h": "12 heures",
+        "24h": "24 heures",
+        "7d": "7 jours"
+      }
     },
     "overview": {
       "title": "Vue d'ensemble",
