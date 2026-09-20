@@ -18,7 +18,7 @@ import type {
   Severity,
 } from '@/api/contract';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters } from '@/api/client';
-import { calmHealth, errorSummaryOf, trendOf, type DemoDataset } from './fixtures';
+import { calmHealth, errorSummaryOf, type DemoDataset } from './fixtures';
 
 export const DEMO_PAGE_SIZE = 20;
 export const DEMO_LOG_PAGE_SIZE = 50;
