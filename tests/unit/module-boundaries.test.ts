@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SRC, clientModuleGraph, moduleGraph, readSource, sourceFilesUnder, valueImports } from '../helpers/source-graph';
+import { SRC, allImports, clientModuleGraph, moduleGraph, readSource, sourceFilesUnder, valueImports } from '../helpers/source-graph';
 
 /** Never reachable from the browser, and never imported by a module that is. */
 const FORBIDDEN_IN_CLIENT = /^(zod|server-only|node:|@aws-sdk\/|@node-rs\/|better-sqlite3|drizzle-orm|next-intl\/server)/;
@@ -14,6 +14,13 @@ const relative = (file: string) => path.relative(SRC, file);
  * §9.6: the store is the only SQL in the product. Nothing above it may reach the driver or the schema, and nothing
  * outside it may name `.$client` — that is the escape hatch, and it belongs behind the repository like the rest.
  */
+/**
+ * `lib/detect` is the pure layer: it turns signals into outcomes and scores them, and it never calls AWS, reads
+ * a clock or touches the database. Every detector takes the numbers it needs as parameters, which is what makes
+ * the whole engine testable — so the imports it may not have are enforced rather than promised.
+ */
+const DETECT_FORBIDDEN = /^(better-sqlite3|drizzle-orm|node:|@aws-sdk\/|next|next-intl|react)/;
+
 const STORE_ONLY = /^(better-sqlite3|drizzle-orm)/;
 const STORE_DIRS = ['lib/db', 'lib/store'];
 
@@ -48,6 +55,8 @@ const SERVER_ONLY_MODULES = [
   'lib/store/collector.ts',
   'lib/store/incidents.ts',
   'lib/store/retention.ts',
+  'lib/detect/key.ts',
+  'lib/detect/score.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',
@@ -131,6 +140,16 @@ describe('module boundaries', () => {
     // An entry that stopped importing drizzle has been migrated or deleted: take it off the list rather than let
     // the exception outlive the debt it records.
     expect(valueImports(readSource(path.join(SRC, file))).some((specifier) => STORE_ONLY.test(specifier))).toBe(true);
+  });
+
+  it.each(sourceFilesUnder('lib/detect').map(relative))('%s stays pure: no AWS, no clock, no database', (file) => {
+    const source = readSource(path.join(SRC, file));
+    const forbidden = allImports(source).filter((specifier) => DETECT_FORBIDDEN.test(specifier));
+    expect(forbidden, `${file} imports ${forbidden.join(', ')}`).toEqual([]);
+    // The schema is the store's vocabulary; a detector that reached for it would tie the pure layer to storage.
+    expect(allImports(source).filter((specifier) => specifier.includes('db/schema'))).toEqual([]);
+    // Reading the clock is the one that quietly destroys testability, so it is called out on its own.
+    expect(source).not.toMatch(/Date\.now\(\)|new Date\(\)/);
   });
 
   it('finds the files of both directories', () => {

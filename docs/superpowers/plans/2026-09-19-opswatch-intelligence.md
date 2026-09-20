@@ -915,3 +915,92 @@ Then simplify `tests/unit/store-problems.test.ts` from Task 1 to import `newProb
 - [x] **Step 5: Run the tests** → PASS.
 - [x] **Step 6: Add `'lib/store/incidents.ts'` and `'lib/store/retention.ts'` to `SERVER_ONLY_MODULES`.**
 - [x] **Step 7: Verify and commit.** Full gate. Commit: `feat(store): incidents, their timeline, and the 30-day resolved-problem rule`.
+
+---
+
+## Phase 2 — The Problem engine
+
+> **Derived 2026-09-20 from the spec**, because the plan as written stopped after Task 4. Each task below cites
+> the sections it implements, and is written into this file *before* it is implemented so a lost session leaves
+> the derived task behind. The Task index above, `## File Structure` and `## Decisions fixed once` still govern.
+
+### Task 5: Identity and the severity score
+
+Implements §4.3's deterministic grouping and severity score, and §33.7's ruling on fresh subjects and floors.
+
+**Files:**
+- Create: `src/lib/detect/key.ts`, `src/lib/detect/score.ts`
+- Create: `tests/unit/detect-key.test.ts`, `tests/unit/detect-score.test.ts`
+- Modify: `src/lib/crypto.ts` (add `sha256Hex`), `tests/unit/module-boundaries.test.ts`
+
+**The purity rule this task establishes.** `src/lib/detect/**` is pure: no AWS, no clock, no database. In
+particular it **must not import `@/lib/db/schema`** — the store converts between the detector's vocabulary and
+the row. So `key.ts` declares `SUBJECT_KINDS` itself, and `tests/unit/detect-key.test.ts` asserts it matches
+`SUBJECT_TYPES` in the schema, which keeps the two from drifting without making `detect` depend on storage.
+
+**Interfaces:**
+- Produces (`src/lib/crypto.ts`): `export function sha256Hex(value: string): string`
+- Produces (`src/lib/detect/key.ts`):
+  - `export const PROBLEM_KEY_LENGTH = 32;`
+  - `export const SUBJECT_KINDS = ['service','resource','cluster','error_group','synthetic','integration'] as const;`
+  - `export type SubjectKind = (typeof SUBJECT_KINDS)[number];`
+  - `export function problemKey(parts: { connectionId: string; scope: string; kind: string; subjectId: string }): string`
+    — `sha256(connectionId + '|' + scope + '|' + kind + '|' + subjectId)` truncated to 32 hex characters.
+    **Nothing else enters the key** — not the value, not the timestamp, not the message — so the same problem
+    stays one row for its whole life (§4.3).
+    **Deviation, found while implementing:** §4.3 writes the key as a plain `'|'` join, which collides —
+    `kind='a|b', subjectId='c'` and `kind='a', subjectId='b|c'` produce the same string and would merge two
+    unrelated subjects into one problem row. The parts are therefore length-prefixed (`2:c1|9:us-east-1|…`)
+    before hashing. Same four inputs, same determinism, no collision.
+- Produces (`src/lib/detect/score.ts`):
+  - `SCORE_WEIGHTS`, `LEVEL_S`, `NO_FAMILY_B`, `FRESH_SUBJECT_MS`, `CRITICAL_SCORE`, `WARNING_SCORE` per **D3**.
+  - `export type ScoreInput = { level; blast: { affected: number; members: number } | null; minutesBreaching: number; userFacing: 'direct' | 'dependency' | 'none' | null; robustZ: number | null; subjectFirstSeenAt: number; nowMs: number; totalFailure?: boolean; floorCritical?: boolean };`
+  - `export function scoreProblem(input: ScoreInput): ScoreTerms` — the five terms, the weight actually
+    available, whether it was rescaled, whether a floor applied, and the score.
+  - `export function severityForScore(score: number): 'critical' | 'warning' | 'info'` — `≥ 70`, `40…69`, `< 40`.
+
+**The formula, and the two rulings that bend it.**
+
+```
+score = round( (40·S + 20·B + 15·T + 15·U + 10·D) / availableWeight × 100 )   clamped 0…100
+```
+
+- `S` the detector's level: critical 1.0, warning 0.55, info 0.2.
+- `B` blast radius: `affected ÷ members`. A subject with no family: `NO_FAMILY_B` (0.34).
+- `T` persistence: `min(1, minutesBreaching / 60)`.
+- `U` user-facing: 1.0 direct, 0.5 a dependency of one (§17), 0 otherwise.
+- `D` deviation: `min(1, |robustZ| / 6)`; **0 when there is no baseline** — `D` is zero-filled, never dropped.
+
+**§33.7, first half — absence of evidence is not evidence of absence.** When a subject has no dependency edge
+(`userFacing === null`) **and** was first seen less than `FRESH_SUBJECT_MS` ago, `U` and `B` are *not*
+zero-filled: they are left out, `availableWeight` drops to the weight of the terms actually known, and the
+score is rescaled over it. A service that fails minutes after its first deploy is then judged on what can be
+measured rather than punished for what cannot. `rescaled` records that this happened.
+
+**§33.7, second half — floors.** A detector reporting critical on a subject whose failure is total (zero
+running tasks, zero healthy targets, every request failing) produces **at least `CRITICAL_SCORE`** whatever the
+formula says. The existing floors — zero healthy targets, synthetic down, certificate under seven days — pass
+`floorCritical`. `floored` records that a floor raised the score. Each floor gets a test with the worked
+example that produced it.
+
+- [x] **Step 1: Write the failing tests.** `tests/unit/detect-key.test.ts` asserts: the key is 32 lowercase hex
+  characters; it is stable across calls and across processes for the same four parts; changing any one of the
+  four parts changes it; a value, a timestamp or a message does **not** enter it (same parts, different
+  evidence → same key); `SUBJECT_KINDS` equals the schema's `SUBJECT_TYPES`.
+  `tests/unit/detect-score.test.ts` asserts the worked examples below.
+- [x] **Step 2: Run them to see them fail.** → FAIL.
+- [x] **Step 3: Add `sha256Hex`, write `key.ts` and `score.ts`.**
+- [x] **Step 4: Run the tests** → PASS.
+- [x] **Step 5: Add `'lib/detect/key.ts'` and `'lib/detect/score.ts'` to `SERVER_ONLY_MODULES`**, and assert in
+  `module-boundaries.test.ts` that nothing under `lib/detect/` imports `@/lib/db/schema`, `drizzle-orm`,
+  `better-sqlite3`, `@aws-sdk/*` or `node:` — the purity rule, enforced rather than promised.
+- [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): the problem key and the severity score`.
+
+**Worked examples the tests pin.**
+
+| Case | Terms | Expected |
+|---|---|---|
+| A sustained critical on a wholly-broken user-facing service, no baseline | S=1, B=1, T=1, U=1, D=0 | 90, critical |
+| §33.7's regression: user-facing service failing 5 minutes after its first deploy, no dependency edge, no family, no baseline | S=1, T=0.083, D=0, B and U unavailable | rescaled over 65; ≈ 63 → warning **unless** the detector declares total failure, which floors it at 70 → critical |
+| An info detector, small blast, brief, not user-facing, no baseline | S=0.2, B=0.1, T=0.05, U=0, D=0 | 11, info |
+| A synthetic down | floorCritical | ≥ 70, `floored: true` |

@@ -88,6 +88,14 @@ and reflows to 80 columns, which is churn against the house style.
    generated client unable to see the segment. Parameters are now derived from each route's own path
    template, with two tests against drift.
 
+5. **The problem key length-prefixes its parts.** §4.3 writes it as
+   `sha256(connectionId + '|' + scope + '|' + kind + '|' + subjectId)`. That collides: `kind='a|b',
+   subjectId='c'` and `kind='a', subjectId='b|c'` hash the same string, which would silently merge two
+   unrelated subjects into one problem row. The parts are length-prefixed instead —
+   `2:c1|9:us-east-1|12:ecs_cpu_high|8:prod/web` — keeping the spec's four inputs and its determinism without
+   the ambiguity. The digest is pinned by a test against an independently computed value; **changing it
+   re-keys every open problem in the field.**
+
 ## Accepted trade-offs, reviewed and deliberately left as they are
 
 Both came out of an independent peer review of `90ed109`, which raised no critical or important findings.
