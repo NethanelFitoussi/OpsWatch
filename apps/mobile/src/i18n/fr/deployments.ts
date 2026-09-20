@@ -17,6 +17,7 @@ export const deployments: Record<keyof typeof source, string> = {
   'deployments.message': 'Message',
   'deployments.author': 'Auteur',
   'deployments.repository': 'Dépôt',
+  'deployments.noCommit': 'Aucun commit n’est associé à ce déploiement : l’app ne peut pas montrer ce qui a changé.',
   'deployments.changes': 'Modifications',
   'deployments.files': '{count} fichier(s)',
   'deployments.additions': '{count} ajouts',

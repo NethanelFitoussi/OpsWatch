@@ -13,6 +13,8 @@ export const services: Record<keyof typeof source, string> = {
   'services.openProblems': '{count} problème(s) ouvert(s)',
   'services.firingAlerts': '{count} alerte(s) en cours',
   'services.metrics': 'Indicateurs clés',
+  'services.noHttpMetrics': 'Pas de métriques HTTP — non mesuré',
+  'services.noHttpMetricsHint': 'Ce service ne remonte ni requêtes, ni latence, ni taux d’erreur. Rien n’est cassé : il n’est simplement pas mesuré ainsi.',
   'services.charts': 'Tendances',
   'services.problems': 'Problèmes',
   'services.noProblems': 'Aucun problème ouvert sur ce service.',

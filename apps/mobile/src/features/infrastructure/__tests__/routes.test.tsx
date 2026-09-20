@@ -12,7 +12,7 @@ it('summarises health and filters resources by category (RDS shows the two Auror
   await seedDemoSession();
   renderRouter('./app', { initialUrl: '/infrastructure' });
   expect(await screen.findByTestId('infrastructure-row-res-bastion', {}, { timeout: 5000 })).toBeTruthy();
-  expect(screen.getByTestId('infrastructure-summary')).toHaveTextContent('2 critical · 3 degraded · 3 healthy · 1 unknown');
+  expect(screen.getByTestId('infrastructure-summary')).toHaveTextContent('2 critical · 3 degraded · 3 healthy · 2 unknown');
   expect(screen.getByTestId('chip-load-balancer')).toBeTruthy();
   expect(screen.queryByTestId('chip-other')).toBeNull();
 
@@ -32,6 +32,17 @@ it('shows "No data" for the Requests metric of res-assets-bucket', async () => {
   expect(tile).toHaveTextContent(/Requests/);
   expect(tile).toHaveTextContent(/No data/);
   expect(screen.getByTestId('infrastructure-header')).toHaveTextContent(/shop-assets/);
+  // Health the server does not know is "Unknown", never quietly promoted to healthy.
+  expect(screen.getByTestId('infrastructure-header')).toHaveTextContent(/Unknown/);
+  expect(screen.getByTestId('infrastructure-header')).not.toHaveTextContent(/Healthy/);
+});
+
+it('says nothing about the estate until the resources have loaded', async () => {
+  await seedDemoSession();
+  renderRouter('./app', { initialUrl: '/infrastructure' });
+  // "No resources" before the first response would be a claim the app cannot make yet.
+  expect(screen.queryByTestId('infrastructure-summary')).toBeNull();
+  expect(await screen.findByTestId('infrastructure-summary', {}, { timeout: 5000 })).toHaveTextContent(/2 unknown/);
 });
 
 it('highlights anomalies and shows problems on the Aurora writer', async () => {

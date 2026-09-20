@@ -19,6 +19,7 @@ export const infrastructure: Record<keyof typeof source, string> = {
   'infrastructure.providerStatus': 'État chez le fournisseur',
   'infrastructure.category': 'Catégorie',
   'infrastructure.keyMetrics': 'Indicateurs clés',
+  'infrastructure.noMetrics': 'Ce serveur ne remonte aucune métrique pour cette ressource.',
   'infrastructure.charts': 'Tendances',
   'infrastructure.properties': 'Propriétés',
   'infrastructure.related': 'Objets liés',

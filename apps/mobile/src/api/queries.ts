@@ -139,23 +139,61 @@ const LOG_POLL_MS = 1500;
 const LOG_MAX_POLLS = 40;
 
 /**
- * Log search. The server may answer `running` (CloudWatch Logs Insights is asynchronous): the hook polls until the
- * search completes, and releases the server-side query when a newer search replaces it or the screen goes away.
+ * Log search against an asynchronous backend (CloudWatch Logs Insights answers `running` first, then results).
+ *
+ * Two things matter beyond fetching: a server-side query costs the account a slot of its concurrency limit, so the
+ * hook releases every query it started — when a newer search replaces it, when the screen goes away, and when it
+ * gives up polling — and a refresh of a search that is still running polls that query instead of starting another.
  */
 export function useLogs(query: LogQuery | null) {
   const { client } = useSession();
   const scope = useScope();
+  const queryKey = keys.logs(scope, query ?? { from: 0, to: 0 });
+  const keyHash = JSON.stringify(queryKey);
+
+  // The query id the server is working on for this search, so a later refresh can poll it and cleanup can end it.
+  const running = useRef<{ keyHash: string; searchId: string } | null>(null);
+  const release = useCallback(
+    (searchId: string) => {
+      void client.cancelLogs(scope, searchId).catch(() => undefined);
+    },
+    [client, scope],
+  );
+
+  // A new search, or leaving the screen, ends the query the server is still running for the previous one.
+  useEffect(() => {
+    return () => {
+      const previous = running.current;
+      if (previous) {
+        running.current = null;
+        release(previous.searchId);
+      }
+    };
+  }, [keyHash, release]);
+
   return useInfiniteQuery({
-    queryKey: keys.logs(scope, query ?? { from: 0, to: 0 }),
+    queryKey,
     queryFn: async ({ pageParam, signal }) => {
-      let result = await client.searchLogs(scope, query!, pageParam);
+      const pending = running.current?.keyHash === keyHash ? running.current.searchId : null;
+      // Refreshing a search that is still running polls it; starting one that is not begins a new query.
+      let result = pending
+        ? await client.pollLogs(scope, pending, pageParam).catch(() => client.searchLogs(scope, query!, pageParam))
+        : await client.searchLogs(scope, query!, pageParam);
+      running.current = { keyHash, searchId: result.searchId };
+
       for (let polls = 0; result.status === 'running' && polls < LOG_MAX_POLLS; polls += 1) {
-        if (signal.aborted) {
-          void client.cancelLogs(scope, result.searchId).catch(() => undefined);
-          break;
-        }
+        if (signal.aborted) break;
         await new Promise((resolve) => setTimeout(resolve, LOG_POLL_MS));
         result = await client.pollLogs(scope, result.searchId, pageParam);
+      }
+
+      if (result.status === 'running') {
+        // Abandoned, or still not finished after the poll budget: the server should stop working on it. The answer
+        // keeps its `running` status, so the screen can offer to look again.
+        running.current = null;
+        release(result.searchId);
+      } else if (running.current?.searchId === result.searchId) {
+        running.current = null;
       }
       return result;
     },

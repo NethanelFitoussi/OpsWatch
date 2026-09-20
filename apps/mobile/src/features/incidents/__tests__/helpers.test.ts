@@ -1,5 +1,5 @@
 import { translate } from '@/i18n';
-import { chronological, incidentDurationText, incidentStatusMeta, isOngoing, serviceNames, timelineTypeKey } from '../helpers';
+import { chronological, incidentDurationText, incidentStatusMeta, isOngoing, isSameDay, serviceNames, timelineTypeKey } from '../helpers';
 
 const MIN = 60_000;
 const now = 1_000 * MIN;
@@ -40,6 +40,10 @@ describe('incident helpers', () => {
     expect(serviceNames({ affectedServices: [{ type: 'service', id: 'svc-a', label: 'a' }, { type: 'service', id: 'svc-b' }] })).toBe('a, svc-b');
   });
 
-  it('offers the AI summary only when authorised', () => {
+  it('tells apart entries of the same day from entries of another one', () => {
+    const at = Date.UTC(2026, 8, 20, 13, 30);
+    expect(isSameDay(at, at + 30 * MIN)).toBe(true);
+    expect(isSameDay(at, at - 26 * 60 * MIN)).toBe(false);
+    expect(isSameDay(at, at + 365 * 24 * 60 * MIN)).toBe(false);
   });
 });

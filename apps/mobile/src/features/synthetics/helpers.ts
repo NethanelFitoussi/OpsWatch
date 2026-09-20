@@ -37,6 +37,25 @@ export function statusCounts(items: Pick<SyntheticSummary, 'status'>[]): Record<
   return counts;
 }
 
+/**
+ * The summary line, failures first: "1 down · 2 degraded · 5 up". Zero counts are dropped, except "up", which is
+ * always stated so an all-green estate still says so out loud.
+ */
+export function summaryParts(items: Pick<SyntheticSummary, 'status'>[]): { status: SyntheticStatus; count: number }[] {
+  const counts = statusCounts(items);
+  const order: SyntheticStatus[] = ['down', 'degraded', 'unknown', 'up'];
+  return order.filter((status) => status === 'up' || counts[status] > 0).map((status) => ({ status, count: counts[status] }));
+}
+
+/** The worst status present, so the summary can be toned without hiding the words behind a colour. */
+export function worstStatus(items: Pick<SyntheticSummary, 'status'>[]): SyntheticStatus {
+  const counts = statusCounts(items);
+  if (counts.down) return 'down';
+  if (counts.degraded) return 'degraded';
+  if (counts.unknown) return 'unknown';
+  return 'up';
+}
+
 /** The host of a check target, or the target itself when it is not a URL. */
 export function targetHost(target: string): string {
   try {

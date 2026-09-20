@@ -14,6 +14,7 @@ export const synthetics = {
   'synthetics.kind': 'Check type: {kind}',
   'synthetics.copyTarget': 'Copy URL',
   'synthetics.lastChecked': 'Last checked',
+  'synthetics.neverRun': 'Never run yet',
   'synthetics.availability24h': 'Availability 24 h',
   'synthetics.uptime30d': 'Uptime 30 d',
   'synthetics.latency': 'Latency',

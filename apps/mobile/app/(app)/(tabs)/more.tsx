@@ -42,7 +42,7 @@ export default function MoreScreen() {
             {i > 0 ? <Divider /> : null}
             <Row
               title={t(entry.label)}
-              subtitle={entry.feature && features && !features[entry.feature] ? t('state.featureUnavailableTitle') : undefined}
+              subtitle={entry.feature && !features?.[entry.feature] ? t('state.featureUnavailableTitle') : undefined}
               icon={entry.icon}
               onPress={() => router.push(entry.href as Href)}
               testID={`more-${entry.href.slice(1)}`}

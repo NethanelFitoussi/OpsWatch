@@ -533,6 +533,13 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       id: 'al-catalog-tasks', name: 'catalog-api-running-tasks', severity: 'warning', status: 'resolved', source: 'CloudWatch alarm',
       since: t(26 * 60 - 4), service: catalog, history: [{ at: t(26 * 60 - 4), status: 'ALARM' }, { at: t(26 * 60 - 19), status: 'OK' }], allowedActions: [],
     },
+    {
+      // No start time and no service: a composite alarm the provider reports without either. The app must not
+      // invent a duration or a subject for it.
+      id: 'al-composite-region', name: 'eu-west-1-composite', severity: 'warning', status: 'insufficient_data',
+      source: 'CloudWatch composite alarm', reason: 'Insufficient data for one of the child alarms.',
+      since: null, history: [], allowedActions: [],
+    },
   ];
   problems[0]!.alerts = [alerts[0]!];
   problems[1]!.alerts = [alerts[1]!];
@@ -603,6 +610,12 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       availability24h: 0.999, uptime30d: 0.9995, latencyMs: 164, lastCheckedAt: t(1),
       ssl: { valid: true, expiresAt: now + 64 * DAY, issuer: 'Example CA' },
       latency: series('latency', 'ms', now, { base: 160, noise: 20, seed: 44 }), availability: uptimeBuckets(null, 44), failures: [],
+    },
+    {
+      // Just created, never executed: everything the app would show is genuinely unknown.
+      id: 'syn-admin', name: 'Admin console', kind: 'http', target: 'https://admin.example.com/', status: 'unknown',
+      availability24h: null, uptime30d: null, latencyMs: null, lastCheckedAt: null, ssl: null,
+      availability: [], failures: [],
     },
   ];
 
@@ -697,6 +710,12 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       keyMetrics: [{ label: 'Requests', value: { value: null, unit: 'per_minute', status: null } }], anomalies: [], properties: [], series: [], related: [web], problems: [],
     },
     {
+      // Discovered, but this server collects no metric for it: the screen must say so rather than look half-loaded.
+      id: 'res-legacy-elb', name: 'legacy-classic-elb', category: 'load-balancer', health: 'unknown', status: undefined,
+      summary: 'Classic load balancer. OpsWatch has no metric for it on this server.',
+      keyMetrics: [], anomalies: [], properties: [], series: [], related: [], problems: [],
+    },
+    {
       id: 'res-nat', name: 'nat-eu-west-1a', category: 'network', health: 'healthy', status: 'available', summary: 'NAT gateway',
       keyMetrics: [{ label: 'Dropped packets', value: { value: 0, unit: 'count', status: 'ok' } }], anomalies: [], properties: [], series: [], related: [], problems: [],
     },
@@ -752,7 +771,21 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
     ),
   ];
 
-  const deployments = [deployCheckout, deployCatalog, deployWorker];
+  const deployAuth: DeploymentDetail = {
+    // No commit and no repository: this service's images are not tagged with a resolvable sha, so OpsWatch can time
+    // the deployment but cannot say what changed in it.
+    id: 'dep-auth-77',
+    service: auth,
+    environment: 'production',
+    version: 'build-770',
+    at: t(8 * 60),
+    status: 'completed',
+    relatedProblems: [],
+    evidence: [],
+    allowedActions: [],
+  };
+
+  const deployments = [deployCheckout, deployCatalog, deployWorker, deployAuth];
 
   const investigations: Investigation[] = [
     {

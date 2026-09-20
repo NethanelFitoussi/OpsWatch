@@ -11,6 +11,8 @@ export const services = {
   'services.openProblems': '{count} open problem(s)',
   'services.firingAlerts': '{count} firing alert(s)',
   'services.metrics': 'Key metrics',
+  'services.noHttpMetrics': 'No HTTP metrics — not measured',
+  'services.noHttpMetricsHint': 'This service reports no request, latency or error-rate metric. Nothing is broken: it is simply not measured that way.',
   'services.charts': 'Trends',
   'services.problems': 'Problems',
   'services.noProblems': 'No open problems on this service.',

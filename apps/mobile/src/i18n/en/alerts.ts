@@ -16,7 +16,7 @@ export const alerts = {
   'alerts.startedAgo': 'started {time}',
   'alerts.startedAt': 'Started {time}',
   'alerts.sinceUnknown': 'Start time unknown',
-  'alerts.currentValue': '{label}, latest reading',
+  'alerts.currentValue': 'Latest reading',
   'alerts.actions': 'Next steps',
   'alerts.acknowledging': 'Acknowledging…',
   'alerts.acknowledgeHint': 'Tells your team someone is looking at this alert. Nothing changes on the monitored system.',

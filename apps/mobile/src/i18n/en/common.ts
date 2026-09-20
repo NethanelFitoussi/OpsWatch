@@ -140,6 +140,7 @@ export const common = {
   'a11y.opens': 'Opens {target}',
   'a11y.chart': '{label}: latest {value}, range {min} to {max}',
   'a11y.chartNoData': '{label}: no data',
+  'chart.overBudget': 'over budget by ×{factor}',
   'chart.offScale': 'off scale',
   'a11y.uptime': '{up} periods up, {down} down, {unknown} without data',
   'a11y.privacyCover': 'OpsWatch content hidden',

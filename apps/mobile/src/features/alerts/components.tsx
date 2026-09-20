@@ -103,7 +103,7 @@ export function AlertHeader({ alert }: { alert: AlertDetail }) {
       {alert.metric ? (
         <View style={styles.field} testID="alert-current-value">
           <Text variant="caption" tone="muted">
-            {t('alerts.currentValue', { label: alert.metric.label })}
+            {t('alerts.currentValue')}
           </Text>
           <Text variant="subtitle" weight="700" style={styles.figures}>
             {current === null ? t('metric.noData') : formatMetric(current, alert.metric.unit)}

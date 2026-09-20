@@ -57,6 +57,16 @@ export function chronological<T extends { at: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.at - b.at);
 }
 
+/**
+ * Whether two instants fall on the same calendar day. A timeline showing only "22:41" for something that happened
+ * yesterday reads as if it happened an hour ago, so entries from another day carry their date.
+ */
+export function isSameDay(a: number, b: number): boolean {
+  const x = new Date(a);
+  const y = new Date(b);
+  return x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate();
+}
+
 export function serviceNames(incident: Pick<IncidentSummary, 'affectedServices'>): string {
   return incident.affectedServices.map((s) => s.label ?? s.id).join(', ');
 }

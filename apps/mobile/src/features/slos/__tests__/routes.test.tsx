@@ -15,6 +15,10 @@ it('lists SLOs, showing No data rather than 0 for slo-auth', async () => {
   expect(auth).toHaveTextContent(/current No data/);
   expect(auth).not.toHaveTextContent(/current 0/);
   expect(screen.getByTestId('slo-row-slo-checkout-availability')).toHaveTextContent(/Breached/);
+  // An exhausted budget says so in words in the list too, not only as a red bar with a negative percentage.
+  expect(screen.getByTestId('slo-row-budget-slo-checkout-availability')).toHaveTextContent('Budget exhausted');
+  expect(screen.getByTestId('slo-row-budget-slo-auth')).toHaveTextContent('Error budget remaining');
+  expect(auth).not.toHaveTextContent('Budget exhausted');
 });
 
 it('shows slo-checkout-availability with its budget exhausted', async () => {

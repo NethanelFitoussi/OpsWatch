@@ -14,7 +14,7 @@ import { UptimeBar } from '@/ui/charts';
 import { KeyValue } from '@/ui/layout';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
-import { classifySsl, sslMessage, sslNeedsAttention, sslTone, statusCounts, syntheticStatusMeta, targetHost, type SslState } from './helpers';
+import { classifySsl, sslMessage, sslNeedsAttention, sslTone, summaryParts, syntheticStatusMeta, targetHost, worstStatus, type SslState } from './helpers';
 
 export function useSyntheticStatus() {
   const { t } = useI18n();
@@ -30,20 +30,17 @@ export function SslBadge({ state, testID }: { state: SslState; testID?: string }
   return <Badge tone={sslTone(state.level)} icon={state.level === 'ok' ? 'lock-closed' : 'lock-open'} label={t(message.key, message.params)} testID={testID} />;
 }
 
-/** "3 up · 1 degraded · 0 down", plus unknown when there is any. */
+/** "1 down · 1 degraded · 2 up": what is failing comes first, and the words carry it without the colour. */
 export function SyntheticsSummary({ items }: { items: SyntheticSummary[] }) {
   const { t } = useI18n();
-  const counts = statusCounts(items);
-  const parts = [
-    t('synthetics.summary.up', { count: counts.up }),
-    t('synthetics.summary.degraded', { count: counts.degraded }),
-    t('synthetics.summary.down', { count: counts.down }),
-    counts.unknown ? t('synthetics.summary.unknown', { count: counts.unknown }) : null,
-  ].filter(Boolean);
+  const worst = worstStatus(items);
+  const text = summaryParts(items)
+    .map((part) => t(`synthetics.summary.${part.status}`, { count: part.count }))
+    .join(' · ');
   return (
     <View style={styles.summary} accessible accessibilityRole="summary" testID="synthetics-summary">
-      <Text variant="body" weight="700">
-        {parts.join(' · ')}
+      <Text variant="body" weight="700" tone={worst === 'down' ? 'critical' : worst === 'degraded' ? 'warning' : 'default'} style={styles.figures}>
+        {text}
       </Text>
     </View>
   );
@@ -58,7 +55,11 @@ export const SyntheticRow = memo(function SyntheticRow({ synthetic, now }: { syn
   const meta = `${synthetic.kind.toUpperCase()} · ${targetHost(synthetic.target)}`;
   const availability = synthetic.availability24h === null ? t('metric.noData') : formatPercentFraction(synthetic.availability24h);
   const latency = synthetic.latencyMs === null ? t('metric.noData') : formatMetric(synthetic.latencyMs, 'ms');
-  const detail = `${t('synthetics.availability24hShort', { value: availability })} · ${t('synthetics.latencyShort', { value: latency })}`;
+  // A check that has never run has no availability to average: say that, rather than two "No data" figures.
+  const detail =
+    synthetic.lastCheckedAt === null
+      ? t('synthetics.neverRun')
+      : `${t('synthetics.availability24hShort', { value: availability })} · ${t('synthetics.latencyShort', { value: latency })}`;
   const sslText = flagSsl ? t(sslMessage(ssl).key, sslMessage(ssl).params) : null;
   return (
     <RichRow
@@ -136,6 +137,7 @@ export function FailureList({ failures }: { failures: SyntheticDetail['failures'
 
 const styles = StyleSheet.create({
   summary: { paddingHorizontal: spacing.lg },
+  figures: { fontVariant: ['tabular-nums'] },
   sslFlag: { marginTop: spacing.xs },
   block: { gap: spacing.sm },
 });

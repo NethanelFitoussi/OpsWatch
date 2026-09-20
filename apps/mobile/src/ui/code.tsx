@@ -50,7 +50,8 @@ export const CodeBlock = memo(function CodeBlock({
             const isHighlighted = highlighted.has(number);
             return (
               <View key={number} style={[styles.codeLine, isHighlighted && { backgroundColor: colors.codeLineHighlight }]}>
-                <Text style={[MONO, { color: colors.textFaint, width: gutter * 8 + 10, textAlign: 'right' }]} selectable={false}>
+                {/* The gutter is sized in characters; capping its scaling keeps the numbers aligned with the code. */}
+                <Text style={[MONO, { color: colors.textFaint, minWidth: gutter * 8 + 10, textAlign: 'right' }]} selectable={false} maxFontSizeMultiplier={1.2}>
                   {number}
                 </Text>
                 <Text style={[MONO, { color: isHighlighted ? colors.warning : colors.textFaint, width: 14 }]} accessibilityLabel={isHighlighted ? highlightLabel : undefined}>
@@ -93,8 +94,9 @@ const FrameRow = memo(function FrameRow({ frame, index }: { frame: StackFrame; i
           <Text variant="small" weight={frame.inApp ? '700' : '400'} tone={frame.inApp ? 'default' : 'muted'} style={{ fontFamily: monoFont }} numberOfLines={2}>
             {frame.function ?? `<${t('code.anonymous')}>`}
           </Text>
+          {/* Truncating from the head keeps `…/internal/handler.js:95:5` readable: the end is what matters. */}
           {frame.file ? (
-            <Text variant="caption" tone="faint" style={{ fontFamily: monoFont }} numberOfLines={2}>
+            <Text variant="caption" tone="faint" style={{ fontFamily: monoFont }} numberOfLines={1} ellipsizeMode="head">
               {frameLocation(frame)}
             </Text>
           ) : null}

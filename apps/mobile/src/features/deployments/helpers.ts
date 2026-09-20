@@ -28,6 +28,11 @@ export function timingSentence(minutesAfterDeployment: number): { key: MessageKe
   return { key: 'deployments.startedAfter', params: { delay } };
 }
 
+/** A deployment that did not end well: worth flagging on the screen, not just wording in a badge. */
+export function isDeploymentUnsuccessful(status: DeploymentStatus): boolean {
+  return status === 'failed' || status === 'rolled_back';
+}
+
 /** "8f3c2a9 · Batch currency lookups" (the first line of the message only). */
 export function commitLine(commit: DeploymentSummary['commit']): string | undefined {
   if (!commit) return undefined;

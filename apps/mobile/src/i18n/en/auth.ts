@@ -45,4 +45,12 @@ export const auth = {
   'session.signOut': 'Sign out',
   'session.signOutConfirm': 'Sign out of {server}? Cached data on this device is deleted.',
   'session.leaveDemo': 'Leave the demo',
+  'connect.error.notFoundHere': 'Nothing answered at that address. If OpsWatch runs under a path, include it, for example https://example.com/ops.',
+  'connect.error.unreachable': "Couldn't reach that address. Check the address, that the server is running, and that you are on a network that can reach it (a VPN, for instance). An untrusted certificate also fails here.",
+  'connect.error.timeout': 'The server did not answer in time. It may be starting up, or something in between is dropping the request.',
+  'connect.error.blocked': 'Something in front of the server is asking for credentials of its own. OpsWatch itself does not need any to answer this check.',
+  'connect.needTitle': 'What you need',
+  'connect.need1': 'The address of an OpsWatch server. OpsWatch is self-hosted: someone in your team runs it.',
+  'connect.need2': 'Your OpsWatch account, to sign in on the next screen.',
+  'connect.need3': 'No account yet? Explore the demo below: fictional data, nothing to install.',
 } as const;

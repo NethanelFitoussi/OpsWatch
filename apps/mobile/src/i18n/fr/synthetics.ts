@@ -16,6 +16,7 @@ export const synthetics: Record<keyof typeof source, string> = {
   'synthetics.kind': 'Type de test : {kind}',
   'synthetics.copyTarget': 'Copier l’URL',
   'synthetics.lastChecked': 'Dernier test',
+  'synthetics.neverRun': 'Jamais encore exécuté',
   'synthetics.availability24h': 'Disponibilité 24 h',
   'synthetics.uptime30d': 'Disponibilité 30 j',
   'synthetics.latency': 'Latence',

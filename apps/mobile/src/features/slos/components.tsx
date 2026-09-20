@@ -28,6 +28,7 @@ export const SloRow = memo(function SloRow({ slo }: { slo: SloSummary }) {
   const target = percentOrNull(slo.target) ?? t('metric.noData');
   const figures = t('slos.targetCurrent', { target, current });
   const budget = budgetText(slo.budgetRemaining);
+  const exhausted = isBudgetExhausted(slo.budgetRemaining);
   return (
     <RichRow
       testID={`slo-row-${slo.id}`}
@@ -36,8 +37,9 @@ export const SloRow = memo(function SloRow({ slo }: { slo: SloSummary }) {
       left={<StatusBadge meta={status} />}
       extra={
         <View style={styles.budget}>
-          <Text variant="caption" tone="muted">
-            {t('slos.budgetRemaining')}
+          {/* A negative percentage alone reads as a number; an exhausted budget has to say so in words. */}
+          <Text variant="caption" tone={exhausted ? 'critical' : 'muted'} weight={exhausted ? '700' : undefined} testID={`slo-row-budget-${slo.id}`}>
+            {exhausted ? t('slos.budgetExhausted') : t('slos.budgetRemaining')}
           </Text>
           <BudgetBar remaining={slo.budgetRemaining} />
         </View>

@@ -142,6 +142,7 @@ export const common: Record<keyof typeof source, string> = {
   'a11y.opens': 'Ouvre {target}',
   'a11y.chart': '{label} : dernière valeur {value}, de {min} à {max}',
   'a11y.chartNoData': '{label} : pas de données',
+  'chart.overBudget': 'dépassement de ×{factor}',
   'chart.offScale': 'hors échelle',
   'a11y.uptime': '{up} périodes disponibles, {down} en panne, {unknown} sans données',
   'a11y.privacyCover': 'Contenu OpsWatch masqué',

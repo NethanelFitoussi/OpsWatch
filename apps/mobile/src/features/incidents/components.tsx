@@ -15,7 +15,7 @@ import { useNow } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { chronological, incidentDurationText, incidentStatusMeta, serviceNames, timelineTypeKey } from './helpers';
+import { chronological, incidentDurationText, incidentStatusMeta, isSameDay, serviceNames, timelineTypeKey } from './helpers';
 
 export function useIncidentStatus() {
   const { t } = useI18n();
@@ -25,11 +25,13 @@ export function useIncidentStatus() {
   };
 }
 
+/** Still going or over is the first thing to read, so it is a badge with its own icon and word, not a muted line. */
 export const IncidentRow = memo(function IncidentRow({ incident, now }: { incident: IncidentSummary; now: number }) {
   const { t } = useI18n();
   const openRef = useOpenRef();
+  const status = useIncidentStatus()(incident.status);
   const duration = incidentDurationText(incident, now);
-  const meta = `${t(incidentStatusMeta(incident.status).label)} · ${t(duration.key, duration.params)}`;
+  const meta = `${status.label} · ${t(duration.key, duration.params)}`;
   const services = serviceNames(incident);
   return (
     <RichRow
@@ -38,6 +40,11 @@ export const IncidentRow = memo(function IncidentRow({ incident, now }: { incide
       meta={meta}
       detail={services ? t('incidents.affected', { services }) : undefined}
       left={<SeverityBadge severity={incident.severity} />}
+      extra={
+        <View style={styles.rowStatus}>
+          <StatusBadge meta={status} testID={`incident-row-status-${incident.id}`} />
+        </View>
+      }
       onPress={() => openRef({ type: 'incident', id: incident.id })}
       accessibilityLabel={[t(`severity.${incident.severity}`), incident.title, meta, services].filter(Boolean).join(', ')}
     />
@@ -58,7 +65,7 @@ export function IncidentHeader({ incident }: { incident: IncidentDetail }) {
       <Text variant="title" accessibilityRole="header" selectable>
         {incident.title}
       </Text>
-      <Text variant="small" weight="600" testID="incident-duration">
+      <Text variant="small" weight="600" style={styles.figures} testID="incident-duration">
         {t(duration.key, duration.params)}
       </Text>
       {incident.summary ? <Text>{incident.summary}</Text> : null}
@@ -84,17 +91,19 @@ export function AffectedServices({ services }: { services: IncidentDetail['affec
   );
 }
 
+/** Oldest first, so the incident reads as a story. Entries from another day carry their date, not just a clock time. */
 export function IncidentTimeline({ timeline }: { timeline: IncidentDetail['timeline'] }) {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
   const openRef = useOpenRef();
+  const now = useNow();
   const items = chronological(timeline);
   return (
     <View testID="incident-timeline" style={styles.list}>
       {items.map((entry, i) => {
         const typeKey = timelineTypeKey(entry.type);
         return (
-          <TimedItem key={`${entry.at}-${i}`} time={formatClock(entry.at, locale)} testID={`incident-timeline-${i}`}>
+          <TimedItem key={`${entry.at}-${i}`} time={isSameDay(entry.at, now) ? formatClock(entry.at, locale) : formatDateTime(entry.at, locale)} testID={`incident-timeline-${i}`}>
             <Text variant="caption" tone="muted" weight="700">
               {(typeKey ? t(typeKey) : entry.type).toUpperCase()}
             </Text>
@@ -135,6 +144,8 @@ export function IncidentNotes({ notes }: { notes: IncidentDetail['notes'] }) {
 const styles = StyleSheet.create({
   header: { gap: spacing.sm },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  figures: { fontVariant: ['tabular-nums'] },
+  rowStatus: { marginTop: spacing.xs, flexDirection: 'row' },
   list: { gap: spacing.sm },
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
   note: { gap: 2 },

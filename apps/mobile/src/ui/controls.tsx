@@ -173,7 +173,8 @@ export function CopyButton({ text, label, testID }: { text: string; label?: stri
 
 const styles = StyleSheet.create({
   button: { minHeight: TOUCH_TARGET, borderRadius: radius.md, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  compact: { minHeight: 40, paddingHorizontal: spacing.md },
+  // Still a full touch target: every retry and every filter action in an error state uses the compact size.
+  compact: { minHeight: 44, paddingHorizontal: spacing.md },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1 },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
   field: { gap: 6 },

@@ -1,5 +1,5 @@
 import { translate } from '@/i18n';
-import { classifySsl, sortFailuresFirst, sslMessage, sslNeedsAttention, sslTone, statusCounts, syntheticStatusMeta, targetHost } from '../helpers';
+import { classifySsl, sortFailuresFirst, sslMessage, sslNeedsAttention, sslTone, statusCounts, summaryParts, syntheticStatusMeta, targetHost, worstStatus } from '../helpers';
 
 const DAY = 24 * 3_600_000;
 const now = 100 * DAY;
@@ -25,6 +25,20 @@ describe('synthetic helpers', () => {
 
   it('counts statuses', () => {
     expect(statusCounts([{ status: 'up' }, { status: 'up' }, { status: 'down' }])).toEqual({ up: 2, degraded: 0, down: 1, unknown: 0 });
+  });
+
+  it('summarises failures first, drops zero counts and always states how many are up', () => {
+    expect(summaryParts([{ status: 'up' }, { status: 'up' }, { status: 'down' }])).toEqual([{ status: 'down', count: 1 }, { status: 'up', count: 2 }]);
+    expect(summaryParts([{ status: 'up' }])).toEqual([{ status: 'up', count: 1 }]);
+    expect(summaryParts([])).toEqual([{ status: 'up', count: 0 }]);
+    expect(summaryParts([{ status: 'unknown' }, { status: 'degraded' }]).map((p) => p.status)).toEqual(['degraded', 'unknown', 'up']);
+  });
+
+  it('reports the worst status present', () => {
+    expect(worstStatus([{ status: 'up' }, { status: 'degraded' }, { status: 'down' }])).toBe('down');
+    expect(worstStatus([{ status: 'up' }, { status: 'unknown' }])).toBe('unknown');
+    expect(worstStatus([{ status: 'up' }])).toBe('up');
+    expect(worstStatus([])).toBe('up');
   });
 
   it('extracts the target host', () => {

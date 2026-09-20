@@ -47,4 +47,12 @@ export const auth: Record<keyof typeof source, string> = {
   'session.signOut': 'Se déconnecter',
   'session.signOutConfirm': 'Se déconnecter de {server} ? Les données en cache sur cet appareil seront supprimées.',
   'session.leaveDemo': 'Quitter la démo',
+  'connect.error.notFoundHere': 'Rien n’a répondu à cette adresse. Si OpsWatch tourne sous un chemin, indiquez-le, par exemple https://example.com/ops.',
+  'connect.error.unreachable': 'Impossible de joindre cette adresse. Vérifiez l’adresse, que le serveur tourne, et que votre réseau peut l’atteindre (un VPN, par exemple). Un certificat non approuvé échoue ici aussi.',
+  'connect.error.timeout': 'Le serveur n’a pas répondu à temps. Il démarre peut-être, ou un intermédiaire bloque la requête.',
+  'connect.error.blocked': 'Un intermédiaire devant le serveur demande ses propres identifiants. OpsWatch n’en a pas besoin pour répondre à ce test.',
+  'connect.needTitle': 'Ce qu’il vous faut',
+  'connect.need1': 'L’adresse d’un serveur OpsWatch. OpsWatch est auto-hébergé : quelqu’un de votre équipe le fait tourner.',
+  'connect.need2': 'Votre compte OpsWatch, pour vous connecter à l’écran suivant.',
+  'connect.need3': 'Pas encore de compte ? Découvrez la démo ci-dessous : données fictives, rien à installer.',
 };

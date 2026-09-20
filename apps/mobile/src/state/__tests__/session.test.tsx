@@ -11,6 +11,7 @@ import type { OpsWatchClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { buildDemoDataset } from '@/demo/fixtures';
 import { SessionProvider, useSession, type ServerConfig } from '../session';
+import { SettingsProvider } from '../settings';
 import { PREF_KEYS, sessionKey } from '../storage';
 
 const SERVER = 'https://ops.example.com';
@@ -45,9 +46,11 @@ function renderSession(client: OpsWatchClient) {
     return client;
   };
   return render(
-    <SessionProvider locale="en" createClient={createClient}>
-      <Probe />
-    </SessionProvider>,
+    <SettingsProvider initial={{}}>
+      <SessionProvider locale="en" createClient={createClient}>
+        <Probe />
+      </SessionProvider>
+    </SettingsProvider>,
   );
 }
 

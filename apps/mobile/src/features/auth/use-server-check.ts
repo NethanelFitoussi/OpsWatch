@@ -15,14 +15,27 @@ export type ServerCheck =
   | { status: 'ok'; url: string; insecure: boolean; info: ServerInfo }
   | { status: 'error'; message: MessageKey; params?: Params };
 
+/**
+ * Turns a failed connection test into something the person can act on. Each case says what probably went wrong and
+ * what to try, because this screen is the first thing a new user meets and a dead end here ends the install.
+ */
 export function describeCheckError(error: unknown): { message: MessageKey } {
-  if (!isApiError(error)) return { message: 'error.network' };
+  if (!isApiError(error)) return { message: 'connect.error.unreachable' };
   switch (error.kind) {
-    case 'invalid_response':
     case 'not_found':
+      // Something is there, but not at this path: OpsWatch behind a sub-path is the usual cause.
+      return { message: 'connect.error.notFoundHere' };
+    case 'invalid_response':
+      // An answer that is not the OpsWatch API: a proxy, a captive portal or a login page in front of it.
       return { message: 'connect.error.notOpsWatch' };
     case 'network':
-      return { message: 'connect.error.tls' };
+      return { message: 'connect.error.unreachable' };
+    case 'timeout':
+      return { message: 'connect.error.timeout' };
+    case 'unauthorized':
+    case 'forbidden':
+      // `GET /server` needs no credentials, so something in front of the server is asking for them.
+      return { message: 'connect.error.blocked' };
     default:
       return { message: `error.${error.kind}` as MessageKey };
   }

@@ -1,5 +1,5 @@
 import type { ServiceSummary } from '@/api/contract';
-import { favoritesFirst, filterServices } from '../helpers';
+import { favoritesFirst, filterServices, hasHttpMetrics } from '../helpers';
 
 const metric = { value: null, unit: 'percent' as const, status: null };
 const svc = (id: string, name: string, health: ServiceSummary['health'], kind?: string): ServiceSummary => ({
@@ -32,12 +32,28 @@ describe('filterServices', () => {
 });
 
 describe('favoritesFirst', () => {
-  it('pins favorites on top and keeps the server order inside each group', () => {
+  it('never lets a favorite outrank a service in worse health', () => {
     const ordered = favoritesFirst(list, (id) => id === 'c' || id === 'd');
-    expect(ordered.map((s) => s.id)).toEqual(['c', 'd', 'a', 'b']);
+    expect(ordered.map((s) => s.id)).toEqual(['a', 'b', 'd', 'c']);
   });
 
-  it('keeps the order when there are no favorites', () => {
-    expect(favoritesFirst(list, () => false).map((s) => s.id)).toEqual(['a', 'b', 'c', 'd']);
+  it('pins a favorite above its equally healthy peers', () => {
+    const peers = [svc('x', 'x', 'healthy'), svc('y', 'y', 'healthy'), svc('z', 'z', 'healthy')];
+    expect(favoritesFirst(peers, (id) => id === 'z').map((s) => s.id)).toEqual(['z', 'x', 'y']);
+  });
+
+  it('orders by health and keeps the server order inside a group when there are no favorites', () => {
+    expect(favoritesFirst(list, () => false).map((s) => s.id)).toEqual(['a', 'b', 'd', 'c']);
+    expect(list.map((s) => s.id)).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('hasHttpMetrics', () => {
+  const value = (v: number | null) => ({ value: v, unit: 'percent' as const, status: null });
+
+  it('is false only when all three metrics are missing', () => {
+    expect(hasHttpMetrics({ errorRate: value(null), latencyP95: value(null), requests: value(null) })).toBe(false);
+    expect(hasHttpMetrics({ errorRate: value(null), latencyP95: value(null), requests: value(0) })).toBe(true);
+    expect(hasHttpMetrics({ errorRate: value(6.8), latencyP95: value(null), requests: value(null) })).toBe(true);
   });
 });

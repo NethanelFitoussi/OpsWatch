@@ -66,6 +66,10 @@ export function ProblemsAfterDeployment({ related }: { related: DeploymentDetail
   const { t } = useI18n();
   const { colors } = useTheme();
   const sorted = [...related].sort((a, b) => a.minutesAfterDeployment - b.minutesAfterDeployment);
+  if (sorted.length === 0) {
+    // Nothing to caveat: the correlation warning would only add noise where there is no correlation.
+    return <Text tone="muted">{t('deployments.noProblemsAfter')}</Text>;
+  }
   return (
     <View style={styles.block}>
       <View style={[styles.note, { backgroundColor: colors.infoBg }]} testID="correlation-note">
@@ -74,27 +78,23 @@ export function ProblemsAfterDeployment({ related }: { related: DeploymentDetail
           {t('deployments.correlationNote')}
         </Text>
       </View>
-      {sorted.length === 0 ? (
-        <Text tone="muted">{t('deployments.noProblemsAfter')}</Text>
-      ) : (
-        <Card padded={false}>
-          {sorted.map((item, i) => {
-            const timing = timingSentence(item.minutesAfterDeployment);
-            return (
-              <View key={item.problem.id}>
-                {i > 0 ? <Divider /> : null}
-                <View style={styles.timing}>
-                  <Ionicons name="time-outline" size={14} color={colors.textMuted} importantForAccessibility="no" />
-                  <Text variant="small" weight="600" tone="muted" testID={`timing-${item.problem.id}`}>
-                    {t(timing.key, timing.params)}
-                  </Text>
-                </View>
-                <ProblemRow problem={item.problem} />
+      <Card padded={false}>
+        {sorted.map((item, i) => {
+          const timing = timingSentence(item.minutesAfterDeployment);
+          return (
+            <View key={item.problem.id}>
+              {i > 0 ? <Divider /> : null}
+              <View style={styles.timing}>
+                <Ionicons name="time-outline" size={14} color={colors.textMuted} importantForAccessibility="no" />
+                <Text variant="small" weight="600" tone="muted" style={styles.figures} testID={`timing-${item.problem.id}`}>
+                  {t(timing.key, timing.params)}
+                </Text>
               </View>
-            );
-          })}
-        </Card>
-      )}
+              <ProblemRow problem={item.problem} />
+            </View>
+          );
+        })}
+      </Card>
     </View>
   );
 }
@@ -121,4 +121,5 @@ const styles = StyleSheet.create({
   block: { gap: spacing.sm },
   note: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, alignItems: 'flex-start' },
   timing: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  figures: { fontVariant: ['tabular-nums'] },
 });

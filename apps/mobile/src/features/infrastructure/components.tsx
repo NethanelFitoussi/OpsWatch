@@ -6,7 +6,8 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { InfraDetail, InfraResource, Ref } from '@/api/contract';
 import { useOpenRef } from '@/features/shared/navigation';
-import { useI18n, type MessageKey } from '@/i18n';
+import { useI18n, type MessageKey, type Translate } from '@/i18n';
+import { formatMetric } from '@/lib/format';
 import { HealthBadge } from '@/ui/badges';
 import { ChipGroup, type ChipOption } from '@/ui/controls';
 import { Card, Row, type IconName } from '@/ui/layout';
@@ -24,16 +25,21 @@ export function CategoryChips({ categories, value, onChange }: { categories: Cat
   return <ChipGroup options={options} value={value} onChange={onChange} accessibilityLabel={t('infrastructure.categoryFilter')} />;
 }
 
-/** "2 critical · 3 degraded · 3 healthy · 1 unknown" */
-export function HealthSummary({ resources }: { resources: Pick<InfraResource, 'health'>[] }) {
+/**
+ * "2 critical · 3 degraded · 3 healthy · 1 unknown". Resources whose health the server does not know are counted
+ * apart, never folded into "healthy"; while nothing has loaded the line stays away rather than claiming an empty
+ * estate.
+ */
+export function HealthSummary({ resources }: { resources: Pick<InfraResource, 'health'>[] | undefined }) {
   const { t } = useI18n();
+  if (!resources) return null;
   const parts = healthSummaryParts(resources);
   const text = parts.length
     ? parts.map((p) => t('infrastructure.summaryPart', { count: p.count, status: t(`health.${p.status}`).toLocaleLowerCase() })).join(' · ')
     : t('infrastructure.summaryEmpty');
   return (
     <View style={styles.inset}>
-      <Text variant="small" weight="600" tone="muted" testID="infrastructure-summary" accessibilityLabel={`${t('infrastructure.summaryLabel')}: ${text}`}>
+      <Text variant="small" weight="600" tone="muted" style={styles.figures} testID="infrastructure-summary" accessibilityLabel={`${t('infrastructure.summaryLabel')}: ${text}`}>
         {text}
       </Text>
     </View>
@@ -50,7 +56,14 @@ export const InfraRow = memo(function InfraRow({ resource }: { resource: InfraRe
     <Pressable
       onPress={() => openRef({ type: 'infrastructure', id: resource.id })}
       accessibilityRole="button"
-      accessibilityLabel={[resource.name, t(`health.${resource.health}`), t(CATEGORY_LABELS[resource.category]), resource.summary, anomalies ? t('infrastructure.anomalies', { count: anomalies }) : null]
+      accessibilityLabel={[
+        resource.name,
+        t(`health.${resource.health}`),
+        t(CATEGORY_LABELS[resource.category]),
+        resource.summary,
+        ...metrics.map((m) => `${m.label}: ${m.value.value === null ? t('metric.noData') : formatMetric(m.value.value, m.value.unit)}`),
+        anomalies ? t('infrastructure.anomalies', { count: anomalies }) : null,
+      ]
         .filter(Boolean)
         .join(', ')}
       testID={`infrastructure-row-${resource.id}`}
@@ -59,7 +72,8 @@ export const InfraRow = memo(function InfraRow({ resource }: { resource: InfraRe
       <Ionicons name={CATEGORY_ICONS[resource.category]} size={22} color={colors.textMuted} style={styles.icon} importantForAccessibility="no" />
       <View style={styles.body}>
         <View style={styles.top}>
-          <Text variant="body" weight="600" numberOfLines={1} style={styles.flex}>
+          {/* ARNs and "cluster / service" pairs are told apart by their tail, so the middle is what gets dropped. */}
+          <Text variant="body" weight="600" numberOfLines={1} ellipsizeMode="middle" style={styles.flex}>
             {resource.name}
           </Text>
           <HealthBadge status={resource.health} />
@@ -115,6 +129,15 @@ export function InfraHeader({ resource }: { resource: InfraDetail }) {
   );
 }
 
+/** A resource the server has no numbers for: said once, instead of leaving the screen looking half-loaded. */
+export function NoMetrics({ t }: { t: Translate }) {
+  return (
+    <Text tone="muted" testID="infrastructure-no-metrics">
+      {t('infrastructure.noMetrics')}
+    </Text>
+  );
+}
+
 export function AnomalyList({ anomalies }: { anomalies: string[] }) {
   const { colors } = useTheme();
   return (
@@ -155,6 +178,7 @@ export function RelatedList({ related }: { related: Ref[] }) {
 
 const styles = StyleSheet.create({
   inset: { paddingHorizontal: spacing.lg },
+  figures: { fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: TOUCH_TARGET + 8, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.md },
   icon: { width: 24, textAlign: 'center' },
   body: { flex: 1, gap: 4 },

@@ -61,6 +61,20 @@ export default function ConnectScreen() {
           <Text tone="muted">{t('connect.subtitle')}</Text>
         </View>
 
+        <Card testID="connect-needs">
+          <Text variant="label" tone="muted" accessibilityRole="header">
+            {t('connect.needTitle').toUpperCase()}
+          </Text>
+          <View style={{ gap: spacing.xs, marginTop: spacing.sm }}>
+            {([t('connect.need1'), t('connect.need2'), t('connect.need3')] as const).map((line) => (
+              <Text key={line} variant="small" tone="muted">
+                {'\u2022  '}
+                {line}
+              </Text>
+            ))}
+          </View>
+        </Card>
+
         <TextField
           label={t('connect.urlLabel')}
           placeholder={t('connect.urlPlaceholder')}

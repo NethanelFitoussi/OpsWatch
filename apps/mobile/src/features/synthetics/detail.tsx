@@ -16,7 +16,8 @@ import { useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { StatusBadge } from '@/ui/rows';
-import { AvailabilityStrip, FailureList, SslBlock, useSyntheticStatus } from './components';
+import { AvailabilityStrip, FailureList, SslBadge, SslBlock, useSyntheticStatus } from './components';
+import { classifySsl, sslNeedsAttention } from './helpers';
 
 export function SyntheticDetailView({ id }: { id: string }) {
   const { t } = useI18n();
@@ -27,7 +28,9 @@ export function SyntheticDetailView({ id }: { id: string }) {
   const relative = useRelativeTime();
   return (
     <QueryScreen query={query} testID="synthetic-screen">
-      {(synthetic) => (
+      {(synthetic) => {
+        const ssl = classifySsl(synthetic.ssl, now);
+        return (
         <>
           <Stack.Screen options={{ title: synthetic.name }} />
           <Card>
@@ -36,6 +39,8 @@ export function SyntheticDetailView({ id }: { id: string }) {
                 <StatusBadge meta={status(synthetic.status)} size="large" testID="synthetic-status" />
                 <FavoriteButton favorite={{ type: 'synthetic', id: synthetic.id, label: synthetic.name }} />
               </View>
+              {/* An expiring certificate takes the site down on a date nobody is watching: it belongs at the top. */}
+              {sslNeedsAttention(ssl) ? <SslBadge state={ssl} testID="synthetic-ssl-flag" /> : null}
               <Text variant="title" accessibilityRole="header">
                 {synthetic.name}
               </Text>
@@ -48,13 +53,18 @@ export function SyntheticDetailView({ id }: { id: string }) {
                 </Text>
                 <CopyButton text={synthetic.target} label={t('synthetics.copyTarget')} />
               </View>
-              <KeyValue label={t('synthetics.lastChecked')} value={synthetic.lastCheckedAt === null ? t('state.noData') : relative(synthetic.lastCheckedAt, now)} />
+              <KeyValue label={t('synthetics.lastChecked')} value={synthetic.lastCheckedAt === null ? t('synthetics.neverRun') : relative(synthetic.lastCheckedAt, now)} />
             </View>
           </Card>
 
           {synthetic.problem ? (
             <Button label={t('action.openProblem')} icon="alert-circle-outline" variant="secondary" onPress={() => openRef(synthetic.problem!)} testID="synthetic-open-problem" />
           ) : null}
+
+          {/* Failures before figures: what broke, and when, is what the on-call opened this screen for. */}
+          <DetailCard title={t('synthetics.failures')}>
+            <FailureList failures={synthetic.failures} />
+          </DetailCard>
 
           <TileGrid>
             <MetricTile label={t('synthetics.availability24h')} value={{ value: synthetic.availability24h, unit: 'ratio', status: null }} testID="synthetic-availability" />
@@ -75,12 +85,9 @@ export function SyntheticDetailView({ id }: { id: string }) {
           <DetailCard title={t('synthetics.ssl.title')}>
             <SslBlock ssl={synthetic.ssl} now={now} />
           </DetailCard>
-
-          <DetailCard title={t('synthetics.failures')}>
-            <FailureList failures={synthetic.failures} />
-          </DetailCard>
         </>
-      )}
+        );
+      }}
     </QueryScreen>
   );
 }

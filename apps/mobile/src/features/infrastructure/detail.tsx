@@ -9,7 +9,7 @@ import { useI18n } from '@/i18n';
 import { Card, KeyValue, Section } from '@/ui/layout';
 import { QueryScreen } from '@/ui/screen';
 import { CardList, SeriesCharts } from '@/ui/data';
-import { AnomalyList, InfraHeader, RelatedList } from './components';
+import { AnomalyList, InfraHeader, NoMetrics, RelatedList } from './components';
 
 export function InfraDetailScreen({ id }: { id: string }) {
   const query = useInfrastructureResource(id);
@@ -33,21 +33,31 @@ function InfraBody({ resource }: { resource: InfraDetail }) {
         </Section>
       ) : null}
 
-      {resource.keyMetrics.length ? (
-        <Section title={t('infrastructure.keyMetrics')}>
-          <TileGrid>
-            {resource.keyMetrics.map((m, i) => (
-              <MetricTile key={`${m.label}-${i}`} label={m.label} value={m.value} testID={`infrastructure-metric-${i}`} />
-            ))}
-          </TileGrid>
-        </Section>
-      ) : null}
+      {resource.keyMetrics.length || resource.series.length ? (
+        <>
+          {resource.keyMetrics.length ? (
+            <Section title={t('infrastructure.keyMetrics')}>
+              <TileGrid>
+                {resource.keyMetrics.map((m, i) => (
+                  <MetricTile key={`${m.label}-${i}`} label={m.label} value={m.value} testID={`infrastructure-metric-${i}`} />
+                ))}
+              </TileGrid>
+            </Section>
+          ) : null}
 
-      {resource.series.length ? (
-        <Section title={t('infrastructure.charts')}>
-          <SeriesCharts series={resource.series} />
+          {resource.series.length ? (
+            <Section title={t('infrastructure.charts')}>
+              <SeriesCharts series={resource.series} />
+            </Section>
+          ) : null}
+        </>
+      ) : (
+        <Section title={t('infrastructure.keyMetrics')}>
+          <Card>
+            <NoMetrics t={t} />
+          </Card>
         </Section>
-      ) : null}
+      )}
 
       {resource.problems.length ? (
         <Section title={t('infrastructure.problems')}>

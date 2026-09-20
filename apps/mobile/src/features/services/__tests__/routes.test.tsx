@@ -8,18 +8,21 @@ beforeEach(async () => {
   await AsyncStorage.clear();
 });
 
-it('lists services with checkout-api first, and shows "No data" (never 0) for orders-worker metrics', async () => {
+it('lists services worst first, and reads a worker as "not measured" rather than broken', async () => {
   await seedDemoSession();
   renderRouter('./app', { initialUrl: '/services' });
   expect(await screen.findByTestId('service-row-svc-checkout-api', {}, { timeout: 5000 })).toBeTruthy();
   const rows = screen.getAllByTestId(/^service-row-/);
   expect(rows[0]).toHaveProp('testID', 'service-row-svc-checkout-api');
 
-  for (const metric of ['errorRate', 'latencyP95', 'requests']) {
-    const cell = screen.getByTestId(`service-svc-orders-worker-${metric}`);
-    expect(cell).toHaveTextContent(/No data/);
-    expect(cell).not.toHaveTextContent(/\b0\b/);
-  }
+  // orders-worker has no HTTP metric at all: one honest sentence, not three "No data" cells, and never a 0.
+  const worker = screen.getByTestId('service-row-svc-orders-worker');
+  expect(screen.getByTestId('service-svc-orders-worker-not-measured')).toHaveTextContent(/not measured/i);
+  expect(screen.queryByTestId('service-svc-orders-worker-errorRate')).toBeNull();
+  expect(worker).not.toHaveTextContent(/\b0\b/);
+  // catalog-api is measured, so it keeps its metric cells.
+  expect(screen.getByTestId('service-svc-catalog-api-errorRate')).toHaveTextContent(/0\.3 %/);
+
   // checkout-api is a favorite on the demo server: it carries the star.
   expect(await screen.findByTestId('service-favorite-svc-checkout-api', {}, { timeout: 5000 })).toBeTruthy();
 });
@@ -57,9 +60,10 @@ it('shows the service detail with its problems, and toggles the favorite star', 
   expect(await screen.findByLabelText('Remove from favorites', {}, { timeout: 5000 })).toBeTruthy();
 });
 
-it('shows metrics as "No data" on a service without HTTP metrics', async () => {
+it('explains a service without HTTP metrics instead of showing empty tiles', async () => {
   await seedDemoSession();
   renderRouter('./app', { initialUrl: '/services/svc-orders-worker' });
-  expect(await screen.findByTestId('service-metric-requests', {}, { timeout: 5000 })).toHaveTextContent(/No data/);
-  expect(screen.getByTestId('service-metric-errorRate')).toHaveTextContent(/No data/);
+  expect(await screen.findByTestId('service-not-measured', {}, { timeout: 5000 })).toHaveTextContent(/not measured/i);
+  expect(screen.queryByTestId('service-metric-requests')).toBeNull();
+  expect(screen.queryByTestId('service-metric-errorRate')).toBeNull();
 });

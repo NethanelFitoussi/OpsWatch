@@ -26,7 +26,7 @@ export default function InfrastructureScreen() {
         header={
           <View style={{ gap: spacing.sm }}>
             {categories.length > 1 ? <CategoryChips categories={categories} value={category} onChange={setCategory} /> : null}
-            <HealthSummary resources={resources.data ?? []} />
+            <HealthSummary resources={resources.data} />
           </View>
         }
         empty={{ title: t('infrastructure.empty'), icon: 'server-outline' }}

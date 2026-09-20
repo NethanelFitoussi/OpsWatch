@@ -15,6 +15,7 @@ export const deployments = {
   'deployments.message': 'Message',
   'deployments.author': 'Author',
   'deployments.repository': 'Repository',
+  'deployments.noCommit': 'No commit is linked to this deployment, so the app cannot show what changed.',
   'deployments.changes': 'Changes',
   'deployments.files': '{count} file(s)',
   'deployments.additions': '{count} additions',

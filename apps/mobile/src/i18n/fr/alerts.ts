@@ -18,7 +18,7 @@ export const alerts: Record<keyof typeof source, string> = {
   'alerts.startedAgo': 'démarrée {time}',
   'alerts.startedAt': 'Démarrée le {time}',
   'alerts.sinceUnknown': 'Heure de début inconnue',
-  'alerts.currentValue': '{label}, dernière valeur',
+  'alerts.currentValue': 'Dernière valeur',
   'alerts.actions': 'Prochaines étapes',
   'alerts.acknowledging': 'Prise en compte…',
   'alerts.acknowledgeHint': 'Indique à votre équipe que quelqu’un s’en occupe. Rien ne change sur le système surveillé.',

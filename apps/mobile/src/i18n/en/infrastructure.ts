@@ -17,6 +17,7 @@ export const infrastructure = {
   'infrastructure.providerStatus': 'Provider status',
   'infrastructure.category': 'Category',
   'infrastructure.keyMetrics': 'Key metrics',
+  'infrastructure.noMetrics': 'This server reports no metric for this resource.',
   'infrastructure.charts': 'Trends',
   'infrastructure.properties': 'Properties',
   'infrastructure.related': 'Related',

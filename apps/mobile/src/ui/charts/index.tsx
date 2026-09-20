@@ -185,25 +185,37 @@ export const UptimeBar = memo(function UptimeBar({ buckets, height = 28 }: { buc
 });
 
 /** Error budget remaining as a bar; negative (exhausted) budgets render as an empty red bar with the overshoot. */
+/**
+ * Error budget left, as a fraction. A negative value means the budget is spent and then some, which "−280 %" states
+ * badly: it reads as an amount remaining. Past zero the bar empties and the label says how far over it went.
+ */
+export function budgetLabel(remaining: number | null, t: (key: 'state.noData' | 'chart.overBudget', params?: Record<string, string | number>) => string): string {
+  if (remaining === null) return t('state.noData');
+  if (remaining > 0) return formatPercentFraction(remaining);
+  // 0 left is exactly spent; below that, ×N of the budget has been used beyond it.
+  return t('chart.overBudget', { factor: (Math.abs(remaining) + 1).toFixed(1) });
+}
+
 export function BudgetBar({ remaining }: { remaining: number | null }) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const label = budgetLabel(remaining, t);
   if (remaining === null) {
     return (
       <Text variant="small" tone="muted">
-        {t('state.noData')}
+        {label}
       </Text>
     );
   }
   const clamped = Math.max(0, Math.min(1, remaining));
   const color = remaining <= 0 ? colors.critical : remaining < 0.25 ? colors.warning : colors.healthy;
   return (
-    <View accessible accessibilityLabel={formatPercentFraction(remaining)}>
+    <View accessible accessibilityLabel={label}>
       <View style={[styles.budgetTrack, { backgroundColor: colors.surfaceAlt, borderColor: remaining <= 0 ? colors.critical : colors.border }]}>
         <View style={{ width: `${clamped * 100}%`, backgroundColor: color, height: '100%', borderRadius: radius.pill }} />
       </View>
-      <Text variant="small" weight="700" style={{ color, marginTop: 4 }}>
-        {formatPercentFraction(remaining)}
+      <Text variant="small" weight="700" style={{ color, marginTop: 4, fontVariant: ['tabular-nums'] }}>
+        {label}
       </Text>
     </View>
   );

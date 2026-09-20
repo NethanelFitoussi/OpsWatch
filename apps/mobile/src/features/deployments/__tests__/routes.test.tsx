@@ -31,3 +31,13 @@ it('phrases problems after dep-checkout-2140 as timing facts, never as causes', 
   expect(screen.getByTestId('deployment-service')).toHaveTextContent(/checkout-api/);
   expect(screen.getByTestId('ask-ai')).toHaveTextContent(/Analyze changes/);
 });
+
+it('makes a rolled-back deployment unmistakable, and drops the correlation caveat when nothing correlates', async () => {
+  await seedDemoSession();
+  renderRouter('./app', { initialUrl: '/deployments/dep-worker-118' });
+  expect(await screen.findByTestId('deployment-header', {}, { timeout: 5000 })).toHaveTextContent(/Rolled back/);
+  expect(screen.getByTestId('deployment-unsuccessful')).toBeTruthy();
+  // No problem followed this one: no correlation to caveat, so the warning stays away.
+  expect(screen.queryByTestId('correlation-note')).toBeNull();
+  expect(screen.getByText(/No problem started shortly after this deployment/)).toBeTruthy();
+});

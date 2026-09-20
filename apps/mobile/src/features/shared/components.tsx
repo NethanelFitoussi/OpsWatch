@@ -49,7 +49,13 @@ export function MetricTile({ label, value, testID }: { label: string; value: Met
       <Text variant="caption" tone="muted" numberOfLines={1}>
         {label}
       </Text>
-      <Text variant={noData ? 'small' : 'subtitle'} weight="700" style={{ color: noData ? colors.textFaint : tone }} numberOfLines={1} adjustsFontSizeToFit>
+      <Text
+        variant={noData ? 'small' : 'subtitle'}
+        weight="700"
+        style={{ color: noData ? colors.textFaint : tone, fontVariant: ['tabular-nums'] }}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
         {noData ? t('metric.noData') : formatMetric(value.value, value.unit)}
       </Text>
       {value.status === 'critical' || value.status === 'warning' ? (

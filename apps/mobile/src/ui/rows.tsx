@@ -28,7 +28,10 @@ type RichRowProps = {
   left?: ReactNode;
   /** Shown outside the pressable area, for independent controls. */
   right?: ReactNode;
-  /** Extra content under the text (a budget bar, a warning badge). */
+  /**
+   * Extra content under the text (a budget bar, a status badge). It sits inside the pressable, so a screen reader
+   * reads the row as one element: anything meaningful in here must also be in `accessibilityLabel`.
+   */
   extra?: ReactNode;
   onPress: () => void;
   accessibilityLabel: string;
@@ -105,6 +108,7 @@ const styles = StyleSheet.create({
   left: { alignSelf: 'flex-start', paddingTop: 2 },
   text: { flex: 1, gap: 2 },
   timed: { flexDirection: 'row', gap: spacing.md, paddingVertical: spacing.xs },
-  time: { minWidth: 52, fontVariant: ['tabular-nums'] },
+  // Bounded: at a large font scale a date+time string would otherwise squeeze the content column out of the row.
+  time: { minWidth: 52, maxWidth: 110, fontVariant: ['tabular-nums'] },
   timedBody: { flex: 1, gap: 2 },
 });

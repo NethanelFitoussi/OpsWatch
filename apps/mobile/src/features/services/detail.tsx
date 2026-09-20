@@ -16,6 +16,7 @@ import { QueryScreen } from '@/ui/screen';
 import { Text } from '@/ui/text';
 import { CATEGORY_ICONS } from '../infrastructure/helpers';
 import { AlertLine, ServiceHeader } from './components';
+import { hasHttpMetrics } from './helpers';
 import { CardList, SeriesCharts } from '@/ui/data';
 
 const MAX_PROBLEMS = 5;
@@ -40,11 +41,22 @@ function ServiceBody({ service }: { service: ServiceDetail }) {
       <ServiceHeader service={service} />
 
       <Section title={t('services.metrics')}>
-        <TileGrid>
-          <MetricTile label={t('metric.errorRate')} value={service.errorRate} testID="service-metric-errorRate" />
-          <MetricTile label={t('metric.latencyP95')} value={service.latencyP95} testID="service-metric-latencyP95" />
-          <MetricTile label={t('metric.requests')} value={service.requests} testID="service-metric-requests" />
-        </TileGrid>
+        {hasHttpMetrics(service) ? (
+          <TileGrid>
+            <MetricTile label={t('metric.errorRate')} value={service.errorRate} testID="service-metric-errorRate" />
+            <MetricTile label={t('metric.latencyP95')} value={service.latencyP95} testID="service-metric-latencyP95" />
+            <MetricTile label={t('metric.requests')} value={service.requests} testID="service-metric-requests" />
+          </TileGrid>
+        ) : (
+          <Card>
+            <Text weight="600" testID="service-not-measured">
+              {t('services.noHttpMetrics')}
+            </Text>
+            <Text variant="small" tone="muted">
+              {t('services.noHttpMetricsHint')}
+            </Text>
+          </Card>
+        )}
       </Section>
 
       {service.series.length ? (
@@ -53,9 +65,14 @@ function ServiceBody({ service }: { service: ServiceDetail }) {
         </Section>
       ) : null}
 
+      {/* Kept even when empty: "no open problems on this service" is the answer the on-call came for. */}
       <Section
         title={t('services.problems')}
-        action={<Button label={t('action.seeAll')} variant="ghost" compact onPress={() => router.push(problemsHref)} testID="service-see-all-problems" />}
+        action={
+          service.problems.length ? (
+            <Button label={t('action.seeAll')} variant="ghost" compact onPress={() => router.push(problemsHref)} testID="service-see-all-problems" />
+          ) : undefined
+        }
       >
         {service.problems.length ? (
           <CardList items={service.problems.slice(0, MAX_PROBLEMS)} keyOf={(p) => p.id} render={(p) => <ProblemRow problem={p} />} />

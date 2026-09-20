@@ -308,7 +308,11 @@ export function useSession(): SessionContextValue {
   return value;
 }
 
-/** The signed-in server's capabilities. Unknown (no info yet) counts as unavailable. */
+/**
+ * The signed-in server's capabilities. A server that has not said what it provides counts as not providing it: the
+ * app never offers a feature it cannot confirm. `useFeatureStatus` (src/ui/states.tsx) tells the two cases apart for
+ * the explanatory screen.
+ */
 export function useFeature(feature: keyof ServerInfo['features']): boolean {
   const { state } = useSession();
   if (state.status !== 'signed-in' && state.status !== 'signed-out') return false;
