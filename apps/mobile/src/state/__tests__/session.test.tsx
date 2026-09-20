@@ -38,8 +38,12 @@ function Probe() {
   return <Text testID="status">{value.state.status}</Text>;
 }
 
+let lastGetToken: (() => string | null) | null = null;
 function renderSession(client: OpsWatchClient) {
-  const createClient = (_server: ServerConfig, _getToken: () => string | null) => client;
+  const createClient = (_server: ServerConfig, getToken: () => string | null) => {
+    lastGetToken = getToken;
+    return client;
+  };
   return render(
     <SessionProvider locale="en" createClient={createClient}>
       <Probe />
@@ -77,24 +81,34 @@ it('puts the token in secure storage on sign-in and takes it out on sign-out', a
   expect(await storedToken()).toBeNull();
 });
 
-it('runs session-end listeners while the token still works, and revokes it server-side', async () => {
-  const order: string[] = [];
+it('signs out locally first, then revokes server-side with the old token', async () => {
+  // A hanging network must never keep the app signed in: the token is gone before any request is made.
+  const calls: string[] = [];
+  let releaseLogout = () => {};
   const client = fakeClient({
     logout: async () => {
-      order.push(`logout:${(await storedToken()) ? 'token-present' : 'token-gone'}`);
+      calls.push(`logout:${lastGetToken?.() ?? 'no-token'}`);
+      await new Promise<void>((resolve) => {
+        releaseLogout = resolve;
+      });
     },
   });
   const screen = renderSession(client);
   await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('no-server'));
   await act(async () => session.connect({ url: SERVER, insecure: false, info }));
   await act(async () => session.signIn('admin@example.com', 'password'));
-  const stop = session.onSessionEnd(async () => {
-    order.push(`listener:${(await storedToken()) ? 'token-present' : 'token-gone'}`);
+  const stop = session.onSessionEnd((reason) => {
+    calls.push(`listener:${reason}`);
   });
 
   await act(async () => session.signOut());
+
+  // Signed out immediately, even though logout has not answered.
+  expect(screen.getByTestId('status')).toHaveTextContent('signed-out');
+  expect(await storedToken()).toBeNull();
+  await waitFor(() => expect(calls).toEqual(['listener:signed-out', 'logout:token-from-the-server-0123456789']));
+  releaseLogout();
   stop();
-  expect(order).toEqual(['listener:token-present', 'logout:token-present']);
 });
 
 it('expires the session when the server rejects the token, and says so', async () => {

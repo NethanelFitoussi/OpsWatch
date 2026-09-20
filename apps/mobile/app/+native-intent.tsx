@@ -7,7 +7,7 @@ import Constants from 'expo-constants';
 import { parseDeepLink } from '@/lib/deep-links';
 import { pendingLink } from '@/state/pending-link';
 
-const associatedDomain = (Constants.expoConfig?.ios?.associatedDomains?.[0] ?? '').replace(/^applinks:/, '') || undefined;
+const associatedDomain = (Constants.expoConfig?.extra?.associatedDomain as string | undefined) || undefined;
 
 export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
   try {

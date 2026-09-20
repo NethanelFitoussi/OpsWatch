@@ -98,9 +98,10 @@ async function attempt<T extends z.ZodType>(transport: Transport, options: Reque
   if (transport.locale) headers['Accept-Language'] = transport.locale;
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
 
+  const url = buildUrl(transport.baseUrl, options.path, options.query);
   let response: Response;
   try {
-    response = await fetchImpl(buildUrl(transport.baseUrl, options.path, options.query), {
+    response = await fetchImpl(url, {
       method: options.method ?? 'GET',
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
@@ -111,33 +112,42 @@ async function attempt<T extends z.ZodType>(transport: Transport, options: Reque
   } catch {
     if (options.signal?.aborted) throw new ApiError('cancelled');
     throw new ApiError(timedOut ? 'timeout' : 'network');
+  }
+
+  try {
+    // A redirect must not carry the bearer token to another origin: if the answer came from somewhere else, the
+    // request is treated as unusable rather than trusted.
+    if (response.url && new URL(response.url).origin !== new URL(url).origin) {
+      throw new ApiError('invalid_response', { status: response.status, message: 'Answer came from a different origin' });
+    }
+
+    if (!response.ok) {
+      const { code, message, action } = await readErrorBody(response);
+      throw new ApiError(kindForStatus(response.status), {
+        status: response.status,
+        code,
+        message,
+        action,
+        retryAfterMs: retryAfterMs(response) ?? undefined,
+      });
+    }
+
+    if (response.status === 204) {
+      return parseOrThrow(options.schema, undefined, response.status);
+    }
+    let json: unknown;
+    try {
+      json = await response.json();
+    } catch {
+      // A reverse proxy's HTML page, a captive portal, or a truncated body.
+      throw new ApiError('invalid_response', { status: response.status });
+    }
+    return parseOrThrow(options.schema, json, response.status);
   } finally {
+    // Only now: reading the body is part of the request, so it stays under the same timeout.
     clearTimeout(timer);
     options.signal?.removeEventListener('abort', onAbort);
   }
-
-  if (!response.ok) {
-    const { code, message, action } = await readErrorBody(response);
-    throw new ApiError(kindForStatus(response.status), {
-      status: response.status,
-      code,
-      message,
-      action,
-      retryAfterMs: retryAfterMs(response) ?? undefined,
-    });
-  }
-
-  if (response.status === 204) {
-    return parseOrThrow(options.schema, undefined, response.status);
-  }
-  let json: unknown;
-  try {
-    json = await response.json();
-  } catch {
-    // A reverse proxy's HTML page, a captive portal, or a truncated body.
-    throw new ApiError('invalid_response', { status: response.status });
-  }
-  return parseOrThrow(options.schema, json, response.status);
 }
 
 function parseOrThrow<T extends z.ZodType>(schema: T, value: unknown, status: number): z.output<T> {

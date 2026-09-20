@@ -87,7 +87,13 @@ export function fnv1a(input: string): string {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
-/** SecureStore keys may only contain alphanumerics, `.`, `-` and `_`. */
+/**
+ * The Keychain/Keystore entry of one server's token. SecureStore keys may only contain alphanumerics, `.`, `-` and
+ * `_`, so the URL is sanitised rather than hashed: a 32-bit hash could collide, and a collision would hand one
+ * server's token to another. The hash is kept only as a suffix, to keep the key short for very long URLs.
+ */
 export function sessionKey(serverUrl: string): string {
-  return `opswatch.session.${fnv1a(serverUrl.toLowerCase())}`;
+  const normalized = serverUrl.toLowerCase();
+  const safe = normalized.replace(/[^a-z0-9._-]/g, '_').slice(0, 96);
+  return `opswatch.session.${safe}.${fnv1a(normalized)}`;
 }

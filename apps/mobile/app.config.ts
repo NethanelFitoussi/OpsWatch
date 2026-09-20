@@ -54,7 +54,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     // Only what the app needs: network access and notifications. No location, camera, contacts or storage.
     permissions: ['android.permission.INTERNET', 'android.permission.POST_NOTIFICATIONS'],
-    blockedPermissions: ['android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.RECORD_AUDIO'],
+    // Dependencies merge permissions of their own into the manifest; an observability client needs none of these.
+    blockedPermissions: [
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+      'android.permission.RECORD_AUDIO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+    ],
     // Cleartext HTTP is refused by Android by default; it stays refused in release builds.
     intentFilters: associatedDomain
       ? [
@@ -102,5 +108,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: easProjectId ? { projectId: easProjectId } : undefined,
     // Public, optional: pre-fills the server URL field. Never a secret.
     defaultServerUrl: env('EXPO_PUBLIC_DEFAULT_SERVER_URL'),
+    // Read on both platforms for universal/app links, so neither one depends on the other's config block.
+    associatedDomain,
   },
 });

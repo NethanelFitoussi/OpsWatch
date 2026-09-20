@@ -33,14 +33,9 @@ export function SessionEffects() {
     }
   }, [state.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Environment, recent searches and local favorites belong to one server: forget them when the server changes.
-  useEffect(
-    () =>
-      onSessionEnd((reason) => {
-        if (reason === 'server-changed') resetServerScoped();
-      }),
-    [onSessionEnd, resetServerScoped],
-  );
+  // The environment, the searches someone typed and device-local favorites belong to one session on one server:
+  // they are forgotten whenever it ends, whether that is a sign-out, an expiry or a server change.
+  useEffect(() => onSessionEnd(() => resetServerScoped()), [onSessionEnd, resetServerScoped]);
 
   // Default to the first production environment; drop a selection that no longer exists.
   useEffect(() => {

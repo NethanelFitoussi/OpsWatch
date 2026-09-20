@@ -7,7 +7,8 @@ import type { Ref, RefType } from '@/api/contract';
 export const ID_PATTERN = /^[A-Za-z0-9._:~-]{1,200}$/;
 
 export function isSafeId(value: unknown): value is string {
-  return typeof value === 'string' && ID_PATTERN.test(value);
+  // `.` and `..` match the pattern but are path traversal once a URL parser normalises them, so they are refused.
+  return typeof value === 'string' && ID_PATTERN.test(value) && !/^\.+$/.test(value);
 }
 
 /** In-app route of each linkable object type. `null` types are not reachable by link. */

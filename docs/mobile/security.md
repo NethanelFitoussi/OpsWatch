@@ -136,3 +136,35 @@ Agreed with the server team; the app relies on them:
 | `allowedActions` computed server-side | The app never decides authorisation |
 | Errors never include secrets or provider credentials | Messages are displayed |
 | Push payloads with references only (when push ships) | Lock screens and notification services see no content |
+
+## Independent review, 2026-09-20
+
+A reviewer who had not seen the implementation reasoning read every path end to end. Six defects were confirmed and
+all six are fixed; the residual items below are deliberate, with their reasons.
+
+| Finding | Severity | Status |
+|---------|----------|--------|
+| Turning notifications off neither unregistered the device nor silenced foreground banners | Medium | **Fixed.** Switching off calls `unregisterFromPush`, and `shouldPresent` returns false when notifications are disabled |
+| Sign-out kept the token live for up to ~60 s on a hanging network (revocation was awaited before the local clear) | Medium | **Fixed.** The app signs out locally first — token out of memory and Keychain, state changed — then revokes server-side through a client still holding the old token. Covered by a test that holds `logout` open and asserts the app is already signed out |
+| `isSafeId` accepted `.` and `..`, which a URL parser normalises into a path walk | Low | **Fixed.** Dot-only ids are refused; `parseDeepLink` already collapsed them to the list screen |
+| The release Android build carried `SYSTEM_ALERT_WINDOW`, merged in from a dependency | Low | **Fixed.** Added to `blockedPermissions` |
+| Recent searches and local favorites survived sign-out in plaintext AsyncStorage | Low | **Fixed.** They are cleared on every session end, not only on a server change |
+| No iOS counterpart to the Android backup exclusion | Low | **Documented**, see below |
+| Keychain key was a 32-bit hash of the server URL (collisions are cheap) | Hardening | **Fixed.** The key is the sanitised URL plus the hash as a suffix |
+| No origin check on the response, so a redirect could carry the bearer token elsewhere | Hardening | **Fixed.** A response from another origin is refused as `invalid_response` |
+| The response body was read outside the request timeout | Hardening | **Fixed.** The timer is cleared only after the body is parsed |
+| Toggling one notification category re-registered the device | Hardening | **Fixed.** The effect is keyed on the preferences' content |
+| Android app links were validated against an iOS config key | Hardening | **Fixed.** Both platforms read `extra.associatedDomain` |
+
+### Residual, accepted
+
+- **iOS backups include the offline cache.** Android sets `allowBackup: false`; on iOS the AsyncStorage file (the
+  cached health, brief, problems, services and incidents lists, and the recent searches) is part of an iCloud or
+  iTunes backup. The session token is not: it is Keychain-only and `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. Closing this
+  needs a small config plugin setting `NSURLIsExcludedFromBackupKey` on that directory; it is worth doing before the
+  first App Store release, and is listed in [release.md](release.md).
+- **The clipboard is not marked sensitive.** Copying a stack trace, a log line or a diff is always an explicit user
+  action, but Android 13+ shows a preview of what was copied and iOS may sync it to the user's other devices through
+  Universal Clipboard. expo-clipboard exposes no sensitivity flag today.
+- **The app-switcher cover is rendered by JavaScript.** It reacts to `AppState`, so on iOS a snapshot can in principle
+  be taken before React commits the cover. A native snapshot guard would close the remaining gap.

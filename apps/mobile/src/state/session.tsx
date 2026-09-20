@@ -32,7 +32,11 @@ export type SessionState =
   | { status: 'signed-out'; server: ServerConfig; reason: 'expired' | 'signed-out' | null }
   | { status: 'signed-in'; server: ServerConfig; user: User };
 
-type SessionEndListener = (reason: 'expired' | 'signed-out' | 'server-changed') => void | Promise<void>;
+/**
+ * Runs when a session ends, after the app is already signed out locally. `revoker` is a client still holding the old
+ * token, for best-effort server-side cleanup (unregistering this device); it is absent when there was no token.
+ */
+type SessionEndListener = (reason: 'expired' | 'signed-out' | 'server-changed', revoker: OpsWatchClient | null) => void | Promise<void>;
 
 type SessionContextValue = {
   state: SessionState;
@@ -90,10 +94,10 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
   const server = state.status === 'signed-in' || state.status === 'signed-out' ? state.server : null;
   const client = useMemo(() => (server ? build(server, sessionToken.get) : noServerClient), [server, build]);
 
-  const notifyEnd = useCallback(async (reason: Parameters<SessionEndListener>[0]) => {
+  const notifyEnd = useCallback(async (reason: Parameters<SessionEndListener>[0], revoker: OpsWatchClient | null) => {
     await Promise.all([...listeners.current].map(async (listener) => {
       try {
-        await listener(reason);
+        await listener(reason, revoker);
       } catch (error) {
         log.warn('Session end listener failed', error);
       }
@@ -196,28 +200,36 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
   }, [client, server, completeSignIn]);
 
   /**
-   * Ends the session. Listeners (device unregistration, cache wipe) run first, while the token is still usable; the
-   * server-side session is revoked next (sign-out only); the token is dropped last.
+   * Ends the session. The app is signed out locally first — token out of memory and out of the Keychain, state
+   * changed — so a hanging network can never leave it showing production data with a live token. Server-side
+   * revocation and device unregistration then run as best effort, through a client still holding the old token.
    */
   const endSession = useCallback(
     async (reason: 'expired' | 'signed-out') => {
       if (!server) return;
-      await notifyEnd(reason);
-      if (reason === 'signed-out' && !server.demo) {
-        // Best effort: signing out locally must work offline too.
-        await client.logout().catch((error: unknown) => log.debug('Server-side logout failed', error));
-      }
-      await secureStore.remove(sessionKey(server.url));
+      const token = sessionToken.get();
+      const revoker = token && !server.demo ? build(server, () => token) : null;
+
       sessionToken.set(null);
+      await secureStore.remove(sessionKey(server.url));
       await persistServer(server);
       if (server.demo) {
         await prefs.remove(PREF_KEYS.server);
         setState({ status: 'no-server' });
-        return;
+      } else {
+        setState({ status: 'signed-out', server, reason });
       }
-      setState({ status: 'signed-out', server, reason });
+
+      // Not awaited by the caller: signing out must feel immediate and must work offline.
+      void (async () => {
+        await notifyEnd(reason, revoker);
+        // An expired token is already worthless, so only an explicit sign-out asks the server to forget it.
+        if (reason === 'signed-out' && revoker) {
+          await revoker.logout().catch((error: unknown) => log.debug('Server-side logout failed', error));
+        }
+      })();
     },
-    [server, client, persistServer, notifyEnd],
+    [server, build, persistServer, notifyEnd],
   );
 
   const signOut = useCallback(async () => {
@@ -240,7 +252,7 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
     sessionToken.set(null);
     pendingLink.clear();
     await prefs.remove(PREF_KEYS.server);
-    await notifyEnd('server-changed');
+    await notifyEnd('server-changed', null);
     setState({ status: 'no-server' });
   }, [state.status, server, signOut, notifyEnd]);
 

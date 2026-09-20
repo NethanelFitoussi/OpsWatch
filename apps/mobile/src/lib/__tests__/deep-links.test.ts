@@ -10,6 +10,17 @@ describe('parseDeepLink', () => {
     expect(parseDeepLink('https://ops.example.com/m/problems/p1', { associatedDomain: 'ops.example.com' })).toBe('/problems/p1');
   });
 
+  it('never turns a dot segment into a traversal', () => {
+    // The URL parser collapses `..` (encoded or not) before the allow-list sees it, so these are the Problems list.
+    expect(parseDeepLink('opswatch://problems/..')).toBe('/problems');
+    expect(parseDeepLink('opswatch://problems/%2e%2e')).toBe('/problems');
+    // Ids that reach a screen or a request from anywhere else are refused outright.
+    expect(isSafeId('..')).toBe(false);
+    expect(isSafeId('.')).toBe(false);
+    expect(isSafeId('a.b')).toBe(true);
+    expect(routeForRef({ type: 'problem', id: '..' })).toBeNull();
+  });
+
   it('accepts top-level screens', () => {
     expect(parseDeepLink('opswatch://problems')).toBe('/problems');
     expect(parseDeepLink('/')).toBe('/');
@@ -29,6 +40,7 @@ describe('parseDeepLink', () => {
     expect(parseDeepLink('opswatch://problems/<script>')).toBeNull();
     expect(parseDeepLink('opswatch://problems/%E0%A4%A')).toBeNull();
     expect(parseDeepLink('javascript:alert(1)')).toBeNull();
+    expect(parseDeepLink('opswatch://problems/%2E%2E%2Fservices')).toBeNull();
     expect(parseDeepLink('not a url')).toBeNull();
     expect(parseDeepLink(`opswatch://problems/${'a'.repeat(201)}`)).toBeNull();
   });

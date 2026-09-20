@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { buildUrl, request } from '../http';
 import { ApiError, isTransient } from '../errors';
 
-type Reply = { status: number; body?: unknown; headers?: Record<string, string> } | 'network' | 'hang';
+type Reply = { status: number; body?: unknown; headers?: Record<string, string>; url?: string } | 'network' | 'hang';
 
 function fakeFetch(replies: Reply[]) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -17,6 +17,7 @@ function fakeFetch(replies: Reply[]) {
       ok: reply.status >= 200 && reply.status < 300,
       status: reply.status,
       json: async () => reply.body,
+      url: reply.url,
       headers: { get: (name: string) => reply.headers?.[name.toLowerCase()] ?? null },
     } as unknown as Response;
   }) as unknown as typeof fetch;
@@ -95,6 +96,16 @@ it('ignores an HTTP-date Retry-After and backs off instead', async () => {
   await request({ ...transport(impl), sleep: async (ms: number) => void slept.push(ms) }, { path: '/x', schema });
   expect(slept[0]).toBeGreaterThan(0);
   expect(slept[0]).toBeLessThan(2000);
+});
+
+it('refuses an answer that came from another origin', async () => {
+  const { impl } = fakeFetch([{ status: 200, body: { value: 1 }, url: 'https://evil.example.com/api/v1/x' }]);
+  await expect(request(transport(impl), { path: '/x', schema, retries: 0 })).rejects.toMatchObject({ kind: 'invalid_response' });
+});
+
+it('accepts an answer from the same origin', async () => {
+  const { impl } = fakeFetch([{ status: 200, body: { value: 1 }, url: 'https://ops.example.com/base/x' }]);
+  await expect(request(transport(impl), { path: '/x', schema })).resolves.toEqual({ value: 1 });
 });
 
 it('classifies transient errors', () => {

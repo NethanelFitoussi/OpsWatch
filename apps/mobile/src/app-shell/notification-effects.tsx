@@ -113,15 +113,18 @@ export function NotificationEffects() {
     return () => subscription.remove();
   }, [router]);
 
-  // Unregister this device from the server when the session ends (before the token is dropped).
-  useEffect(() => onSessionEnd(() => unregisterFromPush(clientRef.current)), [onSessionEnd]);
+  // Unregister this device once the session has ended, through a client that still holds the old token.
+  useEffect(() => onSessionEnd((_reason, revoker) => (revoker ? unregisterFromPush(revoker) : undefined)), [onSessionEnd]);
 
-  // Keep the server registration in step with the preferences.
+  // Keep the server registration in step with the preferences. Keyed on their content, not the object identity, so
+  // toggling one category does not re-register the device on every keystroke of state.
   const pushSupported = signedIn && !state.server.demo && state.server.info?.features.push === true;
+  const preferencesKey = JSON.stringify(settings.notifications);
   useEffect(() => {
-    if (!pushSupported || !settings.notifications.enabled) return;
-    void registerForPush(client, settings.notifications);
-  }, [pushSupported, client, settings.notifications]);
+    const preferences = JSON.parse(preferencesKey) as NotificationPreferences & { enabled: boolean };
+    if (!pushSupported || !preferences.enabled) return;
+    void registerForPush(clientRef.current, preferences);
+  }, [pushSupported, preferencesKey]);
 
   return null;
 }

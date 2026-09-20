@@ -24,8 +24,12 @@ export function routeForNotification(data: unknown): string | null {
 
 const RANK: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
 
-/** Local mirror of the server-side filter, used for foreground presentation. Recoveries follow their category only. */
-export function shouldPresent(prefs: NotificationPreferences, event: { category: NotificationCategory; severity?: Severity }): boolean {
+/**
+ * Local mirror of the server-side filter, used for foreground presentation. Recoveries follow their category only.
+ * `enabled: false` silences everything, including anything the server sent before it learned of the change.
+ */
+export function shouldPresent(prefs: NotificationPreferences & { enabled?: boolean }, event: { category: NotificationCategory; severity?: Severity }): boolean {
+  if (prefs.enabled === false) return false;
   if (!prefs.categories.includes(event.category)) return false;
   if (event.category === 'recovery' || !event.severity) return true;
   return RANK[event.severity] <= RANK[prefs.minSeverity];

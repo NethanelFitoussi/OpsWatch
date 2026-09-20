@@ -7,7 +7,7 @@ import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
 import { Linking, Platform, View } from 'react-native';
 import { NOTIFICATION_CATEGORIES, type NotificationCategory, type NotificationPreferences } from '@/api/contract';
-import { registerForPush, type RegistrationResult } from '@/app-shell/notification-effects';
+import { registerForPush, unregisterFromPush, type RegistrationResult } from '@/app-shell/notification-effects';
 import { useI18n } from '@/i18n';
 import { log } from '@/lib/log';
 import { useFeature, useSession } from '@/state/session';
@@ -39,7 +39,11 @@ export function NotificationsScreen() {
   const enable = async (enabled: boolean) => {
     setPrefs({ enabled });
     setResult(null);
-    if (!enabled) return;
+    if (!enabled) {
+      // Tell the server to stop sending to this device, rather than only silencing it locally.
+      await unregisterFromPush(client);
+      return;
+    }
     const preferences: NotificationPreferences = { minSeverity: prefs.minSeverity, categories: prefs.categories };
     if (serverPush && !demo) {
       setResult(await registerForPush(client, preferences));
