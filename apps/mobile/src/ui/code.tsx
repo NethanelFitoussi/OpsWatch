@@ -10,7 +10,7 @@ import { useI18n } from '@/i18n';
 import { prettyLog } from '@/lib/format';
 import { CopyButton } from './controls';
 import { Text } from './text';
-import { monoFont, radius, spacing } from './theme';
+import { monoFont, radius, slopToTouchTarget, spacing } from './theme';
 import { useTheme } from './theme-provider';
 
 const MONO = { fontFamily: monoFont, fontSize: 12.5, lineHeight: 19 } as const;
@@ -20,6 +20,10 @@ const MONO = { fontFamily: monoFont, fontSize: 12.5, lineHeight: 19 } as const;
  * would otherwise hang the screen. What is left out is stated rather than silently dropped; the full text is still
  * what gets copied.
  */
+/** Inline controls keep their compact look and reach the minimum touch target through hit slop. */
+const TOGGLE_HEIGHT = 32;
+const FOLDED_HEIGHT = 36;
+
 export const MAX_RENDERED_LINES = 600;
 const MAX_RENDERED_LINE_LENGTH = 2_000;
 
@@ -165,7 +169,7 @@ export function StackTraceViewer({ frames, rawStack, testID }: { frames: StackFr
     <View style={styles.trace} testID={testID}>
       <View style={styles.traceActions}>
         {libraryCount > 0 ? (
-          <Pressable onPress={() => setShowLibrary((s) => !s)} accessibilityRole="button" style={styles.toggle} testID="toggle-library-frames">
+          <Pressable onPress={() => setShowLibrary((s) => !s)} accessibilityRole="button" style={styles.toggle} hitSlop={slopToTouchTarget(TOGGLE_HEIGHT)} testID="toggle-library-frames">
             <Text variant="small" weight="600" tone="primary">
               {showLibrary ? t('action.showLess') : `${t('action.showMore')} (${libraryCount})`}
             </Text>
@@ -175,7 +179,7 @@ export function StackTraceViewer({ frames, rawStack, testID }: { frames: StackFr
         )}
         {rawStack ? (
           <View style={styles.row}>
-            <Pressable onPress={() => setShowRaw((s) => !s)} accessibilityRole="button" style={styles.toggle}>
+            <Pressable onPress={() => setShowRaw((s) => !s)} accessibilityRole="button" style={styles.toggle} hitSlop={slopToTouchTarget(TOGGLE_HEIGHT)}>
               <Text variant="small" weight="600" tone="primary">
                 {showRaw ? t('code.frames') : t('code.raw')}
               </Text>
@@ -195,6 +199,7 @@ export function StackTraceViewer({ frames, rawStack, testID }: { frames: StackFr
               key={`folded-${group.start}`}
               onPress={() => setShowLibrary(true)}
               accessibilityRole="button"
+              hitSlop={slopToTouchTarget(FOLDED_HEIGHT)}
               style={[styles.folded, { borderColor: colors.border }]}
             >
               <Text variant="caption" tone="muted">
@@ -264,9 +269,9 @@ const styles = StyleSheet.create({
   trace: { gap: spacing.sm },
   traceActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  toggle: { minHeight: 32, justifyContent: 'center' },
+  toggle: { minHeight: TOGGLE_HEIGHT, justifyContent: 'center' },
   frame: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.md, overflow: 'hidden', gap: spacing.xs },
   frameHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, minHeight: 48 },
   appTag: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.sm },
-  folded: { borderWidth: StyleSheet.hairlineWidth, borderStyle: 'dashed', borderRadius: radius.md, padding: spacing.sm, alignItems: 'center', minHeight: 36, justifyContent: 'center' },
+  folded: { borderWidth: StyleSheet.hairlineWidth, borderStyle: 'dashed', borderRadius: radius.md, padding: spacing.sm, alignItems: 'center', minHeight: FOLDED_HEIGHT, justifyContent: 'center' },
 });

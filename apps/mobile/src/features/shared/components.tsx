@@ -17,7 +17,7 @@ import { Button } from '@/ui/controls';
 import { Card, Row, type IconName } from '@/ui/layout';
 import { useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
-import { radius, spacing } from '@/ui/theme';
+import { radius, slopToTouchTarget, spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
 import { useOpenRef } from './navigation';
 
@@ -116,7 +116,7 @@ export const EvidenceItem = memo(function EvidenceItem({ item, locale }: { item:
         {expanded && item.detail ? <Text tone="muted">{item.detail}</Text> : null}
         {expanded && item.series ? <TrendChart series={item.series} height={110} /> : null}
         {item.ref ? (
-          <Pressable onPress={() => openRef(item.ref!)} accessibilityRole="link" style={styles.evidenceLink}>
+          <Pressable onPress={() => openRef(item.ref!)} accessibilityRole="link" style={styles.evidenceLink} hitSlop={slopToTouchTarget(EVIDENCE_LINK_HEIGHT)}>
             <Text variant="small" weight="600" tone="primary">
               {item.ref.label ?? t(`investigations.open.${item.ref.type}`)}
             </Text>
@@ -253,6 +253,9 @@ export function LinkRow({ href, title, subtitle, icon }: { href: string; title: 
 
 export { StateBadge };
 
+/** The evidence link sits at the end of a card and stays compact; hit slop takes it to the touch target. */
+const EVIDENCE_LINK_HEIGHT = 32;
+
 const styles = StyleSheet.create({
   tile: { flexGrow: 1, flexBasis: '30%', minWidth: 100, padding: spacing.md, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, gap: 2 },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
   evidenceLine: { width: 2, flex: 1, marginTop: 4, borderRadius: 1 },
   evidenceBody: { flex: 1, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm, marginBottom: spacing.xs },
   evidenceHead: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, minHeight: 24 },
-  evidenceLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
+  evidenceLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: EVIDENCE_LINK_HEIGHT },
   sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   favorite: { padding: 6 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm, gap: spacing.sm },

@@ -116,7 +116,10 @@ export function CountsRow({ counts }: { counts: Health['counts'] }) {
             <Text variant="title" numberOfLines={1} adjustsFontSizeToFit style={styles.tabular}>
               {item.value}
             </Text>
-            <Text variant="caption" tone="muted" numberOfLines={2}>
+            {/* No line cap: at a large font scale "of 18 healthy services" needs three lines, and a truncated
+                count tile is the one thing on this screen that must never be ambiguous. The tiles share a row, so
+                they grow together and stay aligned. */}
+            <Text variant="caption" tone="muted">
               {item.label}
             </Text>
           </>

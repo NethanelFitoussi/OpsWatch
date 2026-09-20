@@ -124,6 +124,17 @@ export const radius = { sm: 6, md: 10, lg: 14, pill: 999 } as const;
 /** Minimum touch target (Apple HIG 44 pt, Material 48 dp): 48 covers both. */
 export const TOUCH_TARGET = 48;
 
+/**
+ * The vertical hit slop that lifts a control of `height` to the minimum touch target.
+ *
+ * Inline controls — a "show more" toggle, a link at the end of a line of prose — cannot be 48 tall without looking
+ * like buttons and pushing the text around them apart. They stay the size they look and grow their touch area
+ * instead. Pass the same constant the style uses, so the two cannot drift apart.
+ */
+export function slopToTouchTarget(height: number): number {
+  return Math.max(0, Math.ceil((TOUCH_TARGET - height) / 2));
+}
+
 export const fontSize = { caption: 12, small: 13, body: 15, subtitle: 17, title: 20, headline: 26, hero: 32 } as const;
 /** Menlo exists only on iOS; Android and web need the generic family, or they fall back to a serif face. */
 export const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
