@@ -1004,3 +1004,76 @@ example that produced it.
 | §33.7's regression: user-facing service failing 5 minutes after its first deploy, no dependency edge, no family, no baseline | S=1, T=0.083, D=0, B and U unavailable | rescaled over 65; ≈ 63 → warning **unless** the detector declares total failure, which floors it at 70 → critical |
 | An info detector, small blast, brief, not user-facing, no baseline | S=0.2, B=0.1, T=0.05, U=0, D=0 | 11, info |
 | A synthetic down | floorCritical | ≥ 70, `floored: true` |
+
+### Task 6: The detector framework, outcomes and lifecycle
+
+Implements §5 (a detector is a pure function returning problems), §4.3's lifecycle, and **§33.5** (auto-resolve
+requires evaluated-and-clear, not silence).
+
+**Files:**
+- Create: `src/lib/detect/types.ts`, `src/lib/detect/framework.ts`, `src/lib/detect/lifecycle.ts`
+- Create: `tests/unit/detect-framework.test.ts`, `tests/unit/detect-lifecycle.test.ts`
+- Modify: `tests/unit/module-boundaries.test.ts`, `tests/helpers/detect.ts`
+
+**The shape of the layer.** `detect` stays pure, so `lifecycle.ts` never touches the database: it is handed the
+live problems as a plain projection (`LiveProblem`, *not* a `ProblemRow` — importing the schema is forbidden),
+plus this cycle's outcomes and `nowMs`, and it answers a list of **transitions** the store then applies. That
+separation is what lets every rule below be tested with literals and no fixture database.
+
+**Interfaces:**
+- Produces (`src/lib/detect/types.ts`):
+  - `EVIDENCE_KINDS`, `EvidenceKind` — `'metric'|'event'|'log'|'check'|'inventory'` (the *stored* kinds; the
+    wire kind is always `'fact'` in phase 1, per **D1**). Declared here, matching the schema, same rule as
+    `SUBJECT_KINDS`.
+  - `export type Evidence = { kind; labelKey; values; value: number | null; unit: string | null; at: number; seriesRef?; href? }`
+    — §4.3: "a problem with no evidence cannot be created; the type makes the field required".
+  - `export type SubjectRef = { type: SubjectKind; id: string; name: string; serviceId: string | null }`
+  - `export type DetectedProblem` — what a detector returns: the subject, the detector `kind`, its `level`, the
+    `titleKey`/`values` to render, the `href`, the required `evidence`, and the score inputs §4.3 needs
+    (`blast`, `minutesBreaching`, `userFacing`, `robustZ`, `totalFailure?`, `floorCritical?`).
+  - `export type SubjectOutcome` — **§33.5's three outcomes**, one per subject per detector:
+    `{ state: 'fired'; problem }` · `{ state: 'clear'; kind; subject }` · `{ state: 'not_evaluated'; kind; subject }`.
+- Produces (`src/lib/detect/framework.ts`):
+  - `export type Detector = { id: string; evaluate: (input: DetectorInput) => SubjectOutcome[] }`
+  - `export type DetectorCycle = { at: number; outcomes: SubjectOutcome[] }`
+  - `export function runDetectors(detectors: readonly Detector[], input: DetectorInput): DetectorCycle` — runs
+    each detector, tags every outcome with the detector that produced it, and **isolates failure**: a detector
+    that throws yields `not_evaluated` for the subjects it was given rather than aborting the cycle, because
+    one broken rule must not stop the other nine from reporting.
+- Produces (`src/lib/detect/lifecycle.ts`):
+  - `CLEAR_EVALUATIONS` 3 · `CLEAR_MIN_MS` 15 min · `REOPEN_WINDOW_MS` 2 h · `STALE_AFTER_MS` 1 h (**D3**).
+  - `export type LiveProblem = { id; key; status; firstSeenAt; lastSeenAt; lastEvaluatedAt; clearStreak; clearSinceAt: number | null; occurrences; flapCount; resolvedAt: number | null }`
+  - `export type Transition` — a discriminated union the store applies verbatim:
+    `open` · `reopen` · `supersede` (a new row carrying `previousProblemId`) · `touch` (still firing) ·
+    `progress_clear` (evaluated-and-clear, not yet enough) · `resolve` · `reset_clear` (fired again before
+    clearing completed).
+  - `export function applyCycle(input: { live: readonly LiveProblem[]; resolvedInWindow: readonly LiveProblem[]; cycle: DetectorCycle; nowMs: number }): Transition[]`
+  - `export function isStale(problem: LiveProblem, nowMs: number): boolean` — `nowMs - lastEvaluatedAt > STALE_AFTER_MS`.
+
+**The rules, stated once.**
+
+1. **Fired, no live row.** If a row for the key was resolved within `REOPEN_WINDOW_MS` → `reopen` that row and
+   increment `flapCount`; `firstSeenAt` and the occurrence count survive. Otherwise → `open`, or `supersede`
+   carrying `previousProblemId` when an older resolved row for the key exists beyond the window.
+2. **Fired, live row.** → `touch`: `lastSeenAt`, `lastEvaluatedAt`, `occurrences + 1`, the new score and
+   evidence. If the row had a clear streak it is reset — `reset_clear` — because clearing must be *consecutive*.
+3. **Evaluated-and-clear, live row.** → `progress_clear`: `clearStreak + 1`, and `clearSinceAt` set on the
+   first one. It becomes `resolve` only when **both** `clearStreak + 1 >= CLEAR_EVALUATIONS` **and**
+   `nowMs - clearSinceAt >= CLEAR_MIN_MS`. Three fast cycles inside one minute do not resolve anything.
+4. **Not-evaluated.** → **no transition at all.** It resets nothing and counts toward nothing (§33.5). The row's
+   `lastEvaluatedAt` is deliberately *not* touched, which is what later makes it read as stale.
+5. **Stale.** A live problem whose subject has not been evaluated for `STALE_AFTER_MS` is reported stale by
+   `isStale` and is **never** auto-resolved: "a monitoring tool that quietly closes what it stopped looking at
+   is worse than one that admits the gap."
+6. **Acknowledged** rows follow every rule above unchanged — acknowledgement silences, it does not freeze.
+
+- [x] **Step 1: Write the failing tests.** `tests/unit/detect-framework.test.ts` covers: outcomes are tagged
+  with their detector; a throwing detector yields `not_evaluated` and the others still run; an empty detector
+  list yields an empty cycle. `tests/unit/detect-lifecycle.test.ts` covers each rule above, and in particular
+  §33.5's regression: **three `not_evaluated` cycles in a row resolve nothing**, while three
+  evaluated-and-clear cycles spanning 15 minutes do.
+- [x] **Step 2: Run them to see them fail.** → FAIL.
+- [ ] **Step 3: Write the three modules.**
+- [x] **Step 4: Run the tests** → PASS.
+- [ ] **Step 5: Add the three files to `SERVER_ONLY_MODULES`**; the purity rule from Task 5 covers them already.
+- [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): outcomes, the detector framework and the problem lifecycle`.

@@ -1,4 +1,5 @@
 import type { NewProblem } from '@/lib/store/problems';
+import type { DetectedProblem } from '@/lib/detect/types';
 
 export const FIXED_NOW = Date.UTC(2026, 8, 19, 9, 0, 0);
 
@@ -13,5 +14,29 @@ export function newProblem(over: Partial<NewProblem> = {}): NewProblem {
     firstSeenAt: FIXED_NOW, lastSeenAt: FIXED_NOW, lastEvaluatedAt: FIXED_NOW, previousProblemId: null,
     evidence: [{ kind: 'metric', labelKey: 'Problems.evidence.cpu', values: {}, value: 96.2, unit: 'percent', at: FIXED_NOW }],
     ...over,
+  };
+}
+
+/**
+ * What a detector returns when it fires. The score inputs default to an established, wholly-broken,
+ * user-facing service, so a test that cares about one term overrides only that term.
+ */
+export function detected(over: Partial<DetectedProblem> & { subjectId?: string } = {}): DetectedProblem {
+  const subjectId = over.subjectId ?? 'prod/web';
+  const rest: Partial<DetectedProblem> = { ...over };
+  delete (rest as { subjectId?: string }).subjectId;
+  return {
+    kind: 'ecs_cpu_high',
+    subject: { type: 'service', id: subjectId, name: subjectId, serviceId: subjectId },
+    level: 'critical',
+    titleKey: 'Insights.messages.ecs_cpu_high',
+    values: { service: 'web', value: 96 },
+    href: `/c/c1/us-east-1/containers/services/${subjectId}`,
+    evidence: [{ kind: 'metric', labelKey: 'Problems.evidence.cpu', values: {}, value: 96.2, unit: 'percent', at: FIXED_NOW }],
+    blast: { affected: 1, members: 1 },
+    minutesBreaching: 60,
+    userFacing: 'direct',
+    robustZ: null,
+    ...rest,
   };
 }
