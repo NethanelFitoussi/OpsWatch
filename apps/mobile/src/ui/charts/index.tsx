@@ -7,13 +7,31 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Line, Path, Rect } from 'react-native-svg';
 import type { Series } from '@/api/contract';
 import { useI18n } from '@/i18n';
-import { formatClock, formatMetric, formatPercentFraction } from '@/lib/format';
+import { formatClock, formatDateTime, formatMetric, formatPercentFraction } from '@/lib/format';
 import { Text } from '../text';
 import { radius, spacing } from '../theme';
 import { useTheme } from '../theme-provider';
-import { areaPath, domainOf, downsample, linePath, nearestIndex, scaleX, scaleY, summary } from './scale';
+import { areaPath, domainOf, downsample, linePath, nearestIndex, scaleX, scaleY, summary, thresholdsInScale, timeAxisFormat, type Point } from './scale';
 
 const MAX_POINTS = 120;
+
+/** One axis label, in a form that is unambiguous for the range the chart covers. */
+function axisLabel(at: number, points: readonly Point[], locale: string): string {
+  const first = points[0]?.[0] ?? at;
+  const last = points[points.length - 1]?.[0] ?? at;
+  const format = timeAxisFormat(first, last);
+  if (format === 'time') return formatClock(at, locale);
+  if (format === 'date') return new Date(at).toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+  return formatDateTime(at, locale);
+}
+
+/** "Sep 18, 08:00 to 10:00", for the screen-reader description. */
+function domainLabel(points: readonly Point[], locale: string): string {
+  const first = points[0]?.[0];
+  const last = points[points.length - 1]?.[0];
+  if (first === undefined || last === undefined) return '';
+  return `${axisLabel(first, points, locale)} – ${axisLabel(last, points, locale)}`;
+}
 
 function useWidth(initial = 0): [number, (e: LayoutChangeEvent) => void] {
   const [width, setWidth] = useState(initial);
@@ -44,16 +62,16 @@ export const TrendChart = memo(function TrendChart({ series, height = 150, testI
   const points = useMemo(() => downsample(series.points, MAX_POINTS), [series.points]);
   const warningAt = series.thresholds?.warning;
   const criticalAt = series.thresholds?.critical;
-  const domain = useMemo(
-    () => domainOf(points, [warningAt, criticalAt].filter((v): v is number => v !== undefined)),
-    [points, warningAt, criticalAt],
-  );
+  const thresholds = useMemo(() => thresholdsInScale(points, { warning: warningAt, critical: criticalAt }), [points, warningAt, criticalAt]);
+  const domain = useMemo(() => domainOf(points, thresholds.inScale), [points, thresholds.inScale]);
+  const shows = (value: number | undefined) => value !== undefined && thresholds.inScale.includes(value);
   const stats = useMemo(() => summary(series.points), [series.points]);
   const fmt = (v: number | null) => formatMetric(v, series.unit);
 
+  const spanLabel = domainLabel(points, locale);
   const a11y = stats.latest === null
     ? t('a11y.chartNoData', { label: series.label })
-    : t('a11y.chart', { label: series.label, value: fmt(stats.latest), min: fmt(stats.min), max: fmt(stats.max) });
+    : `${t('a11y.chart', { label: series.label, value: fmt(stats.latest), min: fmt(stats.min), max: fmt(stats.max) })}. ${spanLabel}`;
 
   const activePoint = active !== null ? points[active] : undefined;
 
@@ -68,8 +86,8 @@ export const TrendChart = memo(function TrendChart({ series, height = 150, testI
         <Text variant="small" weight="600" numberOfLines={1} style={{ flex: 1 }}>
           {series.label}
         </Text>
-        <Text variant="small" weight="700" tone={activePoint ? 'primary' : 'default'}>
-          {activePoint ? `${fmt(activePoint[1])} · ${formatClock(activePoint[0], locale)}` : fmt(stats.latest)}
+        <Text variant="small" weight="700" tone={activePoint ? 'primary' : 'default'} numberOfLines={1} style={styles.headerValue}>
+          {activePoint ? `${fmt(activePoint[1])} · ${axisLabel(activePoint[0], points, locale)}` : fmt(stats.latest)}
         </Text>
       </View>
       <View
@@ -88,11 +106,11 @@ export const TrendChart = memo(function TrendChart({ series, height = 150, testI
             {[0.25, 0.5, 0.75].map((f) => (
               <Line key={f} x1={0} x2={width} y1={height * f} y2={height * f} stroke={colors.chartGrid} strokeWidth={1} />
             ))}
-            {series.thresholds?.warning !== undefined ? (
-              <Line x1={0} x2={width} y1={scaleY(series.thresholds.warning, domain, height)} y2={scaleY(series.thresholds.warning, domain, height)} stroke={colors.warning} strokeDasharray="4 4" strokeWidth={1} />
+            {warningAt !== undefined && shows(warningAt) ? (
+              <Line x1={0} x2={width} y1={scaleY(warningAt, domain, height)} y2={scaleY(warningAt, domain, height)} stroke={colors.warning} strokeDasharray="4 4" strokeWidth={1} />
             ) : null}
-            {series.thresholds?.critical !== undefined ? (
-              <Line x1={0} x2={width} y1={scaleY(series.thresholds.critical, domain, height)} y2={scaleY(series.thresholds.critical, domain, height)} stroke={colors.critical} strokeDasharray="6 3" strokeWidth={1} />
+            {criticalAt !== undefined && shows(criticalAt) ? (
+              <Line x1={0} x2={width} y1={scaleY(criticalAt, domain, height)} y2={scaleY(criticalAt, domain, height)} stroke={colors.critical} strokeDasharray="6 3" strokeWidth={1} />
             ) : null}
             <Path d={areaPath(points, domain, width, height)} fill={colors.chartFill} />
             <Path d={linePath(points, domain, width, height)} stroke={colors.chartLine} strokeWidth={2} fill="none" />
@@ -109,17 +127,20 @@ export const TrendChart = memo(function TrendChart({ series, height = 150, testI
       {domain ? (
         <View style={styles.axis}>
           <Text variant="caption" tone="faint">
-            {formatClock(domain.minX, locale)}
+            {axisLabel(domain.minX, points, locale)}
           </Text>
-          {series.thresholds?.critical !== undefined || series.thresholds?.warning !== undefined ? (
-            <Text variant="caption" tone="faint" numberOfLines={1}>
-              {[series.thresholds?.warning !== undefined ? `⚠ ${fmt(series.thresholds.warning)}` : null, series.thresholds?.critical !== undefined ? `⛔ ${fmt(series.thresholds.critical)}` : null]
+          {warningAt !== undefined || criticalAt !== undefined ? (
+            <Text variant="caption" tone="faint" numberOfLines={1} style={styles.thresholdCaption}>
+              {[
+                warningAt !== undefined ? `⚠ ${fmt(warningAt)}${shows(warningAt) ? '' : ` ${t('chart.offScale')}`}` : null,
+                criticalAt !== undefined ? `⛔ ${fmt(criticalAt)}${shows(criticalAt) ? '' : ` ${t('chart.offScale')}`}` : null,
+              ]
                 .filter(Boolean)
                 .join('  ')}
             </Text>
           ) : null}
           <Text variant="caption" tone="faint">
-            {formatClock(domain.maxX, locale)}
+            {axisLabel(domain.maxX, points, locale)}
           </Text>
         </View>
       ) : null}
@@ -190,6 +211,8 @@ export function BudgetBar({ remaining }: { remaining: number | null }) {
 
 const styles = StyleSheet.create({
   chartHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs },
+  headerValue: { flexShrink: 0, fontVariant: ['tabular-nums'] },
+  thresholdCaption: { flexShrink: 1 },
   axis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2, gap: spacing.sm },
   noData: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md },
   budgetTrack: { height: 10, borderRadius: radius.pill, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },

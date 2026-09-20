@@ -87,6 +87,36 @@ export function nearestIndex(points: readonly Point[], d: Domain, width: number,
   return best;
 }
 
+/**
+ * Which thresholds belong on the chart. A threshold far outside the data would flatten the line it is meant to give
+ * context to (a 5 % critical line against a series that never leaves 0.2 %), so it is left off the scale and named in
+ * the caption instead.
+ */
+export function thresholdsInScale(
+  points: readonly Point[],
+  thresholds: { warning?: number; critical?: number } | undefined,
+): { inScale: number[]; offScale: number[] } {
+  const values = points.map((p) => p[1]).filter((v): v is number => v !== null && Number.isFinite(v));
+  const wanted = [thresholds?.warning, thresholds?.critical].filter((v): v is number => v !== undefined);
+  if (!values.length || !wanted.length) return { inScale: [], offScale: wanted };
+  const max = Math.max(...values);
+  const min = Math.min(...values, 0);
+  const headroom = Math.max(max - min, Math.abs(max) * 0.1, 1) * 2;
+  const inScale = wanted.filter((v) => v <= max + headroom && v >= min - headroom);
+  return { inScale, offScale: wanted.filter((v) => !inScale.includes(v)) };
+}
+
+/**
+ * How to label a time axis. `HH:MM` is ambiguous as soon as a range covers more than a day, so longer spans carry
+ * the date as well.
+ */
+export function timeAxisFormat(fromMs: number, toMs: number): 'time' | 'dateTime' | 'date' {
+  const span = Math.abs(toMs - fromMs);
+  if (span > 7 * 86_400_000) return 'date';
+  if (span > 36 * 3_600_000) return 'dateTime';
+  return 'time';
+}
+
 export function summary(points: readonly Point[]): { latest: number | null; min: number | null; max: number | null } {
   const values = points.map((p) => p[1]).filter((v): v is number => v !== null && Number.isFinite(v));
   if (!values.length) return { latest: null, min: null, max: null };

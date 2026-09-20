@@ -1,4 +1,4 @@
-import { areaPath, domainOf, downsample, linePath, nearestIndex, summary, type Point } from '../scale';
+import { areaPath, domainOf, downsample, linePath, nearestIndex, summary, thresholdsInScale, timeAxisFormat, type Point } from '../scale';
 
 const points: Point[] = [
   [0, 1],
@@ -37,4 +37,29 @@ it('downsamples long series while keeping extremes', () => {
   const out = downsample(long, 100);
   expect(out.length).toBeLessThanOrEqual(110);
   expect(out.some((p) => p[1] === 99)).toBe(true);
+});
+
+describe('thresholdsInScale', () => {
+  const quiet: Point[] = Array.from({ length: 10 }, (_, i) => [i, 0.2]);
+  it('keeps a threshold the data can be read against', () => {
+    expect(thresholdsInScale(quiet, { warning: 1 })).toEqual({ inScale: [1], offScale: [] });
+  });
+  it('drops one so far away it would flatten the line', () => {
+    // 0.2 % against a 5 % critical line: drawing it would squash the series into the axis.
+    expect(thresholdsInScale(quiet, { critical: 500 })).toEqual({ inScale: [], offScale: [500] });
+  });
+  it('says nothing when there is no data or no threshold', () => {
+    expect(thresholdsInScale([[0, null]], { warning: 1 })).toEqual({ inScale: [], offScale: [1] });
+    expect(thresholdsInScale(quiet, undefined)).toEqual({ inScale: [], offScale: [] });
+  });
+});
+
+describe('timeAxisFormat', () => {
+  const hour = 3_600_000;
+  it('uses a clock for a short range and adds the date when it would be ambiguous', () => {
+    expect(timeAxisFormat(0, 6 * hour)).toBe('time');
+    expect(timeAxisFormat(0, 24 * hour)).toBe('time');
+    expect(timeAxisFormat(0, 48 * hour)).toBe('dateTime');
+    expect(timeAxisFormat(0, 30 * 24 * hour)).toBe('date');
+  });
 });
