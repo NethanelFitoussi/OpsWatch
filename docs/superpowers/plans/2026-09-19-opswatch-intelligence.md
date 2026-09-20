@@ -843,7 +843,7 @@ There is **no** `incident_problems` join table: a problem belongs to at most one
 
 `runRetention` deletes resolved problems whose `resolvedAt < nowMs - RESOLVED_RETENTION_MS` (their evidence follows by `on delete cascade`), then the two event families at their own windows, then collector runs older than 30 days. It never deletes an incident: §9.4 keeps incidents "with an admin purge", and no admin purge exists in phase 1.
 
-- [ ] **Step 1: Write the failing tests.** `tests/unit/store-incidents.test.ts` asserts: an incident opens with `status: 'investigating'` and the given severity; `attachProblem` sets `problems.incident_id` and `incidentProblemIds` reads it back; `setIncidentStatus` appends a `status_change` row and stamps `resolvedAt` only for `'resolved'`; `listTimeline` returns rows oldest first; deleting the incident cascades its timeline. `tests/unit/store-retention.test.ts`:
+- [x] **Step 1: Write the failing tests.** `tests/unit/store-incidents.test.ts` asserts: an incident opens with `status: 'investigating'` and the given severity; `attachProblem` sets `problems.incident_id` and `incidentProblemIds` reads it back; `setIncidentStatus` appends a `status_change` row and stamps `resolvedAt` only for `'resolved'`; `listTimeline` returns rows oldest first; deleting the incident cascades its timeline. `tests/unit/store-retention.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -886,7 +886,7 @@ describe('retention', () => {
 });
 ```
 
-- [ ] **Step 2: Create `tests/helpers/detect.ts`** with the fixture builders every later task reuses, so no test repeats a twenty-line literal:
+- [x] **Step 2: Create `tests/helpers/detect.ts`** with the fixture builders every later task reuses, so no test repeats a twenty-line literal:
 
 ```ts
 import type { NewProblem } from '@/lib/store/problems';
@@ -910,8 +910,8 @@ export function newProblem(over: Partial<NewProblem> = {}): NewProblem {
 
 Then simplify `tests/unit/store-problems.test.ts` from Task 1 to import `newProblem` instead of its local `base`, keeping every assertion identical.
 
-- [ ] **Step 3: Run both tests to see them fail.** → FAIL.
-- [ ] **Step 4: Add both tables, generate `drizzle/0005_*.sql`, write both modules.**
-- [ ] **Step 5: Run the tests** → PASS.
-- [ ] **Step 6: Add `'lib/store/incidents.ts'` and `'lib/store/retention.ts'` to `SERVER_ONLY_MODULES`.**
-- [ ] **Step 7: Verify and commit.** Full gate. Commit: `feat(store): incidents, their timeline, and the 30-day resolved-problem rule`.
+- [x] **Step 3: Run both tests to see them fail.** → FAIL.
+- [x] **Step 4: Add both tables, generate `drizzle/0005_*.sql`, write both modules.**
+- [x] **Step 5: Run the tests** → PASS.
+- [x] **Step 6: Add `'lib/store/incidents.ts'` and `'lib/store/retention.ts'` to `SERVER_ONLY_MODULES`.**
+- [x] **Step 7: Verify and commit.** Full gate. Commit: `feat(store): incidents, their timeline, and the 30-day resolved-problem rule`.

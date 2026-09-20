@@ -203,3 +203,40 @@ export const collectorLock = sqliteTable('collector_lock', {
 });
 export type CollectorLockRow = typeof collectorLock.$inferSelect;
 
+export const INCIDENT_STATUSES = ['investigating', 'identified', 'monitoring', 'resolved'] as const;
+export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
+
+export const incidents = sqliteTable('incidents', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  connectionId: text('connection_id').notNull(),
+  scope: text('scope').notNull(),
+  titleKey: text('title_key').notNull(),
+  values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+  status: text('status', { enum: INCIDENT_STATUSES }).notNull(),
+  severity: text('severity', { enum: PROBLEM_SEVERITIES }).notNull(),
+  startedAt: integer('started_at').notNull(),
+  resolvedAt: integer('resolved_at'),
+  serviceIds: text('service_ids', { mode: 'json' }).$type<string[]>().notNull(),
+  origin: text('origin', { enum: ['auto', 'user'] as const }).notNull(),
+  dismissedAt: integer('dismissed_at'),
+}, (t) => [index('incidents_env_seq').on(t.connectionId, t.scope, t.seq)]);
+
+export const INCIDENT_TIMELINE_KINDS = ['status_change', 'event', 'note'] as const;
+export type IncidentTimelineKind = (typeof INCIDENT_TIMELINE_KINDS)[number];
+
+export const incidentTimeline = sqliteTable('incident_timeline', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  incidentId: text('incident_id').notNull().references(() => incidents.id, { onDelete: 'cascade' }),
+  at: integer('at').notNull(),
+  kind: text('kind', { enum: INCIDENT_TIMELINE_KINDS }).notNull(),
+  eventId: text('event_id'),
+  actorId: text('actor_id'),
+  messageKey: text('message_key'),
+  values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+  note: text('note'),
+}, (t) => [index('incident_timeline_incident').on(t.incidentId, t.at)]);
+
+export type IncidentRow = typeof incidents.$inferSelect;
+export type IncidentTimelineRow = typeof incidentTimeline.$inferSelect;

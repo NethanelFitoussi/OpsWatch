@@ -46,6 +46,8 @@ const SERVER_ONLY_MODULES = [
   'lib/store/problems.ts',
   'lib/store/events.ts',
   'lib/store/collector.ts',
+  'lib/store/incidents.ts',
+  'lib/store/retention.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',

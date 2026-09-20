@@ -1,23 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   countProblemsBySeverity, findLastProblemForKey, findLiveProblem, findProblemById, findRecentResolved,
-  insertProblem, listEvidence, pageProblems, replaceEvidence, updateProblem, type NewProblem,
+  insertProblem, listEvidence, pageProblems, replaceEvidence, updateProblem,
 } from '@/lib/store/problems';
 import { createTestDb } from '../helpers/db';
-
-const AT = Date.UTC(2026, 8, 19, 9, 0, 0);
-const base = (over: Partial<NewProblem> = {}): NewProblem => ({
-  key: 'k1'.padEnd(32, '0'),
-  connectionId: 'c1', scope: 'us-east-1', kind: 'ecs_cpu_high',
-  subjectType: 'service', subjectId: 'prod/web', subjectName: 'web', serviceId: 'prod/web',
-  source: 'aws', titleKey: 'Insights.messages.ecs_cpu_high', values: { service: 'web', value: 96 },
-  severity: 'critical', score: 82,
-  scoreTerms: { s: 1, b: 0.5, t: 1, u: 1, d: 0, weights: { s: 40, b: 20, t: 15, u: 15, d: 10 }, availableWeight: 100, rescaled: false, floored: false, score: 82 },
-  href: '/c/c1/us-east-1/containers/services/prod/web',
-  firstSeenAt: AT, lastSeenAt: AT, lastEvaluatedAt: AT, previousProblemId: null,
-  evidence: [{ kind: 'metric', labelKey: 'Problems.evidence.cpu', values: {}, value: 96.2, unit: 'percent', at: AT }],
-  ...over,
-});
+import { FIXED_NOW as AT, newProblem as base } from '../helpers/detect';
 
 describe('the problem store', () => {
   it('assigns a monotonic seq and keeps one live row per key', () => {

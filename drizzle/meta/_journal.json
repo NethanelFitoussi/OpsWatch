@@ -43,6 +43,13 @@
       "when": 1789886498271,
       "tag": "0005_groovy_spencer_smythe",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789886681849,
+      "tag": "0006_early_magma",
+      "breakpoints": true
     }
   ]
 }
