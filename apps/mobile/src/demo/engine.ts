@@ -18,7 +18,7 @@ import type {
   Severity,
 } from '@/api/contract';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters } from '@/api/client';
-import { calmHealth, type DemoDataset } from './fixtures';
+import { calmHealth, errorSummaryOf, trendOf, type DemoDataset } from './fixtures';
 
 export const DEMO_PAGE_SIZE = 20;
 export const DEMO_LOG_PAGE_SIZE = 50;
@@ -63,9 +63,7 @@ export function listErrors(data: DemoDataset, env: string | undefined, f: ErrorF
   const items = data.errors
     .filter((e) => (!f.status || e.status === f.status) && (!f.service || e.service?.id === f.service))
     .sort((a, b) => b.lastSeenAt - a.lastSeenAt)
-    .map(({ id, message, type, status, service, route, occurrences, affectedInstances, firstSeenAt, lastSeenAt, problemId }) => ({
-      id, message, type, status, service, route, occurrences, affectedInstances, firstSeenAt, lastSeenAt, problemId,
-    }));
+    .map(errorSummaryOf);
   return paginate(items, cursor, DEMO_PAGE_SIZE);
 }
 
@@ -89,8 +87,8 @@ export function listAlerts(data: DemoDataset, env: string | undefined, f: AlertF
       return a.status === f.status;
     })
     .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || (b.since ?? 0) - (a.since ?? 0))
-    .map(({ id, name, severity, status, source, reason, since, service, problemId, incidentId }) => ({
-      id, name, severity, status, source, reason, since, service, problemId, incidentId,
+    .map(({ id, name, severity, status, source, reason, since, resolvedAt, service, problemId, incidentId }) => ({
+      id, name, severity, status, source, reason, since, resolvedAt, service, problemId, incidentId,
     }));
   return paginate(items, cursor, DEMO_PAGE_SIZE);
 }

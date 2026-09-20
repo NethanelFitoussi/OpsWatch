@@ -8,6 +8,7 @@
  */
 import type {
   AlertDetail,
+  ErrorSummary,
   Brief,
   DeploymentDetail,
   Environment,
@@ -51,6 +52,42 @@ export type DemoDataset = {
   investigations: Investigation[];
   repository: RepositoryEvidence[];
 };
+
+/**
+ * The direction a group is moving, read from its own trend series the way the server reads it from hourly rollups:
+ * compare the recent level with the earlier one, and call anything inside ±5 % stable. No series means no trend,
+ * which is not the same as stable.
+ */
+export function trendOf(series: ErrorDetail['trend']): ErrorSummary['trend'] {
+  const values = series?.points.map((p) => p[1]).filter((v): v is number => v !== null) ?? [];
+  if (values.length < 4) return null;
+  const half = Math.floor(values.length / 2);
+  const earlier = values.slice(0, half).reduce((a, b) => a + b, 0) / half;
+  const recent = values.slice(half).reduce((a, b) => a + b, 0) / (values.length - half);
+  if (earlier === 0) return recent > 0 ? 'rising' : 'stable';
+  const change = (recent - earlier) / Math.abs(earlier);
+  return change > 0.05 ? 'rising' : change < -0.05 ? 'falling' : 'stable';
+}
+
+/** An error group as the list sees it: the detail's series becomes the summary's direction. */
+export function errorSummaryOf(e: ErrorDetail): ErrorSummary {
+  return {
+    id: e.id,
+    message: e.message,
+    type: e.type,
+    status: e.status,
+    service: e.service,
+    route: e.route,
+    occurrences: e.occurrences,
+    affectedInstances: e.affectedInstances,
+    occurrencesWindow: e.occurrencesWindow,
+    firstSeenAt: e.firstSeenAt,
+    lastSeenAt: e.lastSeenAt,
+    statusSince: e.statusSince,
+    trend: trendOf(e.trend),
+    problemId: e.problemId,
+  };
+}
 
 /** Deterministic pseudo-random numbers so fixtures (and screenshots) are stable. */
 function seeded(seed: number) {
@@ -99,7 +136,13 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
     at: t(52),
     status: 'completed',
     repository: 'example-shop/checkout-api',
-    commit: { sha: '8f3c2a91d4e5b6c7a8f9e0d1c2b3a4f5e6d7c8b9', message: 'Batch currency lookups when pricing the cart', author: 'A. Developer', at: t(95) },
+    commit: {
+      sha: '8f3c2a91d4e5b6c7a8f9e0d1c2b3a4f5e6d7c8b9',
+      message: 'Batch currency lookups when pricing the cart',
+      author: 'A. Developer',
+      at: t(95),
+      url: 'https://github.example.com/example-shop/checkout-api/commit/8f3c2a9',
+    },
     description: 'ECS rolling deployment, task definition checkout-api:214. 6 of 6 tasks running.',
     changes: { files: 7, additions: 184, deletions: 61 },
     relatedProblems: [],
@@ -138,6 +181,7 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
     repository: 'example-shop/checkout-api',
     branch: 'main',
     commit: deployCheckout.commit!,
+    fileUrl: 'https://github.example.com/example-shop/checkout-api/blob/8f3c2a9/src/pricing/cart-pricing.ts',
     file: 'src/pricing/cart-pricing.ts',
     lines: { start: 41, end: 58 },
     summary: 'The new batched lookup opens one database connection per cart line instead of reusing the pool client.',
@@ -420,6 +464,10 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       firstSeenAt: t(41),
       lastSeenAt: t(1),
       problemId: 'prb-checkout-5xx',
+      occurrencesWindow: { from: t(41), to: now },
+      statusSince: t(41),
+      deployments: [{ deployment: deployCheckout, minutesBeforeError: 11 }],
+      repository: [repoEvidence],
       instances: ['checkout-api/1', 'checkout-api/2', 'checkout-api/3', 'checkout-api/4', 'checkout-api/5', 'checkout-api/6'],
       frames: [
         { function: 'priceCart.lines.map', file: 'src/pricing/cart-pricing.ts', line: 52, column: 38, inApp: true, context: [
@@ -460,6 +508,9 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       affectedInstances: 3,
       firstSeenAt: t(9 * DAY / MIN),
       lastSeenAt: t(6),
+      occurrencesWindow: null,
+      deployments: [],
+      repository: [],
       instances: ['catalog-api/1', 'catalog-api/2', 'catalog-api/4'],
       frames: [
         { function: 'InventoryClient.fetchStock', file: 'src/clients/inventory.ts', line: 33, column: 11, inApp: true },
@@ -479,6 +530,11 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       affectedInstances: 2,
       firstSeenAt: t(3 * DAY / MIN),
       lastSeenAt: t(33),
+      occurrencesWindow: null,
+      // Came back after a quiet day: the regression's clock starts here, not at firstSeenAt.
+      statusSince: t(40),
+      deployments: [],
+      repository: [],
       instances: ['orders-worker/1', 'orders-worker/3'],
       frames: [{ function: 'Consumer.ack', file: 'src/queue/consumer.ts', line: 120, column: 9, inApp: true }],
       sampleLogs: [],
@@ -495,50 +551,53 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       affectedInstances: 1,
       firstSeenAt: t(5 * DAY / MIN),
       lastSeenAt: t(4 * DAY / MIN),
+      occurrencesWindow: null,
+      deployments: [],
+      repository: [],
       instances: ['auth-api/2'],
       frames: [],
       sampleLogs: [],
       allowedActions: [],
     },
   ];
-  problems[0]!.errors = [errors[0]!];
+  problems[0]!.errors = [errorSummaryOf(errors[0]!)];
 
   const alerts: AlertDetail[] = [
     {
       id: 'al-checkout-5xx', name: 'checkout-5xx-high', severity: 'critical', status: 'firing', source: 'CloudWatch alarm',
       reason: 'Threshold Crossed: 3 datapoints [6.8, 6.5, 7.1] were greater than the threshold (5.0).',
-      since: t(38), service: checkout, problemId: 'prb-checkout-5xx', incidentId: 'inc-2291',
+      since: t(38), resolvedAt: null, service: checkout, problemId: 'prb-checkout-5xx', incidentId: 'inc-2291',
       condition: 'HTTPCode_Target_5XX rate > 5 % for 3 of 3 minutes', metric: checkout5xx,
       history: [{ at: t(38), status: 'ALARM', reason: 'Threshold crossed' }, { at: t(3 * DAY / MIN), status: 'OK' }],
       allowedActions: ['acknowledge'],
     },
     {
       id: 'al-aurora-connections', name: 'aurora-main-connections', severity: 'critical', status: 'firing', source: 'CloudWatch alarm',
-      reason: 'Threshold Crossed: DatabaseConnections 890 > 800.', since: t(46), service: checkout, problemId: 'prb-aurora-connections',
+      reason: 'Threshold Crossed: DatabaseConnections 890 > 800.', since: t(46), resolvedAt: null, service: checkout, problemId: 'prb-aurora-connections',
       condition: 'DatabaseConnections > 800 for 5 minutes', metric: dbConnections,
       history: [{ at: t(46), status: 'ALARM' }], allowedActions: ['acknowledge'],
     },
     {
       id: 'al-redis-latency', name: 'sessions-redis-latency', severity: 'warning', status: 'acknowledged', source: 'CloudWatch alarm',
-      reason: 'Threshold Crossed: latency 3.4 ms > 2 ms.', since: t(175), service: auth, problemId: 'prb-redis-latency',
+      reason: 'Threshold Crossed: latency 3.4 ms > 2 ms.', since: t(175), resolvedAt: null, service: auth, problemId: 'prb-redis-latency',
       acknowledgedBy: 'demo@opswatch.dev', acknowledgedAt: t(160), metric: redisLatency,
       history: [{ at: t(175), status: 'ALARM' }, { at: t(160), status: 'ACKNOWLEDGED' }], allowedActions: [],
     },
     {
       id: 'al-worker-cpu', name: 'orders-worker-cpu', severity: 'warning', status: 'firing', source: 'CloudWatch alarm',
-      reason: 'Threshold Crossed: CPUUtilization 88 > 85.', since: t(90), service: worker, problemId: 'prb-orders-worker-cpu',
+      reason: 'Threshold Crossed: CPUUtilization 88 > 85.', since: t(90), resolvedAt: null, service: worker, problemId: 'prb-orders-worker-cpu',
       history: [{ at: t(90), status: 'ALARM' }], allowedActions: ['acknowledge'],
     },
     {
       id: 'al-catalog-tasks', name: 'catalog-api-running-tasks', severity: 'warning', status: 'resolved', source: 'CloudWatch alarm',
-      since: t(26 * 60 - 4), service: catalog, history: [{ at: t(26 * 60 - 4), status: 'ALARM' }, { at: t(26 * 60 - 19), status: 'OK' }], allowedActions: [],
+      since: t(26 * 60 - 4), resolvedAt: t(26 * 60 - 19), service: catalog, history: [{ at: t(26 * 60 - 4), status: 'ALARM' }, { at: t(26 * 60 - 19), status: 'OK' }], allowedActions: [],
     },
     {
       // No start time and no service: a composite alarm the provider reports without either. The app must not
       // invent a duration or a subject for it.
       id: 'al-composite-region', name: 'eu-west-1-composite', severity: 'warning', status: 'insufficient_data',
       source: 'CloudWatch composite alarm', reason: 'Insufficient data for one of the child alarms.',
-      since: null, history: [], allowedActions: [],
+      since: null, resolvedAt: null, history: [], allowedActions: [],
     },
   ];
   problems[0]!.alerts = [alerts[0]!];
@@ -803,11 +862,11 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
   const counts = { critical: 2, warning: 3, healthyServices, totalServices: servicesList.length };
 
   const changes: Health['changes'] = [
-    { id: 'chg-1', direction: 'up', severity: 'critical', text: 'checkout-api errors increased from 0.2 % to 6.8 %', ref: { type: 'problem', id: 'prb-checkout-5xx' } },
-    { id: 'chg-2', direction: 'new', severity: 'critical', text: "New exception: TypeError in cart pricing (2,417 times)", ref: { type: 'error', id: 'err-checkout-currency' } },
-    { id: 'chg-3', direction: 'up', severity: 'warning', text: 'Redis latency increased from 0.6 ms to 3.4 ms', ref: { type: 'problem', id: 'prb-redis-latency' } },
-    { id: 'chg-4', direction: 'stable', text: 'Website remained available (100 % over 24 h)', ref: { type: 'synthetic', id: 'syn-storefront' } },
-    { id: 'chg-5', direction: 'resolved', text: 'catalog-api task shortfall resolved after 15 min', ref: { type: 'incident', id: 'inc-2288' } },
+    { id: 'chg-1', at: t(43), direction: 'up', severity: 'critical', text: 'checkout-api errors increased from 0.2 % to 6.8 %', ref: { type: 'problem', id: 'prb-checkout-5xx' } },
+    { id: 'chg-2', at: t(41), direction: 'new', severity: 'critical', text: "New exception: TypeError in cart pricing (2,417 times)", ref: { type: 'error', id: 'err-checkout-currency' } },
+    { id: 'chg-3', at: t(180), direction: 'up', severity: 'warning', text: 'Redis latency increased from 0.6 ms to 3.4 ms', ref: { type: 'problem', id: 'prb-redis-latency' } },
+    { id: 'chg-4', at: t(1), direction: 'stable', text: 'Website remained available (100 % over 24 h)', ref: { type: 'synthetic', id: 'syn-storefront' } },
+    { id: 'chg-5', at: t(26 * 60 - 19), direction: 'resolved', text: 'catalog-api task shortfall resolved after 15 min', ref: { type: 'incident', id: 'inc-2288' } },
   ];
 
   const health: Health = {
@@ -821,7 +880,7 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       { family: 'alb', label: 'Load balancers', status: 'critical', total: 2, affected: 1 },
       { family: 'alarms', label: 'Alarms', status: 'critical', total: 24, affected: 3 },
       { family: 'redis', label: 'Redis', status: 'degraded', total: 1, affected: 1 },
-      { family: 'cloudfront', label: 'CDN', status: 'unknown', total: null, affected: null, unavailable: { reason: 'denied', code: 'AccessDenied' } },
+      { family: 'cloudfront', label: 'CDN', status: 'unknown', total: null, affected: null, unavailable: { reason: 'denied', code: 'AccessDenied', message: 'The IAM role cannot list CloudFront distributions.' } },
     ],
     topProblem: problems[0]!,
     activeAlerts: alerts.filter((a) => a.status === 'firing').length,
@@ -850,6 +909,9 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
   });
   for (const problem of problems) {
     problem.deployments = problem.deployments.map((d) => ({ ...d, deployment: toDeploymentSummary(d.deployment as DeploymentDetail) }));
+  }
+  for (const error of errors) {
+    error.deployments = error.deployments.map((d) => ({ ...d, deployment: toDeploymentSummary(d.deployment as DeploymentDetail) }));
   }
   for (const deployment of deployments) {
     deployment.relatedProblems = deployment.relatedProblems.map((r) => ({ ...r, problem: toProblemSummary(r.problem as ProblemDetail) }));

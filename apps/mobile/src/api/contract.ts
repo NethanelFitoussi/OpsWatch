@@ -157,6 +157,9 @@ export type Environment = z.infer<typeof environmentSchema>;
 export const PROBLEM_STATUSES = ['new', 'active', 'acknowledged', 'resolved'] as const;
 export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
 export const TRENDS = ['rising', 'falling', 'stable'] as const;
+export type Trend = (typeof TRENDS)[number];
+/** Whether something is getting worse. `null` means the server has no trend for it, and never renders as "stable". */
+export const trendSchema = lenientEnum(TRENDS, 'stable').nullable().default(null);
 
 export const problemSummarySchema = z.object({
   id,
@@ -169,7 +172,7 @@ export const problemSummarySchema = z.object({
   firstSeenAt: epoch,
   lastSeenAt: epoch,
   occurrences: nullableNumber.default(null),
-  trend: lenientEnum(TRENDS, 'stable').nullable().default(null),
+  trend: trendSchema,
   summary: z.string().optional(),
 });
 export type ProblemSummary = z.infer<typeof problemSummarySchema>;
@@ -198,6 +201,8 @@ export const commitSchema = z.object({
   message: z.string().optional(),
   author: z.string().optional(),
   at: epoch.optional(),
+  /** Built by the server, which alone knows the provider and the host. Absent means it cannot build one. */
+  url: z.string().optional(),
 });
 export const deploymentSummarySchema = z.object({
   id,
@@ -223,6 +228,8 @@ export const repositoryEvidenceSchema = z.object({
     .optional(),
   /** Unified diff text, already trimmed by the server to the relevant hunks. */
   diff: z.string().optional(),
+  /** Link to the file at this commit, built by the server. */
+  fileUrl: z.string().optional(),
   summary: z.string().optional(),
 });
 export type RepositoryEvidence = z.infer<typeof repositoryEvidenceSchema>;
@@ -236,8 +243,14 @@ export const errorSummarySchema = z.object({
   route: z.string().optional(),
   occurrences: nullableNumber.default(null),
   affectedInstances: nullableNumber.default(null),
+  /** The period `occurrences` and `affectedInstances` cover. `null` means since `firstSeenAt`. */
+  occurrencesWindow: z.object({ from: epoch, to: epoch }).nullable().default(null),
   firstSeenAt: epoch,
   lastSeenAt: epoch,
+  /** When the current status began: for a regression, when it came back, which `firstSeenAt` cannot say. */
+  statusSince: epoch.optional(),
+  /** Whether it is getting worse. `null` renders as "no trend", never `stable`. */
+  trend: trendSchema,
   problemId: id.optional(),
 });
 export type ErrorSummary = z.infer<typeof errorSummarySchema>;
@@ -250,6 +263,8 @@ export const alertSummarySchema = z.object({
   source: z.string(),
   reason: z.string().optional(),
   since: epoch.nullable(),
+  /** When it stopped firing; `null` while it still is. */
+  resolvedAt: epoch.nullable().default(null),
   service: refSchema.optional(),
   problemId: id.optional(),
   incidentId: id.optional(),
@@ -278,6 +293,8 @@ export const investigationSchema = z.object({
   subject: refSchema,
   status: lenientEnum(['open', 'concluded'] as const, 'open'),
   startedAt: epoch,
+  /** Set once the investigation is concluded, so its duration can be stated. */
+  concludedAt: epoch.optional(),
   summary: z.string().optional(),
   timeline: z.array(evidenceSchema),
 });
@@ -297,7 +314,7 @@ export const logEntrySchema = z.object({
   source: z.string().optional(),
   message: z.string(),
   fields: z.record(z.string(), z.string()).optional(),
-  links: z.object({ errorId: id.optional(), problemId: id.optional(), serviceId: id.optional() }).optional(),
+  links: z.object({ errorId: id.optional(), problemId: id.optional(), serviceId: id.optional(), deploymentId: id.optional(), incidentId: id.optional() }).optional(),
 });
 export type LogEntry = z.infer<typeof logEntrySchema>;
 
@@ -318,7 +335,15 @@ export const errorDetailSchema = errorSummarySchema.extend({
   rawStack: z.string().optional(),
   instances: z.array(z.string()).default([]),
   sampleLogs: z.array(logEntrySchema).default([]),
+  /** The full series on the detail; the summary carries only the direction. */
   trend: seriesSchema.optional(),
+  /**
+   * Deployments shortly before the group started or regressed, and the code the stack trace points at: the same
+   * shapes `problemDetail` carries, because an error with no problem would otherwise have no route to either.
+   * Correlation, never a claim of causation.
+   */
+  deployments: z.array(z.object({ deployment: deploymentSummarySchema, minutesBeforeError: z.number() })).default([]),
+  repository: z.array(repositoryEvidenceSchema).default([]),
   allowedActions: actions,
 });
 export type ErrorDetail = z.infer<typeof errorDetailSchema>;
@@ -486,6 +511,8 @@ export type DeploymentDetail = z.infer<typeof deploymentDetailSchema>;
 
 export const changeSchema = z.object({
   id,
+  /** When the change happened inside the covered period, when the server can say. */
+  at: epoch.optional(),
   direction: lenientEnum(['up', 'down', 'new', 'resolved', 'stable'] as const, 'stable'),
   text: z.string(),
   severity: severitySchema.optional(),
@@ -499,8 +526,20 @@ export const familySchema = z.object({
   status: healthStatusSchema,
   total: nullableNumber,
   affected: nullableNumber,
-  /** Present when the server could not read this family (missing permission, throttling, error). */
-  unavailable: z.object({ reason: z.string(), code: z.string().optional() }).optional(),
+  /**
+   * Present when the server could not read this family (missing permission, throttling, error). `reason` and `code`
+   * are for logic; `messageKey` + `values` render in the app's own language, and `message` is the server's rendering
+   * for a client without the catalogue.
+   */
+  unavailable: z
+    .object({
+      reason: z.string(),
+      code: z.string().optional(),
+      messageKey: z.string().optional(),
+      values: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
+      message: z.string().optional(),
+    })
+    .optional(),
 });
 export type Family = z.infer<typeof familySchema>;
 
