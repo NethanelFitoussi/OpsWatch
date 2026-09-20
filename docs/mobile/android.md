@@ -27,8 +27,9 @@ change once the app is on Play. Set it for every build:
 export OPSWATCH_ANDROID_PACKAGE=com.yourcompany.opswatch
 ```
 
-`eas.json` also carries the placeholder in `build.base.env`, so change it there as well (or override it with an EAS
-environment variable) before any cloud build ([expo-eas.md](expo-eas.md), [app-identity.md](app-identity.md)).
+For a cloud build, set `OPSWATCH_ANDROID_PACKAGE` as an EAS environment variable; `eas.json` sets no identifier that
+would shadow it, and the `production` profile refuses to build while it is the placeholder
+([expo-eas.md](expo-eas.md), [app-identity.md](app-identity.md)).
 
 ## Signing
 

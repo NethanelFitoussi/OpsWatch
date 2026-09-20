@@ -2,8 +2,9 @@
 
 Everything that identifies the app to Apple, Google and Expo is a placeholder today. `app.config.ts` reads these
 values from environment variables so that whoever publishes the app sets their own, and defaults to
-`com.example.*`, which both stores reject. `eas.json` sets the same two placeholders in `build.base.env`, so cloud
-builds inherit them until they are changed there too.
+`com.example.*`, which both stores reject. `eas.json` sets no identifiers of its own, so an EAS environment variable
+is all a cloud build needs. Building the **`production` profile** on a placeholder is refused outright: a store
+identifier cannot be changed after the first release.
 
 > **Requires owner action.** Each row below is a decision for the owner. Several values can never change after the
 > first store release. The migration steps are in [release.md](release.md#3-replace-the-placeholder-identifiers).
@@ -11,8 +12,8 @@ builds inherit them until they are changed there too.
 | Item | Current value | Set with | Changeable later? |
 |------|---------------|----------|-------------------|
 | App name | `OpsWatch` | `name` in `app.config.ts` | Yes (store listing name must be unique per store) |
-| iOS bundle identifier | `com.example.opswatch` | `OPSWATCH_IOS_BUNDLE_ID`, and `eas.json` `base.env` | **No**, after the first App Store submission |
-| Android package | `com.example.opswatch` | `OPSWATCH_ANDROID_PACKAGE`, and `eas.json` `base.env` | **No**, after the first Play upload |
+| iOS bundle identifier | `com.example.opswatch` | `OPSWATCH_IOS_BUNDLE_ID` | **No**, after the first App Store submission |
+| Android package | `com.example.opswatch` | `OPSWATCH_ANDROID_PACKAGE` | **No**, after the first Play upload |
 | Expo owner | unset | `EXPO_OWNER` | Yes (transferring projects has consequences for EAS) |
 | Expo slug | `opswatch` | `slug` in `app.config.ts` | Avoid: it names the EAS project |
 | EAS project id | unset | `EAS_PROJECT_ID` (from `eas init`) | No: tied to the project |

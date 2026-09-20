@@ -14,8 +14,21 @@ const env = (name: string): string | undefined => {
   return value ? value : undefined;
 };
 
-const iosBundleId = env('OPSWATCH_IOS_BUNDLE_ID') ?? 'com.example.opswatch';
-const androidPackage = env('OPSWATCH_ANDROID_PACKAGE') ?? 'com.example.opswatch';
+const PLACEHOLDER_ID = 'com.example.opswatch';
+const iosBundleId = env('OPSWATCH_IOS_BUNDLE_ID') ?? PLACEHOLDER_ID;
+const androidPackage = env('OPSWATCH_ANDROID_PACKAGE') ?? PLACEHOLDER_ID;
+
+/**
+ * A store identifier cannot be changed after the first release: shipping `com.example.opswatch` would take the name
+ * permanently and force a new listing to undo. The placeholders are what every local and preview build should use,
+ * so they are only refused for the one profile that produces a build meant for a store.
+ */
+if (env('EAS_BUILD_PROFILE') === 'production' && (iosBundleId === PLACEHOLDER_ID || androidPackage === PLACEHOLDER_ID)) {
+  throw new Error(
+    'Refusing to build the production profile with the placeholder identifier com.example.opswatch. ' +
+      'Set OPSWATCH_IOS_BUNDLE_ID and OPSWATCH_ANDROID_PACKAGE as EAS environment variables first (docs/mobile/release.md).',
+  );
+}
 const easProjectId = env('EAS_PROJECT_ID');
 const associatedDomain = env('OPSWATCH_ASSOCIATED_DOMAIN');
 

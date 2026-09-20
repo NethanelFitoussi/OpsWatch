@@ -42,8 +42,9 @@ reports that this build has no push project.
 | `preview` | `base` | Release-like build for testers, channel `preview` | Internal | Android APK (`buildType: "apk"`); iOS ad hoc |
 | `production` | `base` | Store builds, channel `production`, `autoIncrement: true` | Store | Android AAB; iOS App Store build |
 
-> **`base.env` still holds the `com.example.opswatch` placeholders.** Every cloud build inherits them unless they are
-> changed there or overridden by an EAS environment variable. Fixing this is step 1 of the first real release
+> **`base` sets no identifiers.** It used to pin both to `com.example.opswatch`, which silently overrode any EAS
+> environment variable of the same name; it no longer does, so setting them in the EAS project is enough. A
+> `production` build with either still unset is refused by `app.config.ts`
 > ([release.md](release.md#3-replace-the-placeholder-identifiers)).
 
 About versions: `appVersionSource: "remote"` means **EAS stores the iOS build number and the Android `versionCode`
@@ -104,7 +105,7 @@ Every value in `app.config.ts` ends up inside the public app binary. So:
 
 | Variable | Kind | Where |
 |----------|------|-------|
-| `OPSWATCH_IOS_BUNDLE_ID`, `OPSWATCH_ANDROID_PACKAGE` | Public config | `eas.json` `base.env` today; change them there or with an EAS environment variable (plain text) |
+| `OPSWATCH_IOS_BUNDLE_ID`, `OPSWATCH_ANDROID_PACKAGE` | Public config | EAS environment variables (plain text). Required for the `production` profile, which refuses to build without them |
 | `EAS_PROJECT_ID`, `EXPO_OWNER` | Public config | EAS environment variable or the build shell |
 | `OPSWATCH_ASSOCIATED_DOMAIN` | Public config | Same |
 | `OPSWATCH_IOS_BUILD_NUMBER`, `OPSWATCH_ANDROID_VERSION_CODE` | Public config | Local builds only while `appVersionSource` is `remote` |

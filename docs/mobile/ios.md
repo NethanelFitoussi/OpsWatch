@@ -137,8 +137,9 @@ The placeholder `com.example.opswatch` is rejected by Apple. Choose a reverse-DN
 export OPSWATCH_IOS_BUNDLE_ID=com.yourcompany.opswatch
 ```
 
-`eas.json` also carries the placeholder in `build.base.env`, so change it there as well (or override it with an EAS
-environment variable) before any cloud build. See [app-identity.md](app-identity.md) and [release.md](release.md).
+For a cloud build, set `OPSWATCH_IOS_BUNDLE_ID` as an EAS environment variable; `eas.json` sets no identifier that
+would shadow it, and the `production` profile refuses to build while it is the placeholder. See
+[app-identity.md](app-identity.md) and [release.md](release.md).
 
 ## Signing, certificates, provisioning profiles
 

@@ -5,11 +5,7 @@
   },
   "build": {
     "base": {
-      "node": "22.19.0",
-      "env": {
-        "OPSWATCH_IOS_BUNDLE_ID": "com.example.opswatch",
-        "OPSWATCH_ANDROID_PACKAGE": "com.example.opswatch"
-      }
+      "node": "22.19.0"
     },
     "development": {
       "extends": "base",

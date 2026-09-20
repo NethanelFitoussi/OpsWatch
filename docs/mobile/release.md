@@ -11,7 +11,7 @@ None of this has been done. Until every line is ticked, there is no release to m
 
 | # | Blocker | Where |
 |---|---------|-------|
-| 1 | Replace the `com.example.opswatch` bundle id and package | [below](#3-replace-the-placeholder-identifiers) |
+| 1 | Replace the `com.example.opswatch` bundle id and package — the `production` profile refuses to build until you do | [below](#3-replace-the-placeholder-identifiers) |
 | 2 | Create the Expo account and EAS project (`eas init`), set `EXPO_OWNER` and `EAS_PROJECT_ID` | [expo-eas.md](expo-eas.md#expo-account-and-project) |
 | 3 | Enrol in the Apple Developer Program | [ios.md](ios.md#apple-developer-account) |
 | 4 | Create the Google Play developer account | [android.md](android.md#google-play-console) |
@@ -70,9 +70,9 @@ const androidPackage = env('OPSWATCH_ANDROID_PACKAGE') ?? 'com.example.opswatch'
 
 Change them in every place they are set, in this order:
 
-1. **`apps/mobile/eas.json`** — `build.base.env` currently pins both to the placeholder, and every profile extends
-   `base`. Replace both values (or delete them and define EAS environment variables instead, which keeps the repo free
-   of one organisation's ids).
+1. **EAS environment variables**, for cloud builds. `eas.json` deliberately sets no identifiers, so nothing in the
+   repo shadows them and no organisation's ids live in version control. A `production` build with either still unset
+   is refused by `app.config.ts` before anything is compiled.
 2. **Your shell / CI**, for local builds and `expo prebuild`:
 
    ```bash
@@ -104,7 +104,7 @@ Everything the build needs is public. There are no secrets in the binary.
 
 | Variable | Needed for | Set where |
 |----------|-----------|-----------|
-| `OPSWATCH_IOS_BUNDLE_ID`, `OPSWATCH_ANDROID_PACKAGE` | Every build | `eas.json` `base.env` or EAS environment variables |
+| `OPSWATCH_IOS_BUNDLE_ID`, `OPSWATCH_ANDROID_PACKAGE` | Every build; **required** for the `production` profile | EAS environment variables, or the shell for a local build |
 | `EXPO_OWNER`, `EAS_PROJECT_ID` | EAS builds, push tokens, EAS Update | EAS environment variables or the build shell |
 | `OPSWATCH_ASSOCIATED_DOMAIN` | Universal links / App Links | Same; leave unset to disable them |
 | `EXPO_PUBLIC_DEFAULT_SERVER_URL` | Optional: pre-fills the server field | Leave unset for store builds unless you ship to one known server |
