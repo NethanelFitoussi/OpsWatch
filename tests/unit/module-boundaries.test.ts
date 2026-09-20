@@ -44,6 +44,8 @@ const SERVER_ONLY_MODULES = [
   'lib/auth/login.ts',
   'lib/store/tx.ts',
   'lib/store/problems.ts',
+  'lib/store/events.ts',
+  'lib/store/collector.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',

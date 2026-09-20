@@ -567,7 +567,7 @@ export type CollectorRunRow = typeof collectorRuns.$inferSelect;
   - `export function lastRuns(db: Db, limit: number): CollectorRunRow[]` — newest first, for System status.
   - `export function deleteRunsBefore(db: Db, beforeMs: number): number`
 
-- [ ] **Step 1: Write the failing test.** Create `tests/unit/store-events.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `tests/unit/store-events.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -636,12 +636,12 @@ describe('collector runs', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail.** `npx vitest run tests/unit/store-events.test.ts` → FAIL.
-- [ ] **Step 3: Add both tables and generate the migration.** `npm run db:generate` → `drizzle/0003_*.sql`. Confirm additive-only.
-- [ ] **Step 4: Write both modules.**
-- [ ] **Step 5: Run the test** → PASS.
-- [ ] **Step 6: Add `'lib/store/events.ts'` and `'lib/store/collector.ts'` to `SERVER_ONLY_MODULES`.**
-- [ ] **Step 7: Verify and commit.** Full gate. Commit: `feat(store): the append-only events spine and collector runs`.
+- [x] **Step 2: Run it to see it fail.** `npx vitest run tests/unit/store-events.test.ts` → FAIL.
+- [x] **Step 3: Add both tables and generate the migration.** `npm run db:generate` → `drizzle/0003_*.sql`. Confirm additive-only.
+- [x] **Step 4: Write both modules.**
+- [x] **Step 5: Run the test** → PASS.
+- [x] **Step 6: Add `'lib/store/events.ts'` and `'lib/store/collector.ts'` to `SERVER_ONLY_MODULES`.**
+- [x] **Step 7: Verify and commit.** Full gate. Commit: `feat(store): the append-only events spine and collector runs`.
 
 ---
 

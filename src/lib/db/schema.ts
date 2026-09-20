@@ -144,3 +144,53 @@ export type StoredScoreTerms = {
   weights: { s: number; b: number; t: number; u: number; d: number };
   availableWeight: number; rescaled: boolean; floored: boolean; score: number;
 };
+
+export const EVENT_KINDS = [
+  'problem_opened', 'problem_reopened', 'problem_acknowledged', 'problem_resolved',
+  'problem_grouped', 'problem_ungrouped', 'fleet_opened', 'fleet_resolved',
+  'resource_appeared', 'resource_disappeared', 'error_group_appeared', 'error_group_regressed',
+  'collector_job_capped', 'collector_job_failed',
+] as const;
+
+export type EventKind = (typeof EVENT_KINDS)[number];
+
+export const events = sqliteTable('events', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  at: integer('at').notNull(),
+  connectionId: text('connection_id'),
+  scope: text('scope'),
+  kind: text('kind', { enum: EVENT_KINDS }).notNull(),
+  subjectType: text('subject_type', { enum: SUBJECT_TYPES }).notNull(),
+  subjectId: text('subject_id').notNull(),
+  serviceId: text('service_id'),
+  severity: text('severity', { enum: PROBLEM_SEVERITIES }),
+  source: text('source').notNull(),
+  payload: text('payload', { mode: 'json' }).$type<Record<string, string | number | null>>().notNull(),
+  dedupeKey: text('dedupe_key'),
+}, (t) => [
+  index('events_at').on(t.at),
+  index('events_service_at').on(t.serviceId, t.at),
+  index('events_subject_at').on(t.subjectId, t.at),
+  uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
+]);
+
+export const COLLECTOR_RUN_STATUSES = ['running', 'ok', 'failed', 'skipped'] as const;
+
+export const collectorRuns = sqliteTable('collector_runs', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  job: text('job').notNull(),
+  connectionId: text('connection_id'),
+  scope: text('scope'),
+  startedAt: integer('started_at').notNull(),
+  finishedAt: integer('finished_at'),
+  status: text('status', { enum: COLLECTOR_RUN_STATUSES }).notNull(),
+  covered: integer('covered'),
+  total: integer('total'),
+  truncated: integer('truncated', { mode: 'boolean' }).notNull().default(false),
+  errorCode: text('error_code'),
+}, (t) => [index('collector_runs_job').on(t.job, t.startedAt)]);
+
+export type EventRow = typeof events.$inferSelect;
+export type CollectorRunRow = typeof collectorRuns.$inferSelect;
