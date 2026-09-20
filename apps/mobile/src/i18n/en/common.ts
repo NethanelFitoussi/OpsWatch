@@ -96,6 +96,8 @@ export const common = {
   'error.unsupported': "This server doesn't support this yet.",
   'error.cancelled': 'Cancelled.',
   'error.unexpected': 'Something went wrong in the app.',
+  'error.crashTitle': 'This screen could not be shown',
+  'error.crashBody': "Something in the data it received didn't fit. The rest of the app still works, and trying again often clears it.",
   'error.title': 'Something went wrong',
   'error.hint.timeout': 'It may be busy right now.',
   'error.hint.server': "It isn't your connection. Try again in a moment.",
@@ -159,6 +161,7 @@ export const common = {
   'code.raw': 'Raw',
   'code.libraryFrame1': '1 library frame',
   'code.libraryFrames': '{count} library frames',
+  'code.omitted': '{count} more lines not shown. Copy to get all of it.',
   'code.stack': 'Stack trace',
   'code.highlighted': 'highlighted line',
 

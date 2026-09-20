@@ -15,6 +15,19 @@ import { useTheme } from './theme-provider';
 
 const MONO = { fontFamily: monoFont, fontSize: 12.5, lineHeight: 19 } as const;
 
+/**
+ * How much of a server-sent block is drawn. Every line becomes a native view, so an enormous diff, stack or log line
+ * would otherwise hang the screen. What is left out is stated rather than silently dropped; the full text is still
+ * what gets copied.
+ */
+export const MAX_RENDERED_LINES = 600;
+const MAX_RENDERED_LINE_LENGTH = 2_000;
+
+export function limitLines(lines: readonly string[]): { lines: string[]; omitted: number } {
+  const shown = lines.slice(0, MAX_RENDERED_LINES).map((line) => (line.length > MAX_RENDERED_LINE_LENGTH ? `${line.slice(0, MAX_RENDERED_LINE_LENGTH)}…` : line));
+  return { lines: shown, omitted: Math.max(0, lines.length - shown.length) };
+}
+
 export const CodeBlock = memo(function CodeBlock({
   lines,
   startLine = 1,
@@ -33,7 +46,8 @@ export const CodeBlock = memo(function CodeBlock({
   const { colors } = useTheme();
   const { t } = useI18n();
   const highlightLabel = t('code.highlighted');
-  const gutter = String(startLine + lines.length - 1).length;
+  const limited = useMemo(() => limitLines(lines), [lines]);
+  const gutter = String(startLine + limited.lines.length - 1).length;
   const highlighted = useMemo(() => new Set(highlight), [highlight]);
   return (
     <View style={[styles.block, { backgroundColor: colors.codeBg, borderColor: colors.border }]} testID={testID}>
@@ -45,7 +59,7 @@ export const CodeBlock = memo(function CodeBlock({
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.codeScroll}>
         <View>
-          {lines.map((line, i) => {
+          {limited.lines.map((line, i) => {
             const number = startLine + i;
             const isHighlighted = highlighted.has(number);
             return (
@@ -65,6 +79,11 @@ export const CodeBlock = memo(function CodeBlock({
           })}
         </View>
       </ScrollView>
+      {limited.omitted > 0 ? (
+        <Text variant="caption" tone="muted" style={styles.omitted}>
+          {t('code.omitted', { count: limited.omitted })}
+        </Text>
+      ) : null}
     </View>
   );
 });
@@ -198,7 +217,8 @@ export const LogBlock = memo(function LogBlock({ message, title }: { message: st
 /** Unified diff with +/− markers in text (not only colour). */
 export const DiffView = memo(function DiffView({ diff, title }: { diff: string; title?: string }) {
   const { colors } = useTheme();
-  const lines = diff.split('\n');
+  const { t } = useI18n();
+  const { lines, omitted } = limitLines(diff.split('\n'));
   return (
     <View style={[styles.block, { backgroundColor: colors.codeBg, borderColor: colors.border }]}>
       <View style={styles.blockHeader}>
@@ -226,11 +246,17 @@ export const DiffView = memo(function DiffView({ diff, title }: { diff: string; 
           })}
         </View>
       </ScrollView>
+      {omitted > 0 ? (
+        <Text variant="caption" tone="muted" style={styles.omitted}>
+          {t('code.omitted', { count: omitted })}
+        </Text>
+      ) : null}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
+  omitted: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   block: { borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   blockHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingTop: spacing.xs, gap: spacing.sm },
   codeScroll: { paddingVertical: spacing.sm, paddingRight: spacing.lg },

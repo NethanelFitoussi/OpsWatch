@@ -29,6 +29,12 @@ export type AsyncStorageLike = {
   removeItem: (key: string) => Promise<void>;
 };
 
+/**
+ * A ceiling on one snapshot. Beyond it the write is skipped rather than attempted: a failed write is silent, and an
+ * offline cache that has quietly stopped working is worse than one that is missing a very large list.
+ */
+export const MAX_CACHE_BYTES = 2_000_000;
+
 export const cacheStorage: AsyncStorageLike = {
   async getItem(key) {
     if (isWeb) return AsyncStorage.getItem(key);
@@ -42,6 +48,11 @@ export const cacheStorage: AsyncStorageLike = {
     }
   },
   async setItem(key, value) {
+    if (value.length > MAX_CACHE_BYTES) {
+      log.debug('Offline cache snapshot too large to keep', `${value.length} bytes`);
+      await cacheStorage.removeItem(key);
+      return;
+    }
     if (isWeb) return AsyncStorage.setItem(key, value);
     try {
       fileFor(key).write(value);

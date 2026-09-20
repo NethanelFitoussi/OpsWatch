@@ -14,6 +14,7 @@ import { useI18n } from '@/i18n';
 import { displayServer } from '@/lib/server-url';
 import { useFeature, useSession } from '@/state/session';
 import { useSettings, type LocalePreference, type ThemeMode } from '@/state/settings';
+import { cacheStorage } from '@/state/cache-storage';
 import { PREF_KEYS } from '@/state/storage';
 import { EnvironmentBadge } from '@/ui/badges';
 import { Button, ChipGroup } from '@/ui/controls';
@@ -172,7 +173,11 @@ export function SecuritySection() {
   const clearCache = async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
+    // The cache lives in the OS cache directory now; the old AsyncStorage copy is removed too, for anyone
+    // upgrading. Recent searches go as well: they are the only other thing here that the user typed.
+    await cacheStorage.removeItem(PREF_KEYS.queryCache);
     await AsyncStorage.removeItem(PREF_KEYS.queryCache);
+    update({ recentSearches: [] });
     setCleared(true);
   };
   return (

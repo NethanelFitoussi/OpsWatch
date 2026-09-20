@@ -98,6 +98,8 @@ export const common: Record<keyof typeof source, string> = {
   'error.unsupported': 'Ce serveur ne le permet pas encore.',
   'error.cancelled': 'Annulé.',
   'error.unexpected': "Un problème est survenu dans l'application.",
+  'error.crashTitle': 'Cet écran n’a pas pu s’afficher',
+  'error.crashBody': 'Une donnée reçue n’a pas pu être affichée. Le reste de l’app fonctionne, et réessayer suffit souvent.',
   'error.title': 'Un problème est survenu',
   'error.hint.timeout': 'Il est peut-être très sollicité en ce moment.',
   'error.hint.server': 'Cela ne vient pas de votre connexion. Réessayez dans un instant.',
@@ -161,6 +163,7 @@ export const common: Record<keyof typeof source, string> = {
   'code.raw': 'Brut',
   'code.libraryFrame1': '1 cadre de bibliothèque',
   'code.libraryFrames': '{count} cadres de bibliothèque',
+  'code.omitted': '{count} lignes supplémentaires non affichées. Copiez pour tout obtenir.',
   'code.stack': 'Pile d’appels',
   'code.highlighted': 'ligne mise en évidence',
 

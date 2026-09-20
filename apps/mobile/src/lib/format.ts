@@ -125,7 +125,11 @@ export function shortSha(sha: string): string {
 }
 
 /** Pretty-prints a log line when it is JSON, otherwise returns it untouched. */
+/** Above this a log line is shown as it came: parsing and re-printing megabytes helps nobody. */
+export const MAX_PRETTY_LOG_LENGTH = 100_000;
+
 export function prettyLog(message: string): { pretty: string; isJson: boolean } {
+  if (message.length > MAX_PRETTY_LOG_LENGTH) return { pretty: message, isJson: false };
   const trimmed = message.trim();
   if (!(trimmed.startsWith('{') && trimmed.endsWith('}')) && !(trimmed.startsWith('[') && trimmed.endsWith(']'))) {
     return { pretty: message, isJson: false };

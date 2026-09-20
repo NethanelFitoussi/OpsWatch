@@ -58,6 +58,7 @@ export const settings = {
   'notifications.test': 'Show a test notification',
   'notifications.testTitle': 'OpsWatch test',
   'notifications.testBody': 'Tapping this opens the checkout problem (demo).',
+  'notifications.switchedEnvironment': 'Switched to {name}, the environment this notification is about.',
   'notifications.payloadNote': 'Notifications only contain a short title and a reference. Logs and credentials are never included.',
   'settings.language.en': 'English',
   'settings.language.fr': 'Français',

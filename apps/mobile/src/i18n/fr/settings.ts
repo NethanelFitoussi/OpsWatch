@@ -60,6 +60,7 @@ export const settings: Record<keyof typeof source, string> = {
   'notifications.test': 'Afficher une notification de test',
   'notifications.testTitle': 'Test OpsWatch',
   'notifications.testBody': 'Toucher cette notification ouvre le problème du paiement (démo).',
+  'notifications.switchedEnvironment': 'Basculé vers {name}, l’environnement concerné par cette notification.',
   'notifications.payloadNote': 'Les notifications ne contiennent qu’un titre court et une référence. Jamais de journaux ni d’identifiants.',
   'settings.language.en': 'English',
   'settings.language.fr': 'Français',

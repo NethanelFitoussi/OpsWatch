@@ -1,4 +1,4 @@
-import { areaPath, domainOf, downsample, linePath, nearestIndex, summary, thresholdsInScale, timeAxisFormat, type Point } from '../scale';
+import { areaPath, domainOf, downsample, extent, linePath, nearestIndex, summary, thresholdsInScale, timeAxisFormat, type Point } from '../scale';
 
 const points: Point[] = [
   [0, 1],
@@ -61,5 +61,23 @@ describe('timeAxisFormat', () => {
     expect(timeAxisFormat(0, 24 * hour)).toBe('time');
     expect(timeAxisFormat(0, 48 * hour)).toBe('dateTime');
     expect(timeAxisFormat(0, 30 * 24 * hour)).toBe('date');
+  });
+});
+
+describe('extent', () => {
+  it('folds rather than spreads, and says nothing about an empty list', () => {
+    expect(extent([3, -1, 7])).toEqual({ min: -1, max: 7 });
+    expect(extent([])).toBeNull();
+  });
+});
+
+describe('large series', () => {
+  it('summarises a series far larger than the argument limit', () => {
+    // `Math.min(...values)` throws above ~100k arguments, and a server decides how many points it sends.
+    const huge: Point[] = Array.from({ length: 300_000 }, (_, i) => [i, i === 1234 ? -5 : 1]);
+    expect(() => summary(huge)).not.toThrow();
+    expect(summary(huge)).toEqual({ latest: 1, min: -5, max: 1 });
+    expect(() => domainOf(huge)).not.toThrow();
+    expect(() => thresholdsInScale(huge, { warning: 2 })).not.toThrow();
   });
 });

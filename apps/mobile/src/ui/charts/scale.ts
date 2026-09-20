@@ -5,12 +5,24 @@ export type Point = readonly [number, number | null];
 
 export type Domain = { minX: number; maxX: number; minY: number; maxY: number };
 
+/** Folded rather than spread: `Math.min(...values)` throws on a large array, which a server controls the size of. */
+export function extent(values: readonly number[]): { min: number; max: number } | null {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const value of values) {
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+  return min === Infinity ? null : { min, max };
+}
+
 export function domainOf(points: readonly Point[], extraY: readonly number[] = [], opts: { zeroBased?: boolean } = {}): Domain | null {
   const values = points.map((p) => p[1]).filter((v): v is number => v !== null && Number.isFinite(v));
   if (points.length === 0 || values.length === 0) return null;
-  const ys = [...values, ...extraY];
-  let minY = Math.min(...ys);
-  let maxY = Math.max(...ys);
+  const bounds = extent(values)!;
+  const extra = extent(extraY);
+  let minY = extra ? Math.min(bounds.min, extra.min) : bounds.min;
+  let maxY = extra ? Math.max(bounds.max, extra.max) : bounds.max;
   if (opts.zeroBased !== false && minY >= 0) minY = 0;
   if (minY === maxY) {
     // A flat line sits in the middle rather than on the edge.
@@ -98,9 +110,10 @@ export function thresholdsInScale(
 ): { inScale: number[]; offScale: number[] } {
   const values = points.map((p) => p[1]).filter((v): v is number => v !== null && Number.isFinite(v));
   const wanted = [thresholds?.warning, thresholds?.critical].filter((v): v is number => v !== undefined);
-  if (!values.length || !wanted.length) return { inScale: [], offScale: wanted };
-  const max = Math.max(...values);
-  const min = Math.min(...values, 0);
+  const bounds = extent(values);
+  if (!bounds || !wanted.length) return { inScale: [], offScale: wanted };
+  const max = bounds.max;
+  const min = Math.min(bounds.min, 0);
   const headroom = Math.max(max - min, Math.abs(max) * 0.1, 1) * 2;
   const inScale = wanted.filter((v) => v <= max + headroom && v >= min - headroom);
   return { inScale, offScale: wanted.filter((v) => !inScale.includes(v)) };
@@ -119,16 +132,17 @@ export function timeAxisFormat(fromMs: number, toMs: number): 'time' | 'dateTime
 
 export function summary(points: readonly Point[]): { latest: number | null; min: number | null; max: number | null } {
   const values = points.map((p) => p[1]).filter((v): v is number => v !== null && Number.isFinite(v));
-  if (!values.length) return { latest: null, min: null, max: null };
+  const bounds = extent(values);
+  if (!bounds) return { latest: null, min: null, max: null };
   let latest: number | null = null;
   for (let i = points.length - 1; i >= 0; i -= 1) {
     const v = points[i]![1];
-    if (v !== null) {
+    if (v !== null && Number.isFinite(v)) {
       latest = v;
       break;
     }
   }
-  return { latest, min: Math.min(...values), max: Math.max(...values) };
+  return { latest, min: bounds.min, max: bounds.max };
 }
 
 /** Keeps at most `max` points (min/max-preserving buckets), so long series render cheaply. */

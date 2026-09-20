@@ -28,8 +28,11 @@ const RANK: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
  * Local mirror of the server-side filter, used for foreground presentation. Recoveries follow their category only.
  * `enabled: false` silences everything, including anything the server sent before it learned of the change.
  */
-export function shouldPresent(prefs: NotificationPreferences & { enabled?: boolean }, event: { category: NotificationCategory; severity?: Severity }): boolean {
+export function shouldPresent(prefs: NotificationPreferences & { enabled?: boolean }, event: { category: NotificationCategory | null; severity?: Severity }): boolean {
   if (prefs.enabled === false) return false;
+  // A payload whose category the app does not recognise is not shown: a filter that fails open is not a filter, and
+  // a server (or a newer one with a sixth category) must not be able to bypass the user's choice by omitting it.
+  if (!event.category) return false;
   if (!prefs.categories.includes(event.category)) return false;
   if (event.category === 'recovery' || !event.severity) return true;
   return RANK[event.severity] <= RANK[prefs.minSeverity];
@@ -49,6 +52,11 @@ export function isRepeat(key: string, now: number, windowMs: number = DEDUPE_WIN
   if (seen.size > SEEN_LIMIT) {
     for (const [k, at] of seen) {
       if (now - at > windowMs) seen.delete(k);
+    }
+    // Still over the limit means a flood inside the window: drop the oldest, so the map cannot grow without bound.
+    for (const k of seen.keys()) {
+      if (seen.size <= SEEN_LIMIT) break;
+      if (k !== key) seen.delete(k);
     }
   }
   return previous !== undefined && now - previous < windowMs;

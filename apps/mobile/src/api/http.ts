@@ -76,7 +76,10 @@ async function readErrorBody(response: Response): Promise<{ code?: string; messa
   try {
     const parsed = apiErrorBodySchema.safeParse(await response.json());
     if (!parsed.success) return {};
-    return { code: parsed.data.error, message: parsed.data.message?.slice(0, MAX_ERROR_MESSAGE), action: parsed.data.action?.slice(0, 120) };
+    // `action` is shown to the user as the permission the server is missing, so only a provider action shape is
+    // accepted: anything else is free text inside the app's own error card.
+    const action = parsed.data.action && /^[A-Za-z0-9]+:[A-Za-z0-9*]+$/.test(parsed.data.action) ? parsed.data.action : undefined;
+    return { code: parsed.data.error, message: parsed.data.message?.slice(0, MAX_ERROR_MESSAGE), action };
   } catch {
     return {};
   }
@@ -97,6 +100,11 @@ async function attempt<T extends z.ZodType>(transport: Transport, options: Reque
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
   if (transport.locale) headers['Accept-Language'] = transport.locale;
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+
+  if (options.signal?.aborted) {
+    clearTimeout(timer);
+    throw new ApiError('cancelled');
+  }
 
   const url = buildUrl(transport.baseUrl, options.path, options.query);
   let response: Response;

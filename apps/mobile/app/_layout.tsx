@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { AppErrorBoundary } from '@/app-shell/error-boundary';
 import { AppProviders } from '@/app-shell/providers';
 import { NotificationEffects } from '@/app-shell/notification-effects';
 import { PrivacyCover } from '@/app-shell/privacy-cover';
@@ -27,15 +28,17 @@ function RootNavigator() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-        <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="(app)" />
-        </Stack.Protected>
-        <Stack.Protected guard={!signedIn}>
-          <Stack.Screen name="(auth)" />
-        </Stack.Protected>
-        <Stack.Screen name="auth/callback" />
-      </Stack>
+      <AppErrorBoundary>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+          <Stack.Protected guard={signedIn}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+          <Stack.Screen name="auth/callback" />
+        </Stack>
+      </AppErrorBoundary>
       <SessionEffects />
       <NotificationEffects />
       <PrivacyCover />

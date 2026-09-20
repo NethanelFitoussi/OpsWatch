@@ -256,6 +256,8 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
   const expire = useCallback(() => {
     if (expiring.current || state.status !== 'signed-in' || state.server.demo) return;
     expiring.current = true;
+    // A destination captured before the session ended must not be replayed into a later, possibly different session.
+    pendingLink.clear();
     void endSession('expired').finally(() => {
       expiring.current = false;
     });
