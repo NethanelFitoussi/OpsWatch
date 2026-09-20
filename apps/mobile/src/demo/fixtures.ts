@@ -660,7 +660,7 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
     {
       id: 'syn-status', name: 'Status page', kind: 'http', target: 'https://status.example.com/', status: 'up',
       availability24h: 1, uptime30d: 1, latencyMs: 98, lastCheckedAt: t(2),
-      ssl: { valid: true, expiresAt: now + 12 * DAY, issuer: 'Example CA' },
+      ssl: { valid: true, expiresAt: now + 12 * DAY + HOUR * 12, issuer: 'Example CA' },
       latency: series('latency', 'ms', now, { base: 95, noise: 12, seed: 43 }), availability: uptimeBuckets(null, 43), failures: [],
       problem: { type: 'problem', id: 'prb-status-ssl' },
     },

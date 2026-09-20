@@ -8,8 +8,8 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import NetInfo from '@react-native-community/netinfo';
-import { useEffect, useState, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { ActivityIndicator, AppState, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isApiError, type ApiErrorKind } from '@/api/errors';
 import { useI18n, type MessageKey } from '@/i18n';
@@ -27,14 +27,71 @@ export const SPINNER_DELAY_MS = 200;
 /** Past this age, "Updated 12 min ago" is not enough: the screen says out loud that what it shows is not live. */
 export const STALE_AFTER_MS = 5 * 60 * 1000;
 
-/** Current time, re-rendered every `intervalMs` so relative times ("3 min ago") stay honest. */
+/**
+ * One clock for the whole app.
+ *
+ * Every row that says "3 min ago" needs the time to move, and a list can hold fifty of them. A timer per component
+ * would mean fifty wakeups, fifty re-renders and staggered updates, so they share a single interval: subscribers are
+ * notified together, and each reads the time rounded to the granularity it asked for, so a component that only cares
+ * about minutes does not re-render when the seconds change. The interval runs only while the app is in front —
+ * nothing on screen needs updating while it is in the background.
+ */
+const CLOCK_TICK_MS = 15_000;
+
+const clock = (() => {
+  const listeners = new Set<() => void>();
+  let now = Date.now();
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let appState: { remove: () => void } | null = null;
+
+  const tick = () => {
+    now = Date.now();
+    listeners.forEach((listener) => listener());
+  };
+  const start = () => {
+    if (timer === null) timer = setInterval(tick, CLOCK_TICK_MS);
+  };
+  const stop = () => {
+    if (timer !== null) clearInterval(timer);
+    timer = null;
+  };
+
+  return {
+    now: () => now,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      if (listeners.size === 1) {
+        start();
+        if (Platform.OS !== 'web') {
+          appState = AppState.addEventListener('change', (status) => {
+            if (status === 'active') {
+              tick();
+              start();
+            } else {
+              stop();
+            }
+          });
+        }
+      }
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+          stop();
+          appState?.remove();
+          appState = null;
+        }
+      };
+    },
+  };
+})();
+
+/**
+ * Current time, rounded to `intervalMs`, so relative times stay honest without a timer per component. It rounds
+ * *up*: an age computed from it is never shorter than the real one, so data can never look fresher than it is.
+ */
 export function useNow(intervalMs = 30_000): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(timer);
-  }, [intervalMs]);
-  return now;
+  const snapshot = useCallback(() => Math.ceil(clock.now() / intervalMs) * intervalMs, [intervalMs]);
+  return useSyncExternalStore(clock.subscribe, snapshot, snapshot);
 }
 
 export function useOnline(): boolean {
