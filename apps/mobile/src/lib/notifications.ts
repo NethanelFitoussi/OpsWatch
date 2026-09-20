@@ -35,6 +35,35 @@ export function shouldPresent(prefs: NotificationPreferences & { enabled?: boole
   return RANK[event.severity] <= RANK[prefs.minSeverity];
 }
 
+/**
+ * Suppresses a notification the app has already acted on. A server retry, or the same alert delivered twice while a
+ * phone reconnects, must not open two screens or show the same banner twice.
+ */
+const seen = new Map<string, number>();
+const DEDUPE_WINDOW_MS = 60_000;
+const SEEN_LIMIT = 50;
+
+export function isRepeat(key: string, now: number, windowMs: number = DEDUPE_WINDOW_MS): boolean {
+  const previous = seen.get(key);
+  seen.set(key, now);
+  if (seen.size > SEEN_LIMIT) {
+    for (const [k, at] of seen) {
+      if (now - at > windowMs) seen.delete(k);
+    }
+  }
+  return previous !== undefined && now - previous < windowMs;
+}
+
+/** Test seam. */
+export function forgetSeenNotifications(): void {
+  seen.clear();
+}
+
+export function dedupeKey(data: unknown, fallback: string): string {
+  const target = parseNotificationData(data);
+  return target ? `${target.type}:${target.id}:${target.env ?? ''}` : fallback;
+}
+
 export function categoryOf(value: unknown): NotificationCategory | null {
   const known: NotificationCategory[] = ['critical_problem', 'alert', 'synthetic_failure', 'incident', 'recovery'];
   return typeof value === 'string' && (known as string[]).includes(value) ? (value as NotificationCategory) : null;

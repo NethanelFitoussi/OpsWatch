@@ -30,6 +30,7 @@ export function NotificationsScreen() {
   const { settings, update } = useSettings();
   const serverPush = useFeature('push');
   const demo = state.status === 'signed-in' && state.server.demo;
+  const serverUrl = state.status === 'signed-in' ? state.server.url : '';
   const prefs = settings.notifications;
   const [result, setResult] = useState<RegistrationResult | null>(null);
   const [testStatus, setTestStatus] = useState<'sent' | 'failed' | null>(null);
@@ -46,7 +47,7 @@ export function NotificationsScreen() {
     }
     const preferences: NotificationPreferences = { minSeverity: prefs.minSeverity, categories: prefs.categories };
     if (serverPush && !demo) {
-      setResult(await registerForPush(client, preferences));
+      setResult(await registerForPush(client, preferences, serverUrl));
       return;
     }
     // The server cannot push yet: still ask for the permission so local notifications (and the test) can show.
