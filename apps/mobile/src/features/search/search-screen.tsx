@@ -4,9 +4,10 @@
  */
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Keyboard, View } from 'react-native';
 import type { SearchResult } from '@/api/contract';
 import { useSearch } from '@/api/queries';
+import { useCurrentEnvironment } from '@/features/shared/header';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n } from '@/i18n';
 import { useFeature } from '@/state/session';
@@ -27,16 +28,18 @@ export function SearchScreen() {
   const router = useRouter();
   const openRef = useOpenRef();
   const aiEnabled = useFeature('ai');
+  const environment = useCurrentEnvironment();
   const { settings, update } = useSettings();
   const [text, setText] = useState('');
-  const debounced = useDebouncedValue(text, SEARCH_DEBOUNCE_MS);
+  const [debounced, flush] = useDebouncedValue(text, SEARCH_DEBOUNCE_MS);
   const query = useSearch(debounced);
   const searchable = isSearchable(text);
   const settled = searchable && debounced.trim() === text.trim();
 
   const remember = (value: string) => update((current) => ({ recentSearches: addRecentSearch(current.recentSearches, value) }));
   const open = (result: SearchResult) => {
-    remember(text);
+    // The query that produced this result, not whatever has been typed since.
+    remember(debounced);
     openRef(result);
   };
 
@@ -44,6 +47,12 @@ export function SearchScreen() {
 
   return (
     <ScrollScreen testID="search-screen">
+      {environment ? (
+        <Text variant="small" tone="muted" testID="search-scope">
+          {t('search.scope', { environment: environment.name })}
+        </Text>
+      ) : null}
+
       <TextField
         label={t('search.label')}
         placeholder={t('search.placeholder')}
@@ -56,7 +65,11 @@ export function SearchScreen() {
         clearButtonMode="while-editing"
         icon="search"
         onSubmitEditing={() => {
-          if (searchable) remember(text);
+          if (!searchable) return;
+          // Searching now rather than after another debounce interval.
+          flush();
+          remember(text);
+          Keyboard.dismiss();
         }}
         testID="search-input"
       />

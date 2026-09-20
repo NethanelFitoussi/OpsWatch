@@ -7,7 +7,7 @@ import type { AiAnswer, Ref } from '@/api/contract';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n, type MessageKey } from '@/i18n';
 import { routeForRef } from '@/lib/deep-links';
-import { Button } from '@/ui/controls';
+import { Button, CopyButton } from '@/ui/controls';
 import { Card } from '@/ui/layout';
 import { ScrollScreen } from '@/ui/screen';
 import { errorMessageKey } from '@/ui/states';
@@ -89,16 +89,37 @@ export function QuestionBubble({ text }: { text: string }) {
   );
 }
 
-export function PendingAnswer() {
+/** An answer can take up to a minute; waiting for one is always abandonable. */
+export function PendingAnswer({ onCancel }: { onCancel: () => void }) {
   const { t } = useI18n();
   const { colors } = useTheme();
   return (
     <Card>
-      <View style={styles.point} accessibilityRole="progressbar" accessibilityLabel={t('ai.thinking')} testID="ask-pending">
-        <ActivityIndicator color={colors.primary} />
-        <Text tone="muted" style={{ flex: 1 }}>
-          {t('ai.thinking')}
-        </Text>
+      <View style={{ gap: spacing.sm }} testID="ask-pending">
+        <View style={styles.point} accessibilityRole="progressbar" accessibilityLabel={t('ai.thinking')}>
+          <ActivityIndicator color={colors.primary} />
+          <Text tone="muted" style={{ flex: 1 }}>
+            {t('ai.thinking')}
+          </Text>
+        </View>
+        <View style={{ alignSelf: 'flex-start' }}>
+          <Button label={t('action.cancel')} onPress={onCancel} variant="ghost" compact testID="ask-cancel" />
+        </View>
+      </View>
+    </Card>
+  );
+}
+
+/** The user gave up on this question; asking again is one tap away. */
+export function CancelledAnswer({ onRetry }: { onRetry: () => void }) {
+  const { t } = useI18n();
+  return (
+    <Card>
+      <View style={{ gap: spacing.sm }} testID="ask-cancelled">
+        <Text tone="muted">{t('ai.cancelled')}</Text>
+        <View style={{ alignSelf: 'flex-start' }}>
+          <Button label={t('ai.askAgain')} onPress={onRetry} variant="secondary" icon="refresh" compact testID="ask-again" />
+        </View>
       </View>
     </Card>
   );
@@ -139,6 +160,11 @@ export function AnswerCard({ answer }: { answer: AiAnswer }) {
         <Text selectable accessibilityLabel={`${t('ai.answer')}: ${answer.answer}`}>
           {answer.answer}
         </Text>
+        <View style={{ alignSelf: 'flex-start' }}>
+          {/* Answers are usually pasted into an incident channel; the label goes with it so nobody mistakes it for
+              an OpsWatch finding. */}
+          <CopyButton text={`${answer.answer}\n\n— ${t('ai.generated')}`} label={t('ai.copyAnswer')} testID="ask-copy-answer" />
+        </View>
         <View style={{ gap: spacing.xs }}>
           <Text variant="label" tone="muted" accessibilityRole="header">
             {t('ai.citations').toUpperCase()}

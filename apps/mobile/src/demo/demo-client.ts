@@ -30,16 +30,30 @@ export function createDemoClient(options: DemoClientOptions = {}): OpsWatchClien
     return data;
   }
 
-  const delay = <T>(value: () => T, factor = 1): Promise<T> =>
-    new Promise((resolve, reject) =>
-      setTimeout(() => {
+  /**
+   * Answers after a small pause, so loading states are visible. A caller that gives up (an abandoned AI answer)
+   * gets the same `cancelled` failure the HTTP client would produce.
+   */
+  const delay = <T>(value: () => T, factor = 1, signal?: AbortSignal): Promise<T> =>
+    new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(new ApiError('cancelled'));
+        return;
+      }
+      const timer = setTimeout(() => {
+        signal?.removeEventListener('abort', onAbort);
         try {
           resolve(value());
         } catch (error) {
           reject(error);
         }
-      }, latency * factor),
-    );
+      }, latency * factor);
+      function onAbort() {
+        clearTimeout(timer);
+        reject(new ApiError('cancelled'));
+      }
+      signal?.addEventListener('abort', onAbort, { once: true });
+    });
 
   const found = <T>(item: T | undefined): T => {
     if (item === undefined) throw new ApiError('not_found', { status: 404, code: 'not_found' });
@@ -117,7 +131,7 @@ export function createDemoClient(options: DemoClientOptions = {}): OpsWatchClien
     investigation: (_scope, id) => delay(() => found(engine.findById(fresh().investigations, id))),
     repositoryEvidence: (_scope, id) => delay(() => found(engine.findById(fresh().repository, id))),
 
-    ask: (_scope, question, context) => delay(() => engine.ask(fresh(), question, context, now()), 4),
+    ask: (_scope, question, context, signal) => delay(() => engine.ask(fresh(), question, context, now()), 4, signal),
     search: (scope, text) => delay(() => engine.search(fresh(), scope.env, text), 0.5),
 
     favorites: () => delay(() => favorites, 0.3),

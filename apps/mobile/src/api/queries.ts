@@ -3,7 +3,7 @@
  * persistence allow-list in query-provider.tsx), then `list` or `detail`, then the environment scope.
  */
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters, Scope } from './client';
 import type { Favorite, InfraCategory, Page, Ref } from './contract';
 import { useSession } from '@/state/session';
@@ -270,11 +270,29 @@ export function useSearch(text: string) {
     placeholderData: keepPreviousData, queryFn: () => client.search(scope, q), enabled: useSignedIn() && q.length >= 2, staleTime: 30_000 });
 }
 
-/** AI answers are mutations: never cached, never persisted, never retried automatically. */
+/**
+ * AI answers are mutations: never cached, never persisted, never retried automatically. An answer can take up to a
+ * minute, so the caller can give up on it; the request is then cancelled instead of running on unseen.
+ */
 export function useAsk() {
   const { client } = useSession();
   const scope = useScope();
-  return useMutation({ mutationFn: ({ question, context }: { question: string; context?: Ref }) => client.ask(scope, question, context) });
+  const controller = useRef<AbortController | null>(null);
+  const mutation = useMutation({
+    mutationFn: ({ question, context }: { question: string; context?: Ref }) => {
+      controller.current?.abort();
+      const next = new AbortController();
+      controller.current = next;
+      return client.ask(scope, question, context, next.signal);
+    },
+  });
+  const cancel = useCallback(() => {
+    controller.current?.abort();
+    controller.current = null;
+    mutation.reset();
+  }, [mutation]);
+  useEffect(() => () => controller.current?.abort(), []);
+  return { ...mutation, cancel };
 }
 
 export function useAcknowledgeProblem(id: string) {

@@ -82,8 +82,11 @@ export function useSettings(): SettingsContextValue {
   return value;
 }
 
+/** Longest query kept on the device: enough for a real search, short enough that a pasted payload is not stored. */
+export const MAX_RECENT_SEARCH_LENGTH = 120;
+
 export function addRecentSearch(list: readonly string[], text: string): string[] {
-  const trimmed = text.trim();
+  const trimmed = text.trim().slice(0, MAX_RECENT_SEARCH_LENGTH);
   if (!trimmed) return [...list];
   return [trimmed, ...list.filter((item) => item.toLowerCase() !== trimmed.toLowerCase())].slice(0, MAX_RECENT_SEARCHES);
 }

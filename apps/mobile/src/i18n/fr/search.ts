@@ -4,6 +4,7 @@ export const search: Record<keyof typeof source, string> = {
   'search.label': 'Rechercher dans OpsWatch',
   'search.placeholder': 'Problèmes, erreurs, services, ressources…',
   'search.minChars': 'Saisissez au moins 2 caractères.',
+  'search.scope': 'Recherche dans {environment}',
   'search.recent': 'Recherches récentes',
   'search.clearRecent': 'Effacer',
   'search.clearRecentLabel': 'Effacer les recherches récentes',

@@ -2,6 +2,7 @@ export const search = {
   'search.label': 'Search OpsWatch',
   'search.placeholder': 'Problems, errors, services, resources…',
   'search.minChars': 'Type at least 2 characters.',
+  'search.scope': 'Searching {environment}',
   'search.recent': 'Recent searches',
   'search.clearRecent': 'Clear',
   'search.clearRecentLabel': 'Clear recent searches',

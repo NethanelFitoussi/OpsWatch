@@ -150,7 +150,8 @@ export interface OpsWatchClient {
   investigation(scope: Scope, id: string): Promise<Investigation>;
   repositoryEvidence(scope: Scope, id: string): Promise<RepositoryEvidence>;
 
-  ask(scope: Scope, question: string, context?: Ref): Promise<AiAnswer>;
+  /** `signal` lets a screen abandon a long answer; the request is cancelled rather than left running. */
+  ask(scope: Scope, question: string, context?: Ref, signal?: AbortSignal): Promise<AiAnswer>;
   search(scope: Scope, text: string): Promise<SearchResult[]>;
 
   favorites(): Promise<Favorite[]>;
@@ -275,7 +276,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
     investigation: (scope, id) => get(`/investigations/${enc(id)}`, investigationSchema, env(scope)),
     repositoryEvidence: (scope, id) => get(`/repository/evidence/${enc(id)}`, repositoryEvidenceSchema, env(scope)),
 
-    ask: (scope, question, context) =>
+    ask: (scope, question, context, signal) =>
       request(transport, {
         method: 'POST',
         path: p('/ai/ask'),
@@ -285,6 +286,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
         // References only: the server gathers the evidence itself.
         body: { question, context: context ? { type: context.type, id: context.id } : undefined },
         timeoutMs: AI_TIMEOUT_MS,
+        signal,
       }),
     search: (scope, text) => get('/search', searchResponseSchema, { ...env(scope), q: text }).then((r) => r.items),
 

@@ -14,14 +14,15 @@ import { MAX_CONTENT_WIDTH } from '@/ui/screen';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { AnswerCard, ContextChip, FailedAnswer, PendingAnswer, QuestionBubble } from './components';
+import { isApiError } from '@/api/errors';
+import { AnswerCard, CancelledAnswer, ContextChip, FailedAnswer, PendingAnswer, QuestionBubble } from './components';
 import { canAsk, clampQuestion, MAX_QUESTION_LENGTH, SUGGESTED_QUESTIONS } from './helpers';
 
 type Turn = {
   key: number;
   question: string;
   context: Pick<Ref, 'type' | 'id'> | null;
-  state: { status: 'pending' } | { status: 'done'; answer: AiAnswer } | { status: 'error'; error: unknown };
+  state: { status: 'pending' } | { status: 'done'; answer: AiAnswer } | { status: 'error'; error: unknown } | { status: 'cancelled' };
 };
 
 export function AskScreen({ initialContext, initialQuestion }: { initialContext: Pick<Ref, 'type' | 'id'> | null; initialQuestion: string }) {
@@ -43,7 +44,8 @@ export function AskScreen({ initialContext, initialQuestion }: { initialContext:
       const answer = await ask.mutateAsync({ question, context: turnContext ?? undefined });
       setState({ status: 'done', answer });
     } catch (error) {
-      setState({ status: 'error', error });
+      // Giving up on an answer is not a failure worth a red card.
+      setState(isApiError(error) && error.kind === 'cancelled' ? { status: 'cancelled' } : { status: 'error', error });
     }
   };
 
@@ -87,7 +89,8 @@ export function AskScreen({ initialContext, initialQuestion }: { initialContext:
           {turns.map((turn) => (
             <View key={turn.key} style={styles.turn}>
               <QuestionBubble text={turn.question} />
-              {turn.state.status === 'pending' ? <PendingAnswer /> : null}
+              {turn.state.status === 'pending' ? <PendingAnswer onCancel={ask.cancel} /> : null}
+              {turn.state.status === 'cancelled' ? <CancelledAnswer onRetry={() => void run(turn.key, turn.question, turn.context)} /> : null}
               {turn.state.status === 'done' ? <AnswerCard answer={turn.state.answer} /> : null}
               {turn.state.status === 'error' ? <FailedAnswer error={turn.state.error} onRetry={() => void run(turn.key, turn.question, turn.context)} /> : null}
             </View>
