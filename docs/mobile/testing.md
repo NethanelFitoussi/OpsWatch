@@ -155,3 +155,23 @@ Copy this list into the release issue and tick it on the release binaries ([rele
 - [ ] Dynamic Type (iOS) and font scale (Android) at the largest size: no truncated critical text
 - [ ] Small screens (iPhone SE class): no overlapping or clipped content
 - [ ] Large screens and tablets: layout uses the space, no stretched controls
+
+## What has actually been verified
+
+Recorded so it is clear what is tested and what is not. Dates are when the check last ran.
+
+| Check | Result | Date |
+|-------|--------|------|
+| Lint, typecheck, unit/component/navigation tests | Clean; 970 tests in 41 suites (65 more skipped: the contract parity suite waits for `packages/contract`) | 2026-09-20 |
+| API client against the contract mock server over real HTTP | 12 tests: auth, 401 without a token, validation, filters, pagination, async log polling and release, acknowledge then forbidden, AI, not-found, unsupported, favorites, logout | 2026-09-20 |
+| Demo fixtures against the contract, after a JSON round trip | Passing; caught and fixed a reference cycle that would have broken any real JSON response | 2026-09-20 |
+| Contract parity with the server team's `packages/contract` | 65/65 against their work in progress; only difference was the additive `serverInfo.demo`, since adopted | 2026-09-20 |
+| Web export tour at six device profiles (small/regular/large iPhone, Android phone, tablet, dark mode) | 36/36; screenshots in `test-results/screens/` | 2026-09-20 |
+| WCAG AA contrast for every colour pair, both themes | 40 pairs, all ≥ 4.5:1 | 2026-09-20 |
+| **Native Android release build** (`expo prebuild` + `gradlew assembleRelease`) | Builds; 48 MB APK | 2026-09-20 |
+| **Native Android run** on an Android 15 emulator (Pixel 7, x86_64) | Demo mode, Home, tab bar, scrolling, `opswatch://` deep link into a problem, unknown link falling back to Home; no crash, no red box | 2026-09-20 |
+| iOS | **Not run**: no macOS machine available here. The JavaScript, layout and navigation are shared and covered by the tests and the web profiles, but an iOS simulator run and an EAS iOS build are still to be done by a maintainer with a Mac ([ios.md](ios.md)) | — |
+| Physical devices, push notifications end to end, Google sign-in | **Not run**: needs devices, an EAS project, APNs/FCM credentials, and a server that implements them | — |
+
+Bugs this QA found and fixed: a monospace font that fell back to serif off iOS, a truncated "15 of 18 healthy
+services" tile on small phones, a cramped hypothesis title, and a demo banner that hid the Android status bar.
