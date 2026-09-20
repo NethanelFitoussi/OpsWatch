@@ -209,6 +209,7 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | **Mutation spot-check** on eight rules the app's safety rests on | 6 of 8 killed on the first run: refusing a cross-origin answer, rejecting a dot-only deep-link id, rounding ages so data never looks fresher, persisting lists but not details, never persisting a failed query, and capping `Retry-After`. Two **survived** and now have tests: the 2 MB cache ceiling, and redacting a bearer token | 2026-09-20 |
 | **Every redaction rule in the logger, mutated one at a time** | 3 of 9 survived: the `Authorization:` rule and the bare-`Bearer` rule only ever covered each other, and `github_pat_` had no case at all. Each rule now has a case only it can catch; **9 of 9** killed | 2026-09-20 |
 | Minimum touch targets | Every `Pressable` declares a role; rows use `TOUCH_TARGET` (48); the three inline controls that cannot be 48 tall reach it through hit slop, asserted by a test | 2026-09-20 |
+| **Landscape and tablet geometry** on the emulator (2400x1080, and 1600x2560 at 280 dpi) | Content stays inside the readable column instead of stretching, tabs lay out horizontally, nothing clipped, no crash. Found one copy bug: a freshness line read "0 min ago" | 2026-09-20 |
 | **Native Android run** on an Android 15 emulator (Pixel 7, x86_64) | Demo mode, Home, tabs, scrolling, dark mode, the offline banner, `opswatch://` deep links into a problem, into an error and an unknown link falling back to Home, a deep link while signed out (stays on Connect, nothing leaks), tablet geometry and landscape. No crash, no red box, no fatal exception in logcat. Cold start measured at **697–722 ms** | 2026-09-20 |
 | Android release manifest | The permissions actually present are listed in [privacy.md](privacy.md#android-permissions-actually-in-the-release-build); `SYSTEM_ALERT_WINDOW` is blocked and absent | 2026-09-20 |
 | **iOS project generation** (`npx expo prebuild --platform ios --no-install`) | Generated and read statically: no Face ID usage string, OpsWatch's own local-network wording, `opswatch` URL scheme, ATS with arbitrary loads off, `ITSAppUsesNonExemptEncryption = false`, iPhone and iPad orientations | 2026-09-20 |
@@ -216,8 +217,8 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | Physical devices (iOS or Android), push notifications end to end, Google sign-in | **Not run**: needs devices, an EAS project, APNs/FCM credentials, and a server that implements them | — |
 
 Bugs this QA found and fixed: a monospace font that fell back to serif off iOS, a truncated "15 of 18 healthy
-services" tile on small phones, a cramped hypothesis title, a demo banner that hid the Android status bar, and an
-empty status-bar-height strip between that banner and every pushed screen's header (see
+services" tile on small phones, a cramped hypothesis title, a demo banner that hid the Android status bar, a freshness
+line that read "0 min ago" for fifteen seconds of every minute, and an empty status-bar-height strip between that banner and every pushed screen's header (see
 [architecture.md](architecture.md#chrome-above-the-navigator) for why the native header could not be told to drop its
 top inset).
 

@@ -99,14 +99,21 @@ export type RelativeTimeLabels = { now: string; ago: (amount: string) => string;
 
 const EN_RELATIVE: RelativeTimeLabels = { now: 'just now', ago: (a) => `${a} ago`, in: (a) => `in ${a}` };
 
-/** "3 min ago", "in 12 d". Rounded down so data never looks fresher than it is. */
+/**
+ * "3 min ago", "in 12 d". Rounded down so data never looks fresher than it is.
+ *
+ * The minute count floors to 1, not 0: "just now" stops at 45 seconds but the floor would not reach 1 minute until
+ * 60, so the fifteen seconds in between read "0 min ago" — which is both meaningless and, on a screen whose job is to
+ * say how old the data is, the wrong kind of wrong. Erring to "1 min ago" keeps the guarantee that nothing ever looks
+ * fresher than it is.
+ */
 export function formatRelative(at: number, now: number, labels: RelativeTimeLabels = EN_RELATIVE): string {
   const diff = now - at;
   const abs = Math.abs(diff);
   if (abs < 45_000) return labels.now;
   const u = units();
   let amount: string;
-  if (abs < HOUR) amount = `${Math.floor(abs / MIN)} ${u.min}`;
+  if (abs < HOUR) amount = `${Math.max(1, Math.floor(abs / MIN))} ${u.min}`;
   else if (abs < DAY) amount = `${Math.floor(abs / HOUR)} ${u.h}`;
   else amount = `${Math.floor(abs / DAY)} ${u.d}`;
   return diff >= 0 ? labels.ago(amount) : labels.in(amount);

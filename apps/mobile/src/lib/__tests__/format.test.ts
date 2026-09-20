@@ -28,6 +28,11 @@ describe('formatRelative', () => {
   it('rounds down so data never looks fresher than it is', () => {
     expect(formatRelative(now - 10_000, now)).toBe('just now');
     expect(formatRelative(now - 119_000, now)).toBe('1 min ago');
+    // The gap between "just now" (under 45 s) and a whole minute used to read "0 min ago".
+    expect(formatRelative(now - 45_000, now)).toBe('1 min ago');
+    expect(formatRelative(now - 59_999, now)).toBe('1 min ago');
+    expect(formatRelative(now - 44_999, now)).toBe('just now');
+    expect(formatRelative(now + 50_000, now)).toBe('in 1 min');
     expect(formatRelative(now - 3 * 3_600_000 - 59 * 60_000, now)).toBe('3 h ago');
     expect(formatRelative(now + 12 * 86_400_000, now)).toBe('in 12 d');
   });
