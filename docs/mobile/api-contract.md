@@ -152,6 +152,17 @@ To be filled as needs are agreed. Known items:
 | Acknowledge adds a history entry | After acknowledging an alert its `history` should show the acknowledgement | Open (server behaviour) |
 | Push registration is idempotent per device token | Registration runs from Settings and again when preferences change; the server should upsert by token | Open |
 
+| `changeSchema` has no `at` | Health/brief changes cannot be ordered or placed in time, so the brief can group what changed but not say when | Open |
+| `investigationSchema` has no `concludedAt` | A concluded investigation cannot show when it ended or how long it took | Open |
+| `family.unavailable` has no human-readable `message` | The most trust-relevant line on Home can only show a token (`denied` / `AccessDenied`) instead of "the IAM role cannot list CloudFront distributions" | Open |
+| `repositoryEvidence.commit` has no URL | Evidence cannot offer "open this commit in your repository" | Open |
+| `errorSummarySchema` has no trend | The error list cannot answer "is this getting worse" without opening each group | Open |
+| `occurrences` / `affectedInstances` have no window | A count of 2,417 cannot be labelled "in the last hour" or "ever" | Open |
+| `errorDetailSchema` has no deployments or repository evidence | "Was there a deployment near this error?" can only be answered via its problem, and not at all without one | Open |
+| `errorSummarySchema` has no `statusSince` | For a regression, the app can only say when the error first ever appeared, not when it came back | Open |
+| `logEntrySchema.links` has no `deploymentId` / `incidentId` | Log → error → problem → service works; nothing further is in the payload | Open |
+| `alertSummarySchema` has no `resolvedAt` | A resolved alert cannot say how long it fired, the most useful number after the fact | Open |
+
 ## Parity with `packages/contract`
 
 `src/api/__tests__/contract-parity.test.ts` checks, when `packages/contract` exists on the branch, that every schema the
