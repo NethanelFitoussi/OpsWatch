@@ -2,9 +2,11 @@
 
 The mobile app and the web app share one versioned API under `/api/v1`. The schemas are written with zod 4.
 
-> **Temporary local copy.** Mobile currently uses `apps/mobile/src/api/contract.ts`. The canonical contract moves to
-> `packages/contract`, owned jointly with the server side. Once that package lands on this branch, the local file is
-> deleted and imports point at the package ([merge-notes.md](merge-notes.md)). Never evolve the local copy on its own.
+> **Temporary local copy.** Mobile currently uses `apps/mobile/src/api/contract.ts` (48 exported schemas). The
+> canonical contract now exists as `packages/contract`, owned jointly with the server side — but on the server team's
+> branch, not on this one and not on `main`. Until it lands here, the local copy is what the app compiles against, and
+> a parity test keeps the two honest ([Parity with `packages/contract`](#parity-with-packagescontract),
+> [merge-notes.md](merge-notes.md)). Never evolve the local copy on its own.
 
 ## Conventions
 
@@ -21,6 +23,8 @@ The mobile app and the web app share one versioned API under `/api/v1`. The sche
 | Vocabulary | Severity `critical | warning | info`; health status `healthy | degraded | critical | unknown` |
 | Forward compatibility | Unknown keys are ignored; unknown enum values fall back to a neutral value (`info`, `unknown`, `custom`, `none`) |
 | Errors | Non-2xx bodies are `{ error: <snake_case code>, message?, action?, code? }`. `action` names a missing provider permission (for example `logs:StartQuery`) |
+| Rate limits | `429` may carry `Retry-After` in seconds. The client waits that long before retrying an idempotent call, capped at 30 s; an HTTP-date value is ignored and the usual backoff applies |
+| Redirects | An answer whose final URL is on another origin is discarded (`invalid_response`): the bearer token must not follow a redirect off the server |
 | Unsupported | `501` means the capability is not implemented and is shown as unavailable |
 | References | Objects point to each other with `{ type, id, label? }`; ids are 1–200 characters |
 
@@ -32,7 +36,7 @@ All paths are relative to `/api/v1`. Source: `apps/mobile/src/api/client.ts`.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/server` | Capability discovery (unauthenticated): product, version, `apiVersion`, optional name, `auth.{password,google}`, `features` |
+| GET | `/server` | Capability discovery (unauthenticated): product, version, `apiVersion`, optional `name`, optional `demo`, `auth.{password,google}`, `features` |
 | POST | `/auth/login` | `{ email, password }` → `{ token, expiresAt, user }` |
 | GET | `/auth/google/start?redirectUri&codeChallenge&codeChallengeMethod=S256&state` | Opened in the system browser; the server finally redirects to `redirectUri?code=…&state=…` |
 | POST | `/auth/google/exchange` | `{ code, codeVerifier, redirectUri }` → `{ token, expiresAt, user }` (one-time, PKCE-bound code) |
@@ -78,7 +82,9 @@ All paths are relative to `/api/v1`. Source: `apps/mobile/src/api/client.ts`.
 | POST | `/me/devices` | Register for push `{ pushToken, platform, preferences: { minSeverity, categories } }` → `{ id }` |
 | DELETE | `/me/devices/:id` | Unregister |
 
-Client timeouts: 10 s for `server`, 30 s for logs, 60 s for AI, 15 s otherwise.
+Client timeouts: 10 s for `server`, 30 s for the log search and its polling, 5 s for the log search cancel, 60 s for
+AI, 15 s otherwise. `GET /server` is never retried; `POST /logs/search` is marked idempotent so a network blip may
+retry it.
 
 ## Capability flags
 
@@ -118,10 +124,10 @@ Server implementation is pending. The server team froze the first areas; the res
 | Problems | `problems*` | Frozen first; pending |
 | Errors | `errors*` | Frozen first; pending |
 | Services, infrastructure, logs, alerts, incidents, synthetics, SLOs, deployments, investigations, repository, AI, search, favorites | | Later, behind flags |
-| Push devices | `me/devices*` | Later; `features.push = false` for now |
+| Push devices | `me/devices*` | Later; `features.push = false` everywhere for now |
 
 The demo client and the mock server implement the whole contract from fixtures, so the app can be developed and
-tested before the server catches up.
+tested before the server catches up. Both advertise every feature except `push`.
 
 ## Requesting a contract change
 
@@ -150,8 +156,7 @@ To be filled as needs are agreed. Known items:
 | Incident actions (update status, add note) | Incidents are read-only on mobile until the server exposes these, gated by `allowedActions` | Open |
 | Problem title on error summaries (`problemTitle`) | The error list and detail link to "the related problem" without its title, to avoid an extra request | Open |
 | Acknowledge adds a history entry | After acknowledging an alert its `history` should show the acknowledgement | Open (server behaviour) |
-| Push registration is idempotent per device token | Registration runs from Settings and again when preferences change; the server should upsert by token | Open |
-
+| Push registration is idempotent per device token | The app re-registers when the push token, the preferences or the server change, and unregisters when notifications are switched off; the server should upsert by token | Open |
 | `changeSchema` has no `at` | Health/brief changes cannot be ordered or placed in time, so the brief can group what changed but not say when | Open |
 | `investigationSchema` has no `concludedAt` | A concluded investigation cannot show when it ended or how long it took | Open |
 | `family.unavailable` has no human-readable `message` | The most trust-relevant line on Home can only show a token (`denied` / `AccessDenied`) instead of "the IAM role cannot list CloudFront distributions" | Open |
@@ -165,16 +170,33 @@ To be filled as needs are agreed. Known items:
 
 ## Parity with `packages/contract`
 
-`src/api/__tests__/contract-parity.test.ts` checks, when `packages/contract` exists on the branch, that every schema the
-app uses is exported by the package and that the package parses the demo data to a superset of what the local copy
-produces (additive fields only). Against the server team's work in progress on 2026-09-18 it passed 65/65; the only
-difference was the additive `serverInfo.demo`, which mobile adopted.
+`src/api/__tests__/contract-parity.test.ts` checks that every schema the app uses is exported by the package under the
+same name, that `API_PREFIX` and `API_VERSION` agree, and that the package parses the demo dataset to a superset of
+what the local copy produces (additive fields only, as v1 allows). That is 65 checks: 48 schema exports, the
+prefix/version pair, and 16 demo-data comparisons.
+
+**The suite skips itself while the package is not there.** It looks for `packages/contract/index.ts` at the repository
+root, or wherever `OPSWATCH_CONTRACT_DIR` points, and uses `describe.skip` when neither exists. On this branch it is
+therefore reported as 65 skipped tests, which is expected and not a failure:
 
 ```sh
-# against another checkout's package, before it reaches this branch
-OPSWATCH_CONTRACT_DIR=/path/to/packages/contract npx jest contract-parity
+npx jest contract-parity                                               # skipped: no packages/contract here
+OPSWATCH_CONTRACT_DIR=/path/to/packages/contract npx jest contract-parity   # another checkout's work in progress
 ```
 
-Switching over when the package lands: replace the body of `apps/mobile/src/api/contract.ts` with
-`export * from '../../../../packages/contract';` (Metro already watches the folder, see `metro.config.js`), run the
-tests, then delete the local schemas.
+Jest maps `zod` to this app's copy (`moduleNameMapper` in `jest.config.js`), so an out-of-tree contract with no
+`node_modules` of its own still resolves.
+
+Against the server team's work in progress on 2026-09-20 it passed 65/65; the only difference was the additive
+`serverInfo.demo`, which mobile adopted.
+
+**Switching over is one file.** When the package is on this branch, replace the body of
+`apps/mobile/src/api/contract.ts` with:
+
+```ts
+export * from '../../../../packages/contract';
+```
+
+Metro already watches that folder and resolves its imports from this app's `node_modules` (`metro.config.js`), so no
+npm workspace, no root `package.json` change and no TypeScript path mapping is needed. Then run `npm run check`
+— the parity suite stops skipping — and delete the local schemas.

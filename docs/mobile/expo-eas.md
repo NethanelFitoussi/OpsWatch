@@ -1,7 +1,8 @@
 # Expo and EAS
 
 EAS (Expo Application Services) builds, signs, submits and updates the app in the cloud, which is also how iOS builds
-are produced without a Mac. None of this is set up yet: there is no Expo organisation or EAS project for OpsWatch.
+are produced without a Mac. None of it has been used yet: there is no Expo organisation and no EAS project for
+OpsWatch. The configuration is in place; the account is not.
 
 Run the EAS CLI with `npx eas-cli <command>` (or install it globally with `npm install -g eas-cli` and use `eas`).
 All commands run from `apps/mobile`.
@@ -25,35 +26,44 @@ export EAS_PROJECT_ID=00000000-0000-0000-0000-000000000000
 ```
 
 `app.config.ts` puts `EAS_PROJECT_ID` in `extra.eas.projectId` (needed by EAS Update and by push tokens) and
-`EXPO_OWNER` in `owner`. The slug is `opswatch`.
+`EXPO_OWNER` in `owner`. The slug is `opswatch`. Without a project id the app still works; only push registration
+reports that this build has no push project.
 
 ## Build profiles
 
-`apps/mobile/eas.json` (being added) defines three profiles:
+`apps/mobile/eas.json` is committed. It requires EAS CLI `>= 16.0.0`, builds on Node 22.19.0, and sets
+`appVersionSource: "remote"`.
 
-| Profile | Purpose | Distribution | Output |
-|---------|---------|-------------|--------|
-| `development` | Development client (`developmentClient: true`) for daily work | Internal | iOS: simulator or registered devices; Android: APK |
-| `preview` | Release-like build for testers | Internal | Android APK; iOS ad hoc (registered devices) |
-| `production` | Store builds, `autoIncrement` of build numbers | Store | Android AAB; iOS App Store build |
+| Profile | Extends | Purpose | Distribution | Output |
+|---------|---------|---------|--------------|--------|
+| `base` | — | Shared settings: Node version and the `OPSWATCH_IOS_BUNDLE_ID` / `OPSWATCH_ANDROID_PACKAGE` env values | — | — |
+| `development` | `base` | Development client (`developmentClient: true`), channel `development` | Internal | iOS simulator (`ios.simulator: true`); Android APK |
+| `development-device` | `development` | The same for a registered iPhone (`ios.simulator: false`) | Internal | iOS device build |
+| `preview` | `base` | Release-like build for testers, channel `preview` | Internal | Android APK (`buildType: "apk"`); iOS ad hoc |
+| `production` | `base` | Store builds, channel `production`, `autoIncrement: true` | Store | Android AAB; iOS App Store build |
 
-The `development` profile needs `expo-dev-client` in `package.json`. It is not a dependency at the time of writing;
-add it with `npx expo install expo-dev-client`.
+> **`base.env` still holds the `com.example.opswatch` placeholders.** Every cloud build inherits them unless they are
+> changed there or overridden by an EAS environment variable. Fixing this is step 1 of the first real release
+> ([release.md](release.md#3-replace-the-placeholder-identifiers)).
 
-About versions: `autoIncrement` raises the iOS build number and Android `versionCode` on each production build. When
-`eas.json` uses `"appVersionSource": "remote"`, EAS stores those numbers itself and `OPSWATCH_IOS_BUILD_NUMBER` /
-`OPSWATCH_ANDROID_VERSION_CODE` are ignored; with `"local"`, the values from `app.config.ts` are used. Check the
-committed `eas.json` and follow [release.md](release.md) accordingly.
+About versions: `appVersionSource: "remote"` means **EAS stores the iOS build number and the Android `versionCode`
+itself**, and `autoIncrement` on the `production` profile raises them for each production build.
+`OPSWATCH_IOS_BUILD_NUMBER` and `OPSWATCH_ANDROID_VERSION_CODE` are then ignored for EAS builds; they still apply to
+local builds from `app.config.ts`.
+
+`expo-dev-client` is a dependency of the app, so the `development` profile needs no extra setup — and `npx expo start`
+targets a development build by default ([development.md](development.md#expo-go-or-a-development-build)).
 
 ## Development builds
 
 ```bash
 npx eas-cli build -p android --profile development
-npx eas-cli build -p ios --profile development      # simulator or registered devices (Apple credentials for devices)
-npm start                                            # then open the installed development build
+npx eas-cli build -p ios --profile development           # simulator build, no Apple account needed
+npx eas-cli build -p ios --profile development-device     # registered devices (Apple credentials)
+npm start                                                 # then open the installed development build
 ```
 
-Register iPhones for internal builds with `npx eas-cli device:create`.
+Register iPhones for device builds with `npx eas-cli device:create`.
 
 ## EAS Build
 
@@ -67,6 +77,13 @@ npx eas-cli build:list
 The first build of each platform sets up credentials (EAS-managed recommended): [ios.md](ios.md#signing-certificates-provisioning-profiles),
 [android.md](android.md#signing).
 
+### From CI
+
+`.github/workflows/mobile-release.yml` runs the same thing manually from GitHub: choose a platform (`all`, `ios`,
+`android`) and a profile (`preview`, `production`), and it runs `npm run check` and then
+`eas build --non-interactive --no-wait`. It needs the `EXPO_TOKEN` repository secret and an initialised EAS project.
+It never submits anything to a store, and no signing material is stored in the repository or in GitHub.
+
 ## EAS Submit
 
 ```bash
@@ -78,7 +95,8 @@ npx eas-cli submit -p android --latest
   Apple credentials.**
 - Android: needs a **Google service account key** (JSON) with access to the app in Play Console, uploaded to EAS
   credentials. The very first Android upload must be done manually in Play Console. **Requires Google Play access.**
-- Submission settings (track, App Store Connect app id) belong in the `submit` section of `eas.json`, never keys.
+- Submission settings live in `eas.json`'s `submit.production`: Android is set to the `internal` track with
+  `releaseStatus: "draft"`; the iOS block is empty and will need the App Store Connect app id. Never keys.
 
 ## Environment variables and secrets
 
@@ -86,10 +104,10 @@ Every value in `app.config.ts` ends up inside the public app binary. So:
 
 | Variable | Kind | Where |
 |----------|------|-------|
-| `OPSWATCH_IOS_BUNDLE_ID`, `OPSWATCH_ANDROID_PACKAGE` | Public config | EAS environment variable (plain text) or profile `env` |
-| `EAS_PROJECT_ID`, `EXPO_OWNER` | Public config | Same |
+| `OPSWATCH_IOS_BUNDLE_ID`, `OPSWATCH_ANDROID_PACKAGE` | Public config | `eas.json` `base.env` today; change them there or with an EAS environment variable (plain text) |
+| `EAS_PROJECT_ID`, `EXPO_OWNER` | Public config | EAS environment variable or the build shell |
 | `OPSWATCH_ASSOCIATED_DOMAIN` | Public config | Same |
-| `OPSWATCH_IOS_BUILD_NUMBER`, `OPSWATCH_ANDROID_VERSION_CODE` | Public config | Same, or EAS `autoIncrement` |
+| `OPSWATCH_IOS_BUILD_NUMBER`, `OPSWATCH_ANDROID_VERSION_CODE` | Public config | Local builds only while `appVersionSource` is `remote` |
 | `EXPO_PUBLIC_DEFAULT_SERVER_URL` | Public config | Optional; only pre-fills the server field |
 
 **Nothing secret goes in the app.** There are no API keys to embed: the app talks only to the user's OpsWatch server
@@ -104,15 +122,15 @@ EAS Update ships JavaScript and asset changes to installed builds without a stor
 
 State today:
 
-- `runtimeVersion: { policy: 'appVersion' }` is configured: an update only reaches builds with the same app version
-  (`0.1.0`), so a JS bundle can never land on a binary with different native code if the version is bumped with every
-  native change.
-- **`expo-updates` is not installed yet.** To enable EAS Update: `npx expo install expo-updates`, then
-  `npx eas-cli update:configure`, then new builds. **Requires owner decision.**
+- **`expo-updates` is not installed.** No build can receive an update, and `eas update` has nothing to publish to.
+  Enabling it: `npx expo install expo-updates`, then `npx eas-cli update:configure`, then new builds. **Requires
+  owner decision.**
+- `runtimeVersion: { policy: 'appVersion' }` is already configured, so once updates exist an update will only reach
+  builds with the same app version (`0.1.0`) — which is only safe if the version is bumped with every native change.
+- The three build profiles already declare their channels (`development`, `preview`, `production`).
 
-Recommendations:
+Recommendations, for when it is enabled:
 
-- One channel per profile: `development`, `preview`, `production` (set `"channel"` in each `eas.json` build profile).
 - Publish to `preview` first, test on a preview build, then publish the same change to production:
 
   ```bash
@@ -140,4 +158,5 @@ Considerations:
 - Rolling back to the embedded update returns to the JavaScript shipped in the store binary.
 - An update cannot fix a native crash that happens before the update loads; that needs a new build
   ([release.md](release.md#rollback-and-recovery)).
-- Server-side feature flags in `GET /api/v1/server` hide a broken feature immediately, without any app change.
+- Server-side feature flags in `GET /api/v1/server` hide a broken feature immediately, without any app change, and
+  work today — unlike EAS Update.

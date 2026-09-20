@@ -20,17 +20,20 @@ monitored systems produce.
 
 | Data | Storage | Lifetime |
 |------|---------|----------|
-| Session token | iOS Keychain / Android Keystore through `expo-secure-store`, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, one key per server URL (`opswatch.session.<hash>`). Web (QA only): memory only | Until sign-out, session expiry or server change |
+| Session token | iOS Keychain / Android Keystore through `expo-secure-store`, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, one key per server URL (`opswatch.session.<sanitised URL>.<hash>`). Web (QA only): memory only | Until sign-out, session expiry or server change |
 | Server config: URL, demo flag, plain-HTTP flag, last known capabilities, signed-in user's email and name | AsyncStorage `opswatch.server.v1` | Until server change |
-| Settings: theme, language, selected environment id, privacy cover on/off, notification preferences, up to 8 recent search texts, local favorites (only when the server has no favorites support) | AsyncStorage `opswatch.settings.v1` | Until changed. `resetServerScoped()` (environment, recent searches, local favorites) exists but is not called on server change at the time of writing: see [security.md](security.md#local-caching) |
-| Offline cache of list queries: health, brief, problems list, services list, incidents list, environments | AsyncStorage `opswatch.query-cache.v1` | At most 24 h; wiped on sign-out, session expiry and server change |
-| Push registration id (only when push is enabled) | AsyncStorage `opswatch.device-registration.v1` | Removed when the session ends |
+| Settings: theme, language, privacy cover on/off, notification preferences, demo capability switches | AsyncStorage `opswatch.settings.v1` | Until changed |
+| Session-scoped settings: selected environment id, up to 8 recent search texts (120 characters each), local favorites (only when the server has no favorites support) | AsyncStorage `opswatch.settings.v1` | Cleared whenever a session ends: sign-out, session expiry or server change |
+| Offline cache of list queries: health, brief, problems list, services list, incidents list, environments | The OS cache directory, `opswatch-cache/opswatch.query-cache.v1.json` (`expo-file-system`). Web (QA only): AsyncStorage | At most 24 queries, each at most 24 h old, and a snapshot over 2 MB is dropped rather than written; wiped on sign-out, session expiry and server change, and the OS may delete it when storage runs low |
+| Push registration id, and the token and preferences it was registered with (only when push is enabled) | Secure storage `opswatch.device-registration.v1` | Removed when the session ends or notifications are switched off |
 | Pending deep-link destination while signed out | Memory only | Until used or app restart |
 
 Not stored on disk: details, log lines, stack traces, evidence, AI answers, passwords. Android `allowBackup` is `false`,
-so none of the above goes into Android device backups. Uninstalling the app removes AsyncStorage data; iOS may keep
-Keychain items after uninstall, but they are only readable by a reinstall of the same app, on the same device, and
-the app re-validates any found token with the server before using it.
+so none of the above goes into Android device backups. On iOS the AsyncStorage data (not the token) is part of an
+iCloud or iTunes backup ([security.md](security.md#residual-accepted)); the offline cache is not, because it is written
+to the cache directory, which neither platform backs up. Uninstalling the app removes both;
+iOS may keep Keychain items after uninstall, but they are only readable by a reinstall of the same app, on the same
+device, and the app re-validates any found token with the server before using it.
 
 ## What the app sends to OpsWatch
 
@@ -45,11 +48,14 @@ Only to the server the user chose, over HTTPS (plain HTTP only for local servers
 - AI questions typed by the user, with a reference `{ type, id }` to the object in context (never the object's data).
 - Favorites (when the server supports them).
 - When push is enabled on server and device: a push token, the platform (`ios`/`android`) and notification
-  preferences (minimum severity, categories).
+  preferences (minimum severity, categories). Switching notifications off sends a delete for that registration.
+
+A response that arrives from a different origin than the request was sent to is discarded rather than read, so the
+session token cannot be carried to another host by a redirect.
 
 ## What the app does not send anywhere else
 
-Checked against `apps/mobile/package.json` dependencies at the time of writing:
+Checked against `apps/mobile/package.json` dependencies:
 
 - No analytics SDK.
 - No crash reporting SDK.
@@ -67,7 +73,7 @@ Third parties that may be involved, only through user action or when enabled:
 | Apple / Google stores | Always, as the distribution platform | Their own download, crash and usage statistics under their terms, if the user opted in on the device |
 
 Clipboard: the app writes to the clipboard only when the user taps a copy button (error message, stack trace, commit
-SHA, diff, check target). It never reads the clipboard.
+SHA, diff, check target, AI answer). It never reads the clipboard.
 
 ## App Store privacy answers (draft)
 
@@ -116,9 +122,14 @@ the first two are asked for by OpsWatch itself; the rest are merged in by librar
 | `INTERNET` | Talking to your OpsWatch server. Nothing else is contacted |
 | `POST_NOTIFICATIONS` | Showing notifications, once you turn them on |
 | `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` | Connectivity detection (`@react-native-community/netinfo`), which drives the offline banner |
-| `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`, `READ_APP_BADGE` | Merged by `expo-notifications` for scheduled and incoming notifications |
-| `USE_BIOMETRIC`, `USE_FINGERPRINT` | Merged by `expo-secure-store`; OpsWatch does not ask for biometric authentication and stores its token with `WHEN_UNLOCKED_THIS_DEVICE_ONLY` |
+| `VIBRATE` | Vibration for a notification, and the short confirmation felt when an action succeeds or fails (`expo-haptics`) |
+| `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`, `READ_APP_BADGE` | Merged by `expo-notifications` and its support libraries for scheduled and incoming notifications |
+| `USE_BIOMETRIC`, `USE_FINGERPRINT` | Merged through `expo-secure-store`; OpsWatch never asks for biometric authentication and stores its token with `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. The iOS side of the same library is configured with `faceIDPermission: false`, so the app declares no Face ID usage at all |
 
-`SYSTEM_ALERT_WINDOW` ("draw over other apps") was merged in by a dependency and is explicitly blocked in
-`app.config.ts`. No location, camera, microphone, contacts or storage permission is present. `allowBackup` is
-`false`, so the offline cache is not swept into Google Drive backups.
+`app.config.ts` blocks `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `RECORD_AUDIO` and `SYSTEM_ALERT_WINDOW`
+("draw over other apps"), each of which a dependency would otherwise merge in; the last one was found in an earlier
+release build and is absent since. No location, camera, microphone or contacts permission is present. `allowBackup`
+is `false`, so the offline cache is not swept into Google Drive backups.
+
+Re-read this list from the merged manifest whenever a dependency is added or upgraded: it is the only place the real
+answer exists.

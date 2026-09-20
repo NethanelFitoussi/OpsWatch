@@ -23,48 +23,60 @@ migration and no root script for mobile. The root `npm ci`, `npm run dev`, Docke
 
 ## `packages/contract`
 
-The `/api/v1` contract is shared by the server, the web app and mobile. It moves to `packages/contract`, owned jointly
-with the server side ([api-contract.md](api-contract.md)). Plan on the mobile side once the package is on this branch:
+The `/api/v1` contract is shared by the server, the web app and mobile. It lives in `packages/contract`, owned jointly
+with the server side — on their branch today, not on this one ([api-contract.md](api-contract.md)). The mobile side of
+the move is already prepared:
 
-1. Delete `apps/mobile/src/api/contract.ts` and import from the package.
-2. Metro: add the package folder to `watchFolders` in `apps/mobile/metro.config.js` (to be created) and resolve it,
-   for example through `resolver.extraNodeModules` or a local `file:` dependency, so Metro bundles a file outside
-   `apps/mobile`.
-3. Jest: add a `moduleNameMapper` entry in `apps/mobile/jest.config.js` pointing the package name at its source, and
-   make sure it is transformed (not excluded by `transformIgnorePatterns`).
-4. TypeScript: add a `paths` entry in `apps/mobile/tsconfig.json`.
-5. The package must stay free of React Native, Node and server-only imports (zod 4 only), as the local copy is today.
+| Step | State |
+|------|-------|
+| `src/api/contract.ts` free of React Native, Node and server-only imports (zod 4 only) | **Done**, and it is what makes the switchover a one-line re-export |
+| Metro resolves a package outside `apps/mobile` | **Done**: `metro.config.js` adds `../../packages/contract` to `watchFolders` when it exists, and pins `nodeModulesPaths` to this app's `node_modules` so the package's `zod` import resolves |
+| Jest resolves the same thing | **Done**: `moduleNameMapper` maps `^zod$` to this app's copy, and `zod` is in `transformIgnorePatterns`'s exception list |
+| A parity check between the two copies | **Done**: `src/api/__tests__/contract-parity.test.ts`, skipped until the package is present, and runnable against another checkout with `OPSWATCH_CONTRACT_DIR` |
+| TypeScript `paths` entry | **Not needed** for a relative re-export; add one only if the package is imported by name |
+| The CI path filter includes `packages/contract/**` | **To do** when the package lands: `.github/workflows/mobile.yml` currently watches `apps/mobile/**`, `docs/mobile/**` and itself |
+
+**Switchover, when `packages/contract` is on this branch:** replace the body of `apps/mobile/src/api/contract.ts` with
+
+```ts
+export * from '../../../../packages/contract';
+```
+
+run `npm run check` (the parity suite stops skipping and runs from then on), then delete the local schemas. Restart
+Metro with `-c` so the new watch folder is picked up.
 
 ## CI
 
-Mobile CI is a separate, path-filtered workflow: `.github/workflows/mobile.yml` (being added), triggered only by
-changes under `apps/mobile/**` and `docs/mobile/**` (and `packages/contract/**` once it exists). It runs from
-`apps/mobile`: `npm ci`, lint, typecheck, tests and the web export smoke. The existing root `ci.yml` does not need
-changes beyond not picking up `apps/` (handled by the exclusions above).
+Two path-filtered workflows, both added on this branch:
+
+| Workflow | What it does |
+|----------|--------------|
+| `.github/workflows/mobile.yml` | On pushes to `main` and pull requests touching `apps/mobile/**`, `docs/mobile/**` or the workflow: `npm ci`, lint, typecheck, `test:ci`, `npx expo config --type public`; then the web export plus the Playwright smoke tour |
+| `.github/workflows/mobile-release.yml` | Manual only: `npm run check`, then an EAS build for a chosen platform and profile. It never submits, and holds no credentials beyond the `EXPO_TOKEN` secret |
+
+The existing root `ci.yml` needs no change beyond not picking up `apps/` (handled by the exclusions above).
 
 ## Contract drift (checked 2026-09-20)
 
 The server team adopted this app's contract as the canonical one and seeded `packages/contract` from it. Checked
-against their work in progress:
+against their work in progress with `OPSWATCH_CONTRACT_DIR`:
 
 - **No drift.** Parity 65/65: every schema the app uses is exported by the package, and the package parses the app's
   demo data to a superset of the local copy.
 - **One additive field**, `serverInfo.demo`, has been adopted here.
 - The server's `/api/v1` envelope, error codes and status map match what the client already expects; the client now
-  also honours `Retry-After`.
+  also honours `Retry-After` and refuses an answer from another origin.
 - `GET /me` returns `id`, `role`, `locale` and `allowedActions`. The app keeps `email`/`name` and ignores the rest for
   now; adopting `meSchema` is part of the switchover.
 - Open requests are listed in [api-contract.md](api-contract.md#contract-gaps--requests). None block the merge.
 
-**Switchover, when `packages/contract` is on `main`:** replace the body of `apps/mobile/src/api/contract.ts` with
-`export * from '../../../../packages/contract';`, run `npm run check`, then delete the local schemas. Metro already
-watches the folder (`apps/mobile/metro.config.js`), so no npm workspace and no root `package.json` change is needed.
-The parity suite stops skipping and runs in CI from then on.
-
 ## Verified before merging
 
-- `npm run check` in `apps/mobile` (lint, typecheck, 976 tests in 42 suites).
-- The web export tour at six device profiles, and a native Android release build run on an emulator
-  ([testing.md](testing.md#what-has-actually-been-verified)).
+- `npm run check` in `apps/mobile`: lint and typecheck clean, **1167 tests passing in 53 suites**, plus the 66-test
+  contract parity suite skipped because `packages/contract` is not here.
+- `expo-doctor`: 21/21.
+- The web export tour at six device profiles (36/36), and a native Android release build run on an Android 15
+  emulator ([testing.md](testing.md#what-has-actually-been-verified)).
+- **iOS has never been run.** Nothing about the merge changes that; see [ios.md](ios.md).
 - Nothing outside `apps/mobile`, `docs/mobile`, `.github/workflows/mobile*.yml` and the four root exclusions was
   touched on this branch, so the web app's own suite is unaffected.
