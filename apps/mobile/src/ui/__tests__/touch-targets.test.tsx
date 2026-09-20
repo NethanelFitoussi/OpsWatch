@@ -19,15 +19,15 @@ function effectiveHeight(element: { props: { style?: unknown; hitSlop?: number }
   return box + slop * 2;
 }
 
-it('lifts a control to the touch target, and never shrinks one already big enough', () => {
+it('lifts a control to the touch target, and never shrinks one already big enough', async () => {
   expect(32 + slopToTouchTarget(32) * 2).toBeGreaterThanOrEqual(TOUCH_TARGET);
   expect(36 + slopToTouchTarget(36) * 2).toBeGreaterThanOrEqual(TOUCH_TARGET);
   expect(slopToTouchTarget(TOUCH_TARGET)).toBe(0);
   expect(slopToTouchTarget(96)).toBe(0);
 });
 
-it('gives the stack trace toggle a full touch target despite its compact height', () => {
-  renderWithProviders(
+it('gives the stack trace toggle a full touch target despite its compact height', async () => {
+  await renderWithProviders(
     <StackTraceViewer
       frames={[
         { file: 'src/cart.ts', line: 42, column: 7, function: 'priceCart', inApp: true, context: undefined },

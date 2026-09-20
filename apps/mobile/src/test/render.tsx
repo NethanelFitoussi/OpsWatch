@@ -4,7 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, type RenderOptions } from '@testing-library/react-native';
+import { act, render, type RenderOptions } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { buildDemoDataset, DEMO_CREDENTIALS } from '@/demo/fixtures';
@@ -35,9 +35,21 @@ export function TestProviders({ children, locale = 'en', settings, queryClient }
   );
 }
 
-export function renderWithProviders(ui: ReactElement, options: RenderOptions & { locale?: Locale; settings?: Partial<Settings> } = {}) {
+/**
+ * Renders inside every provider, and waits for the session provider to finish restoring from storage.
+ *
+ * That restore is an async effect, so without the wait its `setState` lands after the test body has returned: React
+ * reports it as an update not wrapped in `act`. Those warnings were harmless here, but a run that always prints them
+ * teaches everyone to ignore the one that is not. Awaiting it is also what the app really does, so a test that asserts
+ * straight after rendering is asserting on the state the user would see.
+ */
+export async function renderWithProviders(ui: ReactElement, options: RenderOptions & { locale?: Locale; settings?: Partial<Settings> } = {}) {
   const { locale, settings, ...rest } = options;
-  return render(ui, { wrapper: ({ children }) => <TestProviders locale={locale} settings={settings}>{children}</TestProviders>, ...rest });
+  const result = render(ui, { wrapper: ({ children }) => <TestProviders locale={locale} settings={settings}>{children}</TestProviders>, ...rest });
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return result;
 }
 
 /** Stores a signed-in demo session so the SessionProvider starts signed in (demo client, no network). */

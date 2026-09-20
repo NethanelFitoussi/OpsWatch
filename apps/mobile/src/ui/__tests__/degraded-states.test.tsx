@@ -47,40 +47,40 @@ afterEach(async () => {
 });
 
 describe('ErrorState', () => {
-  it('offers a retry for a failure that repeating can fix', () => {
-    renderWithProviders(<ErrorState error={new ApiError('network')} onRetry={jest.fn()} />);
+  it('offers a retry for a failure that repeating can fix', async () => {
+    await renderWithProviders(<ErrorState error={new ApiError('network')} onRetry={jest.fn()} />);
     expect(screen.getByTestId('error-state')).toHaveTextContent(/Can't reach the OpsWatch server/);
     expect(screen.getByTestId('error-retry')).toBeTruthy();
   });
 
-  it('never offers a retry for a permission or a missing object, and says what to do instead', () => {
-    renderWithProviders(<ErrorState error={new ApiError('forbidden', { action: 'logs:StartQuery' })} onRetry={jest.fn()} />);
+  it('never offers a retry for a permission or a missing object, and says what to do instead', async () => {
+    await renderWithProviders(<ErrorState error={new ApiError('forbidden', { action: 'logs:StartQuery' })} onRetry={jest.fn()} />);
     expect(screen.queryByTestId('error-retry')).toBeNull();
     expect(screen.getByTestId('error-state')).toHaveTextContent(/Ask whoever administers this OpsWatch instance/);
     // The provider permission is shown exactly as the server named it, so it can be pasted into a policy.
     expect(screen.getByTestId('error-permission')).toHaveTextContent(/logs:StartQuery/);
   });
 
-  it('never offers a retry for something that no longer exists', () => {
-    renderWithProviders(<ErrorState error={new ApiError('not_found')} onRetry={jest.fn()} />);
+  it('never offers a retry for something that no longer exists', async () => {
+    await renderWithProviders(<ErrorState error={new ApiError('not_found')} onRetry={jest.fn()} />);
     expect(screen.queryByTestId('error-retry')).toBeNull();
     expect(screen.getByTestId('error-state')).toHaveTextContent(/no longer exists/);
   });
 
-  it('passes on how long the server asked to wait', () => {
-    renderWithProviders(<ErrorState error={new ApiError('rate_limited', { retryAfterMs: 90_000 })} onRetry={jest.fn()} />);
+  it('passes on how long the server asked to wait', async () => {
+    await renderWithProviders(<ErrorState error={new ApiError('rate_limited', { retryAfterMs: 90_000 })} onRetry={jest.fn()} />);
     expect(screen.getByTestId('error-state')).toHaveTextContent(/asked to wait 2 min/);
     expect(screen.getByTestId('error-retry')).toBeTruthy();
   });
 
-  it('points an unreadable answer at the server address rather than at the network', () => {
-    renderWithProviders(<ErrorState error={new ApiError('invalid_response')} onRetry={jest.fn()} />);
+  it('points an unreadable answer at the server address rather than at the network', async () => {
+    await renderWithProviders(<ErrorState error={new ApiError('invalid_response')} onRetry={jest.fn()} />);
     expect(screen.getByTestId('error-state')).toHaveTextContent(/Check the server address in Settings/);
   });
 
-  it('says plainly that a never-loaded screen is empty because the device is offline', () => {
+  it('says plainly that a never-loaded screen is empty because the device is offline', async () => {
     network(false);
-    renderWithProviders(<ErrorState error={new ApiError('network')} onRetry={jest.fn()} />);
+    await renderWithProviders(<ErrorState error={new ApiError('network')} onRetry={jest.fn()} />);
     expect(screen.getByTestId('error-state')).toHaveTextContent(/offline, and this screen has nothing saved/);
     expect(screen.getByTestId('error-state')).toHaveTextContent(/never been loaded|never loaded/);
     expect(screen.getByTestId('error-retry')).toBeTruthy();
@@ -89,7 +89,7 @@ describe('ErrorState', () => {
 
 describe('LoadingState', () => {
   it('holds the spinner back so a fast answer never makes it flash', async () => {
-    renderWithProviders(<LoadingState delayMs={80} />);
+    await renderWithProviders(<LoadingState delayMs={80} />);
     expect(screen.queryByTestId('loading-state')).toBeNull();
     expect(screen.getByTestId('loading-placeholder')).toBeTruthy();
     expect(await screen.findByTestId('loading-state', {}, { timeout: 3000 })).toBeTruthy();
@@ -97,35 +97,35 @@ describe('LoadingState', () => {
 });
 
 describe('Freshness', () => {
-  it('calls data live only when it really is', () => {
-    renderWithProviders(<Freshness updatedAt={Date.now()} />);
+  it('calls data live only when it really is', async () => {
+    await renderWithProviders(<Freshness updatedAt={Date.now()} />);
     expect(screen.queryByTestId('stale-banner')).toBeNull();
     expect(screen.getByTestId('freshness')).toHaveTextContent(/Updated just now/);
   });
 
-  it('warns and offers a retry when the refresh failed under the data on screen', () => {
+  it('warns and offers a retry when the refresh failed under the data on screen', async () => {
     const onRetry = jest.fn();
-    renderWithProviders(<Freshness updatedAt={Date.now() - 120_000} refreshFailed onRetry={onRetry} />);
+    await renderWithProviders(<Freshness updatedAt={Date.now() - 120_000} refreshFailed onRetry={onRetry} />);
     expect(screen.queryByTestId('freshness')).toBeNull();
     expect(screen.getByTestId('stale-banner')).toHaveTextContent(/Couldn't refresh.*not live/);
     fireEvent.press(screen.getByTestId('stale-banner-retry'));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('warns while offline, with the age of what is on screen', () => {
+  it('warns while offline, with the age of what is on screen', async () => {
     network(false);
-    renderWithProviders(<Freshness updatedAt={Date.now() - 180_000} />);
+    await renderWithProviders(<Freshness updatedAt={Date.now() - 180_000} />);
     expect(screen.getByTestId('stale-banner')).toHaveTextContent(/offline.*3 min ago.*not live/);
   });
 
-  it('stops calling old data fresh once it has aged past a glance', () => {
-    renderWithProviders(<Freshness updatedAt={Date.now() - 10 * 60_000} />);
+  it('stops calling old data fresh once it has aged past a glance', async () => {
+    await renderWithProviders(<Freshness updatedAt={Date.now() - 10 * 60_000} />);
     expect(screen.queryByTestId('freshness')).toBeNull();
     expect(screen.getByTestId('stale-banner')).toHaveTextContent(/Not live: this is data from 10 min ago/);
   });
 
-  it('says nothing at all when there is no data to date', () => {
-    renderWithProviders(<Freshness updatedAt={0} />);
+  it('says nothing at all when there is no data to date', async () => {
+    await renderWithProviders(<Freshness updatedAt={0} />);
     expect(screen.queryByTestId('freshness')).toBeNull();
     expect(screen.queryByTestId('stale-banner')).toBeNull();
   });
@@ -136,7 +136,7 @@ describe('FeatureGate', () => {
 
   it('shows the feature when the server advertises it', async () => {
     await seedServer({ ...info, features: { ...info.features, slos: true } });
-    renderWithProviders(
+    await renderWithProviders(
       <FeatureGate feature="slos" label="SLOs">
         <Text testID="gated">SLO list</Text>
       </FeatureGate>,
@@ -146,7 +146,7 @@ describe('FeatureGate', () => {
 
   it('explains that the server simply does not provide it, with nothing to retry', async () => {
     await seedServer({ ...info, features: { ...info.features, slos: false } });
-    renderWithProviders(
+    await renderWithProviders(
       <FeatureGate feature="slos" label="SLOs">
         <Text testID="gated">SLO list</Text>
       </FeatureGate>,
@@ -160,7 +160,7 @@ describe('FeatureGate', () => {
   // An older server that never answered GET /server must not have its features guessed at.
   it('never shows a feature as working when the server reported no capabilities at all', async () => {
     await seedServer(null);
-    renderWithProviders(
+    await renderWithProviders(
       <FeatureGate feature="slos" label="SLOs">
         <Text testID="gated">SLO list</Text>
       </FeatureGate>,

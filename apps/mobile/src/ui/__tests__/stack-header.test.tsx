@@ -11,9 +11,9 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { renderWithProviders } from '@/test/render';
 import { StackHeader } from '../stack-header';
 
-function header(props: Partial<Parameters<typeof StackHeader>[0]> = {}) {
+async function header(props: Partial<Parameters<typeof StackHeader>[0]> = {}) {
   const goBack = jest.fn();
-  renderWithProviders(
+  await renderWithProviders(
     <StackHeader
       options={{ title: 'TypeError' }}
       route={{ name: 'errors/[id]' }}
@@ -25,25 +25,25 @@ function header(props: Partial<Parameters<typeof StackHeader>[0]> = {}) {
   return goBack;
 }
 
-it('shows the screen title', () => {
-  header();
+it('shows the screen title', async () => {
+  await header();
   expect(screen.getByText('TypeError')).toBeTruthy();
 });
 
-it('goes back when the back button is pressed', () => {
-  const goBack = header();
+it('goes back when the back button is pressed', async () => {
+  const goBack = await header();
   fireEvent.press(screen.getByTestId('stack-header-back'));
   expect(goBack).toHaveBeenCalledTimes(1);
 });
 
-it('has no back button on a screen that was not pushed', () => {
-  header({ back: undefined });
+it('has no back button on a screen that was not pushed', async () => {
+  await header({ back: undefined });
   expect(screen.queryByTestId('stack-header-back')).toBeNull();
 });
 
 /** The title is the only thing announced as the header; a long one truncates rather than pushing the layout. */
-it('names the screen for a screen reader and keeps the title to one line', () => {
-  header({ options: { title: 'A very long incident title that would otherwise wrap over several lines' } });
+it('names the screen for a screen reader and keeps the title to one line', async () => {
+  await header({ options: { title: 'A very long incident title that would otherwise wrap over several lines' } });
   const title = screen.getByRole('header');
   expect(title).toHaveTextContent('A very long incident title that would otherwise wrap over several lines');
   expect(title.props.numberOfLines).toBe(1);

@@ -24,8 +24,8 @@ function labelLineCaps(testID: string): (number | undefined)[] {
     .filter((lines) => lines !== undefined);
 }
 
-it('never caps the lines of a count label, at any font scale', () => {
-  renderWithProviders(<CountsRow counts={counts} />);
+it('never caps the lines of a count label, at any font scale', async () => {
+  await renderWithProviders(<CountsRow counts={counts} />);
   expect(screen.getByTestId('count-healthy')).toHaveTextContent(/of 18 healthy services/);
   for (const tile of ['count-critical', 'count-warning', 'count-healthy']) {
     expect(labelLineCaps(tile)).toEqual([]);
@@ -33,8 +33,8 @@ it('never caps the lines of a count label, at any font scale', () => {
 });
 
 /** The number is announced with its label, so a screen reader never reads a bare "15". */
-it('announces each tile as a number and what it counts', () => {
-  renderWithProviders(<CountsRow counts={counts} />);
+it('announces each tile as a number and what it counts', async () => {
+  await renderWithProviders(<CountsRow counts={counts} />);
   expect(screen.getByTestId('count-healthy')).toHaveProp('accessibilityLabel', '15 of 18 healthy services');
   expect(screen.getByTestId('count-critical')).toHaveProp('accessibilityLabel', '2 critical');
 });
