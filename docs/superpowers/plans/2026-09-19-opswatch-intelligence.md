@@ -1073,7 +1073,7 @@ separation is what lets every rule below be tested with literals and no fixture 
   §33.5's regression: **three `not_evaluated` cycles in a row resolve nothing**, while three
   evaluated-and-clear cycles spanning 15 minutes do.
 - [x] **Step 2: Run them to see them fail.** → FAIL.
-- [ ] **Step 3: Write the three modules.**
+- [x] **Step 3: Write the three modules.**
 - [x] **Step 4: Run the tests** → PASS.
-- [ ] **Step 5: Add the three files to `SERVER_ONLY_MODULES`**; the purity rule from Task 5 covers them already.
+- [x] **Step 5: Add the three files to `SERVER_ONLY_MODULES`**; the purity rule from Task 5 covers them already.
 - [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): outcomes, the detector framework and the problem lifecycle`.
