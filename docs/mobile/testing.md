@@ -186,7 +186,7 @@ Copy this list into the release issue and tick it on the release binaries ([rele
 - [ ] Dark mode and light mode, system and manual; no white flash behind the app in dark mode
 - [ ] French and English
 - [ ] VoiceOver (iOS) and TalkBack (Android): every control has a label, status is announced as a word
-- [ ] Dynamic Type (iOS) and font scale (Android) at the largest size: no truncated critical text
+- [x] Dynamic Type (iOS) and font scale (Android) at the largest size: no truncated critical text — done on Android at 1.5 and 2.0; not on iOS
 - [ ] Small screens (iPhone SE class): no overlapping or clipped content
 - [ ] Large screens and tablets: layout uses the space, no stretched controls
 
@@ -197,7 +197,7 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | Check | Result | Date |
 |-------|--------|------|
 | `npm run lint`, `npm run typecheck` | Clean | 2026-09-20 |
-| Jest: unit, component, navigation, integration | **1167 tests passing in 53 suites**, plus the 66-test contract parity suite skipped (54 suites, 1233 tests reported) | 2026-09-20 |
+| Jest: unit, component, navigation, integration | **1171 tests passing in 55 suites**, plus the 66-test contract parity suite skipped (56 suites, 1237 tests reported) | 2026-09-20 |
 | API client against the contract mock server over real HTTP | 12 tests: auth, 401 without a token, validation, filters, pagination, async log polling and release, acknowledge then forbidden, AI, not-found, unsupported, favorites, logout | 2026-09-20 |
 | Demo fixtures against the contract, after a JSON round trip | Passing; caught and fixed a reference cycle that would have broken any real JSON response | 2026-09-20 |
 | Contract parity with the server team's `packages/contract` | **66/66** against `feature/opswatch-intelligence` at `3881b23`, run with `OPSWATCH_CONTRACT_DIR`, covering the ten additive fields they landed in `089808a`. No differences remain | 2026-09-20 |
@@ -205,6 +205,8 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | WCAG AA contrast for every colour pair the components use | 20 pairs in each of the two palettes, 40 checks, all ≥ 4.5:1 | 2026-09-20 |
 | `expo-doctor` | 21/21 checks passed | 2026-09-20 |
 | **Native Android release build** (`npx expo prebuild --platform android` + `./gradlew assembleRelease`) | Builds; 48 MB APK | 2026-09-20 |
+| **Font scaling on Android** at `font_scale 1.5` and `2.0` | Home, the count tiles and the error detail all wrap without clipping at both. Found and fixed one truncation: the third count tile read "of 18 healthy se…" at 1.5. At 2.0 the **tab bar labels** truncate ("Proble…", "Servic…") — accepted, see below | 2026-09-20 |
+| Minimum touch targets | Every `Pressable` declares a role; rows use `TOUCH_TARGET` (48); the three inline controls that cannot be 48 tall reach it through hit slop, asserted by a test | 2026-09-20 |
 | **Native Android run** on an Android 15 emulator (Pixel 7, x86_64) | Demo mode, Home, tabs, scrolling, dark mode, the offline banner, `opswatch://` deep links into a problem, into an error and an unknown link falling back to Home, a deep link while signed out (stays on Connect, nothing leaks), tablet geometry and landscape. No crash, no red box, no fatal exception in logcat. Cold start measured at **697–722 ms** | 2026-09-20 |
 | Android release manifest | The permissions actually present are listed in [privacy.md](privacy.md#android-permissions-actually-in-the-release-build); `SYSTEM_ALERT_WINDOW` is blocked and absent | 2026-09-20 |
 | **iOS project generation** (`npx expo prebuild --platform ios --no-install`) | Generated and read statically: no Face ID usage string, OpsWatch's own local-network wording, `opswatch` URL scheme, ATS with arbitrary loads off, `ITSAppUsesNonExemptEncryption = false`, iPhone and iPad orientations | 2026-09-20 |
@@ -216,6 +218,11 @@ services" tile on small phones, a cramped hypothesis title, a demo banner that h
 empty status-bar-height strip between that banner and every pushed screen's header (see
 [architecture.md](architecture.md#chrome-above-the-navigator) for why the native header could not be told to drop its
 top inset).
+
+Accepted at the largest font scale: the tab bar labels truncate at `font_scale 2.0`. The tabs expose only
+`tabBarAllowFontScaling`, an on/off switch, and turning scaling off would freeze those labels at 11 pt for exactly the
+people who set the scale to 200 %. No information is lost — each tab keeps its icon and its selected state, and a
+screen reader is given the untruncated name — so the labels are left to scale and clip like the platform's own.
 
 Two things about how this QA is run, both of which had already produced a wrong conclusion once:
 

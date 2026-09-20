@@ -72,7 +72,7 @@ against their work in progress with `OPSWATCH_CONTRACT_DIR`:
 
 ## Verified before merging
 
-- `npm run check` in `apps/mobile`: lint and typecheck clean, **1167 tests passing in 53 suites**, plus the 66-test
+- `npm run check` in `apps/mobile`: lint and typecheck clean, **1171 tests passing in 55 suites**, plus the 66-test
   contract parity suite skipped because `packages/contract` is not on this branch.
 - **Parity, run for real: 66/66** against `packages/contract` on the server team's `feature/opswatch-intelligence` at
   `3881b23`, including the ten additive fields they landed in `089808a`. Their notes record this gate as blocked by a
