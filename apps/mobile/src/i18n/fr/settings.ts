@@ -79,6 +79,7 @@ export const settings: Record<keyof typeof source, string> = {
   'settings.favorites.type.synthetic': 'Tests',
   'settings.favorites.type.environment': 'Environnements',
   'settings.favorites.type.view': 'Vues',
+  'settings.favoriteMissing': 'Absent de {environment}',
   'settings.favoritesCurrentEnv': 'Environnement actuel',
 
   'notifications.webUnsupported': 'Les notifications push ne sont pas disponibles dans la version web. Utilisez l’app iOS ou Android.',

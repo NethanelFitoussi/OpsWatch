@@ -77,6 +77,7 @@ export const settings = {
   'settings.favorites.type.synthetic': 'Checks',
   'settings.favorites.type.environment': 'Environments',
   'settings.favorites.type.view': 'Views',
+  'settings.favoriteMissing': 'Not in {environment}',
   'settings.favoritesCurrentEnv': 'Current environment',
 
   'notifications.webUnsupported': 'Push notifications are not available in the web version. Use the iOS or Android app.',

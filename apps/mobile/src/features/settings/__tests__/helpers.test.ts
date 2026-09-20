@@ -1,5 +1,5 @@
 import type { Environment } from '@/api/contract';
-import { buildNumberOf, chooseEnvironment, effectiveEnvironmentId, groupFavorites, registrationMessage } from '../helpers';
+import { buildNumberOf, chooseEnvironment, effectiveEnvironmentId, favoritePresence, groupFavorites, registrationMessage } from '../helpers';
 
 const prod: Environment = { id: 'prod', name: 'Production', kind: 'production' };
 const staging: Environment = { id: 'staging', name: 'Staging', kind: 'staging' };
@@ -50,5 +50,37 @@ describe('groupFavorites', () => {
       { type: 'synthetic', id: 'y', label: 'Y' },
     ]);
     expect(groups.map((g) => g.type)).toEqual(['service', 'synthetic', 'view']);
+  });
+});
+
+describe('favoritePresence', () => {
+  const service = { type: 'service' as const, id: 'svc-checkout-api', label: 'checkout-api' };
+  const synthetic = { type: 'synthetic' as const, id: 'syn-status', label: 'Status page' };
+
+  it('says nothing until the list it would appear in has loaded', () => {
+    // Offline, or a server without that capability: a favorite must not be accused of being gone.
+    expect(favoritePresence(service, {})).toBe('unknown');
+    expect(favoritePresence(synthetic, { services: [] })).toBe('unknown');
+  });
+
+  it('recognises what is there and what is not in this environment', () => {
+    expect(favoritePresence(service, { services: [{ id: 'svc-checkout-api' }] })).toBe('present');
+    expect(favoritePresence(service, { services: [{ id: 'svc-other' }] })).toBe('missing');
+    expect(favoritePresence(synthetic, { synthetics: [{ id: 'syn-status' }] })).toBe('present');
+  });
+
+  it('never judges a kind it cannot check', () => {
+    expect(favoritePresence({ type: 'environment', id: 'prod', label: 'Production' }, { services: [], synthetics: [] })).toBe('unknown');
+    expect(favoritePresence({ type: 'view', id: 'home', label: 'Home' }, { services: [], synthetics: [] })).toBe('unknown');
+  });
+});
+
+describe('groupFavorites ordering', () => {
+  it('sorts alphabetically inside a group so the list does not reshuffle itself', () => {
+    const items = [
+      { type: 'service' as const, id: 'b', label: 'zeta-api' },
+      { type: 'service' as const, id: 'a', label: 'alpha-api' },
+    ];
+    expect(groupFavorites(items)[0]!.items.map((f) => f.label)).toEqual(['alpha-api', 'zeta-api']);
   });
 });
