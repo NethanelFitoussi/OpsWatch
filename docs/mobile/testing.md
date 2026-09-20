@@ -200,7 +200,7 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | Jest: unit, component, navigation, integration | **1167 tests passing in 53 suites**, plus the 66-test contract parity suite skipped (54 suites, 1233 tests reported) | 2026-09-20 |
 | API client against the contract mock server over real HTTP | 12 tests: auth, 401 without a token, validation, filters, pagination, async log polling and release, acknowledge then forbidden, AI, not-found, unsupported, favorites, logout | 2026-09-20 |
 | Demo fixtures against the contract, after a JSON round trip | Passing; caught and fixed a reference cycle that would have broken any real JSON response | 2026-09-20 |
-| Contract parity with the server team's `packages/contract` | 65/65 against their work in progress, run with `OPSWATCH_CONTRACT_DIR`; only difference was the additive `serverInfo.demo`, since adopted | 2026-09-20 |
+| Contract parity with the server team's `packages/contract` | **66/66** against `feature/opswatch-intelligence` at `3881b23`, run with `OPSWATCH_CONTRACT_DIR`, covering the ten additive fields they landed in `089808a`. No differences remain | 2026-09-20 |
 | Web export tour at six device profiles (small/regular/large iPhone, Android phone, tablet, dark mode) | 36/36; screenshots in `test-results/screens/` | 2026-09-20 |
 | WCAG AA contrast for every colour pair the components use | 20 pairs in each of the two palettes, 40 checks, all ≥ 4.5:1 | 2026-09-20 |
 | `expo-doctor` | 21/21 checks passed | 2026-09-20 |

@@ -73,7 +73,14 @@ against their work in progress with `OPSWATCH_CONTRACT_DIR`:
 ## Verified before merging
 
 - `npm run check` in `apps/mobile`: lint and typecheck clean, **1167 tests passing in 53 suites**, plus the 66-test
-  contract parity suite skipped because `packages/contract` is not here.
+  contract parity suite skipped because `packages/contract` is not on this branch.
+- **Parity, run for real: 66/66** against `packages/contract` on the server team's `feature/opswatch-intelligence` at
+  `3881b23`, including the ten additive fields they landed in `089808a`. Their notes record this gate as blocked by a
+  compilation error in this branch's `jest.setup.ts`; that is fixed, and the gate is green. Re-run it with:
+
+  ```bash
+  OPSWATCH_CONTRACT_DIR=/path/to/packages/contract npx jest parity
+  ```
 - `expo-doctor`: 21/21.
 - The web export tour at six device profiles (36/36), and a native Android release build run on an Android 15
   emulator ([testing.md](testing.md#what-has-actually-been-verified)).
