@@ -10,6 +10,26 @@ const CLIENT_SAFE_DIR = 'lib/monitoring/shared';
 const SERVER_ONLY_DIR = 'lib/analysis';
 const relative = (file: string) => path.relative(SRC, file);
 
+/**
+ * §9.6: the store is the only SQL in the product. Nothing above it may reach the driver or the schema, and nothing
+ * outside it may name `.$client` — that is the escape hatch, and it belongs behind the repository like the rest.
+ */
+const STORE_ONLY = /^(better-sqlite3|drizzle-orm)/;
+const STORE_DIRS = ['lib/db', 'lib/store'];
+
+/**
+ * The repositories that predate the store layer. They are the same thing the rule asks for — every query behind a
+ * function, and not one of them reaches for `.$client` — they simply live beside the feature that owns them rather
+ * than under `lib/store/`. Moving them is a refactor of its own, so they are named here instead of being allowed
+ * silently. **This list is closed: a new module that wants SQL belongs in `lib/store/`.**
+ */
+const REPOSITORIES_OUTSIDE_THE_STORE = [
+  'lib/auth/admin.ts',
+  'lib/auth/sessions.ts',
+  'lib/connections/repository.ts',
+  'lib/settings/repository.ts',
+].map((file) => file.split('/').join(path.sep));
+
 const SERVER_ONLY_MODULES = [
   'lib/env.ts',
   'lib/crypto.ts',
@@ -22,6 +42,8 @@ const SERVER_ONLY_MODULES = [
   'lib/auth/login-limiter.ts',
   'lib/auth/route.ts',
   'lib/auth/login.ts',
+  'lib/store/tx.ts',
+  'lib/store/problems.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',
@@ -86,6 +108,25 @@ describe('module boundaries', () => {
 
   it.each(sourceFilesUnder(SERVER_ONLY_DIR).map(relative))('%s is server-only, consumed or not', (file) => {
     expect(valueImports(readSource(path.join(SRC, file)))).toContain('server-only');
+  });
+
+  it('keeps SQL and better-sqlite3 below the store layer', () => {
+    const offenders: string[] = [];
+    for (const file of sourceFilesUnder('lib')) {
+      const rel = relative(file);
+      if (STORE_DIRS.some((dir) => rel.startsWith(dir + path.sep))) continue;
+      const source = readSource(file);
+      const mayQuery = REPOSITORIES_OUTSIDE_THE_STORE.includes(rel);
+      if (!mayQuery && valueImports(source).some((specifier) => STORE_ONLY.test(specifier))) offenders.push(rel);
+      if (source.includes('.$client')) offenders.push(rel);
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it.each(REPOSITORIES_OUTSIDE_THE_STORE)('%s is still a repository, so the exception still earns its place', (file) => {
+    // An entry that stopped importing drizzle has been migrated or deleted: take it off the list rather than let
+    // the exception outlive the debt it records.
+    expect(valueImports(readSource(path.join(SRC, file))).some((specifier) => STORE_ONLY.test(specifier))).toBe(true);
   });
 
   it('finds the files of both directories', () => {

@@ -7,7 +7,12 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { env } from '../env';
 import * as schema from './schema';
 
-export type Db = BetterSQLite3Database<typeof schema>;
+/**
+ * The database handle. `$client` is the better-sqlite3 connection drizzle wrapped, kept on the type because the
+ * store layer needs statements drizzle does not express and the tests reach for it. Nothing above the store may
+ * name it: `module-boundaries.test.ts` enforces that.
+ */
+export type Db = BetterSQLite3Database<typeof schema> & { $client: Database.Database };
 
 const MIGRATIONS_FOLDER = path.join(process.cwd(), 'drizzle');
 

@@ -1,4 +1,5 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import type { TokenAudience } from '@opswatch/contract';
 import {
   CONNECTION_METHODS,
@@ -58,3 +59,88 @@ export const settings = sqliteTable('settings', {
 });
 
 export type ConnectionRow = typeof connections.$inferSelect;
+
+export const PROBLEM_STATUSES = ['open', 'acknowledged', 'resolved', 'closed'] as const;
+export const PROBLEM_SEVERITIES = ['critical', 'warning', 'info'] as const;
+export const SUBJECT_TYPES = ['service', 'resource', 'cluster', 'error_group', 'synthetic', 'integration'] as const;
+export const EVIDENCE_KINDS = ['metric', 'event', 'log', 'check', 'inventory'] as const;
+
+export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
+export type ProblemSeverity = (typeof PROBLEM_SEVERITIES)[number];
+export type SubjectType = (typeof SUBJECT_TYPES)[number];
+export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
+
+export const problems = sqliteTable(
+  'problems',
+  {
+    // The cursor axis of §33.6: AUTOINCREMENT, so a purge never lets SQLite reuse a rowid.
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    key: text('key').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    kind: text('kind').notNull(),
+    subjectType: text('subject_type', { enum: SUBJECT_TYPES }).notNull(),
+    subjectId: text('subject_id').notNull(),
+    subjectName: text('subject_name').notNull(),
+    serviceId: text('service_id'),
+    source: text('source').notNull(),
+    titleKey: text('title_key').notNull(),
+    values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+    severity: text('severity', { enum: PROBLEM_SEVERITIES }).notNull(),
+    score: integer('score').notNull(),
+    scoreTerms: text('score_terms', { mode: 'json' }).$type<StoredScoreTerms>().notNull(),
+    status: text('status', { enum: PROBLEM_STATUSES }).notNull(),
+    href: text('href').notNull(),
+    firstSeenAt: integer('first_seen_at').notNull(),
+    lastSeenAt: integer('last_seen_at').notNull(),
+    lastEvaluatedAt: integer('last_evaluated_at').notNull(),
+    clearStreak: integer('clear_streak').notNull().default(0),
+    clearSinceAt: integer('clear_since_at'),
+    occurrences: integer('occurrences').notNull().default(1),
+    flapCount: integer('flap_count').notNull().default(0),
+    acknowledgedBy: text('acknowledged_by'),
+    acknowledgedAt: integer('acknowledged_at'),
+    resolvedAt: integer('resolved_at'),
+    investigationId: text('investigation_id'),
+    incidentId: text('incident_id'),
+    previousProblemId: text('previous_problem_id'),
+    fleetProblemId: text('fleet_problem_id'),
+    grouped: integer('grouped', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    // One live row per dedupe key. A resolved row leaves the index, so a new row may take its place.
+    uniqueIndex('problems_open_key').on(t.key).where(sql`resolved_at is null`),
+    index('problems_env_seq').on(t.connectionId, t.scope, t.seq),
+    index('problems_key_resolved').on(t.key, t.resolvedAt),
+    index('problems_service').on(t.serviceId, t.seq),
+  ],
+);
+
+export const problemEvidence = sqliteTable(
+  'problem_evidence',
+  {
+    id: text('id').primaryKey(),
+    problemId: text('problem_id').notNull().references(() => problems.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    kind: text('kind', { enum: EVIDENCE_KINDS }).notNull(),
+    labelKey: text('label_key').notNull(),
+    values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+    // null is "not measured" (§2.4). It is never written as 0.
+    value: real('value'),
+    unit: text('unit'),
+    at: integer('at').notNull(),
+    seriesRef: text('series_ref'),
+    href: text('href'),
+  },
+  (t) => [index('problem_evidence_problem').on(t.problemId, t.position)],
+);
+
+export type ProblemRow = typeof problems.$inferSelect;
+export type ProblemEvidenceRow = typeof problemEvidence.$inferSelect;
+/** Written by Task 5's scoreProblem; stored verbatim so the page can render the arithmetic it used. */
+export type StoredScoreTerms = {
+  s: number; b: number | null; t: number; u: number | null; d: number;
+  weights: { s: number; b: number; t: number; u: number; d: number };
+  availableWeight: number; rescaled: boolean; floored: boolean; score: number;
+};
