@@ -13,7 +13,8 @@
 | Document | What it is |
 |---|---|
 | `docs/superpowers/specs/2026-09-19-opswatch-intelligence-design.md` | The design. **§33 (peer review rulings) is binding and overrides every earlier section it contradicts**; §31–§32 override §1–§30. |
-| `docs/superpowers/plans/2026-09-19-opswatch-intelligence.md` | The task-by-task plan. Its checkboxes are kept current as tasks land, so the first unticked step is the place to resume. |
+| `docs/superpowers/plans/2026-09-19-opswatch-intelligence.md` | The task-by-task plan. Its checkboxes are kept current as tasks land, so the first unticked step is the place to resume. **It writes out only Tasks 1–4**; see the note at the end of the hardening mission. |
+| `docs/superpowers/plans/2026-09-20-product-hardening-and-remediation.md` | Mission 2, recorded 2026-09-20: product hardening, UX, security, settings and the Detect → Investigate → Locate → Explain → Propose workflow. The authority for everything after the intelligence plan. |
 | This file | The state of play, and the decisions that are not written in either of the above. |
 
 ## Where the work stands
@@ -26,9 +27,20 @@ file by file, found essentially complete, and preserved rather than rewritten.
 - Audience-bound sessions — a `web` cookie and an `api` bearer token, neither replayable as the other.
 - `src/lib/net/safe-fetch.ts` — pinned-address SSRF guard, groundwork for the synthetics of a later phase.
 
-**Phase 1 of the plan** — in progress, task by task. The plan's checkboxes are the authority; at the time of
-writing Tasks 1 and 2 are done (the `problems`/`problem_evidence` store with its immutable `seq` cursor, and
-the `events` spine with `collector_runs`).
+**Phase 1 of the intelligence plan — complete.** Tasks 1–4 are done and pushed: the `problems` /
+`problem_evidence` store with its immutable `seq` cursor, the append-only `events` spine with
+`collector_runs`, the collector lock claimed in one conditional update, and incidents with their timeline and
+the retention rules. Migrations `0003`–`0006`. Nothing in it calls AWS or renders a page.
+
+**Next:** the intelligence plan's Tasks 5–21 (the Problem engine, the collector, the surfaces, error
+intelligence), then mission 2. **The plan writes out only Tasks 1–4** — derive each later task from the spec
+and write it into the plan *before* implementing it, so a crash leaves the derived task behind.
+
+**The V1 safety boundary, which overrides any task that appears to ask otherwise:** OpsWatch observes,
+correlates, investigates and *proposes*. It never modifies a customer's infrastructure or repository, never
+commits, pushes, opens a PR, deploys or rolls back, and never executes repository code. A proposed fix is
+reviewed and applied by the user. Evidence is always labelled observed / correlated / hypothesis / proposed,
+and an AI hypothesis is never presented as an observed fact.
 
 ## How to verify the tree before trusting it
 
