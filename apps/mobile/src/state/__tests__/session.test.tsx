@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, render, waitFor } from '@testing-library/react-native';
+import { useEffect } from 'react';
 import { Text } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { OpsWatchClient } from '@/api/client';
@@ -29,8 +30,12 @@ function fakeClient(overrides: Partial<OpsWatchClient> = {}): OpsWatchClient {
 
 let session: ReturnType<typeof useSession>;
 function Probe() {
-  session = useSession();
-  return <Text testID="status">{session.state.status}</Text>;
+  const value = useSession();
+  // Published after render, so the tests can drive the provider without reassigning during render.
+  useEffect(() => {
+    session = value;
+  });
+  return <Text testID="status">{value.state.status}</Text>;
 }
 
 function renderSession(client: OpsWatchClient) {
