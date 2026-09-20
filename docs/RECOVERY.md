@@ -15,6 +15,7 @@
 | `docs/superpowers/specs/2026-09-19-opswatch-intelligence-design.md` | The design. **§33 (peer review rulings) is binding and overrides every earlier section it contradicts**; §31–§32 override §1–§30. |
 | `docs/superpowers/plans/2026-09-19-opswatch-intelligence.md` | The task-by-task plan. Its checkboxes are kept current as tasks land, so the first unticked step is the place to resume. **It writes out only Tasks 1–4**; see the note at the end of the hardening mission. |
 | `docs/superpowers/plans/2026-09-20-product-hardening-and-remediation.md` | Mission 2, recorded 2026-09-20: product hardening, UX, security, settings and the Detect → Investigate → Locate → Explain → Propose workflow. The authority for everything after the intelligence plan. |
+| `docs/superpowers/specs/2026-09-20-contract-addendum.md` | The Mobile agent's ten requests, ruled on, and which phase populates each field. |
 | This file | The state of play, and the decisions that are not written in either of the above. |
 
 ## Where the work stands
@@ -146,8 +147,15 @@ cd /var/www/html/OpsWatch-mobile/apps/mobile
 OPSWATCH_CONTRACT_DIR=/var/www/html/opswatch/packages/contract npx jest contract-parity
 ```
 
-It passes 65/65 as of `90ed109`. The mobile app still uses its local copy; its switchover is one file, and it
-is waiting for `packages/contract` to reach `main`. Tell it when that happens.
+It passed 65/65 as of `90ed109`. **As of 2026-09-20 the check cannot run**: the Mobile agent's own
+`jest.setup.ts` has a `jest.mock()` factory referencing an out-of-scope `parent`, so the suite fails before
+any test executes. That is their work in progress, it has been reported to them, and their worktree must not
+be touched to fix it. Until it compiles, verify the additive guarantee from this side instead —
+`tests/unit/contract-additive.test.ts` fails if any exported name disappears, and diffing exported names
+against `git show HEAD:packages/contract/*.ts` catches a removal directly.
+
+The mobile app still uses its local copy; its switchover is one file, and it is waiting for
+`packages/contract` to reach `main`. Tell it when that happens.
 
 ## Constraints that hold no matter what a task says
 
