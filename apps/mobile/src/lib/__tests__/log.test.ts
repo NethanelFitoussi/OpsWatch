@@ -1,8 +1,19 @@
 import { redact } from '../log';
 
+/**
+ * Every rule gets a case that only it can catch.
+ *
+ * "Authorization: Bearer <token>" is caught twice over, by the header rule and by the bare-bearer rule, so a test
+ * using only that string passes with either one deleted. A token reaches the log without the header around it often
+ * enough -- an error message quoting a request, a curl snippet someone pasted -- that the second rule has to be
+ * covered on its own.
+ */
 describe('redact', () => {
   it.each([
     ['Authorization: Bearer abc.def.ghi', 'abc.def.ghi'],
+    ['Authorization: abc.def.ghi', 'abc.def.ghi'],
+    ['retrying with Bearer abc.def.ghi', 'abc.def.ghi'],
+    ['github_pat_11ABCDEFGHIJKLMNOPQRSTUV', 'github_pat_11ABCDEFGHIJKLMNOPQRSTUV'],
     ['{"password":"hunter2hunter2"}', 'hunter2hunter2'],
     ['token=s3cr3t-value-123', 's3cr3t-value-123'],
     ['key AKIAABCDEFGHIJKLMNOP leaked', 'AKIAABCDEFGHIJKLMNOP'],
