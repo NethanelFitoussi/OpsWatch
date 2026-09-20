@@ -197,7 +197,7 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | Check | Result | Date |
 |-------|--------|------|
 | `npm run lint`, `npm run typecheck` | Clean | 2026-09-20 |
-| Jest: unit, component, navigation, integration | **1171 tests passing in 55 suites**, plus the 66-test contract parity suite skipped (56 suites, 1237 tests reported) | 2026-09-20 |
+| Jest: unit, component, navigation, integration | **1173 tests passing in 55 suites**, plus the 66-test contract parity suite skipped (56 suites, 1239 tests reported) | 2026-09-20 |
 | API client against the contract mock server over real HTTP | 12 tests: auth, 401 without a token, validation, filters, pagination, async log polling and release, acknowledge then forbidden, AI, not-found, unsupported, favorites, logout | 2026-09-20 |
 | Demo fixtures against the contract, after a JSON round trip | Passing; caught and fixed a reference cycle that would have broken any real JSON response | 2026-09-20 |
 | Contract parity with the server team's `packages/contract` | **66/66** against `feature/opswatch-intelligence` at `3881b23`, run with `OPSWATCH_CONTRACT_DIR`, covering the ten additive fields they landed in `089808a`. No differences remain | 2026-09-20 |
@@ -206,6 +206,7 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | `expo-doctor` | 21/21 checks passed | 2026-09-20 |
 | **Native Android release build** (`npx expo prebuild --platform android` + `./gradlew assembleRelease`) | Builds; 48 MB APK | 2026-09-20 |
 | **Font scaling on Android** at `font_scale 1.5` and `2.0` | Home, the count tiles and the error detail all wrap without clipping at both. Found and fixed one truncation: the third count tile read "of 18 healthy se…" at 1.5. At 2.0 the **tab bar labels** truncate ("Proble…", "Servic…") — accepted, see below | 2026-09-20 |
+| **Mutation spot-check** on four rules the app's safety rests on | 3 of 4 mutants killed on the first run: refusing a cross-origin answer, rejecting a dot-only deep-link id, and rounding ages so data never looks fresher. The fourth — dropping an oversized cache snapshot — **survived**, and two tests were added that now kill it | 2026-09-20 |
 | Minimum touch targets | Every `Pressable` declares a role; rows use `TOUCH_TARGET` (48); the three inline controls that cannot be 48 tall reach it through hit slop, asserted by a test | 2026-09-20 |
 | **Native Android run** on an Android 15 emulator (Pixel 7, x86_64) | Demo mode, Home, tabs, scrolling, dark mode, the offline banner, `opswatch://` deep links into a problem, into an error and an unknown link falling back to Home, a deep link while signed out (stays on Connect, nothing leaks), tablet geometry and landscape. No crash, no red box, no fatal exception in logcat. Cold start measured at **697–722 ms** | 2026-09-20 |
 | Android release manifest | The permissions actually present are listed in [privacy.md](privacy.md#android-permissions-actually-in-the-release-build); `SYSTEM_ALERT_WINDOW` is blocked and absent | 2026-09-20 |

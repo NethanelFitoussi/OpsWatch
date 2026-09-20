@@ -3,7 +3,7 @@
  * neither platform includes it in device backups, and what older versions left in backed-up storage is removed.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { cacheStorage, forgetBackedUpCache } from '../cache-storage';
+import { cacheStorage, forgetBackedUpCache, MAX_CACHE_BYTES } from '../cache-storage';
 import { PREF_KEYS } from '../storage';
 
 beforeEach(async () => {
@@ -34,4 +34,23 @@ it('treats an unreadable cache as a cold start rather than failing', async () =>
   // Keys become file names, so anything is accepted without throwing.
   await expect(cacheStorage.setItem('weird key/../..', 'x')).resolves.toBeUndefined();
   await expect(cacheStorage.getItem('never-written')).resolves.toBeNull();
+});
+
+/**
+ * A snapshot over the ceiling is dropped, and the stale one with it. Writing it and failing halfway would leave a
+ * truncated file that parses as nothing, and keeping the previous snapshot would serve data the app has decided it
+ * can no longer maintain — on a screen whose whole job is to say how old what you are looking at is.
+ */
+it('drops an oversized snapshot, and the stale one it would have replaced', async () => {
+  await cacheStorage.setItem(PREF_KEYS.queryCache, '{"snapshot":"small"}');
+  expect(await cacheStorage.getItem(PREF_KEYS.queryCache)).toBe('{"snapshot":"small"}');
+
+  await cacheStorage.setItem(PREF_KEYS.queryCache, 'x'.repeat(MAX_CACHE_BYTES + 1));
+  expect(await cacheStorage.getItem(PREF_KEYS.queryCache)).toBeNull();
+});
+
+it('keeps a snapshot exactly at the ceiling', async () => {
+  const atTheLimit = 'x'.repeat(MAX_CACHE_BYTES);
+  await cacheStorage.setItem(PREF_KEYS.queryCache, atTheLimit);
+  expect(await cacheStorage.getItem(PREF_KEYS.queryCache)).toBe(atTheLimit);
 });
