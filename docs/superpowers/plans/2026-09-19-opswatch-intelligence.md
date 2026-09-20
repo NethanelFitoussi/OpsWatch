@@ -1124,3 +1124,54 @@ child does **not** silence the fleet.
 - [x] **Step 4: Run the test** → PASS.
 - [x] **Step 5: Add `'lib/detect/fleet.ts'` to `SERVER_ONLY_MODULES`.**
 - [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): fleet collapse and expansion with hysteresis`.
+
+### Task 8: The first detectors, over the Stage 2 rules
+
+Implements §5: "The Stage 2 insight rules become detectors unchanged — same thresholds, same hysteresis
+(`evaluate.ts`, three consecutive datapoints, clearing margin) — and gain persistence."
+
+**Files:**
+- Create: `src/lib/detect/aws.ts`, `tests/unit/detect-aws.test.ts`
+- Modify: `tests/unit/module-boundaries.test.ts`
+
+**The rules are not rewritten.** `src/lib/monitoring/insights.ts` keeps its thresholds, its hysteresis and its
+catalogue keys exactly as they are; this task is an **adapter** from `Insight[]` to `SubjectOutcome[]`. Copying
+the rules into `detect` would have given the product two sets of thresholds to keep in step, which §24 and the
+duplication rule both forbid. `Insight` is imported as a **type only** — it is a plain data shape (severity,
+kind, resource, messageKey, values, href, members) with no AWS in it, and the import is erased at runtime, so
+`detect` stays pure.
+
+**The one behaviour that changes, and why.** Stage 2 collapses four or more services of a cluster into a single
+grouped insight carrying `members[]` — a *rendering* collapse. §33.8 rules that collapse is a **lifecycle
+transition**, and requires the children to keep accruing evidence and to keep their `firstSeenAt`, occurrence
+counts and acknowledgements. A grouped insight is therefore **expanded back into one outcome per member**, so
+each service gets its own problem, and Task 7's `planFleet` performs the collapse at the problem level. Without
+this, the children §33.8 talks about would never exist.
+
+**Interfaces:**
+- `export function outcomesFromInsights(input: { insights; evaluated; notEvaluated?; nowMs; breachingMinutes? }): SubjectOutcome[]`
+  - `evaluated` — every `(subject, kinds)` pair the cycle actually looked at. A pair that was evaluated and
+    produced no insight yields **`clear`**; a pair in `notEvaluated` yields **`not_evaluated`**. §33.5 depends
+    entirely on the caller telling these apart, so the adapter never infers one from the absence of the other.
+  - `breachingMinutes?: (kind, subjectId) => number | undefined` — persistence, which a Stage 2 insight does not
+    carry. Task 10 supplies it from the live problem's `firstSeenAt`; until then it defaults to the rules' own
+    evaluation window.
+- Subject typing: `ecs_*` → `service` (the resource *is* the service id, so `serviceId` is set); `rds_*`,
+  `aurora_replica_lag`, `alb_*` and `alarm_firing` → `resource`.
+- Score inputs are filled only where the insight actually knows them, and are `null` otherwise — `blast` when
+  the insight carries both an affected and a total (`aurora_replica_lag` carries `lagging`/`readers`),
+  `userFacing` `null` until §17's dependency map exists, `robustZ` `null` until §8's baselines exist. Guessing
+  any of them would be exactly the zero-filling §33.7 forbids.
+- **Floors.** `alb_unhealthy_hosts` with zero healthy targets is one of §4.3's three named floors, and zero
+  running tasks is §33.7's total failure; both are read from the insight's own values, never assumed.
+
+- [x] **Step 1: Write the failing test.** `tests/unit/detect-aws.test.ts` covers: every `InsightKind` maps to a
+  subject kind; a grouped insight expands into one outcome per member and never yields a cluster-subject
+  outcome; evaluated-but-silent yields `clear`; `notEvaluated` yields `not_evaluated` and is never inferred;
+  evidence is non-empty and carries the insight's own catalogue key; the two floors; unknown score inputs stay
+  `null`.
+- [x] **Step 2: Run it to see it fail.** → FAIL.
+- [x] **Step 3: Write `aws.ts`.**
+- [x] **Step 4: Run the test** → PASS.
+- [x] **Step 5: Add `'lib/detect/aws.ts'` to `SERVER_ONLY_MODULES`.**
+- [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): the Stage 2 rules as detectors, with fleets expanded to members`.
