@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isApiError } from '@/api/errors';
 import { useI18n, type MessageKey } from '@/i18n';
 import { formatRelative } from '@/lib/format';
@@ -133,15 +134,29 @@ export function Freshness({ updatedAt, refreshFailed, fetching }: { updatedAt: n
   );
 }
 
+/** Whether the demo banner is showing: the app layout then stops the header from insetting the status bar twice. */
+export function useDemoBannerShown(): boolean {
+  const { state } = useSession();
+  return state.status === 'signed-in' && (state.server.demo || state.server.info?.demo === true);
+}
+
+/**
+ * Sits above everything, so it covers the status bar area itself: its own top padding is the safe-area inset, which
+ * keeps the clock and battery readable over the banner's background.
+ */
 export function DemoBanner() {
   const { t } = useI18n();
   const { colors } = useTheme();
-  const { state } = useSession();
-  if (state.status !== 'signed-in' || !(state.server.demo || state.server.info?.demo)) return null;
+  const insets = useSafeAreaInsets();
+  if (!useDemoBannerShown()) return null;
   return (
-    <View style={[styles.demo, { backgroundColor: colors.demoBg }]} accessibilityRole="text" testID="demo-banner">
+    <View
+      style={[styles.demo, { backgroundColor: colors.demoBg, paddingTop: insets.top + 5 }]}
+      accessibilityRole="text"
+      testID="demo-banner"
+    >
       <Ionicons name="flask" size={14} color={colors.demo} importantForAccessibility="no" />
-      <Text variant="caption" weight="700" style={{ color: colors.demo }}>
+      <Text variant="caption" weight="700" style={{ color: colors.demo }} numberOfLines={1} adjustsFontSizeToFit>
         {t('state.demoBanner')}
       </Text>
     </View>

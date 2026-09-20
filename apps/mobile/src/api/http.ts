@@ -41,6 +41,8 @@ export const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_RETRIES = 2;
 const BACKOFF_BASE_MS = 400;
 const MAX_ERROR_MESSAGE = 300;
+/** A server asking for longer than this is treated as "come back later" rather than slept through. */
+const MAX_RETRY_AFTER_SECONDS = 30;
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -58,6 +60,16 @@ export function buildUrl(baseUrl: string, path: string, query?: RequestOptions<z
     }
   }
   return url.toString();
+}
+
+/** The wait a rate-limited server asked for, in milliseconds, when it sent a sane `Retry-After` in seconds. */
+export function retryAfterMs(response: Pick<Response, 'headers'>): number | null {
+  const raw = response.headers?.get?.('retry-after');
+  if (!raw) return null;
+  const seconds = Number(raw);
+  // Only the seconds form is honoured; an HTTP-date is ignored and the usual backoff applies.
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  return Math.min(seconds, MAX_RETRY_AFTER_SECONDS) * 1000;
 }
 
 async function readErrorBody(response: Response): Promise<{ code?: string; message?: string; action?: string }> {
@@ -106,7 +118,13 @@ async function attempt<T extends z.ZodType>(transport: Transport, options: Reque
 
   if (!response.ok) {
     const { code, message, action } = await readErrorBody(response);
-    throw new ApiError(kindForStatus(response.status), { status: response.status, code, message, action });
+    throw new ApiError(kindForStatus(response.status), {
+      status: response.status,
+      code,
+      message,
+      action,
+      retryAfterMs: retryAfterMs(response) ?? undefined,
+    });
   }
 
   if (response.status === 204) {
@@ -146,7 +164,8 @@ export async function request<T extends z.ZodType>(transport: Transport, options
       if (!(error instanceof ApiError) || !isTransient(error) || attemptNumber >= retries || options.signal?.aborted) {
         throw error;
       }
-      const delay = BACKOFF_BASE_MS * 2 ** attemptNumber * (0.5 + random());
+      // A rate-limited server says when to come back; otherwise back off exponentially with jitter.
+      const delay = error.retryAfterMs ?? BACKOFF_BASE_MS * 2 ** attemptNumber * (0.5 + random());
       await sleep(delay);
     }
   }

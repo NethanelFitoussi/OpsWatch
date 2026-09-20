@@ -26,14 +26,17 @@ export class ApiError extends Error {
   readonly code: string | undefined;
   /** The provider permission behind an access failure, for example `logs:StartQuery`, when the server names it. */
   readonly action: string | undefined;
+  /** How long the server asked the client to wait, in milliseconds, when it sent `Retry-After`. */
+  readonly retryAfterMs: number | undefined;
 
-  constructor(kind: ApiErrorKind, options: { status?: number; code?: string; message?: string; action?: string } = {}) {
+  constructor(kind: ApiErrorKind, options: { status?: number; code?: string; message?: string; action?: string; retryAfterMs?: number } = {}) {
     super(options.message ?? kind);
     this.name = 'ApiError';
     this.kind = kind;
     this.status = options.status;
     this.code = options.code;
     this.action = options.action;
+    this.retryAfterMs = options.retryAfterMs;
   }
 }
 

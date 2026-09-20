@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { buildUrl, request } from '../http';
 import { ApiError, isTransient } from '../errors';
 
-type Reply = { status: number; body?: unknown } | 'network' | 'hang';
+type Reply = { status: number; body?: unknown; headers?: Record<string, string> } | 'network' | 'hang';
 
 function fakeFetch(replies: Reply[]) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -13,7 +13,12 @@ function fakeFetch(replies: Reply[]) {
     if (reply === 'hang') {
       return new Promise((_resolve, reject) => init.signal?.addEventListener('abort', () => reject(new Error('aborted'))));
     }
-    return { ok: reply.status >= 200 && reply.status < 300, status: reply.status, json: async () => reply.body } as Response;
+    return {
+      ok: reply.status >= 200 && reply.status < 300,
+      status: reply.status,
+      json: async () => reply.body,
+      headers: { get: (name: string) => reply.headers?.[name.toLowerCase()] ?? null },
+    } as unknown as Response;
   }) as unknown as typeof fetch;
   return { impl, calls };
 }
@@ -67,6 +72,29 @@ it('reports contract drift as invalid_response without leaking values', async ()
 it('times out', async () => {
   const { impl } = fakeFetch(['hang', 'hang', 'hang']);
   await expect(request(transport(impl), { path: '/x', schema, timeoutMs: 10, retries: 0 })).rejects.toMatchObject({ kind: 'timeout' });
+});
+
+it('waits as long as a rate-limited server asks, capped at 30 s', async () => {
+  const slept: number[] = [];
+  const sleep = async (ms: number) => {
+    slept.push(ms);
+  };
+  const asked = fakeFetch([{ status: 429, body: { error: 'rate_limited' }, headers: { 'retry-after': '2' } }, { status: 200, body: { value: 9 } }]);
+  await expect(request({ ...transport(asked.impl), sleep }, { path: '/x', schema })).resolves.toEqual({ value: 9 });
+  expect(slept).toEqual([2000]);
+
+  slept.length = 0;
+  const huge = fakeFetch([{ status: 429, body: { error: 'rate_limited' }, headers: { 'retry-after': '9999' } }, { status: 200, body: { value: 9 } }]);
+  await request({ ...transport(huge.impl), sleep }, { path: '/x', schema });
+  expect(slept).toEqual([30_000]);
+});
+
+it('ignores an HTTP-date Retry-After and backs off instead', async () => {
+  const slept: number[] = [];
+  const { impl } = fakeFetch([{ status: 503, body: {}, headers: { 'retry-after': 'Wed, 21 Oct 2026 07:28:00 GMT' } }, { status: 200, body: { value: 1 } }]);
+  await request({ ...transport(impl), sleep: async (ms: number) => void slept.push(ms) }, { path: '/x', schema });
+  expect(slept[0]).toBeGreaterThan(0);
+  expect(slept[0]).toBeLessThan(2000);
 });
 
 it('classifies transient errors', () => {
