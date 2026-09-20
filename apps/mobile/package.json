@@ -52,8 +52,8 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "start:demo": "EXPO_PUBLIC_DEFAULT_SERVER_URL=http://localhost:4010 expo start",
     "mock-server": "tsx dev/mock-server.ts",

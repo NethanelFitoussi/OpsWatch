@@ -144,3 +144,26 @@ To be filled as needs are agreed. Known items:
 | Push devices endpoint (`POST /me/devices`, `DELETE /me/devices/:id`) implemented server-side, plus a sender | Remote push ([notifications.md](notifications.md)) | Open |
 | Session listing and revocation endpoint | Let the user see and revoke signed-in devices | Open |
 | Rendered text for brief sentences | Brief and health `changes[].text` should arrive localised and ready to display (per `Accept-Language`), so the app does not rebuild sentences | Open |
+| `allowedActions` vocabulary | The contract lists actions as free strings. Mobile renders `acknowledge` (problems, alerts) from `allowedActions`. AI entry points depend only on `features.ai`; the server enforces who may ask on `POST /ai/ask` (403 is shown as "no access"). Agree a documented action list in `packages/contract` | Open |
+| `GET /me` carries `role` and `allowedActions` | Lets the app hide actions a viewer can never perform (the server design already plans it) | Open |
+| Deployments filter by service (`GET /deployments?service=`) | The service screen only shows the deployments the server embeds in the service detail | Open |
+| Incident actions (update status, add note) | Incidents are read-only on mobile until the server exposes these, gated by `allowedActions` | Open |
+| Problem title on error summaries (`problemTitle`) | The error list and detail link to "the related problem" without its title, to avoid an extra request | Open |
+| Acknowledge adds a history entry | After acknowledging an alert its `history` should show the acknowledgement | Open (server behaviour) |
+| Push registration is idempotent per device token | Registration runs from Settings and again when preferences change; the server should upsert by token | Open |
+
+## Parity with `packages/contract`
+
+`src/api/__tests__/contract-parity.test.ts` checks, when `packages/contract` exists on the branch, that every schema the
+app uses is exported by the package and that the package parses the demo data to a superset of what the local copy
+produces (additive fields only). Against the server team's work in progress on 2026-09-18 it passed 65/65; the only
+difference was the additive `serverInfo.demo`, which mobile adopted.
+
+```sh
+# against another checkout's package, before it reaches this branch
+OPSWATCH_CONTRACT_DIR=/path/to/packages/contract npx jest contract-parity
+```
+
+Switching over when the package lands: replace the body of `apps/mobile/src/api/contract.ts` with
+`export * from '../../../../packages/contract';` (Metro already watches the folder, see `metro.config.js`), run the
+tests, then delete the local schemas.

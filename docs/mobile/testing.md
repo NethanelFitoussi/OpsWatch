@@ -40,7 +40,7 @@ See `src/test/__tests__/app-routes.test.tsx`. Clear AsyncStorage in `beforeEach`
 
 `dev/mock-server.ts` exports `createMockServer()`, so tests can start the contract mock on a free port and point
 `createHttpClient` at it: real HTTP, bearer auth, pagination, log search polling, 401 expiry (`expireAfter`).
-Manually:
+The automated version is `src/api/__tests__/http-client.integration.test.ts`. Manually:
 
 ```bash
 npm run mock-server
@@ -58,13 +58,25 @@ npx playwright install chromium    # once
 npm run e2e:web                    # playwright test --config e2e/web/playwright.config.ts
 ```
 
+`e2e/web/smoke.spec.ts` tours every major screen in demo mode on six profiles: small iPhone (375×667), iPhone
+(393×852), large iPhone (430×932), Android phone (Pixel 7), tablet (820×1180) and dark mode. Each step asserts content
+and saves a screenshot to `test-results/screens/<profile>/` for visual review (clipping, safe areas, dark mode).
+
 ### Device E2E (Maestro)
 
-Maestro flows are being added under `apps/mobile/e2e/maestro`. Install the Maestro CLI (see maestro.dev), start an
-emulator or simulator with a development or preview build installed, then:
+Flows live in `apps/mobile/e2e/maestro` (see its README): demo health → problem, a tour of the tabs, deep links,
+acknowledging an alert, and sign-in / sign-out / sign-in against the mock server. Install the Maestro CLI (see
+maestro.dev), start an emulator or simulator with a development or preview build installed, then:
 
 ```bash
-maestro test e2e/maestro
+maestro test -e APP_ID=com.example.opswatch e2e/maestro
+```
+
+### Contract parity
+
+```bash
+npx jest contract-parity                                               # skipped until packages/contract is on the branch
+OPSWATCH_CONTRACT_DIR=/path/to/packages/contract npx jest contract-parity
 ```
 
 ## Manual testing
