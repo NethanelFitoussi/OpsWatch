@@ -60,6 +60,7 @@ const SERVER_ONLY_MODULES = [
   'lib/detect/types.ts',
   'lib/detect/framework.ts',
   'lib/detect/lifecycle.ts',
+  'lib/detect/fleet.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',

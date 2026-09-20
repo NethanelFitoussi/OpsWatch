@@ -1077,3 +1077,50 @@ separation is what lets every rule below be tested with literals and no fixture 
 - [x] **Step 4: Run the tests** → PASS.
 - [x] **Step 5: Add the three files to `SERVER_ONLY_MODULES`**; the purity rule from Task 5 covers them already.
 - [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): outcomes, the detector framework and the problem lifecycle`.
+
+### Task 7: Fleet collapse and expansion, as lifecycle transitions
+
+Implements **§33.8**: "more than three services of one cluster breaching the same detector collapse into one
+problem whose `subjectId` is the cluster" — and the ruling that collapse and expansion are *lifecycle
+transitions, not rendering*.
+
+**Files:**
+- Create: `src/lib/detect/fleet.ts`, `tests/unit/detect-fleet.test.ts`
+- Modify: `tests/unit/module-boundaries.test.ts`
+
+**Interfaces:**
+- `FLEET_MIN_MEMBERS` 4 · `FLEET_EXPAND_CYCLES` 2 (**D3**).
+- `export type FleetGroup = { clusterId: string; kind: string; breaching: readonly string[] }` — the problem
+  ids currently breaching one detector in one cluster, as the store found them.
+- `export type OpenFleet = { id: string; key: string; clusterId: string; kind: string; memberIds: readonly string[]; belowCycles: number }`
+- `export type FleetTransition` — `fleet_open` · `fleet_members` (the membership changed while it stays open) ·
+  `fleet_hold` (below the threshold, but not for long enough) · `fleet_resolve` (resolve and un-group).
+- `export function planFleet(input: { connectionId; scope; groups: readonly FleetGroup[]; open: readonly OpenFleet[]; nowMs }): FleetTransition[]`
+
+**The rules.**
+
+1. **Four or more breaching, no open fleet** → `fleet_open`. Its dedupe key is an ordinary problem key whose
+   `subjectId` is the **cluster**, so it cannot collide with any per-service key. The children are **linked and
+   marked grouped, never resolved** — they keep accruing evidence, and the list shows the fleet and hides them
+   behind it.
+2. **Four or more, fleet already open** → `fleet_members` when the membership changed, and `belowCycles` resets
+   to 0. A service that joins a cluster-wide outage late is a member like any other.
+3. **Three or fewer, fleet open** → `belowCycles + 1`. Only when it reaches `FLEET_EXPAND_CYCLES` does
+   `fleet_resolve` fire; until then `fleet_hold`. This is the hysteresis: a fleet oscillating around the
+   boundary must not flap.
+4. **`fleet_resolve`** resolves the fleet problem and un-groups every child. Because the children were never
+   closed, their `firstSeenAt`, occurrence counts and acknowledgements survive intact.
+5. **Three or fewer, no open fleet** → nothing at all.
+
+**Acknowledgement** (applied by the store, stated here because it belongs to the rule): an acknowledgement on
+the fleet applies to its current children *and to any that join while it is open*; an acknowledgement on a
+child does **not** silence the fleet.
+
+- [x] **Step 1: Write the failing test.** `tests/unit/detect-fleet.test.ts` covers each rule, the boundary at
+  exactly three and exactly four, the hysteresis needing two consecutive cycles, membership changing while
+  open, and that the fleet key differs from every per-service key.
+- [x] **Step 2: Run it to see it fail.** → FAIL.
+- [x] **Step 3: Write `fleet.ts`.**
+- [x] **Step 4: Run the test** → PASS.
+- [x] **Step 5: Add `'lib/detect/fleet.ts'` to `SERVER_ONLY_MODULES`.**
+- [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): fleet collapse and expansion with hysteresis`.
