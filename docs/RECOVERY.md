@@ -27,14 +27,26 @@ file by file, found essentially complete, and preserved rather than rewritten.
 - Audience-bound sessions — a `web` cookie and an `api` bearer token, neither replayable as the other.
 - `src/lib/net/safe-fetch.ts` — pinned-address SSRF guard, groundwork for the synthetics of a later phase.
 
-**Phase 1 of the intelligence plan — complete.** Tasks 1–4 are done and pushed: the `problems` /
-`problem_evidence` store with its immutable `seq` cursor, the append-only `events` spine with
-`collector_runs`, the collector lock claimed in one conditional update, and incidents with their timeline and
-the retention rules. Migrations `0003`–`0006`. Nothing in it calls AWS or renders a page.
+**Phase 1 — the store. Complete.** Tasks 1–4: the `problems` / `problem_evidence` store with its immutable
+`seq` cursor, the append-only `events` spine with `collector_runs`, the collector lock claimed in one
+conditional update, and incidents with their timeline and the retention rules. Migrations `0003`–`0006`.
 
-**Next:** the intelligence plan's Tasks 5–21 (the Problem engine, the collector, the surfaces, error
-intelligence), then mission 2. **The plan writes out only Tasks 1–4** — derive each later task from the spec
-and write it into the plan *before* implementing it, so a crash leaves the derived task behind.
+**Phase 2 — the Problem engine. Tasks 5–7 done.** The problem key and the severity score with both halves of
+§33.7; the three outcomes, the detector framework and the lifecycle with §33.5; fleet collapse and expansion
+with hysteresis per §33.8. Everything under `src/lib/detect/` is pure — no AWS, no clock, no database — and
+the boundary test enforces that rather than trusting it, down to `Date.now()`.
+
+**Next: Task 8**, the first detectors over the existing Stage 2 rules, which completes Phase 2. Then Phase 3
+(the collector), Phase 4 (the surfaces), Phase 5 (error intelligence), Phase 6 (storage providers), then
+mission 2. **The plan writes out only Tasks 1–4 as delivered** — Tasks 5–7 were derived from the spec and
+written into it before being implemented, and every later task must be too, so a crash leaves the derived task
+behind rather than only the memory of it.
+
+**A note on tests, learned the hard way here.** Several rules in this engine are the kind a passing test does
+not actually prove: the plan's own lock test passes for a read-then-write claim that loses the race, and a
+boundary test written as `FLEET_MIN_MEMBERS - 1` follows a change to the constant and proves nothing. Every
+safety-critical rule in Phases 1–2 has therefore been **mutation-tested** — break the rule, confirm a test
+fails, restore — and spec constants are pinned as literals. Keep doing that.
 
 **The V1 safety boundary, which overrides any task that appears to ask otherwise:** OpsWatch observes,
 correlates, investigates and *proposes*. It never modifies a customer's infrastructure or repository, never
