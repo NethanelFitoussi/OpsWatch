@@ -352,7 +352,7 @@ export type StoredScoreTerms = {
 
 `pageProblems` orders by `(seq asc, id asc)` and asks for `limit + 1` rows: the extra row decides whether `nextSeq`/`nextId` are set. It never orders by `score`, `severity` or `lastSeenAt` — §33.6 forbids a mutable cursor axis. `includeGrouped` defaults to `false`, so a list hides children collapsed behind a fleet problem (§33.8).
 
-- [ ] **Step 1: Write the failing test.** Create `tests/unit/store-problems.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `tests/unit/store-problems.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -447,11 +447,11 @@ describe('the problem store', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail.** `npx vitest run tests/unit/store-problems.test.ts` → FAIL: no module `@/lib/store/problems`.
+- [x] **Step 2: Run it to see it fail.** `npx vitest run tests/unit/store-problems.test.ts` → FAIL: no module `@/lib/store/problems`.
 
-- [ ] **Step 3: Add the tables and generate the migration.** Edit `src/lib/db/schema.ts` with the block above, then run `npm run db:generate`. Expected: `drizzle/0002_*.sql` containing `CREATE TABLE \`problems\``, `CREATE TABLE \`problem_evidence\``, the partial unique index and the three ordinary indexes, plus an updated `drizzle/meta/_journal.json`. **Never hand-edit the generated SQL.** `createDb` runs `migrate()` on every open, so nothing else is needed. Read the generated file once to confirm it contains no `DROP` and no `ALTER … RENAME` — an additive migration only (§9.3).
+- [x] **Step 3: Add the tables and generate the migration.** Edit `src/lib/db/schema.ts` with the block above, then run `npm run db:generate`. Expected: `drizzle/0002_*.sql` containing `CREATE TABLE \`problems\``, `CREATE TABLE \`problem_evidence\``, the partial unique index and the three ordinary indexes, plus an updated `drizzle/meta/_journal.json`. **Never hand-edit the generated SQL.** `createDb` runs `migrate()` on every open, so nothing else is needed. Read the generated file once to confirm it contains no `DROP` and no `ALTER … RENAME` — an additive migration only (§9.3).
 
-- [ ] **Step 4: Write `src/lib/store/tx.ts` and `src/lib/store/problems.ts`.** Both start with `import 'server-only';`. `insertProblem` runs the row insert and its evidence inside one `db.transaction`. `pageProblems` builds its `where` from the filter and ends with:
+- [x] **Step 4: Write `src/lib/store/tx.ts` and `src/lib/store/problems.ts`.** Both start with `import 'server-only';`. `insertProblem` runs the row insert and its evidence inside one `db.transaction`. `pageProblems` builds its `where` from the filter and ends with:
 
 ```ts
 const rows = db.select().from(problems).where(and(...conditions))
@@ -461,9 +461,9 @@ const more = rows.length > limit;
 return { items, nextSeq: more ? items[items.length - 1].seq : null, nextId: more ? items[items.length - 1].id : null };
 ```
 
-- [ ] **Step 5: Run the tests.** `npx vitest run tests/unit/store-problems.test.ts` → PASS.
+- [x] **Step 5: Run the tests.** `npx vitest run tests/unit/store-problems.test.ts` → PASS.
 
-- [ ] **Step 6: Add the boundary rules.** In `tests/unit/module-boundaries.test.ts`, add `'lib/store/tx.ts'` and `'lib/store/problems.ts'` to `SERVER_ONLY_MODULES`, and add the §9.6 test:
+- [x] **Step 6: Add the boundary rules.** In `tests/unit/module-boundaries.test.ts`, add `'lib/store/tx.ts'` and `'lib/store/problems.ts'` to `SERVER_ONLY_MODULES`, and add the §9.6 test:
 
 ```ts
 const STORE_ONLY = /^(better-sqlite3|drizzle-orm)/;
@@ -484,9 +484,9 @@ it('keeps SQL and better-sqlite3 below the store layer', () => {
 
 If `sourceFilesUnder` does not yet accept a bare directory name, extend `tests/helpers/source-graph.ts` so it walks any directory under `src/`; do not change its other behaviour.
 
-- [ ] **Step 7: Extend `tests/unit/db.test.ts`** with one case asserting the migration applied: insert a `problems` row through drizzle and read back `seq === 1` and `values` as an object (the JSON column round-trips).
+- [x] **Step 7: Extend `tests/unit/db.test.ts`** with one case asserting the migration applied: insert a `problems` row through drizzle and read back `seq === 1` and `values` as an object (the JSON column round-trips).
 
-- [ ] **Step 8: Verify and commit.** `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npx knip`. Commit: `feat(store): problems and evidence with an immutable seq cursor`.
+- [x] **Step 8: Verify and commit.** `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npx knip`. Commit: `feat(store): problems and evidence with an immutable seq cursor`.
 
 **Owner-only verification:** none — this task touches only SQLite.
 
