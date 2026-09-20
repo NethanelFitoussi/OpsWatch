@@ -14,12 +14,12 @@
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { focusManager, onlineManager, QueryCache, QueryClient, QueryClientProvider, MutationCache, type Query } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
 import { authEvents } from './auth-events';
 import { isApiError } from './errors';
+import { cacheStorage, forgetBackedUpCache } from '@/state/cache-storage';
 import { PREF_KEYS } from '@/state/storage';
 import { useSession, type SessionState } from '@/state/session';
 
@@ -91,7 +91,9 @@ export function createQueryClient(onUnauthorized: () => void): QueryClient {
   });
 }
 
-const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: PREF_KEYS.queryCache, throttleTime: 2000 });
+// The cache directory rather than AsyncStorage: what is written here is an operational inventory (service, problem
+// and incident names), and neither platform includes its cache directory in device backups. See cache-storage.ts.
+const persister = createAsyncStoragePersister({ storage: cacheStorage, key: PREF_KEYS.queryCache, throttleTime: 2000 });
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const { expire, onSessionEnd, state } = useSession();
@@ -99,6 +101,11 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   const [shouldDehydrateQuery] = useState(() => createDehydrateFilter(client));
 
   useEffect(() => authEvents.onUnauthorized(expire), [expire]);
+
+  // Older versions kept the cache in backed-up storage; remove what they left behind.
+  useEffect(() => {
+    void forgetBackedUpCache(PREF_KEYS.queryCache);
+  }, []);
 
   useEffect(
     () =>

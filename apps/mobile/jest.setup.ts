@@ -47,3 +47,24 @@ jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(async () => undefined),
   NotificationFeedbackType: { Success: 'success', Error: 'error', Warning: 'warning' },
 }));
+
+jest.mock('expo-file-system', () => {
+  const store = new Map<string, string>();
+  function FileSystemDirectory(this: Record<string, unknown>, _parent: unknown, name: string) {
+    this.name = name;
+    this.exists = true;
+    this.create = () => undefined;
+  }
+  function FileSystemFile(this: Record<string, unknown>, directory: { name: string }, name: string) {
+    const path = `${directory.name}/${name}`;
+    Object.defineProperty(this, 'exists', { get: () => store.has(path) });
+    this.text = async () => store.get(path) ?? '';
+    this.write = (value: string) => store.set(path, value);
+    this.delete = () => store.delete(path);
+  }
+  return {
+    Directory: FileSystemDirectory,
+    File: FileSystemFile,
+    Paths: { cache: { name: 'cache' } },
+  };
+});
