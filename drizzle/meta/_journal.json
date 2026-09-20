@@ -36,6 +36,13 @@
       "when": 1789886294532,
       "tag": "0004_happy_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789886498271,
+      "tag": "0005_groovy_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

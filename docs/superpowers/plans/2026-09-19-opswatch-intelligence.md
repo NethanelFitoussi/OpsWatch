@@ -702,7 +702,7 @@ export function refreshCollectorLock(db: Db, owner: string, nowMs: number): bool
 
 `owner` is `${process.pid}:${randomId()}`, generated once per process by Task 9 and never derived from anything a user can set.
 
-- [ ] **Step 1: Write the failing test.** Create `tests/unit/store-lock.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `tests/unit/store-lock.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -760,12 +760,14 @@ describe('the collector lock', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail.** `npx vitest run tests/unit/store-lock.test.ts` → FAIL.
-- [ ] **Step 3: Add the table, generate `drizzle/0004_*.sql`, and write the three statements above.** `releaseCollectorLock` sets `heartbeat_at = 0 where id = 1 and owner = ?`, which frees it without deleting the row.
-- [ ] **Step 4: Run the test** → PASS.
-- [ ] **Step 5: Verify and commit.** Full gate. Commit: `feat(store): claim the collector lock in one conditional update`.
+- [x] **Step 2: Run it to see it fail.** `npx vitest run tests/unit/store-lock.test.ts` → FAIL.
+- [x] **Step 3: Add the table, generate `drizzle/0004_*.sql`, and write the three statements above.** `releaseCollectorLock` sets `heartbeat_at = 0 where id = 1 and owner = ?`, which frees it without deleting the row.
+- [x] **Step 4: Run the test** → PASS.
+- [x] **Step 5: Verify and commit.** Full gate. Commit: `feat(store): claim the collector lock in one conditional update`.
 
 **Note for the implementer:** do not "improve" this with a read followed by a write. §33.4 exists because that version loses the race, and the second test above is the one that catches it.
+
+> **Correction, found while implementing.** The five cases above do **not** catch it: they run two claimers one after the other in one process, and with a synchronous driver a read-then-write claim passes all five. Verified by mutation. Task 3 therefore adds a group that asserts the claim issues exactly one statement and reads nothing first, which is what §33.4 actually requires; that group fails the mutation.
 
 ---
 

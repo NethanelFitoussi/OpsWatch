@@ -194,3 +194,12 @@ export const collectorRuns = sqliteTable('collector_runs', {
 
 export type EventRow = typeof events.$inferSelect;
 export type CollectorRunRow = typeof collectorRuns.$inferSelect;
+
+/** Exactly one row, id = 1. Seeded by the first claim, never by a migration. */
+export const collectorLock = sqliteTable('collector_lock', {
+  id: integer('id').primaryKey(),
+  owner: text('owner').notNull(),
+  heartbeatAt: integer('heartbeat_at').notNull(),
+});
+export type CollectorLockRow = typeof collectorLock.$inferSelect;
+
