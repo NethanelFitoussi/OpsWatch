@@ -105,3 +105,20 @@ In every case: no tracking, no third-party advertising, no analytics.
 | Advertising ID, location, contacts, photos, files, audio, health, financial info | Not collected |
 
 Also answer "Ads: No" in the app content section.
+
+## Android permissions actually in the release build
+
+Read from the merged manifest of a release build on 2026-09-20 (`expo prebuild` + `gradlew assembleRelease`). Only
+the first two are asked for by OpsWatch itself; the rest are merged in by libraries and need no runtime consent.
+
+| Permission | Why it is there |
+|------------|-----------------|
+| `INTERNET` | Talking to your OpsWatch server. Nothing else is contacted |
+| `POST_NOTIFICATIONS` | Showing notifications, once you turn them on |
+| `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` | Connectivity detection (`@react-native-community/netinfo`), which drives the offline banner |
+| `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`, `READ_APP_BADGE` | Merged by `expo-notifications` for scheduled and incoming notifications |
+| `USE_BIOMETRIC`, `USE_FINGERPRINT` | Merged by `expo-secure-store`; OpsWatch does not ask for biometric authentication and stores its token with `WHEN_UNLOCKED_THIS_DEVICE_ONLY` |
+
+`SYSTEM_ALERT_WINDOW` ("draw over other apps") was merged in by a dependency and is explicitly blocked in
+`app.config.ts`. No location, camera, microphone, contacts or storage permission is present. `allowBackup` is
+`false`, so the offline cache is not swept into Google Drive backups.
