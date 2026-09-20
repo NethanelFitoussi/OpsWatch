@@ -42,11 +42,29 @@ changes under `apps/mobile/**` and `docs/mobile/**` (and `packages/contract/**` 
 `apps/mobile`: `npm ci`, lint, typecheck, tests and the web export smoke. The existing root `ci.yml` does not need
 changes beyond not picking up `apps/` (handled by the exclusions above).
 
-## Contract drift
+## Contract drift (checked 2026-09-20)
 
-To be filled at the final sync: every difference found between `apps/mobile/src/api/contract.ts` and
-`packages/contract` (field, endpoint, enum value), and how it was resolved.
+The server team adopted this app's contract as the canonical one and seeded `packages/contract` from it. Checked
+against their work in progress:
 
-| Area | Difference | Resolution |
-|------|-----------|-----------|
-| | | |
+- **No drift.** Parity 65/65: every schema the app uses is exported by the package, and the package parses the app's
+  demo data to a superset of the local copy.
+- **One additive field**, `serverInfo.demo`, has been adopted here.
+- The server's `/api/v1` envelope, error codes and status map match what the client already expects; the client now
+  also honours `Retry-After`.
+- `GET /me` returns `id`, `role`, `locale` and `allowedActions`. The app keeps `email`/`name` and ignores the rest for
+  now; adopting `meSchema` is part of the switchover.
+- Open requests are listed in [api-contract.md](api-contract.md#contract-gaps--requests). None block the merge.
+
+**Switchover, when `packages/contract` is on `main`:** replace the body of `apps/mobile/src/api/contract.ts` with
+`export * from '../../../../packages/contract';`, run `npm run check`, then delete the local schemas. Metro already
+watches the folder (`apps/mobile/metro.config.js`), so no npm workspace and no root `package.json` change is needed.
+The parity suite stops skipping and runs in CI from then on.
+
+## Verified before merging
+
+- `npm run check` in `apps/mobile` (lint, typecheck, 976 tests in 42 suites).
+- The web export tour at six device profiles, and a native Android release build run on an emulator
+  ([testing.md](testing.md#what-has-actually-been-verified)).
+- Nothing outside `apps/mobile`, `docs/mobile`, `.github/workflows/mobile*.yml` and the four root exclusions was
+  touched on this branch, so the web app's own suite is unaffected.
