@@ -77,7 +77,8 @@ export const common: Record<keyof typeof source, string> = {
   'state.refreshing': 'Actualisation…',
   'state.demoBanner': "DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur",
   'state.demoShort': 'DÉMO',
-  'state.featureUnavailableTitle': 'Ce serveur ne propose pas {feature}',
+  'state.featureUnavailableTitle': 'Non disponible sur ce serveur',
+  'state.featureUnavailableFor': 'Ce serveur ne propose pas {feature}',
   'state.featureUnavailableBody':
     "Rien d'anormal : ce serveur OpsWatch ne fournit pas {feature}. Tout le reste de l'app continue de fonctionner, et {feature} apparaîtra ici automatiquement si le serveur se met à le fournir.",
   'state.featureUnknownTitle': "Ce serveur n'a pas indiqué ses fonctions",

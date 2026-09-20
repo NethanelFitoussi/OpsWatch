@@ -45,7 +45,8 @@ export function LogEntryDetail({ entry }: { entry: LogEntry }) {
   const { t } = useI18n();
   const openRef = useOpenRef();
   const links = logLinks(entry);
-  const fields = Object.entries(entry.fields ?? {});
+  // Sorted, so the same field is in the same place on every entry when comparing two lines during an incident.
+  const fields = Object.entries(entry.fields ?? {}).sort(([a], [b]) => a.localeCompare(b));
   const noData = t('state.noData');
   return (
     <>

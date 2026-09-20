@@ -7,7 +7,7 @@ import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import type { AlertDetail, AlertSummary } from '@/api/contract';
 import { useAcknowledgeAlert } from '@/api/queries';
 import { useI18n } from '@/i18n';
-import { formatDateTime, formatDuration } from '@/lib/format';
+import { formatDateTime, formatDuration, formatMetric } from '@/lib/format';
 import { useOpenRef } from '@/features/shared/navigation';
 import { SeverityBadge } from '@/ui/badges';
 import { Button } from '@/ui/controls';
@@ -17,7 +17,7 @@ import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
 import { RichRow, StatusBadge, TimedItem } from '@/ui/rows';
-import { alertDurationMs, alertStatusMeta, canAcknowledge, chronologicalHistory } from './helpers';
+import { alertDurationMs, alertStatusMeta, canAcknowledge, chronologicalHistory, latestValue } from './helpers';
 
 export function useAlertStatusMeta() {
   const { t } = useI18n();
@@ -27,13 +27,18 @@ export function useAlertStatusMeta() {
   };
 }
 
+/**
+ * One alert, answering the three questions asked after a notification: is it still firing (a badge with its own icon
+ * and word, never a colour alone), since when, and what it affects.
+ */
 export const AlertRow = memo(function AlertRow({ alert, now }: { alert: AlertSummary; now: number }) {
   const { t } = useI18n();
   const openRef = useOpenRef();
   const relative = useRelativeTime();
-  const status = t(alertStatusMeta(alert.status).label);
-  const since = alert.since === null ? t('alerts.sinceUnknown') : t('time.since', { time: relative(alert.since, now) });
-  const meta = [alert.service?.label ?? alert.service?.id, status, since].filter(Boolean).join(' · ');
+  const statusMeta = useAlertStatusMeta();
+  const status = statusMeta(alert.status);
+  const started = alert.since === null ? t('alerts.sinceUnknown') : t('alerts.startedAgo', { time: relative(alert.since, now) });
+  const meta = [started, alert.service?.label ?? alert.service?.id].filter(Boolean).join(' · ');
   return (
     <RichRow
       testID={`alert-row-${alert.id}`}
@@ -41,19 +46,35 @@ export const AlertRow = memo(function AlertRow({ alert, now }: { alert: AlertSum
       meta={meta}
       detail={alert.reason}
       left={<SeverityBadge severity={alert.severity} />}
+      extra={
+        <View style={styles.rowStatus}>
+          <StatusBadge meta={status} testID={`alert-row-status-${alert.id}`} />
+        </View>
+      }
       onPress={() => openRef({ type: 'alert', id: alert.id })}
-      accessibilityLabel={[t(`severity.${alert.severity}`), alert.name, meta, alert.reason].filter(Boolean).join(', ')}
+      accessibilityLabel={[t(`severity.${alert.severity}`), alert.name, status.label, meta, alert.reason].filter(Boolean).join(', ')}
     />
   );
 });
 
-/** Severity, status, name, source and how long it has been in this state. */
+/**
+ * Leads with what the on-call needs first: severity and state, the alert's name, since when, then the condition that
+ * fired and the metric's current value. A resolved alert never claims an ongoing duration.
+ */
 export function AlertHeader({ alert }: { alert: AlertDetail }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const statusMeta = useAlertStatusMeta();
   const now = useNow();
   const relative = useRelativeTime();
   const duration = alertDurationMs(alert, now);
+  const current = latestValue(alert.metric);
+  // An alert still going says how long; a resolved one has no end time in the contract, so it only says when it began.
+  const started =
+    alert.since === null
+      ? t('alerts.sinceUnknown')
+      : duration === null
+        ? `${t('alerts.startedAt', { time: formatDateTime(alert.since, locale) })} (${relative(alert.since, now)})`
+        : `${t('alerts.startedAt', { time: formatDateTime(alert.since, locale) })} · ${t('alerts.for', { duration: formatDuration(duration) })}`;
   return (
     <View style={styles.header}>
       <View style={styles.badges}>
@@ -66,11 +87,29 @@ export function AlertHeader({ alert }: { alert: AlertDetail }) {
       <Text variant="small" tone="muted">
         {[alert.source, alert.service?.label].filter(Boolean).join(' · ')}
       </Text>
-      <Text variant="small" weight="600" testID="alert-since">
-        {alert.since === null || duration === null
-          ? t('alerts.sinceUnknown')
-          : `${t('time.since', { time: relative(alert.since, now) })} · ${t('alerts.for', { duration: formatDuration(duration) })}`}
+      <Text variant="small" weight="600" style={styles.figures} testID="alert-since">
+        {started}
       </Text>
+      {alert.condition ? (
+        <View style={styles.field} testID="alert-condition">
+          <Text variant="caption" tone="muted">
+            {t('alerts.condition')}
+          </Text>
+          <Text variant="mono" selectable>
+            {alert.condition}
+          </Text>
+        </View>
+      ) : null}
+      {alert.metric ? (
+        <View style={styles.field} testID="alert-current-value">
+          <Text variant="caption" tone="muted">
+            {t('alerts.currentValue', { label: alert.metric.label })}
+          </Text>
+          <Text variant="subtitle" weight="700" style={styles.figures}>
+            {current === null ? t('metric.noData') : formatMetric(current, alert.metric.unit)}
+          </Text>
+        </View>
+      ) : null}
       {alert.reason ? <Text>{alert.reason}</Text> : null}
     </View>
   );
@@ -179,6 +218,9 @@ export function AlertHistory({ history }: { history: AlertDetail['history'] }) {
 const styles = StyleSheet.create({
   header: { gap: spacing.sm },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  field: { gap: 2 },
+  figures: { fontVariant: ['tabular-nums'] },
+  rowStatus: { marginTop: spacing.xs, flexDirection: 'row' },
   ack: { gap: spacing.sm },
   feedback: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   flex: { flex: 1 },

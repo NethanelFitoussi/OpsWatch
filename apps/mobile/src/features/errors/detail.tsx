@@ -1,5 +1,6 @@
 /**
- * Error group detail: what failed, where, how often, the stack trace, representative logs and where to go next.
+ * Error group detail, in the order an incident is read: what happened, how bad it is, where, the stack trace, the
+ * representative logs, and only then the objects this error is related to.
  */
 import { View } from 'react-native';
 import type { ErrorDetail } from '@/api/contract';
@@ -15,12 +16,13 @@ import { Card, Divider, KeyValue, Row, Section } from '@/ui/layout';
 import { useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { monoFont, spacing } from '@/ui/theme';
-import { ErrorStatusBadge } from './components';
+import { ErrorStatusBadge, ErrorStatusMeaning } from './components';
+import { hasStack, stackCopyText } from './helpers';
 
 export function ErrorHeader({ error }: { error: ErrorDetail }) {
   const { t } = useI18n();
   return (
-    <DetailCard right={<CopyButton text={error.message} testID="copy-error-message" />}>
+    <DetailCard right={<CopyButton text={error.message} label={t('errors.copyMessage')} testID="copy-error-message" />}>
       <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
         <ErrorStatusBadge status={error.status} size="large" />
         {error.type ? (
@@ -29,6 +31,8 @@ export function ErrorHeader({ error }: { error: ErrorDetail }) {
           </Text>
         ) : null}
       </View>
+      {/* The status word alone does not say why it matters, so the detail always spells it out. */}
+      <ErrorStatusMeaning status={error.status} />
       <Text variant="body" weight="600" style={{ fontFamily: monoFont }} selectable accessibilityRole="header" testID="error-message" accessibilityLabel={`${t('errors.message')}: ${error.message}`}>
         {error.message}
       </Text>
@@ -36,12 +40,12 @@ export function ErrorHeader({ error }: { error: ErrorDetail }) {
   );
 }
 
-/** Next steps, most useful first: the problem this error belongs to, then the AI explanation. */
-export function ErrorNextSteps({ error }: { error: ErrorDetail }) {
+/** Related objects: the problem this error belongs to, then the AI explanation. Last, once the evidence is read. */
+export function ErrorRelated({ error }: { error: ErrorDetail }) {
   const { t } = useI18n();
   const openRef = useOpenRef();
   return (
-    <View style={{ gap: spacing.sm }}>
+    <Section title={t('errors.related')}>
       {error.problemId ? (
         <Card padded={false}>
           <Row
@@ -54,10 +58,11 @@ export function ErrorNextSteps({ error }: { error: ErrorDetail }) {
         </Card>
       ) : null}
       <AskAiButton context={{ type: 'error', id: error.id }} label={t('errors.explain')} question={t('errors.explainQuestion')} />
-    </View>
+    </Section>
   );
 }
 
+/** How bad it is and where it happens: the two counts, the service, the route and the two timestamps. */
 export function ErrorFacts({ error }: { error: ErrorDetail }) {
   const { t, locale } = useI18n();
   const openRef = useOpenRef();
@@ -97,11 +102,21 @@ export function ErrorFacts({ error }: { error: ErrorDetail }) {
   );
 }
 
+/**
+ * The stack trace. When the server sent a raw stack the viewer already offers to copy it, so the section adds a Copy
+ * only for the other case — parsed frames and no `rawStack`, which until now could not be copied at all. What it
+ * gives is the error line plus one `at …` line per frame: a self-contained trace to paste into a ticket.
+ */
 export function ErrorStack({ error }: { error: ErrorDetail }) {
   const { t } = useI18n();
+  const available = hasStack(error);
+  const copyable = available && !error.rawStack;
   return (
-    <Section title={t('errors.stackTrace')}>
-      {error.frames.length || error.rawStack ? (
+    <Section
+      title={t('errors.stackTrace')}
+      action={copyable ? <CopyButton text={stackCopyText(error)} label={t('errors.copyStack')} testID="copy-error-stack" /> : undefined}
+    >
+      {available ? (
         <StackTraceViewer frames={error.frames} rawStack={error.rawStack} testID="error-stack" />
       ) : (
         <Text tone="muted">{t('errors.noStack')}</Text>

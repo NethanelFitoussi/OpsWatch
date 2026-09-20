@@ -51,3 +51,36 @@ it('explains when a log entry is not in memory', async () => {
   expect(await screen.findByTestId('logs-back-to-search', {}, { timeout: 5000 })).toBeTruthy();
   expect(screen.getByText('This log line is no longer available')).toBeTruthy();
 });
+
+it('keeps the window the results cover on screen, and offers to stop a search that is on its way', async () => {
+  await seedDemoSession();
+  renderRouter('./app', { initialUrl: '/logs' });
+  // Nothing is searched, so there is no window to show yet.
+  await screen.findByTestId('logs-examples', {}, { timeout: 5000 });
+  expect(screen.queryByTestId('logs-window')).toBeNull();
+  expect(screen.getByTestId('logs-search-submit')).toBeTruthy();
+
+  await searchFor('TypeError');
+  // The window is absolute: "1 h" alone would keep meaning something else as time passes.
+  const window = await screen.findByTestId('logs-window', {}, { timeout: 5000 });
+  expect(window).toHaveTextContent(/^1 h · \d{2}:\d{2}:\d{2} → \d{2}:\d{2}:\d{2}$/);
+
+  // Narrowing the range re-runs the search and the window follows it.
+  fireEvent.press(screen.getByTestId('chip-15m'));
+  await waitFor(() => expect(screen.getByTestId('logs-window')).toHaveTextContent(/^15 min · /));
+});
+
+it('stops a search, releasing the server-side query, and goes back to the search form', async () => {
+  await seedDemoSession();
+  renderRouter('./app', { initialUrl: '/logs' });
+  await screen.findByTestId('logs-examples', {}, { timeout: 5000 });
+  await searchFor('TypeError');
+  // The submit button is the stop button while the search is on its way: it cannot be double-submitted.
+  const stop = await screen.findByTestId('logs-search-stop', {}, { timeout: 5000 });
+  expect(screen.queryByTestId('logs-search-submit')).toBeNull();
+
+  fireEvent.press(stop);
+  expect(await screen.findByTestId('logs-examples', {}, { timeout: 5000 })).toBeTruthy();
+  expect(screen.getByTestId('logs-search-submit')).toBeTruthy();
+  expect(screen.queryByTestId('logs-window')).toBeNull();
+});

@@ -1,4 +1,4 @@
-import { alertDurationMs, alertStatusMeta, canAcknowledge, chronologicalHistory, emptyForTab, filtersForTab } from '../helpers';
+import { alertDurationMs, alertStatusMeta, canAcknowledge, chronologicalHistory, emptyForTab, filtersForTab, isAlertOngoing, latestValue } from '../helpers';
 
 describe('alert helpers', () => {
   it('maps the tabs to server filters, Active meaning firing', () => {
@@ -21,9 +21,24 @@ describe('alert helpers', () => {
   });
 
   it('computes the duration only when the start is known', () => {
-    expect(alertDurationMs({ since: 1_000 }, 61_000)).toBe(60_000);
-    expect(alertDurationMs({ since: null }, 61_000)).toBeNull();
-    expect(alertDurationMs({ since: 90_000 }, 61_000)).toBe(0);
+    expect(alertDurationMs({ since: 1_000, status: 'firing' }, 61_000)).toBe(60_000);
+    expect(alertDurationMs({ since: null, status: 'firing' }, 61_000)).toBeNull();
+    expect(alertDurationMs({ since: 90_000, status: 'firing' }, 61_000)).toBe(0);
+  });
+
+  it('never claims a duration for a resolved alert: the contract carries no end time', () => {
+    expect(alertDurationMs({ since: 1_000, status: 'resolved' }, 61_000)).toBeNull();
+    expect(alertDurationMs({ since: 1_000, status: 'acknowledged' }, 61_000)).toBe(60_000);
+    expect(isAlertOngoing('resolved')).toBe(false);
+    expect(isAlertOngoing('insufficient_data')).toBe(true);
+  });
+
+  it('reads the latest value of a metric, skipping trailing gaps and never falling back to 0', () => {
+    const points: [number, number | null][] = [[1, 2], [2, 6.8], [3, null]];
+    const series = { label: 'rate', unit: 'percent' as const, points };
+    expect(latestValue(series)).toBe(6.8);
+    expect(latestValue({ ...series, points: [[1, null]] as [number, number | null][] })).toBeNull();
+    expect(latestValue(undefined)).toBeNull();
   });
 
   it('orders history oldest first without mutating the input', () => {

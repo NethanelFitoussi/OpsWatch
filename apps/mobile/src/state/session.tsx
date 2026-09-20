@@ -12,13 +12,14 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createHttpClient, type OpsWatchClient } from '@/api/client';
-import { API_VERSION, type ServerInfo, type User } from '@/api/contract';
+import { API_VERSION, type Feature, type ServerInfo, type User } from '@/api/contract';
 import { ApiError } from '@/api/errors';
 import { createDemoClient } from '@/demo/demo-client';
 import { DEMO_CREDENTIALS } from '@/demo/fixtures';
 import { log } from '@/lib/log';
 import { createPkcePair, readAuthRedirect } from '@/lib/pkce';
 import { pendingLink } from './pending-link';
+import { useSettings } from './settings';
 import { prefs, PREF_KEYS, secureStore, sessionKey } from './storage';
 
 export const DEMO_SERVER_URL = 'demo://opswatch';
@@ -86,7 +87,21 @@ function defaultCreateClient(locale: string) {
     server.demo ? createDemoClient() : createHttpClient({ baseUrl: server.url, getToken, locale });
 }
 
+/**
+ * Applies the demo capability switches to a demo session's advertised features. A real server is never touched: its
+ * `GET /server` answer is the only thing that decides what the app offers.
+ */
+export function withDemoCapabilities(state: SessionState, overrides: Partial<Record<Feature, boolean>>): SessionState {
+  if (state.status !== 'signed-in' || !state.server.demo || !state.server.info) return state;
+  const entries = Object.entries(overrides).filter(([, value]) => value === false);
+  if (!entries.length) return state;
+  const features = { ...state.server.info.features };
+  for (const [feature] of entries) features[feature as Feature] = false;
+  return { ...state, server: { ...state.server, info: { ...state.server.info, features } } };
+}
+
 export function SessionProvider({ children, locale, createClient }: SessionProviderProps) {
+  const { settings } = useSettings();
   const [state, setState] = useState<SessionState>({ status: 'loading' });
   const listeners = useRef(new Set<SessionEndListener>());
   const build = useMemo(() => createClient ?? defaultCreateClient(locale), [createClient, locale]);
@@ -277,9 +292,12 @@ export function SessionProvider({ children, locale, createClient }: SessionProvi
     };
   }, []);
 
+  // In demo mode the user can switch capabilities off to see the app degrade; everywhere else the server decides.
+  const visibleState = useMemo(() => withDemoCapabilities(state, settings.demoCapabilities), [state, settings.demoCapabilities]);
+
   const value = useMemo<SessionContextValue>(
-    () => ({ state, client, connect, startDemo, signIn, signInWithGoogle, signOut, forgetServer, expire, refreshServerInfo, onSessionEnd }),
-    [state, client, connect, startDemo, signIn, signInWithGoogle, signOut, forgetServer, expire, refreshServerInfo, onSessionEnd],
+    () => ({ state: visibleState, client, connect, startDemo, signIn, signInWithGoogle, signOut, forgetServer, expire, refreshServerInfo, onSessionEnd }),
+    [visibleState, client, connect, startDemo, signIn, signInWithGoogle, signOut, forgetServer, expire, refreshServerInfo, onSessionEnd],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

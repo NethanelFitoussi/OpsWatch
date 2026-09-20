@@ -2,7 +2,7 @@
  * Local, non-sensitive preferences. Loaded once at startup; every change is written back to AsyncStorage.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Favorite, NotificationPreferences } from '@/api/contract';
+import type { Favorite, Feature, NotificationPreferences } from '@/api/contract';
 import { NOTIFICATION_CATEGORIES } from '@/api/contract';
 import { prefs, PREF_KEYS } from './storage';
 
@@ -19,6 +19,11 @@ export type Settings = {
   recentSearches: string[];
   /** Used only while the server does not support favorites (`features.favorites` false). */
   localFavorites: Favorite[];
+  /**
+   * Demo mode only: capabilities switched off by hand, so a contributor can see how the app behaves against a
+   * server that lacks them. Ignored for a real server, whose `GET /server` is the only source of truth.
+   */
+  demoCapabilities: Partial<Record<Feature, boolean>>;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -29,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifications: { enabled: false, minSeverity: 'critical', categories: [...NOTIFICATION_CATEGORIES] },
   recentSearches: [],
   localFavorites: [],
+  demoCapabilities: {},
 };
 
 export const MAX_RECENT_SEARCHES = 8;

@@ -1,7 +1,7 @@
 /**
  * Pure helpers for the alert screens: filter mapping, status presentation, durations and history ordering.
  */
-import type { AlertDetail, AlertSummary } from '@/api/contract';
+import type { AlertDetail, AlertSummary, Series } from '@/api/contract';
 import type { AlertFilters } from '@/api/client';
 import type { MessageKey } from '@/i18n';
 import type { IconName } from '@/ui/layout';
@@ -46,10 +46,28 @@ export function alertStatusMeta(status: AlertStatus) {
   return STATUS_META[status];
 }
 
-/** How long the alert has been in its current state, or null when the start time is unknown. */
-export function alertDurationMs(alert: Pick<AlertSummary, 'since'>, now: number): number | null {
-  if (alert.since === null) return null;
+/** Firing, acknowledged and insufficient_data are live states; only "resolved" is over. */
+export function isAlertOngoing(status: AlertStatus): boolean {
+  return status !== 'resolved';
+}
+
+/**
+ * How long the alert has been going, or null when that cannot be said: no start time, or the alert is resolved and
+ * the contract carries no end time, so "for 26 h" would be a claim the data does not support.
+ */
+export function alertDurationMs(alert: Pick<AlertSummary, 'since' | 'status'>, now: number): number | null {
+  if (alert.since === null || !isAlertOngoing(alert.status)) return null;
   return Math.max(0, now - alert.since);
+}
+
+/** The most recent point that has a value: a trailing gap is "no data", never the last known number nor 0. */
+export function latestValue(series: Series | undefined): number | null {
+  if (!series) return null;
+  for (let i = series.points.length - 1; i >= 0; i -= 1) {
+    const value = series.points[i]?.[1];
+    if (value !== null && value !== undefined) return value;
+  }
+  return null;
 }
 
 /** State history, oldest first. */

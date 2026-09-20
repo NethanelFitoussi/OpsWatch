@@ -1,6 +1,6 @@
 /**
- * Pure helpers of the Services screens: local filtering and favorite-first ordering. The server already sorts
- * unhealthy services first; these helpers keep that order and only pin favorites on top.
+ * Pure helpers of the Services screens: local filtering, triage ordering, and whether a service reports HTTP metrics
+ * at all. The list is a triage tool, so health always decides the order; favorites only break ties.
  */
 import type { HealthStatus, ServiceSummary } from '@/api/contract';
 
@@ -16,10 +16,22 @@ export function filterServices<T extends Pick<ServiceSummary, 'name' | 'kind' | 
   );
 }
 
-/** Favorites first, each group keeping the server's order (a stable partition, not a re-sort). */
-export function favoritesFirst<T extends { id: string }>(services: T[], isFavorite: (id: string) => boolean): T[] {
-  const favorites: T[] = [];
-  const others: T[] = [];
-  for (const service of services) (isFavorite(service.id) ? favorites : others).push(service);
-  return [...favorites, ...others];
+const HEALTH_RANK: Record<HealthStatus, number> = { critical: 0, degraded: 1, unknown: 2, healthy: 3 };
+
+/**
+ * Triage order: worst health first, favorites pinned inside each health group. A favorite is a preference, so it
+ * never pushes a healthy service above a service that is on fire. Ties keep the server's order (the sort is stable).
+ */
+export function favoritesFirst<T extends { id: string; health: HealthStatus }>(services: T[], isFavorite: (id: string) => boolean): T[] {
+  return [...services].sort(
+    (a, b) => HEALTH_RANK[a.health] - HEALTH_RANK[b.health] || Number(isFavorite(b.id)) - Number(isFavorite(a.id)),
+  );
+}
+
+/**
+ * A worker behind no load balancer has no request, latency or error-rate metric at all. That is "not measured", not
+ * "broken", and the screens say so instead of stacking three "No data" cells.
+ */
+export function hasHttpMetrics(service: Pick<ServiceSummary, 'errorRate' | 'latencyP95' | 'requests'>): boolean {
+  return service.errorRate.value !== null || service.latencyP95.value !== null || service.requests.value !== null;
 }

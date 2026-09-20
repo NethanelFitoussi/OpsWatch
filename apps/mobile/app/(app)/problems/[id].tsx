@@ -55,8 +55,6 @@ function ProblemDetail({ id }: { id: string }) {
                 testID="problem-open-investigation"
               />
             ) : null}
-            <AskAiButton context={{ type: 'problem', id: problem.id }} label={t('problems.ask')} question={t('problems.ask')} />
-
             {problem.description ? (
               <Section title={t('problems.summary')}>
                 <Card>
@@ -70,13 +68,15 @@ function ProblemDetail({ id }: { id: string }) {
             <RelatedObjects problem={problem} />
             <RepositoryEvidenceCards items={problem.repository} />
 
-            <Section title={t('problems.evidence')}>
-              {evidence.length ? (
+            {/* Empty sections are left out entirely rather than shown as empty shells. */}
+            {evidence.length ? (
+              <Section title={t('problems.evidence')}>
                 <EvidenceSections evidence={evidence} locale={locale} />
-              ) : (
-                <Text tone="muted">{t('problems.evidence.empty')}</Text>
-              )}
-            </Section>
+              </Section>
+            ) : null}
+
+            {/* An AI aid, below the facts it would comment on, never above the actions that change the problem. */}
+            <AskAiButton context={{ type: 'problem', id: problem.id }} label={t('problems.ask')} question={t('problems.ask')} />
           </>
         );
       }}

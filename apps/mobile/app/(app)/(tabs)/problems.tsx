@@ -1,9 +1,19 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Severity } from '@/api/contract';
 import { flattenPages, useProblems } from '@/api/queries';
 import { ProblemFilterHeader, ProblemListRow } from '@/features/problems/components';
-import { categoriesOf, DEFAULT_FILTERS, hasNarrowingFilters, sinceFor, toProblemFilters, type StatusFilter, type TimeRange } from '@/features/problems/helpers';
+import {
+  activeFilterLabels,
+  categoriesOf,
+  DEFAULT_FILTERS,
+  hasNarrowingFilters,
+  parseSeverities,
+  sinceFor,
+  toProblemFilters,
+  type StatusFilter,
+  type TimeRange,
+} from '@/features/problems/helpers';
 import { useI18n } from '@/i18n';
 import { isSafeId } from '@/lib/deep-links';
 import { InfiniteListScreen } from '@/ui/list-screen';
@@ -12,11 +22,13 @@ import { FeatureGate } from '@/ui/states';
 export default function ProblemsScreen() {
   const { t } = useI18n();
   const router = useRouter();
-  const params = useLocalSearchParams<{ service?: string }>();
+  const params = useLocalSearchParams<{ service?: string; severity?: string }>();
   const service = isSafeId(params.service) ? params.service : null;
+  // Severity lives in the route so Home can open this list already narrowed ("2 critical" → the two problems).
+  const severities = parseSeverities(params.severity);
+  const setSeverities = useCallback((next: Severity[]) => router.setParams({ severity: next.length ? next.join(',') : undefined }), [router]);
 
   const [status, setStatus] = useState<StatusFilter>(DEFAULT_FILTERS.status);
-  const [severities, setSeverities] = useState<Severity[]>([]);
   const [category, setCategory] = useState<string | null>(null);
   const [range, setRange] = useState<TimeRange>('any');
   const [since, setSince] = useState<number | null>(null);
@@ -30,7 +42,7 @@ export default function ProblemsScreen() {
   const categories = categoriesOf(loaded, category);
   const serviceLabel = service ? (loaded.find((p) => p.service?.id === service)?.service?.label ?? service) : null;
 
-  const quiet = status === 'open' && !hasNarrowingFilters(state);
+  const quiet = status === DEFAULT_FILTERS.status && !hasNarrowingFilters(state);
 
   return (
     <FeatureGate feature="problems" label={t('tab.problems')}>
@@ -42,7 +54,12 @@ export default function ProblemsScreen() {
         empty={
           quiet
             ? { title: t('problems.empty.open.title'), body: t('problems.empty.open.body'), icon: 'checkmark-circle-outline' }
-            : { title: t('problems.empty.filtered.title'), body: t('problems.empty.filtered.body'), icon: 'filter-outline' }
+            : {
+                title: t('problems.empty.filtered.title'),
+                // An empty list always names the filters that emptied it; the header keeps a way to clear them.
+                body: t('problems.empty.filtered.body', { filters: activeFilterLabels(t, state, range, serviceLabel).join(' · ') }),
+                icon: 'filter-outline',
+              }
         }
         header={
           <ProblemFilterHeader
@@ -60,6 +77,14 @@ export default function ProblemsScreen() {
             }}
             service={service && serviceLabel ? { id: service, label: serviceLabel } : null}
             onClearService={() => router.setParams({ service: undefined })}
+            filtered={!quiet}
+            onClearAll={() => {
+              setStatus(DEFAULT_FILTERS.status);
+              setCategory(null);
+              setRange('any');
+              setSince(null);
+              router.setParams({ service: undefined, severity: undefined });
+            }}
           />
         }
       />

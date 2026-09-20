@@ -57,7 +57,7 @@ export function QueryScreen<T>({ query, children, testID, header }: QueryScreenP
   return (
     <ScrollScreen refreshing={query.isRefetching && !query.isRefetchError} onRefresh={() => void query.refetch()} testID={testID}>
       {header}
-      <Freshness updatedAt={query.dataUpdatedAt} refreshFailed={!!query.error} fetching={query.isFetching} />
+      <Freshness updatedAt={query.dataUpdatedAt} refreshFailed={!!query.error} fetching={query.isFetching} onRetry={() => void query.refetch()} />
       {children(query.data)}
     </ScrollScreen>
   );

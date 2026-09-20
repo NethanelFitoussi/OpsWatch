@@ -38,9 +38,12 @@ export default function ErrorsScreen() {
             />
             {service ? (
               <View style={{ paddingHorizontal: spacing.lg, flexDirection: 'row' }}>
+                {/* The label stays a plain sentence: a "✕" in it is read out as "multiplication sign" by a screen
+                    reader, so the hint carries what tapping does instead. */}
                 <Chip
                   label={t('errors.serviceFilter', { service: serviceLabel ?? service })}
                   selected
+                  accessibilityHint={t('errors.serviceFilterHint')}
                   onPress={() => router.setParams({ service: undefined })}
                   testID="errors-service-filter"
                 />

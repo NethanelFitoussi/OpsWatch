@@ -4,9 +4,11 @@ import {
   buildLogQuery,
   findCachedLogEntry,
   formatLogTime,
+  formatLogWindow,
   levelLabelKey,
   levelsForFilter,
   levelTone,
+  logOrigin,
   rangeToWindow,
   searchStatistics,
   searchStatus,
@@ -62,6 +64,28 @@ describe('formatLogTime', () => {
   it('renders HH:MM:SS with leading zeros', () => {
     const at = new Date(2026, 8, 18, 7, 5, 9).getTime();
     expect(formatLogTime(at)).toBe('07:05:09');
+  });
+});
+
+describe('formatLogWindow', () => {
+  it('shows the absolute window the results cover', () => {
+    const from = new Date(2026, 8, 18, 7, 5, 9).getTime();
+    const to = new Date(2026, 8, 18, 8, 5, 9).getTime();
+    expect(formatLogWindow(from, to)).toBe('07:05:09 → 08:05:09');
+  });
+
+  it('adds the day when the window crosses midnight, so 23:50 → 00:50 is not ambiguous', () => {
+    const from = new Date(2026, 8, 18, 23, 50, 0).getTime();
+    const to = new Date(2026, 8, 19, 0, 50, 0).getTime();
+    expect(formatLogWindow(from, to)).toBe('09-18 23:50:00 → 09-19 00:50:00');
+  });
+});
+
+describe('logOrigin', () => {
+  it('falls back to the log source when the server named no service', () => {
+    expect(logOrigin({ service: 'checkout-api', source: '/ecs/checkout-api' })).toBe('checkout-api');
+    expect(logOrigin({ source: '/ecs/checkout-api' })).toBe('/ecs/checkout-api');
+    expect(logOrigin({})).toBeUndefined();
   });
 });
 

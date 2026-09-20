@@ -8,6 +8,7 @@ import type { AlertSummary, HealthStatus, ServiceDetail, ServiceSummary } from '
 import { FavoriteButton } from '@/features/shared/components';
 import { useOpenRef } from '@/features/shared/navigation';
 import { useI18n, type MessageKey, type Translate } from '@/i18n';
+import { formatMetric } from '@/lib/format';
 import { HealthBadge, SeverityBadge } from '@/ui/badges';
 import { ChipGroup, TextField, type ChipOption } from '@/ui/controls';
 import { Card, Row } from '@/ui/layout';
@@ -15,7 +16,7 @@ import { useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing, TOUCH_TARGET } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { HEALTH_FILTERS, type HealthFilter } from './helpers';
+import { HEALTH_FILTERS, hasHttpMetrics, type HealthFilter } from './helpers';
 import { CompactMetric } from '@/ui/data';
 
 /** Open problems and firing alerts, only the counts the server knows (null is left out, not shown as 0). */
@@ -26,22 +27,35 @@ export function serviceCounts(service: Pick<ServiceSummary, 'openProblems' | 'fi
   return parts;
 }
 
+/** The metrics as a screen reader hears them: the row itself is one element, so its children are not announced. */
+function metricsLabel(service: ServiceSummary, t: Translate): string[] {
+  if (!hasHttpMetrics(service)) return [t('services.noHttpMetrics')];
+  return [
+    `${t('services.metric.errors')}: ${service.errorRate.value === null ? t('metric.noData') : formatMetric(service.errorRate.value, service.errorRate.unit)}`,
+    `${t('services.metric.p95')}: ${service.latencyP95.value === null ? t('metric.noData') : formatMetric(service.latencyP95.value, service.latencyP95.unit)}`,
+    `${t('services.metric.requests')}: ${service.requests.value === null ? t('metric.noData') : formatMetric(service.requests.value, service.requests.unit)}`,
+  ];
+}
+
 export const ServiceRow = memo(function ServiceRow({ service, favorite }: { service: ServiceSummary; favorite: boolean }) {
   const { t } = useI18n();
   const { colors } = useTheme();
   const openRef = useOpenRef();
   const counts = serviceCounts(service, t);
+  const measured = hasHttpMetrics(service);
   return (
     <Pressable
       onPress={() => openRef({ type: 'service', id: service.id })}
       accessibilityRole="button"
-      accessibilityLabel={[service.name, t(`health.${service.health}`), favorite ? t('services.favorite') : null, ...counts].filter(Boolean).join(', ')}
+      accessibilityLabel={[service.name, t(`health.${service.health}`), favorite ? t('services.favorite') : null, ...counts, ...metricsLabel(service, t)]
+        .filter(Boolean)
+        .join(', ')}
       testID={`service-row-${service.id}`}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfaceAlt }]}
     >
       <View style={styles.rowTop}>
         <HealthBadge status={service.health} />
-        <Text variant="body" weight="600" numberOfLines={1} style={styles.flex}>
+        <Text variant="body" weight="600" numberOfLines={1} ellipsizeMode="middle" style={styles.flex}>
           {service.name}
         </Text>
         {favorite ? <Ionicons name="star" size={16} color={colors.warning} testID={`service-favorite-${service.id}`} accessibilityLabel={t('services.favorite')} /> : null}
@@ -52,11 +66,18 @@ export const ServiceRow = memo(function ServiceRow({ service, favorite }: { serv
           {[service.kind, ...counts].filter(Boolean).join(' · ')}
         </Text>
       ) : null}
-      <View style={styles.metrics}>
-        <CompactMetric label={t('services.metric.errors')} value={service.errorRate} testID={`service-${service.id}-errorRate`} />
-        <CompactMetric label={t('services.metric.p95')} value={service.latencyP95} testID={`service-${service.id}-latencyP95`} />
-        <CompactMetric label={t('services.metric.requests')} value={service.requests} testID={`service-${service.id}-requests`} />
-      </View>
+      {measured ? (
+        <View style={styles.metrics}>
+          <CompactMetric label={t('services.metric.errors')} value={service.errorRate} testID={`service-${service.id}-errorRate`} />
+          <CompactMetric label={t('services.metric.p95')} value={service.latencyP95} testID={`service-${service.id}-latencyP95`} />
+          <CompactMetric label={t('services.metric.requests')} value={service.requests} testID={`service-${service.id}-requests`} />
+        </View>
+      ) : (
+        // Three "No data" cells read as breakage; a worker simply is not measured this way.
+        <Text variant="caption" tone="faint" numberOfLines={1} testID={`service-${service.id}-not-measured`}>
+          {t('services.noHttpMetrics')}
+        </Text>
+      )}
     </Pressable>
   );
 });

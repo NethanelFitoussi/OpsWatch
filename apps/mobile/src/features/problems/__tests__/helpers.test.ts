@@ -9,10 +9,13 @@ import {
   CATEGORY_ALL,
   DEFAULT_FILTERS,
   deploymentCorrelationText,
+  durationText,
   hasNarrowingFilters,
   occurrencesText,
+  parseSeverities,
   problemDuration,
   problemEvidence,
+  activeFilterLabels,
   sinceFor,
   toProblemFilters,
 } from '../helpers';
@@ -99,7 +102,37 @@ describe('phrasing', () => {
     expect(briefCountsLine(tFr, { critical: 2, warning: 1, healthyServices: 1, totalServices: 3 })).toBe('2 critiques · 1 avertissement · 1 service sain');
     expect(occurrencesText(t, null)).toBeNull();
     expect(occurrencesText(t, 1)).toBe('1 occurrence');
-    expect(occurrencesText(t, 3712)).toBe('3712 occurrences');
+    expect(occurrencesText(t, 3712)).toBe('3,712 occurrences');
+  });
+});
+
+describe('durationText', () => {
+  it('says by its tense whether the problem is still happening', () => {
+    expect(durationText(t, { status: 'active', firstSeenAt: 0, lastSeenAt: 0 }, 75 * MIN)).toBe('ongoing for 1 h 15 min');
+    expect(durationText(t, { status: 'resolved', firstSeenAt: 0, lastSeenAt: 15 * MIN }, 999 * MIN)).toBe('lasted 15 min');
+    expect(durationText(tFr, { status: 'active', firstSeenAt: 0, lastSeenAt: 0 }, 75 * MIN)).toBe('en cours depuis 1 h 15 min');
+  });
+});
+
+describe('parseSeverities', () => {
+  it('keeps known severities only, deduplicated and in a stable order', () => {
+    expect(parseSeverities('warning,critical,critical,nonsense')).toEqual(['critical', 'warning']);
+    expect(parseSeverities(['critical', 'info'])).toEqual(['critical', 'info']);
+    expect(parseSeverities(undefined)).toEqual([]);
+    expect(parseSeverities('')).toEqual([]);
+  });
+});
+
+describe('activeFilterLabels', () => {
+  it('says nothing for the default open list, and names every filter otherwise', () => {
+    expect(activeFilterLabels(t, DEFAULT_FILTERS, 'any', null)).toEqual([]);
+    expect(activeFilterLabels(t, { ...DEFAULT_FILTERS, status: 'resolved' }, 'any', null)).toEqual(['Status: Resolved']);
+    expect(activeFilterLabels(t, { ...DEFAULT_FILTERS, severities: ['critical', 'warning'], category: 'databases', service: 'svc-a' }, '24h', 'checkout-api')).toEqual([
+      'Severity: Critical, Warning',
+      'Category: databases',
+      'Time: 24 h',
+      'Service: checkout-api',
+    ]);
   });
 });
 

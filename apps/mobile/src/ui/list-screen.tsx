@@ -37,11 +37,11 @@ function useListChrome() {
   };
 }
 
-function Header({ header, updatedAt, refreshFailed, fetching }: { header?: ReactNode; updatedAt: number; refreshFailed: boolean; fetching: boolean }) {
+function Header({ header, updatedAt, refreshFailed, fetching, onRetry }: { header?: ReactNode; updatedAt: number; refreshFailed: boolean; fetching: boolean; onRetry: () => void }) {
   return (
     <View style={styles.header}>
       <View style={styles.inset}>
-        <Freshness updatedAt={updatedAt} refreshFailed={refreshFailed} fetching={fetching} />
+        <Freshness updatedAt={updatedAt} refreshFailed={refreshFailed} fetching={fetching} onRetry={onRetry} />
       </View>
       {header}
     </View>
@@ -69,8 +69,9 @@ function wrapRow<T>(renderItem: ListRenderItem<T>, plain: boolean | undefined, s
 export function ListScreen<T>({ query, ...props }: CommonProps<T> & { query: UseQueryResult<T[]> }) {
   const { colors, contentStyle } = useListChrome();
   const items = query.data ?? [];
-  if (query.isPending) return <LoadingState />;
-  if (query.data === undefined) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  const retry = () => void query.refetch();
+  // Loading and failure stay inside the list, so the filters above the rows never disappear underneath the user.
+  const failed = !query.isPending && query.data === undefined;
   return (
     <FlatList
       testID={props.testID}
@@ -79,9 +80,17 @@ export function ListScreen<T>({ query, ...props }: CommonProps<T> & { query: Use
       data={items}
       keyExtractor={props.keyExtractor}
       renderItem={wrapRow(props.renderItem, props.plain, colors.surface, colors.border, items.length)}
-      ListHeaderComponent={<Header header={props.header} updatedAt={query.dataUpdatedAt} refreshFailed={!!query.error} fetching={query.isFetching} />}
-      ListEmptyComponent={<EmptyState title={props.empty.title} body={props.empty.body} icon={props.empty.icon} />}
-      refreshControl={<RefreshControl refreshing={query.isRefetching && !query.isRefetchError} onRefresh={() => void query.refetch()} tintColor={colors.primary} colors={[colors.primary]} />}
+      ListHeaderComponent={<Header header={props.header} updatedAt={query.dataUpdatedAt} refreshFailed={!!query.error} fetching={query.isFetching} onRetry={retry} />}
+      ListEmptyComponent={
+        query.isPending ? (
+          <LoadingState />
+        ) : failed ? (
+          <ErrorState error={query.error} onRetry={retry} />
+        ) : (
+          <EmptyState title={props.empty.title} body={props.empty.body} icon={props.empty.icon} />
+        )
+      }
+      refreshControl={<RefreshControl refreshing={query.isRefetching && !query.isRefetchError} onRefresh={retry} tintColor={colors.primary} colors={[colors.primary]} />}
       initialNumToRender={12}
       windowSize={7}
       removeClippedSubviews
@@ -98,8 +107,8 @@ export function InfiniteListScreen<T>({ query, ...props }: CommonProps<T> & { qu
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (query.isPending) return <LoadingState />;
-  if (query.data === undefined) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  const retry = () => void query.refetch();
+  const failed = !query.isPending && query.data === undefined;
   return (
     <FlatList
       testID={props.testID}
@@ -110,8 +119,16 @@ export function InfiniteListScreen<T>({ query, ...props }: CommonProps<T> & { qu
       renderItem={wrapRow(props.renderItem, props.plain, colors.surface, colors.border, items.length)}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
-      ListHeaderComponent={<Header header={props.header} updatedAt={query.dataUpdatedAt} refreshFailed={!!query.error && !query.isFetchNextPageError} fetching={query.isFetching && !isFetchingNextPage} />}
-      ListEmptyComponent={<EmptyState title={props.empty.title} body={props.empty.body} icon={props.empty.icon} />}
+      ListHeaderComponent={<Header header={props.header} updatedAt={query.dataUpdatedAt} refreshFailed={!!query.error && !query.isFetchNextPageError} fetching={query.isFetching && !isFetchingNextPage} onRetry={retry} />}
+      ListEmptyComponent={
+        query.isPending ? (
+          <LoadingState />
+        ) : failed ? (
+          <ErrorState error={query.error} onRetry={retry} />
+        ) : (
+          <EmptyState title={props.empty.title} body={props.empty.body} icon={props.empty.icon} />
+        )
+      }
       ListFooterComponent={
         isFetchingNextPage ? (
           <ActivityIndicator style={styles.footer} color={colors.primary} />

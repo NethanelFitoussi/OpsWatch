@@ -20,9 +20,21 @@ describe('Problems list', () => {
     expect(screen.queryByTestId('problems-row-prb-catalog-tasks')).toBeNull();
 
     fireEvent.press(screen.getByTestId('chip-resolved'));
-    expect(await screen.findByTestId('problems-row-prb-catalog-tasks', {}, wait)).toBeTruthy();
+    const resolved = await screen.findByTestId('problems-row-prb-catalog-tasks', {}, wait);
     expect(screen.queryByTestId('problems-row-prb-checkout-5xx')).toBeNull();
     expect(screen.queryByTestId('problems-row-prb-redis-latency')).toBeNull();
+    // A row that is over says so in its tense, and never keeps counting up.
+    expect(resolved).toHaveTextContent(/lasted /);
+    expect(resolved).toHaveTextContent(/ended /);
+    expect(resolved).not.toHaveTextContent(/ongoing for/);
+  });
+
+  it('shows how long an open problem has been going, and when it was last seen', async () => {
+    renderRouter('./app', { initialUrl: '/problems' });
+    const row = await screen.findByTestId('problems-row-prb-checkout-5xx', {}, wait);
+    expect(row).toHaveTextContent(/checkout-api/);
+    expect(row).toHaveTextContent(/ongoing for /);
+    expect(row).toHaveTextContent(/last seen /);
   });
 
   it('filters by severity and category', async () => {
@@ -55,7 +67,12 @@ describe('Problems list', () => {
     renderRouter('./app', { initialUrl: '/problems' });
     await screen.findByTestId('problems-row-prb-checkout-5xx', {}, wait);
     fireEvent.press(screen.getByTestId('chip-info'));
-    expect(await screen.findByTestId('empty-state', {}, wait)).toHaveTextContent(/No problems match these filters/);
+    const empty = await screen.findByTestId('empty-state', {}, wait);
+    expect(empty).toHaveTextContent(/No problems match these filters/);
+    // Why it is empty, in words, and a way out that is always on screen.
+    expect(empty).toHaveTextContent(/Active filters — Severity: Info/);
+    fireEvent.press(screen.getByTestId('problems-clear-filters'));
+    expect(await screen.findByTestId('problems-row-prb-checkout-5xx', {}, wait)).toBeTruthy();
   });
   it('is reassuring when nothing is open', async () => {
     // The demo staging environment has no problems.
@@ -86,6 +103,15 @@ describe('Problem detail', () => {
     expect(await screen.findByTestId('problem-acknowledged', {}, wait)).toHaveTextContent('Problem acknowledged.');
     await waitFor(() => expect(screen.getByTestId('problem-status')).toHaveTextContent(/Acknowledged/), wait);
     expect(screen.queryByTestId('problem-acknowledge')).toBeNull();
+  });
+
+  it('leaves out the sections the server has nothing for, instead of showing empty shells', async () => {
+    renderRouter('./app', { initialUrl: '/problems/prb-status-ssl' });
+    await screen.findByTestId('problem-title', {}, wait);
+    expect(screen.queryByText('EVIDENCE AND POSSIBLE CAUSES')).toBeNull();
+    expect(screen.queryByText('Metrics')).toBeNull();
+    expect(screen.queryByText('Deployment correlation')).toBeNull();
+    expect(screen.queryByTestId('problem-deployments')).toBeNull();
   });
 
   it('offers no Acknowledge action when it is not allowed', async () => {

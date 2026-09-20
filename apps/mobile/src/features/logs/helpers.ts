@@ -92,6 +92,25 @@ export function formatLogTimestamp(at: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${formatLogTime(at)}.${pad(d.getMilliseconds(), 3)}`;
 }
 
+/**
+ * The window a search actually covers, in local time: "14:03:07 → 15:03:07". The window is frozen when the search is
+ * submitted, so it keeps drifting away from "now" and must be shown as absolute times, never as "last hour" alone.
+ * The day is added on both ends when the window crosses midnight.
+ */
+export function formatLogWindow(from: number, to: number): string {
+  const sameDay = new Date(from).toDateString() === new Date(to).toDateString();
+  const at = (value: number) => {
+    const d = new Date(value);
+    return sameDay ? formatLogTime(value) : `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${formatLogTime(value)}`;
+  };
+  return `${at(from)} → ${at(to)}`;
+}
+
+/** Where a line came from: the service when the server named one, otherwise the log source (stream or file). */
+export function logOrigin(entry: Pick<LogEntry, 'service' | 'source'>): string | undefined {
+  return entry.service ?? entry.source;
+}
+
 function isLogSearchPages(value: unknown): value is { pages: LogSearch[] } {
   return typeof value === 'object' && value !== null && Array.isArray((value as { pages?: unknown }).pages);
 }

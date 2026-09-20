@@ -1,5 +1,5 @@
 import type { Evidence } from '@/api/contract';
-import { chronological, countByKind, visibleHighlights } from '../helpers';
+import { chronological, countByKind, splitPath, visibleHighlights, withDayBreaks } from '../helpers';
 
 const item = (id: string, at: number, kind: Evidence['kind']): Evidence => ({ id, at, kind, type: 'metric', title: id });
 
@@ -18,5 +18,27 @@ describe('chronological', () => {
 describe('visibleHighlights', () => {
   it('keeps only highlighted lines the snippet shows', () => {
     expect(visibleHighlights({ startLine: 41, code: ['a', 'b', 'c'], highlight: [40, 41, 43, 44] })).toEqual([41, 43]);
+  });
+});
+
+describe('withDayBreaks', () => {
+  const dayOf = (at: number) => (at < 100 ? 'Mon' : 'Tue');
+
+  it('puts the items in time order and labels only the first item of each day', () => {
+    const rows = withDayBreaks([item('c', 150, 'fact'), item('a', 10, 'fact'), item('b', 20, 'fact'), item('d', 160, 'fact')], dayOf);
+    expect(rows.map((row) => [row.item.id, row.day])).toEqual([
+      ['a', 'Mon'],
+      ['b', null],
+      ['c', 'Tue'],
+      ['d', null],
+    ]);
+  });
+});
+
+describe('splitPath', () => {
+  it('lets the file name lead a long path', () => {
+    expect(splitPath('src/pricing/cart-pricing.ts')).toEqual({ directory: 'src/pricing/', name: 'cart-pricing.ts' });
+    expect(splitPath('README.md')).toEqual({ directory: null, name: 'README.md' });
+    expect(splitPath('src/')).toEqual({ directory: null, name: 'src/' });
   });
 });

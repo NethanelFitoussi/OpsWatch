@@ -19,6 +19,8 @@ it('renders the investigation as one tagged timeline, and by kind on demand', as
   expect(timeline).toHaveTextContent(/Correlation/);
   expect(timeline).toHaveTextContent(/Hypothesis/);
   expect(screen.getByTestId('investigation-title')).toHaveTextContent('Checkout 5xx and database connection saturation');
+  // Mixed in with the facts, a hypothesis still has to say what it is worth.
+  expect(screen.getByTestId('timeline-hypothesis-note')).toHaveTextContent(/not confirmed findings/);
 
   fireEvent.press(screen.getByTestId('chip-kind'));
   expect(await screen.findByTestId('evidence-section-correlation')).toBeTruthy();
@@ -43,4 +45,14 @@ it('renders the Morning Brief with the most important problem', async () => {
   expect(screen.getByTestId('most-important-problem')).toHaveTextContent(/checkout-api is returning HTTP 5xx/);
   expect(screen.getByTestId('investigate-top-problem')).toBeTruthy();
   expect(screen.getByTestId('change-chg-1')).toBeTruthy();
+});
+
+it('groups what changed since yesterday, and dates the briefing', async () => {
+  renderRouter('./app', { initialUrl: '/brief' });
+  expect(await screen.findByTestId('change-group-new', {}, wait)).toHaveTextContent('NEW · 1');
+  expect(screen.getByTestId('change-group-up')).toHaveTextContent('INCREASED · 2');
+  expect(screen.getByTestId('change-group-resolved')).toHaveTextContent('RESOLVED · 1');
+  // The covered period comes from the server; the bottom line only says when the briefing was put together.
+  expect(screen.getByTestId('brief-headline')).toHaveTextContent(/Covers /);
+  expect(screen.getByTestId('brief-generated-at')).toHaveTextContent(/^Generated /);
 });

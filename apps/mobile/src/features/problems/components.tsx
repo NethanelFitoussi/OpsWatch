@@ -17,6 +17,7 @@ import {
   CATEGORY_ALL,
   categoryFromValue,
   categoryValue,
+  durationText,
   occurrencesText,
   STATUS_FILTERS,
   STATUS_META,
@@ -47,21 +48,26 @@ export function TrendIndicator({ trend }: { trend: ProblemSummary['trend'] }) {
   );
 }
 
-/** Severity, status and trend first, then the title, then where and how often. */
+/**
+ * How bad and whether it is still happening (badges), what (title), where and for how long (second line), how recent
+ * and how often (third line). The two lines are kept apart so a long service name never pushes the duration out.
+ */
 export const ProblemListRow = memo(function ProblemListRow({ problem }: { problem: ProblemSummary }) {
   const { t } = useI18n();
   const { colors } = useTheme();
   const openRef = useOpenRef();
   const now = useNow();
   const relative = useRelativeTime();
-  const meta = [problem.service?.label ?? problem.service?.id, t('problems.row.lastSeen', { time: relative(problem.lastSeenAt, now) }), occurrencesText(t, problem.occurrences)]
+  const resolved = problem.status === 'resolved';
+  const where = [problem.service?.label ?? problem.service?.id, durationText(t, problem, now)].filter(Boolean).join(' · ');
+  const when = [t(resolved ? 'problems.row.ended' : 'problems.row.lastSeen', { time: relative(problem.lastSeenAt, now) }), occurrencesText(t, problem.occurrences)]
     .filter(Boolean)
     .join(' · ');
   return (
     <Pressable
       onPress={() => openRef({ type: 'problem', id: problem.id })}
       accessibilityRole="button"
-      accessibilityLabel={`${t(`severity.${problem.severity}`)}, ${t(`status.${problem.status}`)}, ${problem.title}, ${meta}`}
+      accessibilityLabel={`${t(`severity.${problem.severity}`)}, ${t(`status.${problem.status}`)}, ${problem.title}, ${where}, ${when}`}
       testID={`problems-row-${problem.id}`}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfaceAlt }]}
     >
@@ -74,8 +80,11 @@ export const ProblemListRow = memo(function ProblemListRow({ problem }: { proble
         <Text variant="body" weight="600" numberOfLines={2}>
           {problem.title}
         </Text>
-        <Text variant="small" tone="muted" numberOfLines={1}>
-          {meta}
+        <Text variant="small" tone="muted" numberOfLines={1} style={styles.tabular}>
+          {where}
+        </Text>
+        <Text variant="small" tone="faint" numberOfLines={1} style={styles.tabular}>
+          {when}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textFaint} importantForAccessibility="no" />
@@ -95,19 +104,35 @@ type FilterHeaderProps = {
   onRange: (range: TimeRange) => void;
   service: { id: string; label: string } | null;
   onClearService: () => void;
+  /** True when anything is narrowing the list; the "Clear filters" chip is then offered. */
+  filtered: boolean;
+  onClearAll: () => void;
 };
 
 export function ProblemFilterHeader(props: FilterHeaderProps) {
   const { t } = useI18n();
   const statusOptions: ChipOption<StatusFilter>[] = STATUS_FILTERS.map((value) => ({ value, label: value === 'all' ? t('filter.all') : t(`status.${value}`) }));
   const severityOptions: ChipOption<Severity>[] = (['critical', 'warning', 'info'] as const).map((value) => ({ value, label: t(`severity.${value}`) }));
-  const categoryOptions: ChipOption<string>[] = [{ value: CATEGORY_ALL, label: t('filter.all') }, ...props.categories.map((c) => ({ value: categoryValue(c), label: c }))];
+  // "All categories", not "All": the status row above already has an "All" chip.
+  const categoryOptions: ChipOption<string>[] = [{ value: CATEGORY_ALL, label: t('problems.filter.allCategories') }, ...props.categories.map((c) => ({ value: categoryValue(c), label: c }))];
   const timeOptions: ChipOption<TimeRange>[] = TIME_RANGES.map((value) => ({ value, label: t(`time.range.${value}`), icon: value === 'any' ? undefined : 'time-outline' }));
   return (
     <View style={styles.filters} testID="problems-filters">
-      {props.service ? (
+      {props.service || props.filtered ? (
         <View style={styles.inset}>
-          <Chip label={t('problems.serviceFilter', { service: props.service.label })} selected onPress={props.onClearService} testID="problems-service-filter" />
+          {props.service ? (
+            <Chip label={t('problems.serviceFilter', { service: props.service.label })} selected onPress={props.onClearService} testID="problems-service-filter" />
+          ) : null}
+          {props.filtered ? (
+            <Chip
+              label={t('action.clearFilters')}
+              selected={false}
+              icon="close-circle-outline"
+              onPress={props.onClearAll}
+              accessibilityHint={t('problems.filter.clearHint')}
+              testID="problems-clear-filters"
+            />
+          ) : null}
         </View>
       ) : null}
       <ChipGroup options={statusOptions} value={props.status} onChange={props.onStatus} accessibilityLabel={t('filter.status')} />
@@ -131,5 +156,6 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   trend: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   filters: { gap: spacing.xs },
-  inset: { paddingHorizontal: spacing.lg, flexDirection: 'row' },
+  inset: { paddingHorizontal: spacing.lg, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  tabular: { fontVariant: ['tabular-nums'] },
 });

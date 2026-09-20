@@ -75,7 +75,8 @@ export const common = {
   'state.refreshing': 'Refreshing…',
   'state.demoBanner': 'DEMO DATA: fictional, not from a real server',
   'state.demoShort': 'DEMO',
-  'state.featureUnavailableTitle': 'This server has no {feature}',
+  'state.featureUnavailableTitle': 'Not available on this server',
+  'state.featureUnavailableFor': 'This server has no {feature}',
   'state.featureUnavailableBody':
     'Nothing is wrong: this OpsWatch server does not provide {feature}. Everything else in the app keeps working, and {feature} will appear here on its own if the server starts providing it.',
   'state.featureUnknownTitle': "This server hasn't said what it provides",

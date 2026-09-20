@@ -23,7 +23,7 @@ export function BriefHeadline({ brief, environmentName }: { brief: Brief; enviro
       <Text variant="headline" style={{ color: colors.text }} testID="brief-status">
         {headline}
       </Text>
-      <Text variant="body" weight="600" style={{ color: colors.text }} testID="brief-counts">
+      <Text variant="body" weight="600" style={[styles.tabular, { color: colors.text }]} testID="brief-counts">
         {counts}
       </Text>
       <Text variant="small" tone="muted">
@@ -35,4 +35,5 @@ export function BriefHeadline({ brief, environmentName }: { brief: Brief; enviro
 
 const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg, gap: spacing.sm },
+  tabular: { fontVariant: ['tabular-nums'] },
 });
