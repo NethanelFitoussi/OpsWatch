@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '@/i18n';
+import { StackHeader } from '@/ui/stack-header';
 import { DemoBanner, useDemoBannerShown } from '@/ui/states';
 import { useTheme } from '@/ui/theme-provider';
 
@@ -15,7 +16,8 @@ export default function AppLayout() {
   const demoBannerShown = useDemoBannerShown();
   const insets = useSafeAreaInsets();
   // The banner already covers the status bar area, so everything below it starts with no top inset; otherwise the header
-  // would leave a second empty strip under the banner.
+  // would leave a second empty strip under the banner. The stack's native header ignores this (see StackHeader), so it
+  // is replaced by our own for as long as the banner is up.
   const belowBanner = demoBannerShown ? { ...insets, top: 0 } : insets;
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -28,6 +30,7 @@ export default function AppLayout() {
             headerTitleStyle: { color: colors.text },
             contentStyle: { backgroundColor: colors.background },
             headerBackButtonDisplayMode: 'minimal',
+            header: demoBannerShown ? (props) => <StackHeader {...props} /> : undefined,
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

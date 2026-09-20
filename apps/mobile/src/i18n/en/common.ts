@@ -41,6 +41,7 @@ export const common = {
   'trend.falling': 'Falling',
   'trend.stable': 'Stable',
 
+  'action.back': 'Back',
   'action.retry': 'Try again',
   'action.copy': 'Copy',
   'action.copied': 'Copied',

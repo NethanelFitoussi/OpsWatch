@@ -43,6 +43,7 @@ export const common: Record<keyof typeof source, string> = {
   'trend.falling': 'En baisse',
   'trend.stable': 'Stable',
 
+  'action.back': 'Retour',
   'action.retry': 'Réessayer',
   'action.copy': 'Copier',
   'action.copied': 'Copié',
