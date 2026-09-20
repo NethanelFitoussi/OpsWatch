@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import * as SystemUI from 'expo-system-ui';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import { palettes, type ColorSchemeName, type Palette } from './theme';
 import type { ThemeMode } from '@/state/settings';
@@ -16,6 +17,13 @@ export function ThemeProvider({ mode, children }: { mode: ThemeMode; children: R
   const system = useColorScheme();
   const scheme = resolveScheme(mode, system);
   const value = useMemo(() => ({ scheme, colors: palettes[scheme] }), [scheme]);
+
+  // The native root view keeps the theme's background, so switching to dark mode or launching into it never shows a
+  // white flash behind the React tree.
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(value.colors.background).catch(() => undefined);
+  }, [value.colors.background]);
+
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

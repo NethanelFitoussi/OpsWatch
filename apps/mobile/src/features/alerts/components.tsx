@@ -11,6 +11,7 @@ import { formatDateTime, formatDuration } from '@/lib/format';
 import { useOpenRef } from '@/features/shared/navigation';
 import { SeverityBadge } from '@/ui/badges';
 import { Button } from '@/ui/controls';
+import { haptics } from '@/lib/haptics';
 import { errorMessageKey, useNow, useRelativeTime } from '@/ui/states';
 import { Text } from '@/ui/text';
 import { spacing } from '@/ui/theme';
@@ -96,8 +97,14 @@ export function AcknowledgeAction({ alert }: { alert: AlertDetail }) {
           testID="alert-acknowledge"
           onPress={() =>
             acknowledge.mutate(undefined, {
-              onSuccess: () => AccessibilityInfo.announceForAccessibility(t('alerts.acknowledgeSuccess')),
-              onError: (error) => AccessibilityInfo.announceForAccessibility(t('alerts.acknowledgeFailed', { reason: t(errorMessageKey(error)) })),
+              onSuccess: () => {
+                haptics.success();
+                AccessibilityInfo.announceForAccessibility(t('alerts.acknowledgeSuccess'));
+              },
+              onError: (error) => {
+                haptics.error();
+                AccessibilityInfo.announceForAccessibility(t('alerts.acknowledgeFailed', { reason: t(errorMessageKey(error)) }));
+              },
             })
           }
         />

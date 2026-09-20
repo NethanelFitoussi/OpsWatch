@@ -39,3 +39,11 @@ jest.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 4 },
   AndroidNotificationVisibility: { PRIVATE: 0 },
 }));
+
+jest.mock('expo-system-ui', () => ({ setBackgroundColorAsync: jest.fn(async () => undefined) }));
+
+jest.mock('expo-haptics', () => ({
+  notificationAsync: jest.fn(async () => undefined),
+  selectionAsync: jest.fn(async () => undefined),
+  NotificationFeedbackType: { Success: 'success', Error: 'error', Warning: 'warning' },
+}));

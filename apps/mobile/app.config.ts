@@ -35,10 +35,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     buildNumber: env('OPSWATCH_IOS_BUILD_NUMBER') ?? '1',
     supportsTablet: true,
     associatedDomains: associatedDomain ? [`applinks:${associatedDomain}`] : undefined,
-    config: { usesNonExemptEncryption: false },
     infoPlist: {
-      // Face ID is not used; OpsWatch only stores its session token in the Keychain.
+      // OpsWatch uses only HTTPS to the server the user configures; no exemption paperwork applies.
       ITSAppUsesNonExemptEncryption: false,
+      // Replaces the Expo dev-launcher wording, which would otherwise ship to the App Store. A release build asks
+      // for the local network only to reach an OpsWatch server on the same network.
+      NSLocalNetworkUsageDescription: 'OpsWatch connects to the OpsWatch server you configure. It needs local network access only when that server runs on this network.',
     },
   },
   android: {
@@ -80,7 +82,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
-    'expo-secure-store',
+    // OpsWatch never asks for biometric authentication, so the Face ID prompt this plugin adds by default is removed:
+    // it would otherwise claim in the App Store listing that the app accesses Face ID data.
+    ['expo-secure-store', { faceIDPermission: false }],
     'expo-web-browser',
     'expo-localization',
     [
