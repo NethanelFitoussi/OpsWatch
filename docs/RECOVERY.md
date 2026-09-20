@@ -31,14 +31,22 @@ file by file, found essentially complete, and preserved rather than rewritten.
 `seq` cursor, the append-only `events` spine with `collector_runs`, the collector lock claimed in one
 conditional update, and incidents with their timeline and the retention rules. Migrations `0003`–`0006`.
 
-**Phase 2 — the Problem engine. Tasks 5–7 done.** The problem key and the severity score with both halves of
-§33.7; the three outcomes, the detector framework and the lifecycle with §33.5; fleet collapse and expansion
-with hysteresis per §33.8. Everything under `src/lib/detect/` is pure — no AWS, no clock, no database — and
-the boundary test enforces that rather than trusting it, down to `Date.now()`.
+**Phase 2 — the Problem engine. Complete.** Tasks 5–8: the problem key and the severity score with both
+halves of §33.7; the three outcomes, the detector framework and the lifecycle with §33.5; fleet collapse and
+expansion with hysteresis per §33.8; and the Stage 2 rules adapted as detectors. Everything under
+`src/lib/detect/` is pure — no AWS, no clock, no database — and the boundary test enforces that rather than
+trusting it, down to `Date.now()`.
 
-**Next: Task 8**, the first detectors over the existing Stage 2 rules, which completes Phase 2. Then Phase 3
-(the collector), Phase 4 (the surfaces), Phase 5 (error intelligence), Phase 6 (storage providers), then
-mission 2. **The plan writes out only Tasks 1–4 as delivered** — Tasks 5–7 were derived from the spec and
+**Next: Task 9**, the collector runtime and its cycle (Phase 3), then Tasks 10–12 (the `inventory` and
+`detect` jobs, compaction, and the checkpoint where the engine runs headless). Then Phase 4 (the surfaces),
+Phase 5 (error intelligence), Phase 6 (storage providers), then mission 2.
+
+**Two things Phase 2 decided that later tasks depend on.** The Stage 2 rules are *adapted*, never copied —
+`src/lib/detect/aws.ts` turns `Insight[]` into outcomes, and `insights.ts` remains the only place thresholds
+live. And a grouped Stage 2 insight is **expanded back into its members**, because §33.8 makes fleet collapse
+a lifecycle transition: `planFleet` collapses at the problem level, so the children exist and keep their
+history. Task 10 owes the adapter two things it cannot know yet — real `minutesBreaching` from the live
+problem's `firstSeenAt`, and family sizes for the blast radius. **The plan writes out only Tasks 1–4 as delivered** — Tasks 5–7 were derived from the spec and
 written into it before being implemented, and every later task must be too, so a crash leaves the derived task
 behind rather than only the memory of it.
 
