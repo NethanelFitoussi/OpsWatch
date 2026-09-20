@@ -11,6 +11,12 @@ export const commitSchema = z.object({
   message: z.string().optional(),
   author: z.string().optional(),
   at: epochSchema.optional(),
+  /**
+   * A link to this commit in the provider, built by the server because only the server knows the provider,
+   * the host, and whether the instance talks to github.com or an enterprise host. Absent means OpsWatch
+   * cannot build a link for that provider — a fact, not a failure.
+   */
+  url: z.string().optional(),
 });
 export type Commit = z.infer<typeof commitSchema>;
 
@@ -27,5 +33,7 @@ export const repositoryEvidenceSchema = z.object({
   /** Unified diff text, already trimmed by the server to the relevant hunks. */
   diff: z.string().optional(),
   summary: z.string().optional(),
+  /** The same, for the file and its line range. Built by the server, for the same reason. */
+  fileUrl: z.string().optional(),
 });
 export type RepositoryEvidence = z.infer<typeof repositoryEvidenceSchema>;

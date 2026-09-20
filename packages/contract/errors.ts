@@ -4,7 +4,18 @@
  * An error group is a fingerprint, not a single occurrence: it is what a screen lists, counts and follows over time.
  */
 import { z } from 'zod';
-import { allowedActionsSchema, epochSchema, idSchema, lenientEnum, nullableNumberSchema, refSchema, seriesSchema } from './primitives';
+import {
+  allowedActionsSchema,
+  epochSchema,
+  idSchema,
+  lenientEnum,
+  nullableNumberSchema,
+  refSchema,
+  seriesSchema,
+  trendSchema,
+} from './primitives';
+import { deploymentSummarySchema } from './deployments';
+import { repositoryEvidenceSchema } from './repository';
 
 export const ERROR_STATUSES = ['new', 'recurring', 'regression', 'resolved'] as const;
 export type ErrorStatus = (typeof ERROR_STATUSES)[number];
@@ -18,8 +29,22 @@ export const errorSummarySchema = z.object({
   route: z.string().optional(),
   occurrences: nullableNumberSchema.default(null),
   affectedInstances: nullableNumberSchema.default(null),
+  /**
+   * The window `occurrences` and `affectedInstances` are counted over. **`null` means lifetime**, since
+   * `firstSeenAt`. A count without its window is not a count, so a windowed figure is never sent with the
+   * window omitted.
+   */
+  occurrencesWindow: z.object({ from: epochSchema, to: epochSchema }).nullable().default(null),
   firstSeenAt: epochSchema,
   lastSeenAt: epochSchema,
+  /**
+   * When the group entered its current `status`. For a `regression` this is when it came back, which is the
+   * whole point of that state — `firstSeenAt` is the group's first ever sighting and answers a different
+   * question.
+   */
+  statusSince: epochSchema.optional(),
+  /** Whether it is getting worse, read from the hourly rollups. `null` renders as "no trend", never `stable`. */
+  trend: trendSchema,
   problemId: idSchema.optional(),
 });
 export type ErrorSummary = z.infer<typeof errorSummarySchema>;
@@ -35,7 +60,15 @@ export const logEntrySchema = z.object({
   source: z.string().optional(),
   message: z.string(),
   fields: z.record(z.string(), z.string()).optional(),
-  links: z.object({ errorId: idSchema.optional(), problemId: idSchema.optional(), serviceId: idSchema.optional() }).optional(),
+  links: z
+    .object({
+      errorId: idSchema.optional(),
+      problemId: idSchema.optional(),
+      serviceId: idSchema.optional(),
+      deploymentId: idSchema.optional(),
+      incidentId: idSchema.optional(),
+    })
+    .optional(),
 });
 export type LogEntry = z.infer<typeof logEntrySchema>;
 
@@ -57,6 +90,13 @@ export const errorDetailSchema = errorSummarySchema.extend({
   instances: z.array(z.string()).default([]),
   sampleLogs: z.array(logEntrySchema).default([]),
   trend: seriesSchema.optional(),
+  /**
+   * Deployments shortly before the group started or regressed, and the code the stack trace points at. The
+   * same shapes `problemDetail` carries, because a stack trace lives on the error group and an error with no
+   * problem would otherwise have no route to either. Correlation, never a claim of causation.
+   */
+  deployments: z.array(z.object({ deployment: deploymentSummarySchema, minutesBeforeError: z.number() })).default([]),
+  repository: z.array(repositoryEvidenceSchema).default([]),
   allowedActions: allowedActionsSchema,
 });
 export type ErrorDetail = z.infer<typeof errorDetailSchema>;

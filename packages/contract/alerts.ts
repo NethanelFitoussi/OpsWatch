@@ -15,6 +15,12 @@ export const alertSummarySchema = z.object({
   source: z.string(),
   reason: z.string().optional(),
   since: epochSchema.nullable(),
+  /**
+   * When it stopped firing, so a resolved alert can say how long it lasted — the first number anyone wants
+   * after the fact. The server sends it from its own record; it is never guessed from `history[]`, because
+   * that would mean interpreting a provider's status words.
+   */
+  resolvedAt: epochSchema.nullable().default(null),
   service: refSchema.optional(),
   problemId: idSchema.optional(),
   incidentId: idSchema.optional(),

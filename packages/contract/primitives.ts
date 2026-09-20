@@ -78,3 +78,15 @@ export const seriesSchema = z.object({
   thresholds: z.object({ warning: z.number().optional(), critical: z.number().optional() }).optional(),
 });
 export type Series = z.infer<typeof seriesSchema>;
+
+/**
+ * Which way a measurement is going. An **enum**, not a series: a list needs a direction, and a detail screen
+ * that wants the shape carries a `series` of its own.
+ *
+ * Derived the same way everywhere (D1): compare the two most recent values — `rising` when the newer exceeds
+ * the older by more than 5 %, `falling` when it is lower by more than 5 %, `stable` between. `null` when there
+ * is nothing to compare, and `null` renders as "no trend", never as `stable`.
+ */
+export const TRENDS = ['rising', 'falling', 'stable'] as const;
+export type Trend = (typeof TRENDS)[number];
+export const trendSchema = lenientEnum(TRENDS, 'stable').nullable().default(null);

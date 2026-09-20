@@ -17,6 +17,8 @@ export const changeSchema = z.object({
   id: idSchema,
   direction: lenientEnum(CHANGE_DIRECTIONS, 'stable'),
   text: z.string(),
+  /** When it happened, so a brief can be read in order rather than only grouped. */
+  at: epochSchema.optional(),
   severity: severitySchema.optional(),
   ref: refSchema.optional(),
 });
@@ -28,8 +30,24 @@ export const familySchema = z.object({
   status: healthStatusSchema,
   total: nullableNumberSchema,
   affected: nullableNumberSchema,
-  /** Present when the server could not read this family (missing permission, throttling, error). */
-  unavailable: z.object({ reason: z.string(), code: z.string().optional() }).optional(),
+  /**
+   * Present when the server could not read this family (missing permission, throttling, error).
+   *
+   * `reason` and `code` are for logic. The sentence is returned **twice** (§12.2): `messageKey` + `values` for
+   * a client that holds the catalogue and renders in its own locale, and `message` already rendered in the
+   * caller's locale for one that does not. This is the most trust-relevant line on the first screen, so it
+   * says what cannot be read and why, in OpsWatch's own words — never a provider's raw error text, which is
+   * unbounded, untranslated and occasionally carries an account identifier.
+   */
+  unavailable: z
+    .object({
+      reason: z.string(),
+      code: z.string().optional(),
+      messageKey: z.string().optional(),
+      values: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
+      message: z.string().optional(),
+    })
+    .optional(),
 });
 export type Family = z.infer<typeof familySchema>;
 

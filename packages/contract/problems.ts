@@ -13,6 +13,7 @@ import {
   refSchema,
   seriesSchema,
   severitySchema,
+  trendSchema,
 } from './primitives';
 import { alertSummarySchema } from './alerts';
 import { deploymentSummarySchema } from './deployments';
@@ -21,8 +22,6 @@ import { repositoryEvidenceSchema } from './repository';
 
 export const PROBLEM_STATUSES = ['new', 'active', 'acknowledged', 'resolved'] as const;
 export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
-export const TRENDS = ['rising', 'falling', 'stable'] as const;
-export type Trend = (typeof TRENDS)[number];
 
 export const problemSummarySchema = z.object({
   id: idSchema,
@@ -42,7 +41,7 @@ export const problemSummarySchema = z.object({
   firstSeenAt: epochSchema,
   lastSeenAt: epochSchema,
   occurrences: nullableNumberSchema.default(null),
-  trend: lenientEnum(TRENDS, 'stable').nullable().default(null),
+  trend: trendSchema,
   summary: z.string().optional(),
 });
 export type ProblemSummary = z.infer<typeof problemSummarySchema>;
@@ -87,6 +86,8 @@ export const investigationSchema = z.object({
   subject: refSchema,
   status: lenientEnum(['open', 'concluded'] as const, 'open'),
   startedAt: epochSchema,
+  /** When it ended, so a concluded investigation can say how long it took. Absent while it is still open. */
+  concludedAt: epochSchema.optional(),
   summary: z.string().optional(),
   timeline: z.array(evidenceSchema),
 });
