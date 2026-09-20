@@ -1196,5 +1196,8 @@
       "refresh_invalid": "Choisissez l'un des intervalles d'actualisation proposés.",
       "range_invalid": "Choisissez l'une des périodes proposées."
     }
+  },
+  "Api": {
+    "environmentName": "{connection} — {region}"
   }
 }

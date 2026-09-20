@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type { TokenAudience } from '@opswatch/contract';
 import {
   CONNECTION_METHODS,
   CONNECTION_STATUSES,
@@ -19,6 +20,14 @@ export const sessions = sqliteTable('sessions', {
     .references(() => adminUser.id, { onDelete: 'cascade' }),
   expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  /**
+   * Which kind of client this session was minted for: `web` for the browser cookie, `api` for a bearer token. A
+   * session is only accepted where its own audience belongs, so neither can be replayed as the other. Rows written
+   * before the API existed are browser sessions, which is what the default says.
+   */
+  audience: text('audience').notNull().default('web').$type<TokenAudience>(),
+  /** Null until the session is presented a second time. `GET /me/sessions` shows it, so a stale device stands out. */
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
 });
 
 export const connections = sqliteTable('connections', {

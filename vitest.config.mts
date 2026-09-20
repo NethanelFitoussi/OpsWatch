@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),
+      '@opswatch/contract': path.resolve(import.meta.dirname, 'packages/contract/index.ts'),
       'server-only': path.resolve(import.meta.dirname, 'tests/stubs/server-only.ts'),
     },
   },

@@ -8,7 +8,8 @@ import { env } from '../env';
 import { hasAdmin } from './admin';
 import { createSession, deleteSession, validateSession } from './sessions';
 
-const SESSION_COOKIE = 'opswatch_session';
+/** The browser session cookie. The API reads it by name too, so it is named in one place. */
+export const SESSION_COOKIE = 'opswatch_session';
 
 // The database enforces the 12 h rolling expiry; the cookie only needs to outlive it.
 const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
