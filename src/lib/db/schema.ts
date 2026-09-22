@@ -384,3 +384,24 @@ export type ErrorGroupRow = typeof errorGroups.$inferSelect;
 export type ErrorOccurrenceRow = typeof errorOccurrences.$inferSelect;
 export type LogSourceRow = typeof logSources.$inferSelect;
 
+/**
+ * How many bytes Logs Insights scanned, per day, for the whole instance.
+ *
+ * §9.5: Logs Insights is billed per gigabyte scanned and is the one cost that can surprise a self-hoster.
+ * `OPSWATCH_LOGS_BUDGET_GB_PER_DAY` is a **hard stop**, not a warning, and this is what it is measured
+ * against. One row per UTC day, so yesterday's spend is still readable tomorrow.
+ */
+export const logsUsage = sqliteTable(
+  'logs_usage',
+  {
+    /** The UTC day, as epoch milliseconds at midnight. */
+    day: integer('day').primaryKey(),
+    bytesScanned: integer('bytes_scanned').notNull(),
+    queries: integer('queries').notNull(),
+    /** Set when the budget stopped the job that day, so the reason is visible rather than inferred. */
+    stoppedAt: integer('stopped_at'),
+  },
+);
+
+export type LogsUsageRow = typeof logsUsage.$inferSelect;
+

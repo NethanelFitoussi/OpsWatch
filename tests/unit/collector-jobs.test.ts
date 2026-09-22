@@ -30,16 +30,24 @@ describe('the job catalogue', () => {
     expect(JOBS.detect.cap).toBeNull();
   });
 
-  it('runs exactly D4\'s three jobs on a fresh install, and no others', () => {
+  it('runs only the jobs that cost a fresh install nothing', () => {
     // The promise a fresh installation makes: no extra AWS request. `detect` reads what the pages already
-    // fetched and `inventory` is Describe*, which §9.5 records as throttled but not billed.
-    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'inventory']);
+    // fetched, `inventory` is Describe* (throttled but not billed, §9.5), `compact` touches no provider, and
+    // `errors` finds no enabled log source, so it does nothing at all until someone opts one in.
+    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'errors', 'inventory']);
   });
 
-  it('leaves everything that costs money or needs an opt-in switched off', () => {
-    for (const id of ['metrics', 'deployments', 'queries', 'errors', 'logvolume', 'baselines', 'slo'] as const) {
+  it('leaves every job that would spend money on a fresh install switched off', () => {
+    for (const id of ['metrics', 'deployments', 'queries', 'logvolume', 'baselines', 'slo'] as const) {
       expect(JOBS[id].freshInstall, id).toBe(false);
     }
+  });
+
+  it('lets `errors` run from the start only because an opted-out source costs nothing', () => {
+    // The switch that protects the bill is the per-source opt-in and the daily byte budget, not this flag.
+    // Scheduling it from the start means an operator who enables a log group does not need a second switch.
+    expect(JOBS.errors.freshInstall).toBe(true);
+    expect(JOBS.errors.cap).toBe(1);
   });
 
   it('scopes every data job to an environment, and compaction to the instance', () => {

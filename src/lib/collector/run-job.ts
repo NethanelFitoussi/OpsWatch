@@ -1,6 +1,8 @@
 import 'server-only';
 import { getDb } from '../db/client';
+import { env } from '../env';
 import { runDetectJob } from './detect';
+import { runErrorsJob } from './errors-job';
 import type { JobRun } from './runner';
 
 /**
@@ -11,8 +13,15 @@ import type { JobRun } from './runner';
  * did no work rather than as a success that quietly did nothing.
  */
 export const runJob: JobRun = async (job, nowMs) => {
-  if (job.id === 'detect' && job.connectionId !== null && job.scope !== null) {
-    return runDetectJob({ db: getDb(), connectionId: job.connectionId, scope: job.scope, nowMs });
+  if (job.connectionId === null || job.scope === null) return { covered: 0, total: 0 };
+  const scoped = { db: getDb(), connectionId: job.connectionId, scope: job.scope, nowMs };
+
+  switch (job.id) {
+    case 'detect':
+      return runDetectJob(scoped);
+    case 'errors':
+      return runErrorsJob({ ...scoped, budgetGbPerDay: env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY });
+    default:
+      return { covered: 0, total: 0 };
   }
-  return { covered: 0, total: 0 };
 };
