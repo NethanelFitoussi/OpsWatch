@@ -92,7 +92,9 @@ describe('the sub-pages no task has built yet', () => {
     expect(isSubsectionBuilt('databases', 'instances')).toBe(true);
     expect(isSubsectionBuilt('databases', 'queries')).toBe(true);
     expect(isSubsectionBuilt('logs', 'search')).toBe(true);
-    expect(isSubsectionBuilt('logs', 'volume')).toBe(false);
+    expect(isSubsectionBuilt('logs', 'volume')).toBe(true);
+    // The last one still unbuilt, which is what keeps this assertion meaningful.
+    expect(isSubsectionBuilt('logs', 'endpoints')).toBe(false);
   });
 
   it('never leaves a section pointing at a page that does not exist', () => {

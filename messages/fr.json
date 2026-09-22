@@ -1425,6 +1425,24 @@
         "search_failed": "OpsWatch n’a pas pu lister les groupes de journaux. Vérifiez la connexion et sa permission logs, puis réessayez.",
         "invalid_search": "Cette recherche est trop longue."
       }
+    },
+    "volume": {
+      "title": "Volume",
+      "cardTitle": "Volume et rétention des journaux",
+      "cardDescription": "Ce que chaque groupe de journaux a ingéré sur la période, et sa durée de conservation.",
+      "total": "{total} ingérés sur {groups, plural, one {un groupe} other {# groupes}}.",
+      "truncated": "Affichage des {covered} premiers groupes de journaux de ce compte.",
+      "foreverCount": "{count, plural, one {Un groupe est conservé} other {# groupes sont conservés}} indéfiniment : leur taille ne fait que croître.",
+      "group": "Groupe de journaux",
+      "ingested": "Ingéré",
+      "share": "Part",
+      "stored": "Stocké",
+      "retention": "Rétention",
+      "forever": "Indéfiniment",
+      "days": "{days} jours",
+      "notMeasured": "Non mesuré",
+      "empty": "Cette région n’a aucun groupe de journaux.",
+      "noQueryCost": "Lu depuis les métriques CloudWatch et DescribeLogGroups : cette page ne consomme rien du budget quotidien de scan des journaux."
     }
   },
   "Insights": {

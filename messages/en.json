@@ -1425,6 +1425,24 @@
         "search_failed": "OpsWatch could not list log groups. Check the connection and its logs permission, then try again.",
         "invalid_search": "That search is too long."
       }
+    },
+    "volume": {
+      "title": "Volume",
+      "cardTitle": "Log volume and retention",
+      "cardDescription": "How much each log group ingested over the window, and how long it is kept.",
+      "total": "{total} ingested across {groups, plural, one {one log group} other {# log groups}}.",
+      "truncated": "Showing the first {covered} log groups of this account.",
+      "foreverCount": "{count, plural, one {One log group is} other {# log groups are}} kept forever, so their stored size only grows.",
+      "group": "Log group",
+      "ingested": "Ingested",
+      "share": "Share",
+      "stored": "Stored",
+      "retention": "Retention",
+      "forever": "Forever",
+      "days": "{days} days",
+      "notMeasured": "Not measured",
+      "empty": "This region has no log groups.",
+      "noQueryCost": "Read from CloudWatch metrics and DescribeLogGroups, so this page costs nothing against the daily log scanning budget."
     }
   },
   "Insights": {
