@@ -1327,6 +1327,47 @@
     "errors": {
       "refresh_invalid": "Choose one of the offered refresh intervals.",
       "range_invalid": "Choose one of the offered time ranges."
+    },
+    "status": {
+      "title": "System status",
+      "description": "What OpsWatch knows about itself. This page reads only its own database, so it still works when monitoring does not.",
+      "collector": "Collector",
+      "collectorAlive": "Running",
+      "collectorStale": "Not running",
+      "collectorNever": "The collector has never run. Every page that reports on your environments is reporting on nothing yet.",
+      "collectorHint": "One process collects at a time. It takes a lock and refreshes it every 30 seconds.",
+      "lastHeartbeat": "Last heartbeat",
+      "jobs": "Jobs",
+      "job": {
+        "name": "Job",
+        "last": "Last run",
+        "status": "Result",
+        "duration": "Took",
+        "covered": "Covered",
+        "next": "Next"
+      },
+      "jobStatus": {
+        "running": "Running",
+        "ok": "OK",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "never": "Never run"
+      },
+      "truncated": "Capped",
+      "coveredOf": "{covered} of {total}",
+      "environments": "Environments",
+      "environment": {
+        "name": "Environment",
+        "lastRead": "Last read",
+        "families": "Read"
+      },
+      "neverRead": "Never read",
+      "database": "Database",
+      "size": "Size",
+      "schema": "Schema version",
+      "version": "OpsWatch version",
+      "notMeasured": "Not measured",
+      "adminOnly": "Only an administrator can see this page."
     }
   },
   "Api": {

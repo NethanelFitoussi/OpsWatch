@@ -1327,6 +1327,47 @@
     "errors": {
       "refresh_invalid": "Choisissez l'un des intervalles d'actualisation proposés.",
       "range_invalid": "Choisissez l'une des périodes proposées."
+    },
+    "status": {
+      "title": "État du système",
+      "description": "Ce qu'OpsWatch sait de lui-même. Cette page ne lit que sa propre base : elle fonctionne encore quand la surveillance, elle, ne fonctionne plus.",
+      "collector": "Collecteur",
+      "collectorAlive": "En marche",
+      "collectorStale": "À l'arrêt",
+      "collectorNever": "Le collecteur n'a jamais tourné. Toutes les pages qui rendent compte de vos environnements ne rendent compte de rien pour l'instant.",
+      "collectorHint": "Un seul processus collecte à la fois. Il prend un verrou et le rafraîchit toutes les 30 secondes.",
+      "lastHeartbeat": "Dernier signe de vie",
+      "jobs": "Tâches",
+      "job": {
+        "name": "Tâche",
+        "last": "Dernière exécution",
+        "status": "Résultat",
+        "duration": "Durée",
+        "covered": "Couvert",
+        "next": "Prochaine"
+      },
+      "jobStatus": {
+        "running": "En cours",
+        "ok": "OK",
+        "failed": "Échec",
+        "skipped": "Ignorée",
+        "never": "Jamais exécutée"
+      },
+      "truncated": "Plafonnée",
+      "coveredOf": "{covered} sur {total}",
+      "environments": "Environnements",
+      "environment": {
+        "name": "Environnement",
+        "lastRead": "Dernière lecture",
+        "families": "Lu"
+      },
+      "neverRead": "Jamais lu",
+      "database": "Base de données",
+      "size": "Taille",
+      "schema": "Version du schéma",
+      "version": "Version d'OpsWatch",
+      "notMeasured": "Non mesuré",
+      "adminOnly": "Seul un administrateur peut voir cette page."
     }
   },
   "Api": {

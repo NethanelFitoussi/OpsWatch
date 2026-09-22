@@ -13,6 +13,7 @@ import {
   problemSummarySchema,
   serverInfoSchema,
   sessionListSchema,
+  systemStatusSchema,
 } from '@opswatch/contract';
 
 /**
@@ -159,6 +160,16 @@ export const API_ROUTES: ApiRouteSpec[] = [
     response: problemDetailSchema,
     status: 200,
     errors: ['unauthorized', 'invalid_request', 'not_found'],
+  },
+  {
+    method: 'get',
+    path: '/system/status',
+    operationId: 'getSystemStatus',
+    auth: 'session',
+    summary: 'What OpsWatch knows about itself: the collector, its jobs and the database. Admin only.',
+    response: systemStatusSchema,
+    status: 200,
+    errors: ['unauthorized', 'forbidden'],
   },
   {
     method: 'get',
