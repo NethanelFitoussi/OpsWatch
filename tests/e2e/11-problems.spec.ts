@@ -140,3 +140,17 @@ test('filters that are honoured actually narrow the list', async ({ page }) => {
   for (const item of resolved.items) expect(item.status).toBe('resolved');
   expect(resolved.items.length).toBeLessThanOrEqual(all.items.length);
 });
+
+test('§7 — a problem with no deployment near it shows no correlation card at all', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  if ((await first.count()) === 0) test.skip(true, 'no problem detected in this environment');
+
+  await first.click();
+  await expect(page).toHaveURL(/\/overview\/problems\/[^/]+$/);
+  await expect(page.getByRole('heading', { name: 'Evidence' })).toBeVisible();
+  const main = await page.locator('main').innerText();
+  // The deployments job has recorded nothing here, so the card is absent rather than an empty list that
+  // would read as "nothing was deployed".
+  expect(main).not.toContain('Deployments just before this started');
+});

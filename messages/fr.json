@@ -1160,7 +1160,11 @@
         "firstSeen": "Première fois",
         "lastSeen": "Dernière fois",
         "occurrences": "Occurrences",
-        "flaps": "Retours"
+        "flaps": "Retours",
+        "deployments": "Déploiements juste avant le début",
+        "deploymentsDescription": "Déploiements du même service lancés peu avant ce problème. C’est un écart de temps mesuré, pas une cause : un déploiement pendant un incident est souvent sans rapport.",
+        "minutesBefore": "{minutes, plural, =0 {au même moment} one {1 minute avant} other {# minutes avant}}",
+        "deploymentFailed": "ce déploiement a échoué"
       }
     },
     "health": {

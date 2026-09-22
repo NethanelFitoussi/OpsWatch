@@ -93,6 +93,27 @@ export default async function ProblemDetailPage({ params }: Props) {
         <EvidenceList evidence={detail.evidence} />
       </MonitoringCard>
 
+      {detail.deployments.length > 0 && (
+        <MonitoringCard title={t('detail.deployments')}>
+          {/* §7: the measured gap and the relation. Never "because" — an unrelated deployment during an
+              incident is the most ordinary thing in the world, and this card must not accuse one. */}
+          <p className="text-sm text-muted-foreground">{t('detail.deploymentsDescription')}</p>
+          <ul className="mt-2 divide-y">
+            {detail.deployments.map((entry) => (
+              <li key={entry.deployment.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0 break-all">
+                  {entry.deployment.service.label ?? entry.deployment.service.id} · {entry.deployment.version}
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {t('detail.minutesBefore', { minutes: entry.minutesBeforeProblem })}
+                  {entry.deployment.status === 'failed' && ` · ${t('detail.deploymentFailed')}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </MonitoringCard>
+      )}
+
       <ScoreBreakdown terms={row.scoreTerms} />
     </SectionLayout>
   );
