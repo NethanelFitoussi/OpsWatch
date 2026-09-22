@@ -62,6 +62,31 @@ it('does not retry client errors and keeps the server code and AWS action', asyn
   expect(calls).toHaveLength(1);
 });
 
+/**
+ * `action` is the only string the app takes from an error body and shows verbatim, as the permission the server is
+ * missing. Anything that is not an `service:Operation` shape is free text placed inside the app's own error card by
+ * whatever answered the request, so it is dropped rather than rendered.
+ */
+it.each([
+  ['free text', 'ask your administrator for s3 access'],
+  ['a sentence with a colon', 'Error: something went wrong'],
+  ['markup', '<b>logs:StartQuery</b>'],
+  ['a newline', 'logs:StartQuery\nand more'],
+  ['a path', '../../etc/passwd'],
+  ['empty', ''],
+])('drops an action that is not a provider action shape (%s)', async (_label, action) => {
+  const { impl } = fakeFetch([{ status: 403, body: { error: 'aws_denied', action } }]);
+  const error = (await request(transport(impl), { path: '/x', schema }).catch((e: unknown) => e)) as ApiError;
+  expect(error.kind).toBe('forbidden');
+  expect(error.action).toBeUndefined();
+});
+
+it('keeps a wildcard action, which providers do use', async () => {
+  const { impl } = fakeFetch([{ status: 403, body: { error: 'aws_denied', action: 'logs:*' } }]);
+  const error = (await request(transport(impl), { path: '/x', schema }).catch((e: unknown) => e)) as ApiError;
+  expect(error.action).toBe('logs:*');
+});
+
 it('reports contract drift as invalid_response without leaking values', async () => {
   const { impl } = fakeFetch([{ status: 200, body: { value: 'secret-looking-string' } }]);
   const error = (await request(transport(impl), { path: '/x', schema }).catch((e: unknown) => e)) as ApiError;

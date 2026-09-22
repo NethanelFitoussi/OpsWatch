@@ -35,6 +35,14 @@ function setPresentationPreferences(preferences: NotificationPreferences): void 
   currentPrefs = preferences;
 }
 
+/**
+ * Lets a test put the module back into its two interesting states: before the stored preferences have been read
+ * (`null`, when nothing may be shown) and after. Nothing else may set it to `null`.
+ */
+export function setPresentationPreferencesForTest(preferences: NotificationPreferences | null): void {
+  currentPrefs = preferences;
+}
+
 if (!isWeb) {
   Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
