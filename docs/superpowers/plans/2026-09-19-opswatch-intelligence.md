@@ -1331,3 +1331,35 @@ of AWS. `mostImportant` is the bounded top-N's first entry.
 - [x] **Step 2:** `GET /api/v1/brief`, the page, EN/FR, `features.brief`, and the brief becomes the
   overview default as D2 intends.
 - [x] **Step 3:** tests, a real browser check, gate, commit, integrate.
+
+---
+
+## Phase 5 — Error intelligence
+
+### Task 18: Fingerprint v1, rebuild-proof
+
+Implements §4.4's deterministic fingerprint and **§33.13** (fingerprints survive a rebuild).
+
+**Files:** `src/lib/detect/fingerprint.ts`, `tests/unit/detect-fingerprint.test.ts`.
+
+Pure, like the rest of `detect`. The whole value is that **the same error keeps one group across deploys**:
+a build hash in a path and a minified function name both change on every release, and a fingerprint that
+noticed either would start a new group every time anyone shipped.
+
+- `FINGERPRINT_VERSION` 1 · `NORMALIZED_MESSAGE_MAX` 300 · `MAX_FRAMES` 5 (**D3**).
+- `normalizeMessage` — §4.4's order exactly: collapse whitespace, then UUID, IP, URL, e-mail, quoted string,
+  hex run of 8+, any remaining digit run, then trim and truncate. The order is load-bearing: a UUID contains
+  hex runs and digits, so replacing digits first would destroy it.
+- `normalizeFrame` — §33.13: a path segment that looks like a build hash is stripped, a function name that
+  matches a minifier pattern (one or two characters, or a bare digit sequence) is replaced by its **position**,
+  and a resolved symbol from a source map is preferred over both.
+- `fingerprint` — drop frames under `node_modules|vendor|site-packages|/usr/lib|<internal>`, keep the top
+  `MAX_FRAMES`, reduce each to `file:function` (**line numbers are dropped**, because they move on a
+  whitespace commit), and hash `type \n message \n frames`. With no stack, hash the type, the message and the
+  log group name instead.
+
+- [x] **Step 1: the tests**, including §33.13's two: two builds of the same code with different content
+  hashes and minified names give **one** fingerprint; two genuinely different errors with the same minified
+  names do **not** collide.
+- [x] **Step 2: the module.**
+- [x] **Step 3: gate and commit.**
