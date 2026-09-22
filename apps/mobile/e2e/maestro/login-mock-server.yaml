@@ -1,0 +1,49 @@
+# Connect to the mock server (development build: plain HTTP opt-in), sign in, sign out, sign in again.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: server-url
+- inputText: ${SERVER_URL}
+- tapOn:
+    id: allow-insecure
+- tapOn:
+    id: test-connection
+- assertVisible:
+    id: connect-success
+- tapOn:
+    id: connect-continue
+- tapOn:
+    id: login-email
+- inputText: demo@opswatch.dev
+- tapOn:
+    id: login-password
+- inputText: opswatch-demo
+- tapOn:
+    id: login-submit
+- assertVisible:
+    id: status-title
+- tapOn:
+    id: tab-more
+- tapOn:
+    id: more-settings
+- scrollUntilVisible:
+    element:
+      id: settings-sign-out
+- tapOn:
+    id: settings-sign-out
+- tapOn:
+    id: settings-sign-out-confirm
+- assertVisible:
+    id: login-screen
+- tapOn:
+    id: login-email
+- inputText: demo@opswatch.dev
+- tapOn:
+    id: login-password
+- inputText: opswatch-demo
+- tapOn:
+    id: login-submit
+- assertVisible:
+    id: status-title
