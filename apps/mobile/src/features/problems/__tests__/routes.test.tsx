@@ -37,17 +37,25 @@ describe('Problems list', () => {
     expect(row).toHaveTextContent(/last seen /);
   });
 
-  it('filters by severity and category', async () => {
+  it('filters by severity', async () => {
     renderRouter('./app', { initialUrl: '/problems' });
     await screen.findByTestId('problems-row-prb-checkout-5xx', {}, wait);
 
     fireEvent.press(screen.getByTestId('chip-warning'));
     expect(await screen.findByTestId('problems-row-prb-redis-latency', {}, wait)).toBeTruthy();
     await waitFor(() => expect(screen.queryByTestId('problems-row-prb-checkout-5xx')).toBeNull(), wait);
+  });
 
-    fireEvent.press(screen.getByTestId('chip-cat:containers'));
-    expect(await screen.findByTestId('problems-row-prb-orders-worker-cpu', {}, wait)).toBeTruthy();
-    await waitFor(() => expect(screen.queryByTestId('problems-row-prb-redis-latency')).toBeNull(), wait);
+  /**
+   * The category chips were removed when the contract declared which filters each endpoint honours: `category` is
+   * not one of them, and an undeclared parameter is now a 400 rather than something the server ignores. Offering a
+   * chip that breaks the list is worse than not offering it.
+   */
+  it('offers no filter the server would reject', async () => {
+    renderRouter('./app', { initialUrl: '/problems' });
+    await screen.findByTestId('problems-row-prb-checkout-5xx', {}, wait);
+    expect(screen.queryByTestId('chip-cat:containers')).toBeNull();
+    expect(screen.queryByTestId('chip-cat:all')).toBeNull();
   });
 
   // External links drop query strings (deep-link allow-list), so the service filter is reached by in-app navigation.

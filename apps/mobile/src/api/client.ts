@@ -80,15 +80,24 @@ import {
 } from './contract';
 import { request, type Transport } from './http';
 
+/**
+ * The filters each list endpoint honours. The vocabulary is the contract's (`LIST_FILTERS`); these types only give it
+ * concrete values. Anything not declared there is a 400, not a no-op, so nothing may be added here alone —
+ * `src/api/__tests__/pagination-agreement.test.ts` holds both halves together.
+ */
 export type ProblemFilters = {
   status?: ProblemStatus | 'open';
   severity?: Severity[];
   service?: string;
-  category?: string;
   /** Epoch ms lower bound on `lastSeenAt`. */
   since?: number;
 };
-export type ErrorFilters = { status?: ErrorSummary['status']; service?: string };
+export type ErrorFilters = {
+  status?: ErrorSummary['status'];
+  service?: string;
+  /** Epoch ms lower bound on `lastSeenAt`. */
+  since?: number;
+};
 export type AlertFilters = { status?: AlertSummary['status'] | 'history' };
 export type LogQuery = {
   text?: string;
@@ -227,7 +236,6 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
         status: f.status,
         severity: f.severity,
         service: f.service,
-        category: f.category,
         since: f.since,
         cursor,
       }),
@@ -236,7 +244,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
       await request(transport, { method: 'POST', path: p(`/problems/${enc(id)}/acknowledge`), schema: empty, token: getToken(), query: env(scope) });
     },
 
-    errors: (scope, f, cursor) => get('/errors', pageSchema(errorSummarySchema), { ...env(scope), status: f.status, service: f.service, cursor }),
+    errors: (scope, f, cursor) => get('/errors', pageSchema(errorSummarySchema), { ...env(scope), status: f.status, service: f.service, since: f.since, cursor }),
     error: (scope, id) => get(`/errors/${enc(id)}`, errorDetailSchema, env(scope)),
 
     services: (scope) => get('/services', listOf(serviceSummarySchema), env(scope)),

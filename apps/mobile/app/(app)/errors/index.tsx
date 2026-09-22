@@ -5,6 +5,7 @@ import type { ErrorSummary } from '@/api/contract';
 import { useErrors } from '@/api/queries';
 import { ErrorRow } from '@/features/errors/components';
 import { ERROR_STATUS_FILTERS, errorFilterLabelKey, errorFiltersFor, type ErrorStatusFilter } from '@/features/errors/helpers';
+import { sinceFor, TIME_RANGES, type TimeRange } from '@/features/problems/helpers';
 import { useI18n } from '@/i18n';
 import { isSafeId } from '@/lib/deep-links';
 import { Chip, ChipGroup } from '@/ui/controls';
@@ -18,7 +19,10 @@ export default function ErrorsScreen() {
   const params = useLocalSearchParams<{ service?: string }>();
   const service = isSafeId(params.service) ? params.service : null;
   const [status, setStatus] = useState<ErrorStatusFilter>('all');
-  const query = useErrors(errorFiltersFor(status, service));
+  // Epoch ms is computed once when the range is chosen, so the query key does not change on every render.
+  const [range, setRange] = useState<TimeRange>('any');
+  const [since, setSince] = useState<number | null>(null);
+  const query = useErrors(errorFiltersFor(status, service, since));
   const serviceLabel = query.data?.pages[0]?.items[0]?.service?.label ?? service;
 
   return (
@@ -36,6 +40,15 @@ export default function ErrorsScreen() {
               onChange={setStatus}
               accessibilityLabel={t('filter.status')}
             />
+            <ChipGroup
+              options={TIME_RANGES.map((value) => ({ value, label: t(`time.range.${value}`), icon: value === 'any' ? undefined : ('time-outline' as const) }))}
+              value={range}
+              onChange={(value) => {
+                setRange(value);
+                setSince(sinceFor(value, Date.now()));
+              }}
+              accessibilityLabel={t('filter.time')}
+            />
             {service ? (
               <View style={{ paddingHorizontal: spacing.lg, flexDirection: 'row' }}>
                 {/* The label stays a plain sentence: a "✕" in it is read out as "multiplication sign" by a screen
@@ -51,7 +64,7 @@ export default function ErrorsScreen() {
             ) : null}
           </>
         }
-        empty={{ title: status === 'all' && !service ? t('errors.emptyTitle') : t('errors.emptyFilteredTitle'), body: t('errors.emptyBody'), icon: 'bug-outline' }}
+        empty={{ title: status === 'all' && !service && since === null ? t('errors.emptyTitle') : t('errors.emptyFilteredTitle'), body: t('errors.emptyBody'), icon: 'bug-outline' }}
       />
     </FeatureGate>
   );

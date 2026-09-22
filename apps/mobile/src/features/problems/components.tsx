@@ -14,9 +14,6 @@ import { Text } from '@/ui/text';
 import { spacing, TOUCH_TARGET } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
 import {
-  CATEGORY_ALL,
-  categoryFromValue,
-  categoryValue,
   durationText,
   occurrencesText,
   STATUS_FILTERS,
@@ -97,9 +94,6 @@ type FilterHeaderProps = {
   onStatus: (status: StatusFilter) => void;
   severities: Severity[];
   onSeverities: (severities: Severity[]) => void;
-  categories: string[];
-  category: string | null;
-  onCategory: (category: string | null) => void;
   range: TimeRange;
   onRange: (range: TimeRange) => void;
   service: { id: string; label: string } | null;
@@ -113,8 +107,6 @@ export function ProblemFilterHeader(props: FilterHeaderProps) {
   const { t } = useI18n();
   const statusOptions: ChipOption<StatusFilter>[] = STATUS_FILTERS.map((value) => ({ value, label: value === 'all' ? t('filter.all') : t(`status.${value}`) }));
   const severityOptions: ChipOption<Severity>[] = (['critical', 'warning', 'info'] as const).map((value) => ({ value, label: t(`severity.${value}`) }));
-  // "All categories", not "All": the status row above already has an "All" chip.
-  const categoryOptions: ChipOption<string>[] = [{ value: CATEGORY_ALL, label: t('problems.filter.allCategories') }, ...props.categories.map((c) => ({ value: categoryValue(c), label: c }))];
   const timeOptions: ChipOption<TimeRange>[] = TIME_RANGES.map((value) => ({ value, label: t(`time.range.${value}`), icon: value === 'any' ? undefined : 'time-outline' }));
   return (
     <View style={styles.filters} testID="problems-filters">
@@ -137,14 +129,6 @@ export function ProblemFilterHeader(props: FilterHeaderProps) {
       ) : null}
       <ChipGroup options={statusOptions} value={props.status} onChange={props.onStatus} accessibilityLabel={t('filter.status')} />
       <MultiChipGroup options={severityOptions} values={props.severities} onChange={props.onSeverities} accessibilityLabel={t('filter.severity')} />
-      {props.categories.length > 0 ? (
-        <ChipGroup
-          options={categoryOptions}
-          value={props.category ? categoryValue(props.category) : CATEGORY_ALL}
-          onChange={(value) => props.onCategory(categoryFromValue(value))}
-          accessibilityLabel={t('filter.category')}
-        />
-      ) : null}
       <ChipGroup options={timeOptions} value={props.range} onChange={props.onRange} accessibilityLabel={t('filter.time')} />
     </View>
   );

@@ -11,7 +11,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ENDPOINT_PAGINATION } from '../contract';
+import { ENDPOINT_PAGINATION, LIST_FILTERS, RESERVED_LIST_PARAMS } from '../contract';
 
 const client = readFileSync(join(__dirname, '../client.ts'), 'utf8');
 
@@ -61,4 +61,38 @@ it('passes a cursor to every endpoint it treats as cursored', () => {
     if (!block.includes('cursor')) withoutCursor.push(path);
   }
   expect(withoutCursor).toEqual([]);
+});
+
+/**
+ * The filters the app sends, against the ones the server honours.
+ *
+ * These used to disagree silently: the app sent `status`, `severity`, `service`, `category` and `since`, and the
+ * server read none of them. A chip lit up, a full unfiltered page came back, and the list did not change — which
+ * reads as "there is only one critical problem" rather than "filtering did not happen". The contract now declares
+ * what each endpoint honours, and an undeclared parameter is a 400 rather than a shrug, so sending one would break
+ * the list outright. Both halves are worth holding: nothing undeclared goes out, and nothing declared is forgotten.
+ */
+describe('list filters', () => {
+  /** What the client puts in the query string for an endpoint, read from the call itself. */
+  function sentFor(path: string): Set<string> {
+    const start = client.indexOf(`get('${path}'`);
+    if (start < 0) return new Set();
+    const call = client.slice(start, start + 500);
+    const body = call.slice(call.indexOf('{'), call.indexOf('}') + 1);
+    return new Set([...body.matchAll(/([a-zA-Z]+):/g)].map((m) => m[1]!));
+  }
+
+  it.each(Object.keys(LIST_FILTERS))('sends only parameters %s declares', (path) => {
+    const declared = new Set<string>([...Object.keys(LIST_FILTERS[path as keyof typeof LIST_FILTERS]), ...RESERVED_LIST_PARAMS]);
+    // `env` is spread in as `...env(scope)` rather than named, so it never appears here.
+    const undeclared = [...sentFor(path)].filter((name) => !declared.has(name));
+    expect(undeclared).toEqual([]);
+  });
+
+  /** A declared filter nobody sends is a feature the server built and the app never offered. */
+  it.each(Object.keys(LIST_FILTERS))('offers every filter %s honours', (path) => {
+    const sent = sentFor(path);
+    const missing = Object.keys(LIST_FILTERS[path as keyof typeof LIST_FILTERS]).filter((name) => !sent.has(name));
+    expect(missing).toEqual([]);
+  });
 });
