@@ -4,6 +4,14 @@ import { z } from 'zod';
 const schema = z.object({
   OPSWATCH_SECRET: z.string().min(32, 'must be at least 32 characters'),
   OPSWATCH_DATA_DIR: z.string().min(1).default('/data'),
+  /** `off` stops the collector in this process. §9.2's off switch. */
+  OPSWATCH_COLLECTOR: z.enum(['on', 'off']).default('on'),
+  /**
+   * `collector` is a second container from the same image that collects and serves nothing; `web` is its
+   * counterpart that serves pages and does not collect. Unset means one container doing both, which is what
+   * an ordinary self-hosted installation runs.
+   */
+  OPSWATCH_ROLE: z.enum(['web', 'collector']).optional(),
   OPSWATCH_PUBLIC_URL: z.url().optional(),
   OPSWATCH_TEMPLATE_BUCKET: z.string().min(3).optional(),
   OPSWATCH_AWS_ENDPOINT_URL: z.url().optional(),
