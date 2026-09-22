@@ -17,6 +17,7 @@ import { deployments } from './deployments';
 import { investigations } from './investigations';
 import { ai } from './ai';
 import { search } from './search';
+import { system } from './system';
 
 export const fr: Record<MessageKey, string> = {
   ...common,
@@ -36,4 +37,5 @@ export const fr: Record<MessageKey, string> = {
   ...investigations,
   ...ai,
   ...search,
+  ...system,
 };

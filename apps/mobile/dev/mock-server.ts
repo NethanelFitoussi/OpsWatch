@@ -6,6 +6,7 @@
  *
  *   npm run mock-server                 # http://localhost:4010, AI enabled
  *   npm run mock-server -- --port 4011 --no-ai --latency 400
+ *   npm run mock-server -- --forbid-system   # /system/status answers 403, as it does for a non-administrator
  *
  * Sign in with demo@opswatch.dev / opswatch-demo. From an Android emulator the host is http://10.0.2.2:4010.
  * Plain HTTP is only accepted by development builds, after enabling "Allow plain HTTP" on the Connect screen.
@@ -21,6 +22,8 @@ import { buildDemoDataset, DEMO_CREDENTIALS, type DemoDataset } from '../src/dem
 export type MockServerOptions = {
   port?: number;
   ai?: boolean;
+  /** Answer `GET /system/status` with 403, the way a real server answers a non-administrator. */
+  forbidSystem?: boolean;
   latencyMs?: number;
   /** Rejects every authenticated request with 401 after this many, to test session expiry. 0 = never. */
   expireAfter?: number;
@@ -29,6 +32,7 @@ export type MockServerOptions = {
 type Json = Record<string, unknown> | unknown[];
 
 export function createMockServer(options: MockServerOptions = {}): { server: Server; tokens: Set<string> } {
+  const forbidSystem = options.forbidSystem === true;
   const tokens = new Set<string>();
   const searches = new Map<string, { query: LogQuery; env?: string; polls: number }>();
   let favorites: Favorite[] = [{ type: 'service', id: 'svc-checkout-api', label: 'checkout-api' }];
@@ -123,6 +127,13 @@ export function createMockServer(options: MockServerOptions = {}): { server: Ser
           return send(res, 200, { email: DEMO_CREDENTIALS.email, name: 'Demo user' });
         case 'GET environments':
           return send(res, 200, { items: d.environments });
+        // `/system/status` is administrator-only on a real server. The mock answers it, so the screen and its
+        // degraded states can be exercised; `--forbid-system` makes it answer 403 instead, which is what a
+        // non-administrator sees and is an ordinary answer rather than a failure.
+        case 'GET system/:id':
+          if (id !== 'status') break;
+          if (forbidSystem) return fail(res, 403, 'forbidden', 'Only an administrator can see system status.');
+          return send(res, 200, { ...d.systemStatus, generatedAt: now });
         case 'GET health':
           return send(res, 200, engine.healthFor(d, env, now));
         case 'GET brief':
@@ -284,6 +295,7 @@ if (isMain && !process.env.JEST_WORKER_ID) {
   const port = Number(argValue('--port') ?? process.env.PORT ?? 4010);
   const { server } = createMockServer({
     ai: !process.argv.includes('--no-ai'),
+    forbidSystem: process.argv.includes('--forbid-system'),
     latencyMs: Number(argValue('--latency') ?? 0),
     expireAfter: Number(argValue('--expire-after') ?? 0),
   });

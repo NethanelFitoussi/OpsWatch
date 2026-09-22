@@ -75,6 +75,8 @@ import {
   type SyntheticDetail,
   type SyntheticSummary,
   type User,
+  systemStatusSchema,
+  type SystemStatus,
 } from './contract';
 import { request, type Transport } from './http';
 
@@ -110,6 +112,11 @@ export interface OpsWatchClient {
   me(): Promise<User>;
 
   environments(): Promise<Environment[]>;
+  /**
+   * What OpsWatch knows about itself. Not environment-scoped: it reports on the instance. Administrator-only, so a
+   * `forbidden` here is an ordinary answer for a non-admin account, not a failure.
+   */
+  systemStatus(): Promise<SystemStatus>;
   health(scope: Scope): Promise<Health>;
   brief(scope: Scope): Promise<Brief>;
 
@@ -210,6 +217,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
     me: () => get('/me', userSchema),
 
     environments: () => get('/environments', listOf(environmentSchema)),
+    systemStatus: () => get('/system/status', systemStatusSchema),
     health: (scope) => get('/health', healthSchema, env(scope)),
     brief: (scope) => get('/brief', briefSchema, env(scope)),
 

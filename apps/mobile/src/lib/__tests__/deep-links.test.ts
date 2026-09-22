@@ -24,6 +24,17 @@ describe('parseDeepLink', () => {
   it('accepts top-level screens', () => {
     expect(parseDeepLink('opswatch://problems')).toBe('/problems');
     expect(parseDeepLink('/')).toBe('/');
+    expect(parseDeepLink('opswatch://system')).toBe('/system');
+  });
+
+  /**
+   * The allow-list is the point of this module, so adding a screen means adding it here too. Forgetting is silent:
+   * the link resolves to nothing and the app opens Home, which reads as the link being wrong rather than unlisted.
+   * This asserts that every top-level screen the app ships is reachable by link.
+   */
+  it('lists every top-level screen the app has', () => {
+    const screens = ['/', '/problems', '/alerts', '/services', '/errors', '/incidents', '/synthetics', '/slos', '/deployments', '/logs', '/infrastructure', '/brief', '/search', '/ask', '/settings', '/system'];
+    for (const screen of screens) expect(parseDeepLink(`opswatch:/${screen}`)).toBe(screen);
   });
 
   it('drops query strings and fragments so a link cannot carry tokens or pre-fill actions', () => {
