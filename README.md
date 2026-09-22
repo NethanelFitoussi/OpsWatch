@@ -276,6 +276,7 @@ your own server, Android and iOS builds, testing, and the route to each store 鈥
 | [testing.md](docs/mobile/testing.md) | The testing matrix, and what has actually been verified |
 | [android.md](docs/mobile/android.md) 路 [ios.md](docs/mobile/ios.md) | Building and releasing on each platform |
 | [expo-eas.md](docs/mobile/expo-eas.md) 路 [release.md](docs/mobile/release.md) | Build profiles, signing, store submission |
+| [store-assets.md](docs/mobile/store-assets.md) | Store screenshots and the pipeline that regenerates them |
 | [configuration.md](docs/mobile/configuration.md) 路 [privacy.md](docs/mobile/privacy.md) 路 [security.md](docs/mobile/security.md) | Every setting, what is stored, and the security review |
 | [troubleshooting.md](docs/mobile/troubleshooting.md) | When it does not work |
 

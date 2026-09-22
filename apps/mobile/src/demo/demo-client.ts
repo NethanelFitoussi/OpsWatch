@@ -6,12 +6,13 @@ import type { OpsWatchClient } from '@/api/client';
 import type { Favorite } from '@/api/contract';
 import { ApiError } from '@/api/errors';
 import * as engine from './engine';
+import { isScreenshotMode, nowForDemo } from './screenshot-mode';
 import { buildDemoDataset, DEMO_CREDENTIALS, type DemoDataset } from './fixtures';
 
 export type DemoClientOptions = { latencyMs?: number; now?: () => number };
 
 export function createDemoClient(options: DemoClientOptions = {}): OpsWatchClient {
-  const now = options.now ?? Date.now;
+  const now = options.now ?? nowForDemo;
   const latency = options.latencyMs ?? 250;
   let data: DemoDataset = buildDemoDataset(now());
   let builtAt = now();
@@ -19,7 +20,7 @@ export function createDemoClient(options: DemoClientOptions = {}): OpsWatchClien
 
   /** Rebuild every minute so relative times ("3 min ago") keep moving while the demo is open. */
   function fresh(): DemoDataset {
-    if (now() - builtAt > 60_000) {
+    if (!isScreenshotMode && now() - builtAt > 60_000) {
       const acknowledged = new Set(data.alerts.filter((a) => a.status === 'acknowledged').map((a) => a.id));
       const acknowledgedProblems = new Set(data.problems.filter((p) => p.status === 'acknowledged').map((p) => p.id));
       data = buildDemoDataset(now());

@@ -6,6 +6,7 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClie
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters, Scope } from './client';
 import type { Favorite, InfraCategory, Page, Ref } from './contract';
+import { isScreenshotMode } from '@/demo/screenshot-mode';
 import { useSession } from '@/state/session';
 import { useSettings } from '@/state/settings';
 
@@ -13,6 +14,15 @@ export function useScope(): Scope {
   const { settings } = useSettings();
   return useMemo(() => ({ env: settings.environmentId ?? undefined }), [settings.environmentId]);
 }
+
+/**
+ * A polling interval, or `false` when the app is being photographed.
+ *
+ * A refetch that lands between the page settling and the shutter changes a screen subtly — a freshness line, a
+ * spinner — and that was enough to make a regenerated screenshot set differ from the last one for reasons no
+ * reviewer could see. The screens that poll were exactly the screens that were not reproducible.
+ */
+const poll = (ms: number): number | false => (isScreenshotMode ? false : ms);
 
 export const keys = {
   environments: () => ['environments', 'list'] as const,
@@ -68,14 +78,14 @@ export function useSystemStatus() {
     queryKey: keys.systemStatus(),
     queryFn: () => client.systemStatus(),
     enabled: useSignedIn(),
-    refetchInterval: 30_000,
+    refetchInterval: poll(30_000),
   });
 }
 
 export function useHealth() {
   const { client } = useSession();
   const scope = useScope();
-  return useQuery({ queryKey: keys.health(scope), queryFn: () => client.health(scope), enabled: useSignedIn(), refetchInterval: 60_000 });
+  return useQuery({ queryKey: keys.health(scope), queryFn: () => client.health(scope), enabled: useSignedIn(), refetchInterval: poll(60_000) });
 }
 
 export function useBrief() {
@@ -249,7 +259,7 @@ export function useAlerts(filters: AlertFilters) {
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
     enabled: useSignedIn(),
-    refetchInterval: 60_000,
+    refetchInterval: poll(60_000),
   });
 }
 
@@ -280,7 +290,7 @@ export function useIncident(id: string) {
 export function useSynthetics() {
   const { client } = useSession();
   const scope = useScope();
-  return useQuery({ queryKey: keys.synthetics(scope), queryFn: () => client.synthetics(scope), enabled: useSignedIn(), refetchInterval: 60_000 });
+  return useQuery({ queryKey: keys.synthetics(scope), queryFn: () => client.synthetics(scope), enabled: useSignedIn(), refetchInterval: poll(60_000) });
 }
 
 export function useSynthetic(id: string) {

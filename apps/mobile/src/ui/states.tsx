@@ -11,9 +11,10 @@ import NetInfo from '@react-native-community/netinfo';
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { ActivityIndicator, AppState, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isScreenshotMode, nowForDemo } from '@/demo/screenshot-mode';
 import { isApiError, type ApiErrorKind } from '@/api/errors';
 import { useI18n, type MessageKey } from '@/i18n';
-import { formatAge, formatDuration } from '@/lib/format';
+import { formatAge, formatDuration, formatRelative } from '@/lib/format';
 import { useSession } from '@/state/session';
 import type { Feature } from '@/api/contract';
 import { Button } from './controls';
@@ -40,11 +41,13 @@ const CLOCK_TICK_MS = 15_000;
 
 const clock = (() => {
   const listeners = new Set<() => void>();
-  let now = Date.now();
+  // In screenshot mode the clock is held at the pinned instant, so ages on a regenerated set do not drift.
+  let now = nowForDemo();
   let timer: ReturnType<typeof setInterval> | null = null;
   let appState: { remove: () => void } | null = null;
 
   const tick = () => {
+    if (isScreenshotMode) return;
     now = Date.now();
     listeners.forEach((listener) => listener());
   };
@@ -120,6 +123,19 @@ export function useRelativeTime() {
   const { t } = useI18n();
   return (at: number, now: number) =>
     formatAge(at, now, { now: t('time.justNow'), ago: (amount) => t('time.ago', { amount }), in: (amount) => t('time.in', { amount }) });
+}
+
+/**
+ * Relative time for something that has *not* happened yet — a scheduled run, an expiry.
+ *
+ * `useRelativeTime` clamps the future away, because every timestamp the app receives describes something that has
+ * already happened and a clock skew should not turn it into "in 2 min". A schedule is the exception: clamping it
+ * renders "next run just now" for a job due in three minutes, which is worse than saying nothing.
+ */
+export function useScheduledTime() {
+  const { t } = useI18n();
+  return (at: number, now: number) =>
+    formatRelative(at, now, { now: t('time.justNow'), ago: (amount) => t('time.ago', { amount }), in: (amount) => t('time.in', { amount }) });
 }
 
 /**

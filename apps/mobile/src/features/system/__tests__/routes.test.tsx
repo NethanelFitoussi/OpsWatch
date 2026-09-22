@@ -50,6 +50,18 @@ it('separates a job that failed from one that has never run', async () => {
   expect(screen.getByTestId('system-job-partial-errors')).toHaveTextContent(/incomplete/);
 });
 
+it('says when a job runs next, in the future tense', async () => {
+  await seedDemoSession();
+  await openSystem();
+
+  // "next just now" is what a clamped future looks like, and it is nonsense for a schedule.
+  const jobs = await screen.findByTestId('system-jobs', {}, { timeout: 5000 });
+  expect(jobs).toHaveTextContent(/next in \d+/);
+  // Neither the clamped past tense, nor "in 0 min" for something about to happen.
+  expect(jobs).not.toHaveTextContent(/next just now/);
+  expect(jobs).toHaveTextContent(/next run due/);
+});
+
 it('shows which environments were read completely and which were not', async () => {
   await seedDemoSession();
   await openSystem();

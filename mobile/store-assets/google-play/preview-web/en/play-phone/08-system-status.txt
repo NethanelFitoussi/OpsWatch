@@ -1,0 +1,53 @@
+# Whether OpsWatch itself is collecting — so you know if you can trust the rest.
+# route: /system
+
+
+DEMO DATA: fictional, not from a real server
+System status
+
+Updated just now
+Whether OpsWatch itself is working, and what that means for everything else here.
+
+Collecting, with failures
+What the failing jobs cover may be out of date. Everything else is current.
+Last checked in
+just now
+Running on
+opswatch-collector-1
+COLLECTION JOBS
+errors
+
+Failed
+Last run 6 min ago · took 12 s · next in 9 min
+Error: ThrottlingException
+Stopped early at a limit, so this run is incomplete.
+compaction
+
+Never run
+every 1 d
+detect
+
+OK
+Last run just now · took 1 s · next run due
+inventory
+
+OK
+Last run 2 min ago · took 8 s · next in 3 min
+metrics
+
+OK
+Last run just now · took 2 s · next run due
+ENVIRONMENTS READ
+eu-west-1
+Everything read
+Last read 2 min ago
+eu-west-1
+4 of 6 kinds of resource read
+Last read 11 min ago
+THIS OPSWATCH
+Version
+0.1.0-demo
+Database
+46 MB
+Schema version
+6

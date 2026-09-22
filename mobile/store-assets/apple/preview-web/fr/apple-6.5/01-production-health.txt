@@ -1,0 +1,139 @@
+# Is production healthy? The answer, and whether you need to act, in one screen.
+# route: /
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+Accueil
+
+PRODUCTION
+
+
+Mis à jour à l'instant
+Production est-elle en bonne santé ?
+
+Dégradé
+Checkout is failing for about 7 % of requests.
+Dois-je agir ?
+Oui : 2 problèmes critiques sont ouverts.
+
+Vue partielle : OpsWatch n’a pas pu vérifier CDN.
+Vérifié par le serveur à l'instant
+PROBLÈME LE PLUS IMPORTANT
+
+Critique
+checkout-api is returning HTTP 5xx
+6.8 % of checkout requests fail (threshold 5 %).
+checkout-api · en cours depuis 43 min · 3 712 occurrences
+
+Enquêter
+
+2
+critiques
+
+3
+avertissements
+
+15
+services sains sur 18
+DEPUIS HIER
+Tout voir
+
+checkout-api errors increased from 0.2 % to 6.8 %
+
+
+New exception: TypeError in cart pricing (2,417 times)
+
+
+Redis latency increased from 0.6 ms to 3.4 ms
+
+
+Website remained available (100 % over 24 h)
+
+
+catalog-api task shortfall resolved after 15 min
+
+
+Alertes actives
+3 en cours
+
+
+Tests du site et de l’API
+3 OK · 1 dégradés · 0 en panne
+
+Dégradé
+
+INCIDENTS RÉCENTS
+
+Critique
+INC-2291 Checkout failures after v2.14.0
+En cours d’analyse · il y a 40 min · 17 mars, 11:02
+
+
+Avertissement
+INC-2288 Catalog rollout short on tasks
+Résolu · il y a 1 j · 16 mars, 09:46
+
+DÉPLOIEMENTS RÉCENTS
+
+checkout-api v2.14.0
+il y a 52 min · 17 mars, 10:50
+
+
+catalog-api v3.9.1
+il y a 1 j · 16 mars, 09:42
+
+
+orders-worker v1.18.0
+il y a 3 j · 14 mars, 11:42
+
+
+auth-api build-770
+il y a 8 h · 17 mars, 03:42
+
+CE QU’OPSWATCH A VÉRIFIÉ
+
+Containers
+2 sur 18 touchés
+
+Dégradé
+
+Databases
+1 sur 2 touchés
+
+Critique
+
+Load balancers
+1 sur 2 touchés
+
+Critique
+
+Alarms
+3 sur 24 touchés
+
+Critique
+
+Redis
+1 sur 1 touchés
+
+Dégradé
+
+CDN
+Lecture impossible : denied (AccessDenied)
+
+Inconnu
+
+
+Accueil
+
+
+2
+Problèmes
+
+
+Alertes
+
+
+Services
+
+
+Plus

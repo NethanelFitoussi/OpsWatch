@@ -30,6 +30,7 @@ export const system: Record<keyof typeof source, string> = {
   'system.job.lastRun': 'Dernière exécution {time}',
   'system.job.nextRun': 'prochaine {time}',
   'system.job.nextRunUnknown': 'prochaine exécution non planifiée',
+  'system.job.nextRunDue': 'prochaine exécution imminente',
   'system.job.took': 'durée {duration}',
   'system.job.partial': '{covered} sur {total} couverts',
   'system.job.truncated': 'Arrêtée à une limite : cette exécution est incomplète.',

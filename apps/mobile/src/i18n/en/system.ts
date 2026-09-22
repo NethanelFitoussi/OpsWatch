@@ -28,6 +28,7 @@ export const system = {
   'system.job.lastRun': 'Last run {time}',
   'system.job.nextRun': 'next {time}',
   'system.job.nextRunUnknown': 'next run not scheduled',
+  'system.job.nextRunDue': 'next run due',
   'system.job.took': 'took {duration}',
   'system.job.partial': 'Covered {covered} of {total}',
   'system.job.truncated': 'Stopped early at a limit, so this run is incomplete.',

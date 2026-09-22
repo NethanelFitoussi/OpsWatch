@@ -1,0 +1,53 @@
+# Whether OpsWatch itself is collecting — so you know if you can trust the rest.
+# route: /system
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+État du système
+
+Mis à jour à l'instant
+Si OpsWatch lui-même fonctionne, et ce que cela implique pour tout le reste ici.
+
+Collecte en cours, avec des échecs
+Ce que couvrent les tâches en échec peut être périmé. Le reste est à jour.
+Dernier signe de vie
+à l'instant
+Exécuté sur
+opswatch-collector-1
+TÂCHES DE COLLECTE
+errors
+
+Échec
+Dernière exécution il y a 6 min · durée 12 s · prochaine dans 9 min
+Erreur : ThrottlingException
+Arrêtée à une limite : cette exécution est incomplète.
+compaction
+
+Jamais exécutée
+toutes les 1 j
+detect
+
+OK
+Dernière exécution à l'instant · durée 1 s · prochaine exécution imminente
+inventory
+
+OK
+Dernière exécution il y a 2 min · durée 8 s · prochaine dans 3 min
+metrics
+
+OK
+Dernière exécution à l'instant · durée 2 s · prochaine exécution imminente
+ENVIRONNEMENTS LUS
+eu-west-1
+Tout a été lu
+Dernière lecture il y a 2 min
+eu-west-1
+4 types de ressources lus sur 6
+Dernière lecture il y a 11 min
+CE SERVEUR OPSWATCH
+Version
+0.1.0-demo
+Base de données
+46 MB
+Version du schéma
+6

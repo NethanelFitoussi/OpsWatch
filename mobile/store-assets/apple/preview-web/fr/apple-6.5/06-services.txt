@@ -1,0 +1,148 @@
+# Every service, its health and what is wrong with it.
+# route: /services
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+Services
+
+PRODUCTION
+
+
+Mis à jour à l'instant
+Trouver un service
+
+
+Tous
+Critique
+Dégradé
+Sain
+Inconnu
+
+Critique
+checkout-api
+
+
+ECS service · 2 problème(s) ouvert(s) · 2 alerte(s) en cours
+Erreurs
+6.8 %
+p95
+1.24 s
+Requêtes
+1 850/min
+
+Dégradé
+auth-api
+
+ECS service · 1 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0.1 %
+p95
+140 ms
+Requêtes
+620/min
+
+Dégradé
+orders-worker
+
+ECS worker · 1 problème(s) ouvert(s) · 1 alerte(s) en cours
+Pas de métriques HTTP — non mesuré
+
+Sain
+admin-web
+
+ECS service · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0.1 %
+p95
+134 ms
+Requêtes
+580/min
+
+Sain
+catalog-api
+
+ECS service · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0.3 %
+p95
+210 ms
+Requêtes
+4 200/min
+
+Sain
+export-worker
+
+ECS worker · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Pas de métriques HTTP — non mesuré
+
+Sain
+gift-cards-api
+
+ECS service · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0 %
+p95
+189 ms
+Requêtes
+930/min
+
+Sain
+loyalty-api
+
+ECS service · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0.1 %
+p95
+200 ms
+Requêtes
+1 000/min
+
+Sain
+media-resizer
+
+ECS worker · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Pas de métriques HTTP — non mesuré
+
+Sain
+notifications-worker
+
+ECS worker · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Pas de métriques HTTP — non mesuré
+
+Sain
+pricing-rules
+
+ECS service · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0.2 %
+p95
+145 ms
+Requêtes
+650/min
+
+Sain
+recommendations-api
+
+ECS service · 0 problème(s) ouvert(s) · 0 alerte(s) en cours
+Erreurs
+0.1 %
+p95
+101 ms
+Requêtes
+370/min
+
+
+Accueil
+
+
+2
+Problèmes
+
+
+Alertes
+
+
+Services
+
+
+Plus

@@ -49,6 +49,8 @@ on first launch — which is exactly right for local development and for the dem
 | `EAS_PROJECT_ID` | EAS builds | The EAS project. `eas init` sets it | `00000000-0000-0000-0000-000000000000` | No |
 | `OPSWATCH_IOS_BUILD_NUMBER` | Local native build only | iOS build number. EAS owns this for cloud builds (`appVersionSource: "remote"`), so set it only for a build you upload by hand | `1` | Yes |
 | `OPSWATCH_ANDROID_VERSION_CODE` | Local native build only | Android `versionCode`. Same rule | `1` | Yes |
+| `EXPO_PUBLIC_SCREENSHOT_AT` | Store screenshots only | Pins the demo's clock to an epoch in milliseconds so a regenerated screenshot set differs only where the UI changed. Unset, the app behaves normally ([store-assets.md](store-assets.md)) | `1773740520000` | Yes, when set |
+| `OPSWATCH_STORE_LOCALE` | Store screenshots only | Which language to capture, `en` or `fr`. Read by the capture scripts, not by the app | `fr` | No |
 | `OPSWATCH_CONTRACT_DIR` | Running the parity test | Points the contract parity suite at a checkout of `packages/contract`. Not read by the app | `../../../opswatch/packages/contract` | No |
 | `EAS_BUILD_PROFILE` | Set by EAS | Which profile is building. `app.config.ts` uses it to refuse a `production` build on placeholder identifiers | *(set for you)* | No |
 

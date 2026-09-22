@@ -1,0 +1,42 @@
+# What changed since yesterday, without reading a dashboard.
+# route: /brief
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+Point du matin
+
+Mis à jour à l'instant
+
+Dégradé
+Production : DÉGRADÉ
+2 critiques · 3 avertissements · 15 services sains
+Du 16 mars, 11:42 au 17 mars, 11:42
+DEPUIS HIER
+NOUVEAU · 1
+
+New exception: TypeError in cart pricing (2,417 times)
+
+EN HAUSSE · 2
+
+checkout-api errors increased from 0.2 % to 6.8 %
+
+
+Redis latency increased from 0.6 ms to 3.4 ms
+
+RÉSOLU · 1
+
+catalog-api task shortfall resolved after 15 min
+
+INCHANGÉ · 1
+
+Website remained available (100 % over 24 h)
+
+PROBLÈME LE PLUS IMPORTANT
+
+Critique
+checkout-api is returning HTTP 5xx
+6.8 % of checkout requests fail (threshold 5 %).
+checkout-api · en cours depuis 43 min · 3 712 occurrences
+
+Enquêter
+Généré à l'instant

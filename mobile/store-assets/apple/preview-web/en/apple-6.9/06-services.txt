@@ -1,0 +1,148 @@
+# Every service, its health and what is wrong with it.
+# route: /services
+
+
+DEMO DATA: fictional, not from a real server
+Services
+
+PRODUCTION
+
+
+Updated just now
+Find a service
+
+
+All
+Critical
+Degraded
+Healthy
+Unknown
+
+Critical
+checkout-api
+
+
+ECS service · 2 open problem(s) · 2 firing alert(s)
+Errors
+6.8 %
+p95
+1.24 s
+Requests
+1,850/min
+
+Degraded
+auth-api
+
+ECS service · 1 open problem(s) · 0 firing alert(s)
+Errors
+0.1 %
+p95
+140 ms
+Requests
+620/min
+
+Degraded
+orders-worker
+
+ECS worker · 1 open problem(s) · 1 firing alert(s)
+No HTTP metrics — not measured
+
+Healthy
+admin-web
+
+ECS service · 0 open problem(s) · 0 firing alert(s)
+Errors
+0.1 %
+p95
+134 ms
+Requests
+580/min
+
+Healthy
+catalog-api
+
+ECS service · 0 open problem(s) · 0 firing alert(s)
+Errors
+0.3 %
+p95
+210 ms
+Requests
+4,200/min
+
+Healthy
+export-worker
+
+ECS worker · 0 open problem(s) · 0 firing alert(s)
+No HTTP metrics — not measured
+
+Healthy
+gift-cards-api
+
+ECS service · 0 open problem(s) · 0 firing alert(s)
+Errors
+0 %
+p95
+189 ms
+Requests
+930/min
+
+Healthy
+loyalty-api
+
+ECS service · 0 open problem(s) · 0 firing alert(s)
+Errors
+0.1 %
+p95
+200 ms
+Requests
+1,000/min
+
+Healthy
+media-resizer
+
+ECS worker · 0 open problem(s) · 0 firing alert(s)
+No HTTP metrics — not measured
+
+Healthy
+notifications-worker
+
+ECS worker · 0 open problem(s) · 0 firing alert(s)
+No HTTP metrics — not measured
+
+Healthy
+pricing-rules
+
+ECS service · 0 open problem(s) · 0 firing alert(s)
+Errors
+0.2 %
+p95
+145 ms
+Requests
+650/min
+
+Healthy
+recommendations-api
+
+ECS service · 0 open problem(s) · 0 firing alert(s)
+Errors
+0.1 %
+p95
+101 ms
+Requests
+370/min
+
+
+Home
+
+
+2
+Problems
+
+
+Alerts
+
+
+Services
+
+
+More

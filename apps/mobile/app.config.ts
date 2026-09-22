@@ -125,6 +125,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: easProjectId ? { projectId: easProjectId } : undefined,
     // Public, optional: pre-fills the server URL field. Never a secret.
     defaultServerUrl: env('EXPO_PUBLIC_DEFAULT_SERVER_URL'),
+    // Store screenshots only: pins the demo's clock so a regenerated set differs only where the UI changed.
+    screenshotAt: env('EXPO_PUBLIC_SCREENSHOT_AT'),
     // Read on both platforms for universal/app links, so neither one depends on the other's config block.
     associatedDomain,
   },

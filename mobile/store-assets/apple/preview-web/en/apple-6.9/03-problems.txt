@@ -1,0 +1,96 @@
+# Every open problem, worst first, with what it affects and how long it has been going.
+# route: /problems
+
+
+DEMO DATA: fictional, not from a real server
+Problems
+
+PRODUCTION
+
+
+Updated just now
+
+Open
+New
+Active
+Acknowledged
+Resolved
+All
+Critical
+Warning
+Info
+
+1 h
+
+6 h
+
+24 h
+
+7 d
+
+Any time
+
+Critical
+
+Active
+
+Rising
+checkout-api is returning HTTP 5xx
+checkout-api · ongoing for 43 min
+last seen 1 min ago · 3,712 occurrences
+
+
+Critical
+
+New
+
+Stable
+aurora-main writer near its connection limit
+checkout-api · ongoing for 49 min
+last seen 2 min ago
+
+
+Warning
+
+Acknowledged
+
+Stable
+sessions-redis latency elevated
+auth-api · ongoing for 3 h
+last seen 3 min ago
+
+
+Warning
+
+Active
+
+Falling
+orders-worker CPU above 85 %
+orders-worker · ongoing for 1 h 35 min
+last seen 4 min ago
+
+
+Warning
+
+Active
+TLS certificate of status.example.com expires in 12 days
+storefront-web · ongoing for 2 d
+last seen 10 min ago
+
+End of the list
+
+
+Home
+
+
+2
+Problems
+
+
+Alerts
+
+
+Services
+
+
+More
