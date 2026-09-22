@@ -44,7 +44,7 @@ test('server info is public, says what it can do, and carries no credential', as
   expect(info.features.push).toBe(false);
   // Built and served; the ones still false are the ones with no implementation behind them.
   expect(info.features.health).toBe(true);
-  expect(info.features.errors).toBe(false);
+  expect(info.features.errors).toBe(true);
   const body = await request.get(v1('/server')).then((r) => r.text());
   for (const secret of [ADMIN.password, 'passwordHash', 'OPSWATCH_SECRET', 'sqlite']) {
     expect(body).not.toContain(secret);

@@ -86,6 +86,7 @@ const SERVER_ONLY_MODULES = [
   'lib/read/health.ts',
   'lib/read/brief.ts',
   'lib/read/system.ts',
+  'lib/read/errors.ts',
   'lib/read/health-labels.ts',
   'lib/store/health.ts',
   'lib/read/paging.ts',

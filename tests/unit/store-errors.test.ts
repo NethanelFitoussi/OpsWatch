@@ -264,3 +264,23 @@ describe('listing', () => {
     expect(recentErrorGroups(db, { ...env, sinceMs: NOW - HOUR }, 10)).toEqual([]);
   });
 });
+
+describe('the wire status', () => {
+  it('speaks the contract\'s words, not the store\'s', async () => {
+    const { wireErrorStatus } = await import('@/lib/read/errors');
+    // §33.1 makes the mobile contract authoritative field by field, and it says `recurring`, not `ongoing`.
+    expect(wireErrorStatus('ongoing')).toBe('recurring');
+    expect(wireErrorStatus('regressed')).toBe('regression');
+    expect(wireErrorStatus('new')).toBe('new');
+    expect(wireErrorStatus('resolved')).toBe('resolved');
+    // A muted group is still recurring to a client: muting is an operator's decision, not a state of the world.
+    expect(wireErrorStatus('muted')).toBe('recurring');
+  });
+
+  it('shows a bounded number of groups in each "what\'s new" set', async () => {
+    const { WHATS_NEW_LIMIT } = await import('@/lib/read/errors');
+    // Three sets on one screen: each has to stay scannable.
+    expect(WHATS_NEW_LIMIT).toBeGreaterThan(0);
+    expect(WHATS_NEW_LIMIT).toBeLessThanOrEqual(10);
+  });
+});

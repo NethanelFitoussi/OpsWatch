@@ -7,6 +7,8 @@ describe('navigation items', () => {
   it('lists the monitoring sections first, then the guide, the settings and the accounts', () => {
     expect(NAV_ITEMS.map((i) => i.key)).toEqual([
       'overview',
+      // Errors sits directly under the overview: it is the second thing anyone looks at.
+      'errors',
       'containers',
       'databases',
       'loadBalancers',
