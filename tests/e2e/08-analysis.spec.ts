@@ -20,9 +20,9 @@ test('the section menu lists the sub-pages, marks the active one and keeps the r
   await page.goto(`/en/c/${connectionId}/us-east-1/databases/instances?range=12h`);
   const nav = page.getByRole('navigation', { name: 'Databases pages' });
   await expect(nav.getByRole('link', { name: 'Instances' })).toHaveAttribute('aria-current', 'page');
-  // Queries is built, so the menu links to it; Report arrives in a later task and stays disabled until then.
+  // Queries and Report are both built, so the menu links to both and carries the range across.
   await expect(nav.getByRole('link', { name: 'Queries' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/databases/queries?range=12h`);
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Report' })).toContainText('Coming soon');
+  await expect(nav.getByRole('link', { name: 'Report' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/databases/report?range=12h`);
   await expect(page.getByRole('heading', { level: 1, name: 'Instances' })).toBeVisible();
 });
 

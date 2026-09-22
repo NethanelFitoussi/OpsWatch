@@ -1274,6 +1274,52 @@
       "emptyHint": "OpsWatch reads them every fifteen minutes.",
       "budgetStopped": "Error collection stopped for today because it reached its scanning budget.",
       "budgetHint": "It resumes tomorrow. Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY to scan more, knowing that CloudWatch bills per gigabyte."
+    },
+    "report": {
+      "title": "Report",
+      "description": "What this period looked like, next to the period before it. Read from what OpsWatch already stored — it makes no new AWS request.",
+      "period": "{from} to {to}",
+      "comparedWith": "Compared with {from} to {to}",
+      "choosePeriod": "Choose a period",
+      "periods": {
+        "24h": "Last 24 hours",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days"
+      },
+      "sections": {
+        "problems": "Problems",
+        "errors": "Errors",
+        "availability": "Availability",
+        "deployments": "Deployments",
+        "synthetics": "Synthetics"
+      },
+      "figure": {
+        "opened": "Opened",
+        "resolved": "Resolved",
+        "opened.critical": "Opened, critical",
+        "opened.warning": "Opened, warning",
+        "opened.info": "Opened, info",
+        "occurrences": "Occurrences",
+        "groups": "Error groups",
+        "healthyShare": "Intervals with nothing affected (%)",
+        "intervals": "Intervals measured"
+      },
+      "columns": {
+        "name": "Name",
+        "value": "This period",
+        "previous": "Previous",
+        "change": "Change"
+      },
+      "unavailable": {
+        "history_off": "Historical collection is off, so there is nothing stored to report on for this period. This is a setting, not a fault.",
+        "not_enough_history": "Historical collection is on, but it does not yet cover this period. OpsWatch will not show a figure it cannot stand behind.",
+        "not_collected": "Nothing is configured to collect this, so OpsWatch has not measured it. This is not the same as there being none.",
+        "not_measured": "This version of OpsWatch does not measure this yet."
+      },
+      "turnOnHistory": "Open Data & history",
+      "approximation": "Measured over stored 5-minute intervals, not per request: a read-only AWS account gives no request histogram. Intervals OpsWatch could not measure are left out rather than counted as healthy.",
+      "notMeasured": "Not measured",
+      "export": "Export as Markdown"
     }
   },
   "Insights": {

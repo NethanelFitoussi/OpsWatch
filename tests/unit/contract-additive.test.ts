@@ -32,7 +32,9 @@ const PROMISED_VALUES = [
   'lenientEnum', 'logEntrySchema', 'logSearchSchema', 'loginRequestSchema', 'meSchema', 'metricUnitSchema',
   'metricValueSchema', 'notificationPreferencesSchema', 'nullableNumberSchema', 'pageSchema',
   'parseEnvironmentId', 'permissionSchema', 'permissionsOf', 'problemDetailSchema', 'problemSummarySchema',
-  'refSchema', 'refTypeSchema', 'repositoryEvidenceSchema', 'roleSchema', 'searchResponseSchema',
+  'refSchema', 'refTypeSchema', 'REPORT_PERIODS', 'REPORT_UNAVAILABLE_REASONS', 'reportFigureSchema',
+  'reportRowSchema', 'reportSchema', 'reportSectionSchema', 'reportUnavailableReasonSchema',
+  'repositoryEvidenceSchema', 'roleSchema', 'searchResponseSchema',
   'searchResultSchema', 'seriesSchema', 'serverInfoSchema', 'serviceDetailSchema', 'serviceSummarySchema',
   'sessionListSchema', 'sessionSummarySchema', 'severitySchema', 'sloDetailSchema', 'sloSummarySchema',
   'stackFrameSchema', 'syntheticDetailSchema', 'syntheticSummarySchema', 'systemStatusSchema',
@@ -56,7 +58,9 @@ type PromisedTypes = [
   types.JobStatus, types.LogEntry, types.LogLevel, types.LogSearch, types.LoginRequest, types.Me,
   types.MetricUnit, types.MetricValue, types.NotificationCategory, types.NotificationPreferences,
   types.Page<unknown>, types.PaginatedEndpoint, types.Permission, types.ProblemDetail, types.ProblemStatus,
-  types.ProblemSummary, types.Ref, types.RefType, types.RepositoryEvidence, types.Role, types.SearchResponse,
+  types.ProblemSummary, types.Ref, types.RefType, types.Report, types.ReportFigure, types.ReportPeriod,
+  types.ReportRow, types.ReportSection, types.ReportUnavailableReason, types.RepositoryEvidence, types.Role,
+  types.SearchResponse,
   types.SearchResult, types.Series, types.ServerInfo, types.ServiceDetail, types.ServiceSummary,
   types.SessionList, types.SessionSummary, types.Severity, types.SloDetail, types.SloStatus, types.SloSummary,
   types.StackFrame, types.SyntheticDetail, types.SyntheticStatus, types.SyntheticSummary, types.SystemStatus,
@@ -69,7 +73,7 @@ describe('the contract only ever adds', () => {
   });
 
   it('has not shrunk', () => {
-    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(108);
+    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(115);
   });
 
   it('exports every promised schema as something usable, not merely present', () => {

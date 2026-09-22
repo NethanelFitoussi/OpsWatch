@@ -23,6 +23,7 @@ export const FEATURES = [
   'synthetics',
   'slos',
   'deployments',
+  'reports',
   'investigations',
   'repository',
   'ai',

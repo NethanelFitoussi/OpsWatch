@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, gt, gte, inArray, isNull, isNotNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, inArray, isNull, isNotNull, lt, or, sql } from 'drizzle-orm';
 import type { DetectedProblem } from '../detect/types';
 import type { LiveProblem, Transition } from '../detect/lifecycle';
 import { severityForScore, scoreProblem } from '../detect/score';
@@ -423,4 +423,82 @@ export function applyTransitions(db: Db, context: ProblemContext, transitions: r
     .from(problems)
     .where(and(eq(problems.connectionId, context.connectionId), eq(problems.scope, context.scope), isNull(problems.resolvedAt)))
     .all().length;
+}
+
+/**
+ * What a period looked like: problems that **opened** in it and problems that **resolved** in it, by severity
+ * (§19). The two are counted independently and neither implies the other — a problem may open in one period
+ * and resolve three periods later, and a report that netted them off would hide exactly that.
+ *
+ * `kinds` scopes the count to one family's detectors, which is how a section's report covers its own section
+ * and nothing else. Omitting it counts the whole environment.
+ */
+export type WindowCounts = {
+  opened: Record<ProblemSeverity, number>;
+  resolved: Record<ProblemSeverity, number>;
+};
+
+export function countProblemsInWindow(
+  db: Db,
+  filter: { connectionId: string; scope: string; kinds?: readonly string[] },
+  window: { from: number; to: number },
+): WindowCounts {
+  const zero = () => Object.fromEntries(PROBLEM_SEVERITIES.map((severity) => [severity, 0])) as Record<ProblemSeverity, number>;
+  const counts: WindowCounts = { opened: zero(), resolved: zero() };
+  // An empty `kinds` is "no detector belongs to this family", which is genuinely zero rather than everything.
+  if (filter.kinds !== undefined && filter.kinds.length === 0) return counts;
+
+  const scoped = [eq(problems.connectionId, filter.connectionId), eq(problems.scope, filter.scope)];
+  if (filter.kinds !== undefined) scoped.push(inArray(problems.kind, [...filter.kinds]));
+
+  // Half-open [from, to): an instant belongs to exactly one period, so consecutive reports never double-count.
+  const openedRows = db
+    .select({ severity: problems.severity, total: sql<number>`count(*)` })
+    .from(problems)
+    .where(and(...scoped, gte(problems.firstSeenAt, window.from), lt(problems.firstSeenAt, window.to)))
+    .groupBy(problems.severity)
+    .all();
+  for (const row of openedRows) counts.opened[row.severity] = Number(row.total);
+
+  const resolvedRows = db
+    .select({ severity: problems.severity, total: sql<number>`count(*)` })
+    .from(problems)
+    .where(and(...scoped, isNotNull(problems.resolvedAt), gte(problems.resolvedAt, window.from), lt(problems.resolvedAt, window.to)))
+    .groupBy(problems.severity)
+    .all();
+  for (const row of resolvedRows) counts.resolved[row.severity] = Number(row.total);
+
+  return counts;
+}
+
+/** The subjects that opened the most problems in a window — §19's "worst resources", newest severity kept. */
+export function worstSubjectsInWindow(
+  db: Db,
+  filter: { connectionId: string; scope: string; kinds?: readonly string[] },
+  window: { from: number; to: number },
+  limit: number,
+): { subjectId: string; subjectName: string; severity: ProblemSeverity; total: number }[] {
+  if (filter.kinds !== undefined && filter.kinds.length === 0) return [];
+  const scoped = [eq(problems.connectionId, filter.connectionId), eq(problems.scope, filter.scope)];
+  if (filter.kinds !== undefined) scoped.push(inArray(problems.kind, [...filter.kinds]));
+
+  return db
+    .select({
+      subjectId: problems.subjectId,
+      subjectName: sql<string>`min(${problems.subjectName})`,
+      // The worst severity the subject reached, which is what makes it worth listing.
+      severity: sql<ProblemSeverity>`min(case ${problems.severity} when 'critical' then 1 when 'warning' then 2 else 3 end)`,
+      total: sql<number>`count(*)`,
+    })
+    .from(problems)
+    .where(and(...scoped, gte(problems.firstSeenAt, window.from), lt(problems.firstSeenAt, window.to)))
+    .groupBy(problems.subjectId)
+    .orderBy(desc(sql`count(*)`), asc(problems.subjectId))
+    .limit(limit)
+    .all()
+    .map((row) => ({
+      ...row,
+      // The rank came back as the ordinal the CASE produced; turn it back into the word.
+      severity: (['critical', 'warning', 'info'] as const)[Number(row.severity) - 1] ?? 'info',
+    }));
 }

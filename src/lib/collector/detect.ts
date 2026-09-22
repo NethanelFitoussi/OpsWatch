@@ -1,10 +1,11 @@
 import 'server-only';
+import { familyOfKind } from '../detect/family';
 import { applyCycle } from '../detect/lifecycle';
 import { outcomesFromInsights, type EvaluatedPair } from '../detect/aws';
 import type { SubjectOutcome, SubjectRef } from '../detect/types';
 import type { Db } from '../db/client';
 import type { InsightKind } from '../monitoring/insights';
-import { INSIGHT_FAMILIES, loadFamily, type InsightFamily } from '../monitoring/overview';
+import { INSIGHT_FAMILIES, loadFamily } from '../monitoring/overview';
 import { resolveTarget } from '../monitoring/target';
 import { recordFamilySnapshot } from '../store/health';
 import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
@@ -22,25 +23,9 @@ import type { JobOutcome } from './runner';
  * the job reports, per live problem, whether its family was actually read this cycle.
  */
 
-/** Which family answers for each detector, so a live problem can be told whether anyone looked at it. */
-const FAMILY_OF: Record<InsightKind, InsightFamily> = {
-  ecs_tasks_below_desired: 'ecs',
-  ecs_cpu_high: 'ecs',
-  ecs_memory_high: 'ecs',
-  ecs_rollout_failed: 'ecs',
-  ecs_rollout_stuck: 'ecs',
-  rds_cpu_high: 'rds',
-  rds_freeable_memory_low: 'rds',
-  aurora_replica_lag: 'rds',
-  alb_5xx_rate: 'alb',
-  alb_elb_5xx_count: 'alb',
-  alb_unhealthy_hosts: 'alb',
-  alarm_firing: 'alarms',
-};
-
-export function familyOfKind(kind: string): InsightFamily | null {
-  return FAMILY_OF[kind as InsightKind] ?? null;
-}
+// The mapping itself lives in `lib/detect/family.ts`: the report service needs it too, and must not import
+// the collector - and everything it drags in - to get it.
+export { familyOfKind };
 
 /** A family is as bad as its worst insight; with none, and having been read, it is healthy. */
 function severityOf(insights: readonly { severity: string }[]): 'critical' | 'degraded' | null {
