@@ -24,6 +24,7 @@ export const FEATURES = [
   'slos',
   'deployments',
   'reports',
+  'checkup',
   'investigations',
   'repository',
   'ai',

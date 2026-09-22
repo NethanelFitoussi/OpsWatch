@@ -38,6 +38,7 @@ export * from './incidents';
 export * from './synthetics';
 export * from './slos';
 export * from './reports';
+export * from './checkup';
 export * from './deployments';
 export * from './deployments-detail';
 export * from './repository';

@@ -29,6 +29,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   deployments: false,
   // GET /reports summarises the rows the collector already wrote, and names the halves it cannot answer.
   reports: true,
+  // GET /checkup runs the catalogue over what is already stored, and says what it could not check.
+  checkup: true,
   investigations: false,
   repository: false,
   ai: false,
@@ -63,6 +65,7 @@ const ENABLED: Record<Feature, (operator: OperatorState) => boolean> = {
   slos: (o) => o.hasConnection,
   deployments: (o) => o.hasConnection,
   reports: (o) => o.hasConnection,
+  checkup: (o) => o.hasConnection,
   investigations: (o) => o.hasConnection,
   repository: (o) => o.hasConnection,
   search: (o) => o.hasConnection,

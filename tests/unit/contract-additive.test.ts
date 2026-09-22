@@ -17,13 +17,14 @@ import type * as types from '@opswatch/contract';
  */
 const PROMISED_VALUES = [
   'ACCOUNT_SCOPE', 'ALERT_STATUSES', 'API_ERROR_CODES', 'API_ERROR_STATUS', 'API_PREFIX', 'API_VERSION',
-  'CHANGE_DIRECTIONS', 'DEFAULT_PAGE_SIZE', 'DEPLOYMENT_STATUSES', 'ENDPOINT_PAGINATION', 'ENVIRONMENT_KINDS',
+  'CHANGE_DIRECTIONS', 'CHECK_NOT_RUN_REASONS', 'DEFAULT_PAGE_SIZE', 'DEPLOYMENT_STATUSES', 'ENDPOINT_PAGINATION', 'ENVIRONMENT_KINDS',
   'ERROR_STATUSES', 'EVIDENCE_KINDS', 'FAVORITE_TYPES', 'FEATURES', 'HEALTH_STATUSES', 'INCIDENT_STATUSES',
   'INFRA_CATEGORIES', 'LOG_LEVELS', 'MAX_PAGE_SIZE', 'METRIC_UNITS', 'MIN_PAGE_SIZE', 'MIN_SEVERITIES',
   'NOTIFICATION_CATEGORIES', 'PERMISSIONS', 'PERMISSION_NAMES', 'PROBLEM_STATUSES', 'REF_TYPES', 'ROLES',
   'SEVERITIES', 'SLO_STATUSES', 'SYNTHETIC_STATUSES', 'TOKEN_AUDIENCES', 'TRENDS', 'aiAnswerSchema',
   'alertDetailSchema', 'alertSummarySchema', 'allowedActionsSchema', 'apiErrorBodySchema', 'authSessionSchema',
-  'briefSchema', 'can', 'changeSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
+  'briefSchema', 'can', 'changeSchema', 'checkFindingSchema', 'checkNotRunReasonSchema',
+  'checkNotRunSchema', 'checkupSchema', 'checkValuesSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
   'deploymentSummarySchema', 'deviceRegistrationSchema', 'encodeCursor', 'environmentId',
   'environmentListSchema', 'environmentSchema', 'environmentStatusSchema', 'epochSchema', 'errorDetailSchema',
   'errorSummarySchema', 'evidenceSchema', 'familySchema', 'favoriteSchema', 'filtersFor', 'favoritesSchema',
@@ -48,7 +49,8 @@ const PROMISED_VALUES = [
  */
 type PromisedTypes = [
   types.AiAnswer, types.AlertDetail, types.AlertStatus, types.AlertSummary, types.ApiErrorBody,
-  types.ApiErrorCode, types.AuthSession, types.Brief, types.Change, types.ChangeDirection, types.Commit,
+  types.ApiErrorCode, types.AuthSession, types.Brief, types.Change, types.ChangeDirection, types.CheckFinding, types.CheckNotRun,
+  types.CheckNotRunReason, types.Checkup, types.Commit,
   types.CursorPosition, types.DeploymentDetail, types.DeploymentStatus, types.DeploymentSummary,
   types.DeviceRegistration, types.Environment, types.EnvironmentKind, types.EnvironmentList,
   types.EnvironmentStatus, types.ErrorDetail, types.ErrorStatus, types.ErrorSummary, types.Evidence,
@@ -73,7 +75,7 @@ describe('the contract only ever adds', () => {
   });
 
   it('has not shrunk', () => {
-    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(118);
+    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(123);
   });
 
   it('exports every promised schema as something usable, not merely present', () => {

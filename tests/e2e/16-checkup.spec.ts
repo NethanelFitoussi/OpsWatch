@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { ensureMonitoringConnection, login, monitoringUrl } from './helpers';
+import { checkupSchema } from '@opswatch/contract';
+import { MOTO_REGION, ensureMonitoringConnection, login, monitoringUrl } from './helpers';
 
 /**
  * Checkup (Stage 3 §4, renamed by the intelligence spec).
@@ -79,4 +80,35 @@ test('Checkup renders at 360px without horizontal overflow', async ({ page }) =>
   await page.goto(monitoringUrl(connectionId, 'overview', 'checkup'));
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('GET /api/v1/checkup answers what the page shows, so mobile can show it too', async ({ page }) => {
+  const response = await page.request.get(`/api/v1/checkup?env=${connectionId}:${MOTO_REGION}`);
+  expect(response.status(), await response.text()).toBe(200);
+  const checkup = checkupSchema.parse(await response.json());
+
+  // §2.6 on the wire: coverage is not optional, because "no findings" means nothing without it.
+  expect(checkup.coverage.ran + checkup.coverage.notRun).toBe(checkup.coverage.total);
+  expect(checkup.coverage.notRun).toBeGreaterThan(0);
+  expect(checkup.notRun.length).toBe(checkup.coverage.notRun);
+
+  // The findings the page shows on a fresh environment are the ones the API returns.
+  const ids = checkup.findings.map((finding) => finding.id);
+  expect(ids).toContain('errors_not_collected');
+  expect(ids).toContain('history_off');
+  // Worst first, as the server states it.
+  const rank = { critical: 0, warning: 1, info: 2 } as Record<string, number>;
+  const ranks = checkup.findings.map((finding) => rank[finding.severity] ?? 99);
+  expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+
+  // Placeholders, never a sentence built by the server: a client renders its own localised copy.
+  for (const finding of checkup.findings) {
+    for (const value of Object.values(finding.values)) expect(['string', 'number']).toContain(typeof value);
+  }
+});
+
+test('checkup is advertised as a capability, and needs a session', async ({ page, request }) => {
+  const info = await page.request.get('/api/v1/server').then((r) => r.json());
+  expect(info.features.checkup).toBe(true);
+  expect((await request.get('/api/v1/checkup')).status()).toBe(401);
 });
