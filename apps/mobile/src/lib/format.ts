@@ -119,6 +119,22 @@ export function formatRelative(at: number, now: number, labels: RelativeTimeLabe
   return diff >= 0 ? labels.ago(amount) : labels.in(amount);
 }
 
+/**
+ * The age of something that has already happened: never "in 2 min", whatever the clocks say.
+ *
+ * Every relative time this app shows is a past event — when health was checked, when an error was first or last seen,
+ * when an alert started, when a deployment went out. None of them can be in the future, but two things routinely make
+ * one look like it. A phone whose clock is a minute slow turns every server timestamp into the future; and the shared
+ * clock deliberately rounds so ages never look fresher, which moves "now" around by design. Rendering "checked in
+ * 1 min" tells an on-call engineer something that cannot be true, about the one number on the screen whose whole job
+ * is to say how current the data is. Clamping to the present says "just now", which is both true enough and useful.
+ *
+ * `formatRelative` keeps the future tense: it is the general formatter, and a future time is a real thing to want.
+ */
+export function formatAge(at: number, now: number, labels: RelativeTimeLabels = EN_RELATIVE): string {
+  return formatRelative(Math.min(at, now), now, labels);
+}
+
 export function formatClock(at: number, locale?: string): string {
   return new Date(at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }

@@ -1,4 +1,4 @@
-import { formatDuration, formatMetric, formatPercentFraction, formatRelative, logPreview, NO_DATA, prettyLog, setFormatLocale } from '../format';
+import { formatAge, formatDuration, formatMetric, formatPercentFraction, formatRelative, logPreview, NO_DATA, prettyLog, setFormatLocale } from '../format';
 
 describe('formatMetric', () => {
   it('never renders null as zero', () => {
@@ -62,5 +62,26 @@ describe('French formatting', () => {
     expect(formatDuration(26 * 3_600_000)).toBe('1 j 2 h');
     expect(formatRelative(0, 3 * 86_400_000)).toBe('3 j ago');
     expect(formatMetric(1850, 'per_minute')).toMatch(/^1\s850\/min$/);
+  });
+});
+
+describe('formatAge', () => {
+  const now = 1_000_000_000_000;
+
+  it('reads the same as formatRelative for anything already past', () => {
+    for (const ago of [0, 10_000, 44_999, 45_000, 119_000, 3 * 3_600_000, 5 * 86_400_000]) {
+      expect(formatAge(now - ago, now)).toBe(formatRelative(now - ago, now));
+    }
+  });
+
+  /**
+   * A phone whose clock is a minute slow makes every server timestamp look like the future. "Checked in 1 min" is not
+   * a thing that can happen, and it appears on the one line whose job is to say how current the data is.
+   */
+  it('never renders the future, however far ahead the timestamp is', () => {
+    expect(formatAge(now + 1, now)).toBe('just now');
+    expect(formatAge(now + 60_000, now)).toBe('just now');
+    expect(formatAge(now + 12 * 86_400_000, now)).toBe('just now');
+    expect(formatRelative(now + 12 * 86_400_000, now)).toBe('in 12 d');
   });
 });

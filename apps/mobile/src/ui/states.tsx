@@ -13,7 +13,7 @@ import { ActivityIndicator, AppState, Platform, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isApiError, type ApiErrorKind } from '@/api/errors';
 import { useI18n, type MessageKey } from '@/i18n';
-import { formatDuration, formatRelative } from '@/lib/format';
+import { formatAge, formatDuration } from '@/lib/format';
 import { useSession } from '@/state/session';
 import type { Feature } from '@/api/contract';
 import { Button } from './controls';
@@ -111,10 +111,15 @@ export function useDelayed(ms: number): boolean {
   return elapsed;
 }
 
+/**
+ * Relative time for the screens. Every timestamp they show is a past event, so this never renders the future — see
+ * `formatAge`. The `in` label is still supplied: it is part of the formatter's contract, and keeping it means a
+ * future-facing caller would read correctly rather than silently saying "just now".
+ */
 export function useRelativeTime() {
   const { t } = useI18n();
   return (at: number, now: number) =>
-    formatRelative(at, now, { now: t('time.justNow'), ago: (amount) => t('time.ago', { amount }), in: (amount) => t('time.in', { amount }) });
+    formatAge(at, now, { now: t('time.justNow'), ago: (amount) => t('time.ago', { amount }), in: (amount) => t('time.in', { amount }) });
 }
 
 /**
