@@ -5,11 +5,31 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["jest", "node"],
+    "types": [
+      "jest",
+      "node"
+    ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@opswatch/contract": [
+        "../../packages/contract/index.ts"
+      ],
+      "zod": [
+        "./node_modules/zod"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules", "dist", "dist-web"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-web"
+  ]
 }

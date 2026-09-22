@@ -31,12 +31,17 @@ const CODES = new Map<string, number>([...ALPHABET].map((character, index) => [c
 function encodeBase64Url(ascii: string): string {
   let out = '';
   for (let i = 0; i < ascii.length; i += 3) {
-    const bytes = [ascii.charCodeAt(i), ascii.charCodeAt(i + 1), ascii.charCodeAt(i + 2)];
-    const chunk = (bytes[0] << 16) | ((Number.isNaN(bytes[1]) ? 0 : bytes[1]) << 8) | (Number.isNaN(bytes[2]) ? 0 : bytes[2]);
+    // Named rather than indexed, and `charAt` rather than `[]`: the mobile app compiles this file with
+    // `noUncheckedIndexedAccess`, under which every index is `T | undefined`. The values here can never be missing —
+    // the alphabet has 64 entries and the mask is `& 63` — so this says that in the types instead of asserting it.
+    const first = ascii.charCodeAt(i);
+    const second = ascii.charCodeAt(i + 1);
+    const third = ascii.charCodeAt(i + 2);
+    const chunk = (first << 16) | ((Number.isNaN(second) ? 0 : second) << 8) | (Number.isNaN(third) ? 0 : third);
     const length = ascii.length - i;
-    out += ALPHABET[(chunk >> 18) & 63] + ALPHABET[(chunk >> 12) & 63];
-    if (length > 1) out += ALPHABET[(chunk >> 6) & 63];
-    if (length > 2) out += ALPHABET[chunk & 63];
+    out += ALPHABET.charAt((chunk >> 18) & 63) + ALPHABET.charAt((chunk >> 12) & 63);
+    if (length > 1) out += ALPHABET.charAt((chunk >> 6) & 63);
+    if (length > 2) out += ALPHABET.charAt(chunk & 63);
   }
   return out;
 }

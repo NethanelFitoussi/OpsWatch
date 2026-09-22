@@ -8,6 +8,8 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // The shared contract is a directory of TypeScript files at the repository root, not an installed package.
+    '^@opswatch/contract$': '<rootDir>/../../packages/contract/index.ts',
     // The shared contract lives outside this app (packages/contract, or a checkout of it during a parity run) and
     // has no node_modules of its own, so its zod import resolves to this app's copy.
     '^zod$': '<rootDir>/node_modules/zod',
