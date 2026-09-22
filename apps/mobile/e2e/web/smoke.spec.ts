@@ -103,13 +103,16 @@ test('ask OpsWatch, search and settings', async ({ page }) => {
   await shot(page, '25-settings');
 });
 
-test('deep link opens the object directly, unknown links fall back to Home', async ({ page }) => {
+test('a deep link opens the object, and an unknown one lands somewhere with a way out', async ({ page }) => {
   await startDemo(page);
   await page.goto('/problems/prb-redis-latency');
   await expect(page.getByText('sessions-redis latency elevated').first()).toBeVisible();
+
+  // An unknown path must never strand someone: the app says what happened and offers the way back. This used to be
+  // asserted against a phrase that exists in no catalogue, so the assertion could only ever pass by falling through
+  // to the other branch — which is to say it asserted nothing.
   await page.goto('/definitely/not/a/route');
-  await expect(page.getByTestId('status-title')).toBeVisible({ timeout: 10_000 }).catch(async () => {
-    // expo-router renders its not-found screen for unknown web paths; either outcome is safe.
-    await expect(page.getByText(/doesn't exist anymore/)).toBeVisible();
-  });
+  await expect(page.getByText('This no longer exists on the server.')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: 'Home' }).click();
+  await expect(page.getByTestId('status-title')).toBeVisible({ timeout: 10_000 });
 });

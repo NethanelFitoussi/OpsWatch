@@ -7,16 +7,136 @@ Android is the platform this app has actually been run on: a release APK built w
 `./gradlew assembleRelease` and installed on an Android 15 emulator (Pixel 7, x86_64) on 2026-09-20. What that run
 covered is listed in [testing.md](testing.md#what-has-actually-been-verified).
 
-## Android Studio, SDK and emulator
+## Setting up Android from nothing
 
-1. Install Android Studio. On first launch, install the Android SDK, SDK Platform-Tools and an emulator system image.
-2. Put the SDK tools on your `PATH` ([development.md](development.md#prerequisites)).
-3. Device Manager → create a virtual device (a Pixel phone and, for layout checks, a tablet).
-4. Start it and check `adb devices` lists it. Then either:
-   - `npm start` and press `s` for Expo Go, then `a` — no native toolchain needed; or
-   - `npm run android` (`expo run:android`), which compiles a debug build with the development client and installs it.
+Two ways. Android Studio is the easy one; the command-line SDK is the one that works on a headless Linux box, and is
+what produced every verified Android result in [testing.md](testing.md#what-has-actually-been-verified).
 
-On the emulator, `10.0.2.2` is the host's `localhost` (or use `adb reverse tcp:<port> tcp:<port>`).
+### With Android Studio
+
+1. Install Android Studio. On first launch let it install the SDK, SDK Platform-Tools and an emulator system image.
+2. Device Manager → create a virtual device (a Pixel phone; add a tablet for layout checks).
+3. Put the SDK on your `PATH` (below), then `adb devices` should list the running emulator.
+
+### Without Android Studio (command line)
+
+This is the whole setup, and it is what this project was developed against. Adjust the versions if you want newer
+ones; these are the versions the verified runs used.
+
+```bash
+# 1. A JDK 17. Android Gradle Plugin does not accept a newer one.
+#    Any distribution works; Temurin is what was used here.
+mkdir -p ~/jdk && cd ~/jdk
+curl -L -o jdk.tar.gz https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse
+tar xzf jdk.tar.gz && rm jdk.tar.gz
+
+# 2. The command-line SDK tools.
+mkdir -p ~/android-sdk/cmdline-tools && cd ~/android-sdk/cmdline-tools
+curl -L -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+unzip -q tools.zip && mv cmdline-tools latest && rm tools.zip
+```
+
+Then set the environment, in `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export JAVA_HOME="$HOME/jdk/jdk-17.0.20.1+1"        # the directory the tarball unpacked to
+export ANDROID_HOME="$HOME/android-sdk"             # macOS with Android Studio: $HOME/Library/Android/sdk
+export PATH="$PATH:$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
+```
+
+> **`JAVA_HOME` must point at the JDK itself, not its parent.** A wrong `JAVA_HOME` makes Gradle fail with
+> *"JAVA_HOME is set to an invalid directory"* — and if you have wrapped the build in a pipeline, `$?` reports the
+> exit status of the last command in the pipe, not Gradle's, so the build looks like it succeeded. See
+> [Make sure you are testing the APK you just built](#make-sure-you-are-testing-the-apk-you-just-built).
+
+Install the packages and create an emulator:
+
+```bash
+sdkmanager --licenses                               # accept them all
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
+           "system-images;android-35;google_apis;x86_64" "emulator"
+
+avdmanager create avd -n opswatch -k "system-images;android-35;google_apis;x86_64" -d pixel_7
+emulator -avd opswatch -no-snapshot -no-audio &     # add -no-window on a headless machine
+adb devices                                         # should list `emulator-5554   device`
+```
+
+On Linux, hardware acceleration needs KVM: `ls -l /dev/kvm` should exist and be readable by your user
+(`sudo usermod -aG kvm $USER`, then log out and back in). Without it the emulator runs, very slowly.
+
+### Running the app on it
+
+```bash
+cd apps/mobile
+npm start            # then press `a`
+# or, for a full native build rather than Expo Go / a prebuilt dev client:
+npm run android
+```
+
+On the emulator, **`10.0.2.2` is the host machine's `localhost`**. Either use that, or forward the port so
+`localhost` works on both sides:
+
+```bash
+adb reverse tcp:4010 tcp:4010
+```
+
+[development.md](development.md#connecting-to-an-opswatch-server) has the full table of which address to use from
+where.
+
+## Logs and debugging
+
+```bash
+adb logcat -c                                        # clear, so you only see what happens next
+adb logcat | grep -E "ReactNativeJS|opswatch"        # the app's own JavaScript logs
+adb logcat -d | grep -cE "FATAL EXCEPTION|SIGSEGV"   # crashes since the last clear; 0 is what you want
+adb shell dumpsys activity activities | grep -oE "com\.[a-z.]*opswatch/[^ }]*"   # what is on screen
+```
+
+The app's logger prefixes everything with `[opswatch]` and redacts credentials before printing
+([security.md](security.md#app-logs)). In a release build only warnings and errors are printed.
+
+For a React Native debugger, press `m` in the Expo CLI (or shake the device) to open the developer menu.
+
+## A physical Android phone over USB
+
+1. On the phone: Settings → About phone → tap *Build number* seven times, then Developer options → **USB debugging**.
+2. Connect it, accept the fingerprint prompt, and check `adb devices` shows it as `device` (not `unauthorized`).
+3. `npm start`, then scan the QR code with Expo Go, or install a development build.
+
+A phone cannot reach your computer's `localhost`. Use `adb reverse tcp:4010 tcp:4010` over the USB cable, or your
+computer's LAN address. See [development.md](development.md#connecting-to-an-opswatch-server).
+
+## Make sure you are testing the APK you just built
+
+This cost a real afternoon here, twice, so it is written down.
+
+Gradle's JavaScript bundling task is up-to-date-checked, and it does not always notice that your JavaScript changed.
+`assembleRelease` can finish successfully and package **the previous bundle**. You then test a build without your
+change in it and draw a conclusion about code that was never running.
+
+```bash
+cd apps/mobile/android
+./gradlew assembleRelease
+
+# 1. Did the bundle actually get rebuilt? Its timestamp should be seconds old.
+ls -l --time-style=+%H:%M:%S app/build/generated/assets/react/release/index.android.bundle
+
+# 2. Even better: look for something only the new code contains.
+grep -c "some-new-testID-or-string" app/build/generated/assets/react/release/index.android.bundle
+```
+
+If the bundle is stale, delete it and build again:
+
+```bash
+rm -rf app/build/generated/assets/react/release && ./gradlew assembleRelease
+```
+
+And never wrap a build in a pipeline that hides its exit status:
+
+```bash
+./gradlew assembleRelease | tail -5; echo $?      # WRONG: $? is tail's status, always 0
+./gradlew assembleRelease || echo "build failed"  # right
+```
 
 ## Package name
 

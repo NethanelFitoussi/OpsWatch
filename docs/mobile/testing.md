@@ -2,6 +2,44 @@
 
 All commands run from `apps/mobile`.
 
+## The testing matrix
+
+Everything that is tested, the command that tests it, and what that command actually proves. A category marked
+**not automated** is a manual check; a category marked **never run** is honest about a gap rather than hiding it.
+Dates and results for each are in [What has actually been verified](#what-has-actually-been-verified).
+
+| Category | Command | What it validates |
+|---|---|---|
+| **Everything at once** | `npm run check` | Lint, typecheck and the full Jest suite. The gate CI runs, and the one to run before pushing |
+| Unit | `npm test` | Pure logic: formatting, severity, deep-link parsing, URL validation, redaction, chart scales, notification filtering |
+| Component | `npm test` | Screens rendered inside every real provider, asserting behaviour rather than markup |
+| Navigation | `npm test` | The real `app/` routes driven through `expo-router/testing-library`, including deep links and guards |
+| Integration (real HTTP) | `npm test` | The API client against `dev/mock-server.ts` over a real socket: auth, 401, filters, pagination, async log polling, acknowledge-then-forbidden |
+| Contract parity | `OPSWATCH_CONTRACT_DIR=<path> npx jest parity` | That the local contract copy and the server team's `packages/contract` agree, schema by schema. Skips itself when the package is not reachable |
+| Security | `npm test` | Fail-closed rules as tests: credential redaction, cross-origin refusal, server-supplied `action` validation, plain-HTTP refusal, cache scoping, notification default-deny |
+| Mutation spot-checks | *(manual; see below)* | Whether those tests would actually catch the bug. Breaking a rule on purpose must break a test |
+| Accessibility (automated) | `npm test` | Contrast for every colour pair in both palettes, touch targets, no line caps on the count tiles |
+| Accessibility (device) | *not automated* | TalkBack/VoiceOver, and font scaling — `adb shell settings put system font_scale 1.5` |
+| Large font | *not automated* | `adb shell settings put system font_scale 1.5` (and `2.0`), then walk the app. Restore with `1.0` |
+| Android emulator QA | *not automated* | `npm run android`, or install a release APK. [android.md](android.md#setting-up-android-from-nothing) |
+| iOS simulator QA | *not automated* | **Never run.** macOS only; [ios.md](ios.md#first-run-on-ios-checklist) is the checklist for whoever is first |
+| Physical device QA | *not automated* | **Never run** on either platform: no device has been available |
+| Offline / degraded | `npm test` (automated part) | Cold start with nothing answering, cached data labelled not-live, bounded cache, capability gating. The device half is manual: drop `adb reverse`, or switch the device to airplane mode |
+| Deep links | `npm test`, plus a device check | `adb shell am start -a android.intent.action.VIEW -d "opswatch://errors/<id>"` |
+| Web export smoke | `npm run export:web && npm run e2e:web` | The whole app toured at six device profiles in a browser, with screenshots |
+| Device flows (Maestro) | `maestro test e2e/maestro/<flow>.yaml` | Scripted flows on a real emulator/device; needs the Maestro CLI |
+| Release smoke | *not automated* | The checklist in [release.md](release.md) against a build that is actually going out |
+| Docs and config drift | `npm test -- docs-match-project` | That every command, path, identifier and variable in `docs/mobile/` still exists in the project |
+
+### One command
+
+```bash
+cd apps/mobile && npm run check
+```
+
+Lint, typecheck and every test. It is what CI runs on a pull request, and it is the only command you need before
+pushing. It does **not** build native apps, run a browser or touch a device; those are the rows above.
+
 ## Automated checks
 
 | Command | What it runs |

@@ -185,35 +185,87 @@ npm run mock-server -- --host 0.0.0.0 --no-ai --latency 400
 
 The mock server always reports `features.push = false`: remote push exists nowhere yet ([notifications.md](notifications.md)).
 
-## Against a local OpsWatch server
+## Connecting to an OpsWatch server
 
-Once the OpsWatch server serves `/api/v1` ([api-contract.md](api-contract.md)), start it from the repository root as
-described in the root [README](../../README.md) and [CONTRIBUTING.md](../../CONTRIBUTING.md):
+This is the part that trips everyone up, because "localhost" means four different machines depending on where the app
+is running.
 
-```bash
-# From the repository root, with Docker
-cp .env.example .env
-# Put at least 32 random characters in OPSWATCH_SECRET, then:
-docker compose up -d --build
+### Which address to use from where
 
-# Or, for development without Docker (Node 22.12+):
-npm ci
-cp .env.example .env.local
-# Set OPSWATCH_SECRET (32+ characters) and OPSWATCH_DATA_DIR (for example ./data) in .env.local
-npm run dev
-```
+The app runs somewhere; the server runs on your computer. These are the addresses that reach it.
 
-The server listens on `http://localhost:3000`. Create the admin account in a browser first. Then connect the app to:
+| The app is running on | Use this address | Why |
+|---|---|---|
+| The **Android emulator** | `http://10.0.2.2:4010` | `10.0.2.2` is the emulator's alias for the host machine. `localhost` is the emulator itself |
+| The **Android emulator**, alternative | `http://127.0.0.1:4010` **after** `adb reverse tcp:4010 tcp:4010` | Forwards the device's port to the host's. Works over USB for a real phone too |
+| The **iOS simulator** | `http://localhost:4010` | The simulator shares the Mac's network stack |
+| A **physical phone**, same Wi-Fi | `http://<your computer's LAN IP>:4010` | Find it with `ip -4 addr` (Linux) or `ipconfig getifaddr en0` (macOS) |
+| A **physical Android phone**, USB | `http://127.0.0.1:4010` after `adb reverse tcp:4010 tcp:4010` | No shared network needed |
+| The **web export** (QA only) | `http://localhost:4010` | It is a browser on your machine |
 
-| Where the app runs | Server URL |
-|--------------------|-----------|
-| iOS simulator | `http://localhost:3000` |
-| Android emulator | `http://10.0.2.2:3000` (or `adb reverse tcp:3000 tcp:3000` and `http://localhost:3000`) |
-| Phone on the same network | `http://<computer LAN IP>:3000` |
+Do not commit your own LAN address anywhere. Put it in `apps/mobile/.env` as
+`EXPO_PUBLIC_DEFAULT_SERVER_URL`, which is git-ignored ([configuration.md](configuration.md)).
 
-`docker-compose.yml` publishes the port on `127.0.0.1` only, so a phone cannot reach the Docker setup directly. Use
-`npm run dev`, a reverse proxy with HTTPS, or a tunnel you control. Remember the root README's warning: until the
-admin account exists, whoever opens OpsWatch first can create it.
+### HTTP or HTTPS
+
+The app requires **HTTPS**, with one deliberate exception: a **development build** may use plain `http://` for a
+**private address** (`localhost`, `127.0.0.1`, `10.x`, `192.168.x`, `172.16–31.x`, `::1`, `*.local`) once you switch on
+**"Allow plain HTTP"** on the Connect screen. The toggle does not exist in a release build, and the app never disables
+certificate verification.
+
+So: a release APK cannot talk to `http://10.0.2.2:4010`. That is not a bug to work around — build a development build
+(`npm run android`, or `eas build --profile development`) when you need to work against a local plain-HTTP server.
+
+A self-signed HTTPS certificate is rejected like any other untrusted certificate. To test against real HTTPS, put a
+reverse proxy with a certificate your device trusts in front of the server, or use a tunnel you control.
+
+### Connecting, step by step
+
+1. Start something to connect to — the mock server is the quickest:
+
+   ```bash
+   cd apps/mobile
+   npm run mock-server           # http://127.0.0.1:4010
+   ```
+
+   For a real OpsWatch server, start it from the repository root instead (root [README](../../README.md)):
+
+   ```bash
+   cp .env.example .env          # set OPSWATCH_SECRET to 32+ random characters
+   docker compose up -d --build  # http://localhost:3000
+   # or, without Docker:  npm ci && npm run dev
+   ```
+
+   Create the admin account in a browser first. Until it exists, whoever opens OpsWatch first can create it.
+
+2. Open the app and enter the address from the table above. Tap **Test connection**.
+
+   A healthy answer names the server and its version, and reports how many features it provides — for example
+   *"Available on this server: 18 / 19"*. That is **capability discovery**: the app asks `GET /api/v1/server` what
+   this server can do, and hides what it cannot. A server that does not advertise `push` gets no push screens; one
+   the app could not ask at all is shown as *unknown*, with a retry, rather than as *unavailable*.
+
+   If the server declares itself a demo (`demo: true`, which the mock server does), the app shows a permanent
+   **DEMO DATA** banner so nobody mistakes fictional numbers for production.
+
+3. Tap **Continue**, then sign in. For the mock server: `demo@opswatch.dev` / `opswatch-demo`.
+
+### When it does not connect
+
+The Connect screen names the actual problem rather than saying "failed". Each message means something specific:
+
+| Message | What it means |
+|---|---|
+| *OpsWatch requires HTTPS…* | Plain HTTP, and either this is a release build or the address is not private. See above |
+| *Couldn't reach that address…* | Nothing answered: wrong address, server not running, a network that cannot route there, or an untrusted certificate |
+| *Nothing answered at that address…* | Something is listening but there is no OpsWatch there. If it runs under a path, include it: `https://example.com/ops` |
+| *This server answered, but it isn't an OpsWatch server with the mobile API* | Reached something else, or a server too old to serve `/api/v1` |
+| *This OpsWatch server speaks mobile API version N…* | Version mismatch; the message says which side to update |
+| *Something in front of the server is asking for credentials of its own* | A proxy wants its own auth. OpsWatch does not need any to answer this check |
+| *The server did not answer in time* | Still starting, or something in between is dropping the request |
+
+From the emulator, the two most common causes are using `localhost` instead of `10.0.2.2`, and forgetting that a
+release build will not accept plain HTTP at all.
 
 ## Everyday commands
 

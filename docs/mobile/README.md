@@ -49,20 +49,50 @@ zero.
 
 ## Quick start
 
-Requirements: Node 22 through [nvm](https://github.com/nvm-sh/nvm), and either Expo Go, an iOS simulator (macOS) or
-an Android emulator. Details in [development.md](development.md).
+Requirements: **Node 22** (`.nvmrc` pins it; `package.json` requires `>=22.12`) and npm. For a device you also need
+either Expo Go, an Android emulator, or an iOS simulator (macOS only). Full setup, from an empty machine, is in
+[development.md](development.md).
 
 ```bash
 git clone -b feature/mobile git@github.com:NethanelFitoussi/OpsWatch.git   # drop -b once merged into main
 cd OpsWatch/apps/mobile
-nvm use
-npm ci
-npm start
+nvm use                  # Node 22
+npm ci                   # exact versions from package-lock.json
+cp .env.example .env     # optional: every value in it is optional
+npm start                # Metro / the Expo dev server
 ```
 
-`expo-dev-client` is a dependency, so `npm start` targets a development build. Press `s` to switch the dev server to
-**Expo Go**, then press `a` (Android emulator), `i` (iOS simulator, macOS only) or scan the QR code. On the Connect
-screen, choose **Explore the demo** to use the app without a server.
+Then press **`a`** for an Android emulator, **`i`** for an iOS simulator (macOS), or scan the QR code with a phone.
+`expo-dev-client` is a dependency, so `npm start` targets a **development build**; press **`s`** first to switch the
+dev server to **Expo Go** if that is what you have installed.
+
+On the Connect screen, tap **Explore the demo**: fictional data, no server, no account, no AWS. That is the whole
+app, working, in about two minutes.
+
+To point it at something real instead, see [Connecting to a server](development.md#connecting-to-an-opswatch-server).
+
+## The commands, in one place
+
+Every command runs from `apps/mobile`. Each one is linked to the document that explains it.
+
+| What you want | Command | Notes |
+|---|---|---|
+| Install | `npm ci` | Never `npm install` unless you mean to change the lockfile |
+| Run it | `npm start` | [development.md](development.md#run) |
+| Run it against fake data | `npm start`, then **Explore the demo** | No server needed ([demo mode](development.md#demo-mode)) |
+| Run a fake OpsWatch server | `npm run mock-server` | Real HTTP on `:4010` ([development.md](development.md#mock-server)) |
+| **Full quality gate** | `npm run check` | Lint, typecheck and the whole test suite ([testing.md](testing.md)) |
+| Just the tests | `npm test` | |
+| Android, on an emulator, from source | `npm run android` | A real native build; needs the Android SDK and a JDK |
+| iOS, on a simulator, from source | `npm run ios` | A real native build; **macOS only** |
+| Android release APK, locally | `cd android && ./gradlew assembleRelease` | [android.md](android.md#build-locally) |
+| Android release AAB, for the Play Store | `eas build --platform android --profile production` | Cloud build ([expo-eas.md](expo-eas.md)) |
+| iOS release build, for TestFlight | `eas build --platform ios --profile production` | Cloud build; needs an Apple account ([ios.md](ios.md)) |
+| Check the config | `npx expo config --type public` | Shows the identifiers that would be built |
+| Check the toolchain | `npm run doctor` | `expo-doctor` |
+
+The `production` profile refuses to build while the store identifiers are still `com.example.opswatch`. That is
+deliberate: an identifier cannot be changed after a first release ([release.md](release.md)).
 
 ## Documentation
 
