@@ -1106,6 +1106,61 @@
         "title": "Log groups",
         "billed": "Logs Insights queries are billed by AWS per GB of logs scanned."
       }
+    },
+    "problems": {
+      "title": "Problems",
+      "description": "What OpsWatch believes is wrong right now, worst first.",
+      "empty": "Nothing is wrong in this environment.",
+      "emptyHint": "OpsWatch checks every five minutes. A problem appears here as soon as a detector opens one.",
+      "waiting": "OpsWatch has not finished its first check of this environment.",
+      "waitingHint": "The first cycle runs within five minutes of a connection being added.",
+      "counts": "{critical} critical, {warning} warning, {info} info",
+      "columns": {
+        "problem": "Problem",
+        "severity": "Severity",
+        "score": "Score",
+        "subject": "Subject",
+        "firstSeen": "First seen",
+        "lastSeen": "Last seen",
+        "occurrences": "Seen"
+      },
+      "status": {
+        "new": "New",
+        "active": "Active",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "stale": "Not checked recently",
+      "staleHint": "OpsWatch has not been able to evaluate this subject for over an hour, so it is neither confirmed nor cleared.",
+      "occurrencesValue": "{count, plural, one {# time} other {# times}}",
+      "detail": {
+        "back": "All problems",
+        "evidence": "Evidence",
+        "evidenceDescription": "What the detector actually read. Every item is an observed fact.",
+        "noEvidence": "No evidence was recorded.",
+        "notMeasured": "Not measured",
+        "why": "Why this score",
+        "whyDescription": "The score is {score} out of 100. Each term is multiplied by its weight and the total is rescaled over the weight actually available.",
+        "term": {
+          "s": "Detector level",
+          "b": "Blast radius",
+          "t": "Persistence",
+          "u": "User-facing",
+          "d": "Deviation from baseline"
+        },
+        "unavailable": "Not known yet",
+        "unavailableHint": "This term is left out rather than counted as zero, and the score is rescaled over the rest.",
+        "weight": "Weight",
+        "value": "Value",
+        "contribution": "Contributes",
+        "rescaled": "Rescaled over {available} of 100, because not every term could be measured.",
+        "floored": "Raised to the critical floor: the subject has failed completely.",
+        "notFound": "That problem does not exist in this environment.",
+        "firstSeen": "First seen",
+        "lastSeen": "Last seen",
+        "occurrences": "Occurrences",
+        "flaps": "Times it came back"
+      }
     }
   },
   "Insights": {
@@ -1141,6 +1196,9 @@
   },
   "Sections": {
     "overview": {
+      "problems": "Problems",
+      "health": "Health",
+      "brief": "Morning brief",
       "insights": "Insights",
       "audit": "Audit"
     },
