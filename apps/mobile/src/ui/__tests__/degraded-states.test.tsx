@@ -88,11 +88,26 @@ describe('ErrorState', () => {
 });
 
 describe('LoadingState', () => {
+  /**
+   * On fake timers, because the thing under test is a delay and the assertion is that it has *not* elapsed yet.
+   * On a real clock that assertion races the machine: rendering inside every provider takes however long it takes,
+   * and under a loaded test run it can outlast the 80 ms being tested, at which point the spinner is legitimately on
+   * screen and the test fails for a reason that has nothing to do with the app.
+   */
   it('holds the spinner back so a fast answer never makes it flash', async () => {
-    await renderWithProviders(<LoadingState delayMs={80} />);
-    expect(screen.queryByTestId('loading-state')).toBeNull();
-    expect(screen.getByTestId('loading-placeholder')).toBeTruthy();
-    expect(await screen.findByTestId('loading-state', {}, { timeout: 3000 })).toBeTruthy();
+    jest.useFakeTimers();
+    try {
+      await renderWithProviders(<LoadingState delayMs={80} />);
+      expect(screen.queryByTestId('loading-state')).toBeNull();
+      expect(screen.getByTestId('loading-placeholder')).toBeTruthy();
+
+      act(() => {
+        jest.advanceTimersByTime(80);
+      });
+      expect(screen.getByTestId('loading-state')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 
