@@ -64,6 +64,13 @@
       "when": 1790071418434,
       "tag": "0008_white_wolf_cub",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790072299816,
+      "tag": "0009_cute_wild_pack",
+      "breakpoints": true
     }
   ]
 }

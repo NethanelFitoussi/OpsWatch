@@ -49,8 +49,12 @@ export const JOBS: Record<JobId, JobSpec> = {
   // `Describe*` calls: §9.5 records them as throttled but not billed.
   inventory: { id: 'inventory', everyMs: 30 * MINUTE, cap: 60, scope: 'environment', freshInstall: true },
   queries: { id: 'queries', everyMs: 30 * MINUTE, cap: 25, scope: 'environment', freshInstall: false },
-  // One bounded Logs Insights query per opted-in source, and a source that is off costs nothing (Task 20).
-  errors: { id: 'errors', everyMs: 15 * MINUTE, cap: 1, scope: 'environment', freshInstall: false },
+  /**
+   * One bounded Logs Insights query per opted-in source. It is on from the start because a fresh install has
+   * no enabled source, so the job finds nothing to do and costs nothing — and the moment an operator opts a
+   * log group in, collection begins without their having to find a second switch.
+   */
+  errors: { id: 'errors', everyMs: 15 * MINUTE, cap: 1, scope: 'environment', freshInstall: true },
   logvolume: { id: 'logvolume', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },
   baselines: { id: 'baselines', everyMs: HOUR, cap: 500, scope: 'environment', freshInstall: false },
   slo: { id: 'slo', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },

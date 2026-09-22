@@ -7,7 +7,7 @@ import { JOBS, type JobId } from '../collector/jobs';
 import { readCollectorLock, lastRuns } from '../store/collector';
 import { listFamilySnapshots } from '../store/health';
 import { version } from '../../../package.json';
-import type { EnvironmentStatus, JobStatus, SystemStatus } from '@opswatch/contract';
+import type { JobStatus, SystemStatus } from '@opswatch/contract';
 
 /**
  * What OpsWatch knows about itself (§21, and the mission's Phase T).

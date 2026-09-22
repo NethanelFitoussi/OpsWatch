@@ -57,8 +57,10 @@ describe('deciding what is due', () => {
     dueJobs({ nowMs: NOW, environments: ENVIRONMENTS, lastRunAt: new Map(), enabled: FRESH_INSTALL_JOBS, ...over });
 
   it('runs everything that has never run', () => {
-    // Two environments × two environment jobs, plus the one instance job.
-    expect(due()).toHaveLength(ENVIRONMENTS.length * 2 + 1);
+    // Every environment-scoped fresh-install job, once per environment, plus the one instance job.
+    const perEnvironment = FRESH_INSTALL_JOBS.filter((id) => JOBS[id].scope === 'environment').length;
+    const instanceWide = FRESH_INSTALL_JOBS.filter((id) => JOBS[id].scope === 'instance').length;
+    expect(due()).toHaveLength(ENVIRONMENTS.length * perEnvironment + instanceWide);
   });
 
   it('fans an environment job out per environment, and an instance job out once', () => {
