@@ -1410,3 +1410,75 @@ The five guarantees, each of which the suite checks:
 
 - [x] **Step 1:** the interface, its types and the conformance suite.
 - [x] **Step 2:** gate and commit; Task 23 provides the first implementation and runs the suite against it.
+
+### Task 23: the default provider — history in the OpsWatch database
+
+Implements **§33.9**. The provider every installation gets, and therefore the one the conformance suite
+matters most for: a guarantee the default provider does not keep is a guarantee the product does not have.
+
+**Files:** `src/lib/history/opswatch-db.ts` (adapter only), `src/lib/store/history.ts` (all SQL, per §9.6),
+migration `0010_history_points/watermarks`.
+
+- [x] **Step 1:** the tables, the store, the adapter.
+- [x] **Step 2:** run Task 22's conformance suite against it; gate, commit, integrate.
+
+### Task 24: the metrics job, behind the history switch
+
+Implements **§31.1** (history off by default) and **§33.12** (cost estimated per billing unit).
+
+**Files:** `src/lib/history/settings.ts`, `src/lib/history/shared.ts`, `src/lib/history/estimate.ts`,
+`src/lib/store/history-settings.ts`, `src/lib/collector/metrics-job.ts`,
+`src/app/[locale]/(app)/settings/history/*`, migration `0011_history_settings`.
+
+- [x] **Step 1:** settings (off by default at the schema level), the estimate, the store.
+- [x] **Step 2:** the job — it asks the switch **before** resolving a target, so a fresh install makes no AWS
+      request at all rather than one whose result is discarded. Mutation-tested.
+- [x] **Step 3:** Settings → Data & history; link it (and System status) from Settings, because a page
+      nothing links to is not reachable. Gate, commit, integrate.
+
+---
+
+## Phase 7 — Reports
+
+### Task 25: reports over stored rollups
+
+Implements **§19**. A report covers 24 hours, 7 days or 30 days, reads **stored rollups and never AWS**, and
+compares every figure with the immediately preceding period of the same length. That comparison is the whole
+point: "14 problems opened" means nothing without "and 31 the week before".
+
+**The honesty constraint is the hard part.** §2.6 forbids a page that fabricates. The prerequisites finished
+in Tasks 9, 22, 23 and 24 mean parts of a report are now genuinely answerable and parts are not, and the two
+must not look alike:
+
+| Half | Source | State today |
+|---|---|---|
+| Problems opened / resolved, by severity | `events` + `problems` | **answerable** — detect runs on data the pages already fetched, so this needs no history switch |
+| Top error groups, and what is new | `error_groups` | answerable **when log sources are configured**; otherwise `not_collected` |
+| Availability, SLO status, worst resources | metric rollups | needs the history switch; `history_off` or `not_enough_history` |
+| Deployments, synthetics | — | `not_measured`: nothing in this build measures them |
+
+So every section of a report carries an explicit `unavailable` reason or real figures, and a reason is a
+named enum rather than an empty list — `history_off`, `not_enough_history`, `not_collected`, `not_measured`.
+An empty section and an unmeasured one are different answers, exactly as §2.6 requires for Health.
+
+**Files:**
+
+- `packages/contract/reports.ts` — additive (§33.1): `reportSchema`, `reportPeriodSchema`,
+  `reportFigureSchema`, `reportSectionSchema`, `reportUnavailableSchema`.
+- `src/lib/read/reports.ts` — the read service. Pure over the stores; no AWS client, no clock of its own.
+- `src/lib/read/report-markdown.ts` — §19's Markdown export, a pure function of the report.
+- `src/app/api/v1/reports/route.ts` — `GET /api/v1/reports?section=&period=`.
+- `src/app/[locale]/(app)/c/[connectionId]/[region]/{containers,databases,load-balancers,alarms}/report/page.tsx`.
+- Delete the four `*/report` lines from `UNBUILT_SUBSECTIONS`.
+
+**Steps:**
+
+- [ ] **Step 1:** the contract schema, additively, with the additive-guard test updated.
+- [ ] **Step 2:** the read service: period arithmetic, the previous period, per-severity counts from both,
+      top error groups, and an `unavailable` reason for every half that cannot be answered. Tests first,
+      including the comparison arithmetic and every unavailable branch.
+- [ ] **Step 3:** the Markdown export, pure and tested against the same report object.
+- [ ] **Step 4:** the API route, registered in the OpenAPI document and the feature list.
+- [ ] **Step 5:** the four pages, EN/FR, and the `UNBUILT_SUBSECTIONS` deletion.
+- [ ] **Step 6:** E2E — each report page reachable by clicking from its section menu, states its period, and
+      says plainly which halves it cannot answer and why. Gate, commit, integrate.

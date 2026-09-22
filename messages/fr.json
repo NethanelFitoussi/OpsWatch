@@ -1274,6 +1274,52 @@
       "emptyHint": "OpsWatch les lit toutes les quinze minutes.",
       "budgetStopped": "La collecte d'erreurs s'est arrêtée pour aujourd'hui : elle a atteint son budget d'analyse.",
       "budgetHint": "Elle reprend demain. Augmentez OPSWATCH_LOGS_BUDGET_GB_PER_DAY pour analyser davantage, en sachant que CloudWatch facture au gigaoctet."
+    },
+    "report": {
+      "title": "Rapport",
+      "description": "Ce qu’a été cette période, comparée à la précédente. Lu depuis ce qu’OpsWatch a déjà stocké : aucune nouvelle requête AWS.",
+      "period": "Du {from} au {to}",
+      "comparedWith": "Comparé au {from} – {to}",
+      "choosePeriod": "Choisir une période",
+      "periods": {
+        "24h": "Dernières 24 heures",
+        "7d": "Derniers 7 jours",
+        "30d": "Derniers 30 jours"
+      },
+      "sections": {
+        "problems": "Problèmes",
+        "errors": "Erreurs",
+        "availability": "Disponibilité",
+        "deployments": "Déploiements",
+        "synthetics": "Tests synthétiques"
+      },
+      "figure": {
+        "opened": "Ouverts",
+        "resolved": "Résolus",
+        "opened.critical": "Ouverts, critiques",
+        "opened.warning": "Ouverts, avertissements",
+        "opened.info": "Ouverts, information",
+        "occurrences": "Occurrences",
+        "groups": "Groupes d’erreurs",
+        "healthyShare": "Intervalles sans ressource affectée (%)",
+        "intervals": "Intervalles mesurés"
+      },
+      "columns": {
+        "name": "Nom",
+        "value": "Cette période",
+        "previous": "Précédente",
+        "change": "Évolution"
+      },
+      "unavailable": {
+        "history_off": "La collecte d’historique est désactivée : rien n’est stocké pour cette période. C’est un réglage, pas une panne.",
+        "not_enough_history": "La collecte d’historique est active mais ne couvre pas encore cette période. OpsWatch n’affiche pas un chiffre qu’il ne peut pas assumer.",
+        "not_collected": "Rien n’est configuré pour collecter cela : OpsWatch ne l’a pas mesuré. Ce n’est pas la même chose qu’une absence.",
+        "not_measured": "Cette version d’OpsWatch ne mesure pas encore cela."
+      },
+      "turnOnHistory": "Ouvrir Données et historique",
+      "approximation": "Mesuré sur des intervalles de 5 minutes stockés, et non par requête : un accès AWS en lecture seule ne fournit aucun histogramme de requêtes. Les intervalles non mesurés sont exclus plutôt que comptés comme sains.",
+      "notMeasured": "Non mesuré",
+      "export": "Exporter en Markdown"
     }
   },
   "Insights": {

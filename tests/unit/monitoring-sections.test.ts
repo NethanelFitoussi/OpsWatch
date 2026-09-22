@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { MONITORING_SECTIONS } from '@/lib/monitoring/shared/paths';
 import {
@@ -49,19 +51,34 @@ describe('the sub-section catalogue', () => {
   });
 });
 
+/** Where a section's sub-pages live. One `page.tsx` under here is what makes a segment real. */
+const ROUTES = join(process.cwd(), 'src/app/[locale]/(app)/c/[connectionId]/[region]');
+
 describe('the sub-pages no task has built yet', () => {
-  it('names every segment that has no page, and only those', () => {
-    // One list drives the whole "coming soon" treatment: the task that builds a page deletes its line here.
-    expect([...UNBUILT_SUBSECTIONS].sort()).toEqual([
-      'alarms/report',
-      'containers/report',
-      'databases/report',
-      'errors/sources',
-      'load-balancers/report',
-      'logs/endpoints',
-      'logs/volume',
-      'overview/audit',
-    ]);
+  it('names every segment that has no page, and only those — checked against the routes on disk', () => {
+    /**
+     * This used to be a hand-written list compared with itself, which could not notice the thing that
+     * actually goes wrong: a page gets built and its "coming soon" line is left behind, so the menu keeps
+     * refusing to link to a page that exists. So it reads the route files instead.
+     */
+    const hasPage = (section: string, subsection: string) =>
+      existsSync(join(ROUTES, section, subsection, 'page.tsx'));
+
+    const missing: string[] = [];
+    const stale: string[] = [];
+    for (const section of MONITORING_SECTIONS) {
+      for (const subsection of subsectionsOf(section)) {
+        const entry = `${section}/${subsection}`;
+        const unbuilt = UNBUILT_SUBSECTIONS.includes(entry);
+        if (unbuilt && hasPage(section, subsection)) stale.push(entry);
+        if (!unbuilt && !hasPage(section, subsection)) missing.push(entry);
+      }
+    }
+
+    // Marked "coming soon" while the page is right there.
+    expect(stale).toEqual([]);
+    // Linked from the menu with nothing behind it, which answers 404.
+    expect(missing).toEqual([]);
   });
 
   it('only names segments the catalogue still has, so a rename cannot leave a stale entry', () => {

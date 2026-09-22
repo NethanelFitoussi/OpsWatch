@@ -8,7 +8,7 @@ describe('sectionLinks', () => {
     expect(sectionLinks(scope, 'databases', 'range=12h&sort=load:desc')).toEqual([
       { subsection: 'instances', href: '/c/abc123def456/eu-west-1/databases/instances?range=12h', comingSoon: false },
       { subsection: 'queries', href: '/c/abc123def456/eu-west-1/databases/queries?range=12h', comingSoon: false },
-      { subsection: 'report', href: '/c/abc123def456/eu-west-1/databases/report?range=12h', comingSoon: true },
+      { subsection: 'report', href: '/c/abc123def456/eu-west-1/databases/report?range=12h', comingSoon: false },
     ]);
   });
 

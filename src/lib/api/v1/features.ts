@@ -27,6 +27,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   synthetics: false,
   slos: false,
   deployments: false,
+  // GET /reports summarises the rows the collector already wrote, and names the halves it cannot answer.
+  reports: true,
   investigations: false,
   repository: false,
   ai: false,
@@ -60,6 +62,7 @@ const ENABLED: Record<Feature, (operator: OperatorState) => boolean> = {
   synthetics: (o) => o.hasConnection,
   slos: (o) => o.hasConnection,
   deployments: (o) => o.hasConnection,
+  reports: (o) => o.hasConnection,
   investigations: (o) => o.hasConnection,
   repository: (o) => o.hasConnection,
   search: (o) => o.hasConnection,
