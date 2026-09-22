@@ -27,8 +27,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 |---|---|
 | `DONE` | 41 |
 | `PARTIAL` | 10 |
-| `FOUNDATION_ONLY` | 10 |
-| `NOT_STARTED` | 30 |
+| `FOUNDATION_ONLY` | 12 |
+| `NOT_STARTED` | 28 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -189,9 +189,9 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| SLO-1 | Definitions and measurement (§19) | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `slo` job declared, not implemented. Needs HIS-* rollups, which now exist |
-| SLO-2 | Error budget and burn rate | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | 14.4× / 1 h and 6× / 6 h multi-window |
-| SLO-3 | "Not enough history" below a quarter | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Reports already do this for availability |
+| SLO-1 | Definitions and measurement (§19) | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | Arithmetic built and mutation-tested. Needs ALB request/5xx rollups, which the metrics job does not yet store |
+| SLO-2 | Error budget and burn rate | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | 14.4× / 1 h and 6× / 6 h implemented and tested; no surface yet |
+| SLO-3 | "Not enough history" below a quarter | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | Enforced in `evaluateSlo`, with the share collected always stated |
 
 ## Cloudflare
 
