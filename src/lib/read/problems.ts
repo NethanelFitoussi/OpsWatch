@@ -1,6 +1,8 @@
 import 'server-only';
 import type { CursorPosition, Evidence, ProblemDetail, ProblemStatus, ProblemSummary, Trend } from '@opswatch/contract';
+import { DEPLOYMENT_WINDOW_MS, correlateDeployments } from '../detect/correlate';
 import type { Db } from '../db/client';
+import { listDeployments } from '../store/deployments';
 import type { ProblemEvidenceRow, ProblemRow, ProblemSeverity, ProblemStatus as StoredStatus } from '../db/schema';
 import { isStale } from '../detect/lifecycle';
 import {
@@ -198,6 +200,38 @@ export function problemIsStale(row: ProblemRow, nowMs: number): boolean {
 export type ProblemDetailResult = { detail: ProblemDetail; row: ProblemRow } | null;
 
 /** One problem, with the evidence that argued for it. Null when it does not exist in this environment. */
+/**
+ * Deployments of the same service that started shortly before the problem did (§7).
+ *
+ * Read from stored rows, so it costs nothing and works for a problem opened weeks ago — which is the point
+ * of DEP-1 having written them down in the first place. An environment where the deployments job has never
+ * run correlates with nothing, which is the honest answer rather than an empty list meaning "none happened".
+ */
+function correlatedDeployments(db: Db, row: ProblemRow) {
+  const candidates = listDeployments(
+    db,
+    {
+      connectionId: row.connectionId,
+      scope: row.scope,
+      ...(row.serviceId === null ? {} : { serviceId: row.serviceId }),
+      sinceMs: row.firstSeenAt - DEPLOYMENT_WINDOW_MS,
+      untilMs: row.firstSeenAt + 1,
+    },
+    20,
+  );
+
+  return correlateDeployments(candidates, { serviceId: row.serviceId, firstSeenAt: row.firstSeenAt }).map((correlated) => ({
+    deployment: {
+      id: correlated.deployment.deploymentId,
+      service: { type: 'service' as const, id: correlated.deployment.serviceId, label: correlated.deployment.serviceName },
+      version: correlated.deployment.taskDefinition,
+      at: correlated.deployment.startedAt,
+      status: correlated.deployment.status,
+    },
+    minutesBeforeProblem: correlated.minutesBefore,
+  }));
+}
+
 export function getProblem(
   db: Db,
   query: { connectionId: string; scope: string; id: string },
@@ -214,7 +248,8 @@ export function getProblem(
       evidence: evidence.map((item) => toEvidence(item, context)),
       errors: [],
       metrics: [],
-      deployments: [],
+      // §7: a measured Δt and a declared relation, never a cause. Every surface rendering it says so.
+      deployments: correlatedDeployments(db, row),
       repository: [],
       possibleCauses: [],
       alerts: [],

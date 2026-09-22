@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 44 |
-| `PARTIAL` | 9 |
+| `DONE` | 45 |
+| `PARTIAL` | 10 |
 | `FOUNDATION_ONLY` | 10 |
-| `NOT_STARTED` | 28 |
+| `NOT_STARTED` | 26 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -134,7 +134,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INV-1 | Investigation timeline | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `investigationSchema` exists; nothing produces one |
-| INV-2 | Cross-signal correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §7 |
+| INV-2 | Cross-signal correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Deployment↔problem only. §7's other pairs (errors, alarms, target health) are not correlated yet |
 | INV-3 | Observed fact vs correlation vs hypothesis | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §N's three bands; the distinction the whole feature rests on |
 | INV-4 | Probable-cause evidence chain | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on INV-2, DEP-2, REPO-* |
 | INV-5 | Investigation workspace (§R) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
@@ -144,7 +144,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | DEP-1 | Deployment collection | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Records ECS deployments and their outcome; visible in section reports |
-| DEP-2 | Deployment ↔ problem correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on DEP-1. Timestamps correlating is never a claim of causation |
+| DEP-2 | Deployment ↔ problem correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Same service, within 30 min before, with the measured Δt. The card says it is a gap in time and not a cause |
 | DEP-3 | Deployment history surface | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | In reports only; no dedicated page or `/api/v1/deployments` |
 
 ## Repository / GitHub
@@ -282,7 +282,7 @@ now**, and the queue moves to C.
 `GET /api/v1/checkup` serves it, with `coverage` as a required field so a client cannot render "no findings"
 without saying how much of the catalogue answered.
 
-### NOW
+### DONE
 
 **Checkpoint E — Deployments → correlation (DEP-2, INV-2).** DEP-1 now records deployments, so the question
 "was there a deployment near this problem?" is answerable from stored rows alone. This is the first piece of

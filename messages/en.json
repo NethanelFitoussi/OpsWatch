@@ -1160,7 +1160,11 @@
         "firstSeen": "First seen",
         "lastSeen": "Last seen",
         "occurrences": "Occurrences",
-        "flaps": "Times it came back"
+        "flaps": "Times it came back",
+        "deployments": "Deployments just before this started",
+        "deploymentsDescription": "Deployments of the same service that started shortly before this problem did. This is a measured gap in time, not a cause — a deployment during an incident is often unrelated.",
+        "minutesBefore": "{minutes, plural, =0 {at the same time} one {1 minute before} other {# minutes before}}",
+        "deploymentFailed": "this deployment failed"
       }
     },
     "health": {
