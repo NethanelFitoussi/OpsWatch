@@ -1,6 +1,6 @@
 # OpsWatch — full roadmap status
 
-**Reconciled against `main` = `origin/main` = `fec8758` on 2026-09-22.** Verified by reading the code, running
+**Reconciled against `main` = `origin/main` = `5a494b9` on 2026-09-22, then updated as work landed.** Verified by reading the code, running
 the gates, and walking the signed-in application in the running Docker instance — not by trusting what earlier
 documents claim was finished.
 
@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 38 |
+| `DONE` | 39 |
 | `PARTIAL` | 9 |
 | `FOUNDATION_ONLY` | 12 |
-| `NOT_STARTED` | 31 |
+| `NOT_STARTED` | 30 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -98,7 +98,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | LOG-1 | Search | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Non-v1 route; `features.logs` still false |
 | LOG-2 | Volume and retention | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Costs nothing against the budget, and says so |
-| LOG-3 | Endpoints / slow routes | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | **The last `UNBUILT_SUBSECTIONS` entry.** §3b: one Insights query per window, p95 per route, refuse windows > 24 h |
+| LOG-3 | Endpoints / slow routes | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Runs on a button, not on load; field names validated, never escaped; shows real lines when the mapping matches nothing |
 | LOG-4 | Single log entry endpoint | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Mobile asks for `GET /logs/{id}`; deep links currently open the surrounding search |
 | LOG-5 | `features.logs` on `/api/v1` | ✗ | ✗ | ✓ | · | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Logs are served by the older non-v1 route; no v1 endpoint exists |
 
@@ -230,7 +230,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| UX-1 | Navigation, section menus | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | One unbuilt segment left, correctly disabled |
+| UX-1 | Navigation, section menus | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | `UNBUILT_SUBSECTIONS` is empty; no segment is disabled anywhere |
 | UX-2 | EN / FR parity | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Enforced by test |
 | UX-3 | Responsive down to 360 px | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `PARTIAL` | Every new page is tested at 360 px; §U's full pass across older pages is not done |
 | UX-4 | Honest empty / unavailable / not-run states | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The product's central rule (§2.4, §2.6) |
@@ -263,22 +263,19 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 ## Remaining work queue, in dependency order
 
+### DONE since this audit was written
+
+**Checkpoint A — Logs → Endpoints (LOG-3).** Landed. `UNBUILT_SUBSECTIONS` is now **empty**: nothing anywhere
+in the product says "Coming soon". An E2E walks every section menu and asserts no disabled entry remains.
+
 ### NOW
-
-**Checkpoint A — Logs → Endpoints (LOG-3).** The last `UNBUILT_SUBSECTIONS` entry, so finishing it takes the
-"Coming soon" mechanism to zero. Everything it needs exists: the `log_source` field map (ERR-5) supplies the
-route and duration fields, the budget hard stop (ERR-4) bounds the query, and the Logs section already refuses
-windows over 24 hours. Acceptance: p95 and count per route from one bounded Insights query; the scanned bytes
-stated; a mapping that matches nothing says so and shows the first lines it saw, so the operator can correct
-the field names rather than guess. Tests: unit for the query builder and the row parser, E2E for reachability,
-the cost statement and the no-match state. Browser: required. Mobile: none.
-
-### NEXT
 
 **Checkpoint B — the unimplemented collector jobs (INT-3, HIS-6, DEP-1).** Seven of ten jobs are scheduled and
 do nothing. `compact` is the one with a correctness consequence: `purgeHistoryBefore` exists and nothing calls
 it, so retention is a setting that does not take effect. `deployments` unlocks DEP-2 and REP-5. `logvolume`
 would store what LOG-2 now reads live. Depends on: nothing new.
+
+### NEXT
 
 **Checkpoint C — Checkup on the API (INT-14).** Add `checkupSchema` to the contract and `GET /api/v1/checkup`,
 so mobile can show what the web already shows. Small, and it closes a Web/API asymmetry that will otherwise

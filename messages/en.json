@@ -1443,6 +1443,48 @@
       "notMeasured": "Not measured",
       "empty": "This region has no log groups.",
       "noQueryCost": "Read from CloudWatch metrics and DescribeLogGroups, so this page costs nothing against the daily log scanning budget."
+    },
+    "endpoints": {
+      "title": "Slowest endpoints",
+      "description": "Which routes are slow, measured from your application’s own logs.",
+      "whyLogs": "CloudWatch cannot answer this: a load balancer reports latency for a whole target group and never per path. Your application’s logs are the only source in a read-only AWS account, so this page needs to know which fields hold the route and the duration.",
+      "cost": "What a query costs",
+      "why": "This page runs nothing until you ask it to. Every run scans logs, and scanning is what CloudWatch charges for.",
+      "budget": "Scanned today: {scanned} GB of {limit} GB. {remaining} GB left.",
+      "costHint": "CloudWatch Logs Insights is billed per gigabyte scanned. OPSWATCH_LOGS_BUDGET_GB_PER_DAY is a hard stop, not a warning.",
+      "noSources": "No log group is switched on, so there is nothing to query.",
+      "noSourcesHint": "Choose the log groups to read in Errors, Log sources. That is not the same as your application having no slow endpoints.",
+      "configure": "Run a query",
+      "sources": "Reading {count, plural, one {one log group} other {# log groups}}: {groups}",
+      "preset": "Field preset",
+      "presetCustom": "Custom",
+      "presets": {
+        "json": "JSON logs (path, duration_ms)",
+        "api": "API format (route, duration)"
+      },
+      "routeField": "Field holding the route",
+      "durationField": "Field holding the duration in milliseconds",
+      "window": "Window",
+      "hours": "{hours, plural, one {Last hour} other {Last # hours}}",
+      "windowHint": "Nothing longer than a day, like the rest of the Logs section — a wider window scans more and costs more.",
+      "run": "Run query",
+      "results": "Results",
+      "scanned": "This query scanned {mb} MB.",
+      "route": "Route",
+      "hits": "Requests",
+      "p95": "p95",
+      "average": "Average",
+      "max": "Slowest",
+      "p95Hint": "p95 means 95 out of 100 requests to that route were faster than this. It is the number that describes what most people experienced, which an average hides.",
+      "notMeasured": "Not measured",
+      "noMatch": "No log line had both “{route}” and “{duration}”. The field names are probably different — here is what your logs actually look like.",
+      "samplesTitle": "Recent lines from these log groups",
+      "errors": {
+        "invalid_field": "A field name may contain letters, digits, dots, dashes, underscores and @ only.",
+        "no_sources": "No log group is switched on. Choose one in Errors, Log sources.",
+        "budget_exhausted": "Today’s log scanning budget is used up, so this query was not run.",
+        "query_failed": "The query could not be run. Check the connection and its logs permission, then try again."
+      }
     }
   },
   "Insights": {
