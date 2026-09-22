@@ -1320,6 +1320,59 @@
       "approximation": "Mesuré sur des intervalles de 5 minutes stockés, et non par requête : un accès AWS en lecture seule ne fournit aucun histogramme de requêtes. Les intervalles non mesurés sont exclus plutôt que comptés comme sains.",
       "notMeasured": "Non mesuré",
       "export": "Exporter en Markdown"
+    },
+    "checkup": {
+      "title": "Bilan",
+      "description": "Un catalogue de vérifications sur la configuration de cet environnement. Il lit ce qu’OpsWatch a déjà stocké : l’exécuter ne coûte rien.",
+      "coverage": "{ran} vérifications sur {total} ont abouti. {notRun} n’ont pas pu.",
+      "noFindings": "Rien à signaler parmi les vérifications qui ont abouti.",
+      "noFindingsHint": "C’est un constat mesuré, pas une page vide : les vérifications ci-dessous n’ont pas pu aboutir et sont listées pour que vous voyiez ce qui n’a pas été examiné.",
+      "findings": "Constats",
+      "couldNotRun": "Vérifications qui n’ont pas pu aboutir",
+      "difference": "Un constat porte sur la configuration de cet environnement et subsiste jusqu’à ce qu’un réglage change. Un problème est une panne en cours, qui se résout d’elle-même.",
+      "reason": {
+        "denied": "La permission nécessaire a été refusée : la réponse est inconnaissable d’ici.",
+        "not_collected": "OpsWatch ne collecte pas encore les données que lit cette vérification.",
+        "cap": "La portée a été écourtée pour rester dans le budget de requêtes.",
+        "unsupported": "Cette ressource ne peut pas répondre à la question."
+      },
+      "check": {
+        "permissions_untested": "Cette connexion n’a jamais été testée",
+        "permissions_denied": "AWS a refusé {count, plural, one {une permission} other {# permissions}} : {services}",
+        "permissions_errored": "AWS a renvoyé une erreur pour {count, plural, one {une permission} other {# permissions}} : {services}",
+        "account_mismatch": "Les identifiants atteignent un compte AWS différent de celui configuré",
+        "family_unreadable": "{family} n’a pas pu être lu ({reason})",
+        "errors_not_collected": "Aucun groupe de journaux n’est activé : aucune erreur n’est collectée",
+        "history_off": "La collecte d’historique est désactivée : ni références, ni SLO, ni rapports de long terme",
+        "logs_budget_exhausted": "Le budget de scan des journaux du jour est épuisé ({scanned} sur {limit} Go)",
+        "collector_never_ran": "Le collecteur n’a jamais fonctionné : rien n’a été mesuré",
+        "collector_job_failing": "{count, plural, one {Une tâche échoue} other {# tâches échouent}} : {jobs}",
+        "template_outdated": "La pile CloudFormation est en version {version} ; la version actuelle est {current}",
+        "log_retention_missing": "Groupes de journaux sans rétention définie",
+        "log_group_share": "Groupes de journaux occupant une grande part du total du compte",
+        "alarm_coverage": "Ressources signalées sans alarme CloudWatch",
+        "pi_disabled": "Instances de base de données sans Performance Insights",
+        "container_insights": "Clusters ECS sans Container Insights",
+        "idle_load_balancer": "Répartiteurs de charge sans aucune requête"
+      },
+      "fix": {
+        "permissions_untested": "Ouvrez la connexion et testez-la.",
+        "permissions_denied": "Mettez à jour la pile CloudFormation pour que le rôle puisse lire ces services.",
+        "permissions_errored": "Relancez le test de connexion ; si cela persiste, vérifiez le rôle et la région.",
+        "account_mismatch": "Vérifiez l’ARN du rôle et l’identifiant de compte sur la connexion.",
+        "family_unreadable": "Vérifiez la permission de ce service, puis retestez la connexion.",
+        "errors_not_collected": "Choisissez les groupes de journaux à lire dans Erreurs, Sources.",
+        "history_off": "Activez-la dans Paramètres, Données et historique, où son coût est indiqué d’abord.",
+        "logs_budget_exhausted": "Augmentez OPSWATCH_LOGS_BUDGET_GB_PER_DAY, ou attendez demain.",
+        "collector_never_ran": "Consultez l’État du système ; le collecteur démarre avec le serveur.",
+        "collector_job_failing": "Ouvrez l’État du système pour voir ce que chaque tâche a signalé.",
+        "template_outdated": "Mettez à jour la pile depuis la page de connexion pour débloquer les vérifications récentes."
+      },
+      "severity": {
+        "critical": "Critique",
+        "warning": "Avertissement",
+        "info": "Information"
+      }
     }
   },
   "Insights": {
@@ -1359,7 +1412,7 @@
       "health": "Santé",
       "brief": "Point du matin",
       "insights": "Analyses",
-      "audit": "Audit"
+      "checkup": "Bilan"
     },
     "containers": {
       "services": "Services",

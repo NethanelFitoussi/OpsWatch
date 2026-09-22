@@ -1482,3 +1482,69 @@ An empty section and an unmeasured one are different answers, exactly as §2.6 r
 - [ ] **Step 5:** the four pages, EN/FR, and the `UNBUILT_SUBSECTIONS` deletion.
 - [ ] **Step 6:** E2E — each report page reachable by clicking from its section menu, states its period, and
       says plainly which halves it cannot answer and why. Gate, commit, integrate.
+
+---
+
+## Phase 8 — Checkup
+
+### Task 26: Checkup, the check catalogue over one environment
+
+Implements Stage 3 §4, carried forward by the intelligence spec's naming ruling:
+
+> Stage 3's **Audit** page is renamed **Checkup**. "Audit" now means the administrative audit log, and two
+> things with one name is how a product gets confusing.
+
+So this task also renames the URL segment `overview/audit` → `overview/checkup` and its label. Nothing was
+ever served at `overview/audit` — it is in `UNBUILT_SUBSECTIONS` and answers 404 — so there is no bookmark to
+preserve and no redirect to write. That is worth stating rather than assuming.
+
+**What it is.** One page that runs a catalogue of checks and lists findings, worst first, each carrying a
+title, a severity, the resource, the evidence that triggered it, and what to do about it. Findings are
+localized messages with placeholders — **never generated prose**, so both languages stay exact.
+
+**What makes it different from Problems.** A problem is something breaking *now*, opened by a detector and
+tracked through a lifecycle. A finding is a standing observation about how the environment is *set up* — a log
+group with no retention, an instance with Performance Insights disabled, a resource with no alarm. Problems
+resolve themselves; findings stay until someone changes a setting. They are different objects and the page
+does not pretend otherwise.
+
+**The honesty constraint, again.** §2.6 governs: a check that could not run says so and why, and is never
+silently dropped. A finding list with three entries where two checks failed is a lie about coverage. So every
+check returns one of three outcomes, mirroring §33.5's shape:
+
+| Outcome | Meaning |
+|---|---|
+| `finding` | the check ran and found something |
+| `clear` | the check ran and found nothing |
+| `not_run` | the check could not run, with a reason (`denied`, `not_collected`, `cap`, `unsupported`) |
+
+The page states its coverage at the top: how many checks ran, how many could not, and — per Stage 3 §4 — the
+permission findings first, "since a missing permission makes every other check partial".
+
+**Cost.** Stage 3 caps a checkup at 500 metric queries total, through the existing batching and the 60-second
+cache shared with the live pages, and the page never auto-refreshes. This task's v1 goes further and reads
+**only what is already stored or already fetched for the live pages** — family snapshots, problems, log
+sources, the stored permission test — so a checkup costs nothing beyond what the Insights page would have
+spent. Checks needing data OpsWatch does not yet hold return `not_run`, which is the honest answer and leaves
+the AWS-reading versions to a later task rather than inventing them now.
+
+**Files:**
+
+- `src/lib/detect/checkup.ts` — the catalogue. Pure: every check is a function from already-fetched inputs to
+  an outcome, with no AWS client, no database and no clock of its own (§9.6).
+- `src/lib/read/checkup.ts` — the read service that assembles the inputs and renders the outcomes.
+- `src/app/[locale]/(app)/c/[connectionId]/[region]/overview/checkup/page.tsx`.
+- `src/lib/monitoring/shared/sections.ts` — `audit` → `checkup` in `SUBSECTIONS.overview`, the
+  `UNBUILT_SUBSECTIONS` line deleted, `SUBSECTION_ICONS` keeping its `audit` icon under the new key.
+- `messages/{en,fr}.json` — `Sections.overview.checkup`, and `Monitoring.checkup.*` for every finding.
+
+**Steps:**
+
+- [ ] **Step 1:** the rename, on its own, so the diff that moves a URL is readable and separate from the diff
+      that adds a feature. The filesystem-backed guard added in Task 25 keeps the two consistent.
+- [ ] **Step 2:** the pure catalogue and its tests, one test per check at and around its threshold, plus the
+      three-outcome shape. Mutation-test that a failed check cannot be silently dropped.
+- [ ] **Step 3:** the read service, the coverage statement, and permissions ranked first.
+- [ ] **Step 4:** the page, EN/FR, Markdown export reusing Task 25's escaping.
+- [ ] **Step 5:** E2E — reachable by clicking, states its coverage, and names a check it could not run. Gate,
+      commit, integrate.

@@ -59,3 +59,11 @@ test('the Errors page renders at 360px without horizontal overflow', async ({ pa
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test('the errors list refuses a filter it does not honour', async ({ page }) => {
+  const base = `/api/v1/errors?env=${connectionId}:${MOTO_REGION}`;
+  // `severity` belongs to problems, not to errors: asking is a mistake worth reporting.
+  expect((await page.request.get(`${base}&severity=critical`)).status()).toBe(400);
+  expect((await page.request.get(`${base}&status=nonsense`)).status()).toBe(400);
+  expect((await page.request.get(`${base}&status=recurring`)).status()).toBe(200);
+});

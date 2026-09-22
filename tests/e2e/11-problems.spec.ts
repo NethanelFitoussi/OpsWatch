@@ -56,17 +56,14 @@ test('Problems says which of its two empty states applies, never the wrong one',
   expect([listed, looked, waiting].filter(Boolean)).toHaveLength(1);
 });
 
-test('the overview menu links every built page and marks the one that is not', async ({ page }) => {
+test('the overview menu links every page it names, with none left disabled', async ({ page }) => {
   await page.goto(problemsUrl());
   const nav = page.getByRole('navigation', { name: 'Overview pages' });
-  // All three intelligence pages are built now, so all three are links.
-  for (const label of ['Morning brief', 'Health', 'Problems', 'Insights']) {
+  // Every Overview sub-page is built now, Checkup included, so every entry is a link.
+  for (const label of ['Morning brief', 'Health', 'Problems', 'Insights', 'Checkup']) {
     await expect(nav.getByRole('link', { name: label })).toBeVisible();
   }
-  // Audit is the one that remains: named so a reader knows where it will be, and not a link, so nobody
-  // reaches a 404.
-  await expect(nav.getByText('Audit')).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Audit' })).toHaveCount(0);
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(0);
 });
 
 test('GET /api/v1/problems answers the shape every client parses', async ({ page }) => {
@@ -113,4 +110,33 @@ test('client-side navigation into Problems works', async ({ page }) => {
   await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/overview/insights`);
   const response = await page.request.get(problemsUrl(), { headers: rscHeaders(['(app)', 'c', connectionId, MOTO_REGION, 'overview', 'problems']) });
   expect(response.status()).toBe(200);
+});
+
+test('a filter the server will not honour is refused, not silently dropped', async ({ page }) => {
+  const base = `/api/v1/problems?env=${connectionId}:${MOTO_REGION}`;
+  // The exact shape that failed in the field: a parameter the route did not read, answered with a full page.
+  expect((await page.request.get(`${base}&category=infrastructure`)).status()).toBe(400);
+  // A declared filter with an undeclared value fails too, rather than answering a narrower question.
+  expect((await page.request.get(`${base}&status=nonsense`)).status()).toBe(400);
+  expect((await page.request.get(`${base}&severity=disastrous`)).status()).toBe(400);
+  expect((await page.request.get(`${base}&since=yesterday`)).status()).toBe(400);
+  expect((await page.request.get(`${base}&service=a&service=b`)).status()).toBe(400);
+});
+
+test('the filters a client may send are in the OpenAPI document', async ({ page }) => {
+  const doc = await page.request.get('/api/v1/openapi.json').then((r) => r.json());
+  const parameters = doc.paths['/api/v1/problems'].get.parameters ?? [];
+  const names = parameters.filter((p: { in: string }) => p.in === 'query').map((p: { name: string }) => p.name);
+  // Undiscoverable filters are how a client comes to invent its own request vocabulary.
+  expect(names.sort()).toEqual(['service', 'severity', 'since', 'status']);
+});
+
+test('filters that are honoured actually narrow the list', async ({ page }) => {
+  const base = `/api/v1/problems?env=${connectionId}:${MOTO_REGION}`;
+  const all = await page.request.get(base).then((r) => r.json());
+  const resolved = await page.request.get(`${base}&status=resolved`).then((r) => r.json());
+  expect(Array.isArray(resolved.items)).toBe(true);
+  // Every row that came back is the status that was asked for — the assertion the silent drop would fail.
+  for (const item of resolved.items) expect(item.status).toBe('resolved');
+  expect(resolved.items.length).toBeLessThanOrEqual(all.items.length);
 });

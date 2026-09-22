@@ -78,14 +78,41 @@ export type ErrorsQuery = {
   connectionId: string;
   scope: string;
   status?: readonly ErrorGroupRow['status'][];
+  /** The contract's statuses, as a client sends them. Translated below; the store never sees a wire word. */
+  wireStatus?: readonly ErrorStatus[];
+  serviceId?: string;
+  sinceMs?: number;
   cursor?: CursorPosition | null;
   limit?: number;
 };
 
+/**
+ * A wire status, as the store stores it — the inverse of `wireErrorStatus`.
+ *
+ * `recurring` covers both `ongoing` and `muted`, because muting is a decision about notification and not a
+ * change in what the group is doing. A client asking for recurring groups means both.
+ */
+export function storedErrorStatuses(statuses: readonly ErrorStatus[]): ErrorGroupRow['status'][] {
+  const map: Record<ErrorStatus, ErrorGroupRow['status'][]> = {
+    new: ['new'],
+    recurring: ['ongoing', 'muted'],
+    regression: ['regressed'],
+    resolved: ['resolved'],
+  };
+  return [...new Set(statuses.flatMap((status) => map[status]))];
+}
+
 export function listErrors(db: Db, query: ErrorsQuery, context: ErrorReadContext) {
   const page = pageErrorGroups(
     db,
-    { connectionId: query.connectionId, scope: query.scope, ...(query.status === undefined ? {} : { status: query.status }) },
+    {
+      connectionId: query.connectionId,
+      scope: query.scope,
+      ...(query.status === undefined ? {} : { status: query.status }),
+      ...(query.wireStatus === undefined ? {} : { status: storedErrorStatuses(query.wireStatus) }),
+      ...(query.serviceId === undefined ? {} : { serviceId: query.serviceId }),
+      ...(query.sinceMs === undefined ? {} : { sinceMs: query.sinceMs }),
+    },
     toStoreCursor(query.cursor ?? null),
     pageLimit(query.limit),
   );
