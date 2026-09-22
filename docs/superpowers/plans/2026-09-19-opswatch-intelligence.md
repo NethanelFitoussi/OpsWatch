@@ -1246,3 +1246,44 @@ the lock, asks that function, runs what it returns and records each run. Nothing
 - [x] **Step 5: Start it from `instrumentation-node.ts`**, after the database is opened, and add both files to
   `SERVER_ONLY_MODULES`.
 - [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(collector): the runtime, its lock loop and the job schedule`.
+
+### Task 10: The `inventory` and `detect` jobs
+
+Implements §9.2's two fresh-install jobs. Split into two checkpoints because they are independent: `detect` is
+what makes a problem exist at all, and `inventory` is what gives a subject a first-seen date.
+
+**10a — the `detect` job.** `src/lib/collector/detect.ts`, plus the store side of applying a cycle
+(`listLiveProblems`, `listRecentlyResolved`, `applyTransitions` in `src/lib/store/problems.ts`).
+
+The job reads the same four families the Insights page reads, through the same cache, so it costs no extra
+AWS request — §9.5's point and the reason D4 leaves it on. It then does what nothing did before: turns the
+rules' output into rows.
+
+The care is all in **§33.5**. A family that fails to load leaves its subjects *not evaluated*, which is not
+the same as clear, so the job reports per live problem whether the family behind it was actually read. A
+connection that cannot be resolved at all throws, and the run is recorded `failed` — never a cycle in which
+everything quietly looked healthy. `covered`/`total` carry how many families were read, so a partial cycle is
+visible rather than hidden.
+
+`resolvedInWindow` is passed **everything still retained**, not only what is still reopenable: the lifecycle
+applies the two-hour window itself, and needs the older rows so a successor can carry `previousProblemId`.
+Found by a test that asserted ancestry and got `null`.
+
+- [x] **Step 1: the store side** — the `LiveProblem` projection, the recently-resolved read, and
+  `applyTransitions`, which scores each problem as it writes it so the row and its arithmetic cannot disagree.
+- [x] **Step 2: the job**, wired into `run-job.ts`.
+- [x] **Step 3: a cycle test** covering open, occurrence counting, resolve-after-three-and-fifteen-minutes,
+  §33.5's regression, reopen inside the window, supersede beyond it, fleet members, and the total-failure floor.
+- [x] **Step 4: verify against a real container.** Against seeded AWS the collector produced three
+  `alarm_firing` problems, one per readable connection, each with its own key, evidence and stored arithmetic —
+  and the score terms show §33.7's rescaling live: `b: null, u: null, availableWeight: 65, rescaled: true`.
+- [x] **Step 5: gate and commit.** Commit: `feat(collector): the detect job, which is what makes a problem exist`.
+
+**10b — the `inventory` job.** `src/lib/store/resources.ts` and `src/lib/collector/inventory.ts`: the
+`Describe*` sweep that records what exists and when it was first and last seen, so a subject's age is known
+(which §33.7's freshness rule needs) and so a resource that disappears can be noticed.
+
+- [ ] **Step 1: the `resources` table and its store**, with first/last seen and an additive migration.
+- [ ] **Step 2: the job**, bounded by §9.2's 60 describe calls, recording `covered N of M`.
+- [ ] **Step 3: events** — `resource_appeared` and `resource_disappeared` on the spine.
+- [ ] **Step 4: gate and commit.**
