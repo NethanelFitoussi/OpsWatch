@@ -117,6 +117,19 @@ and reflows to 80 columns, which is churn against the house style.
    the ambiguity. The digest is pinned by a test against an independently computed value; **changing it
    re-keys every open problem in the field.**
 
+6. **The container's data directory is pinned in `docker-compose.yml`, not left to `.env`.** A self-hosted
+   installation lost its admin account and its encrypted credentials on `docker compose up --build`: `.env`
+   is passed through `env_file` *and* is what `npm run dev` reads, so an `OPSWATCH_DATA_DIR` set for a local
+   run sent the container's database into its own writable layer while the mounted volume stayed empty. The
+   reported "Create admin came back" was the same bug, not a second one — with an empty database there
+   genuinely was no admin, and `/login` correctly redirected to `/setup`. Compose now sets
+   `OPSWATCH_DATA_DIR: /data` under `environment`, which outranks `env_file`. **Do not move it back into
+   `.env`, and do not add a second writable volume** — one database is the whole backup story.
+   `src/lib/db/storage.ts` warns at startup when the data directory is on an overlay or tmpfs mount, and
+   `npm run verify:persistence` proves the whole thing against a real volume across a restart, a recreation
+   and an image rebuild. The e2e suite cannot: `docker-compose.test.yml` uses tmpfs so each run starts empty,
+   which is why this shipped unnoticed.
+
 ## Accepted trade-offs, reviewed and deliberately left as they are
 
 Both came out of an independent peer review of `90ed109`, which raised no critical or important findings.
