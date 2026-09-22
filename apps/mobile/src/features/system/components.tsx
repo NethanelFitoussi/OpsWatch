@@ -7,14 +7,14 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { EnvironmentStatus, JobStatus, SystemStatus } from '@/api/contract';
-import { useI18n } from '@/i18n';
+import { useI18n, type MessageKey } from '@/i18n';
 import { formatBytes, formatDuration } from '@/lib/format';
 import { Badge } from '@/ui/badges';
 import { Card, KeyValue, Section } from '@/ui/layout';
 import { Text } from '@/ui/text';
 import { spacing, toneColors } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
-import { useNow, useRelativeTime } from '@/ui/states';
+import { useNow, useRelativeTime, useScheduledTime } from '@/ui/states';
 import { collectorVerdict, environmentCoverage, isPartial, jobMeta, sortJobs } from './helpers';
 
 /** The headline: one sentence of state, one sentence of consequence. */
@@ -49,10 +49,27 @@ export function CollectorVerdict({ status }: { status: SystemStatus }) {
 }
 
 /** One collection job: what it is for, when it last ran, when it runs next, and how it went. */
+/**
+ * When a job runs next. A run less than a minute away is "due" rather than "in 0 min" — and rather than "just now",
+ * which is what a relative formatter produces for anything inside its own threshold and which reads, for a schedule,
+ * as though it has already happened.
+ */
+function nextRunLabel(
+  nextRunAt: number | null,
+  now: number,
+  t: (key: MessageKey, values?: Record<string, string>) => string,
+  scheduled: (at: number, now: number) => string,
+): string {
+  if (nextRunAt === null) return t('system.job.nextRunUnknown');
+  if (nextRunAt - now < 60_000) return t('system.job.nextRunDue');
+  return t('system.job.nextRun', { time: scheduled(nextRunAt, now) });
+}
+
 export const JobRow = memo(function JobRow({ job }: { job: JobStatus }) {
   const { t } = useI18n();
   const now = useNow();
   const relative = useRelativeTime();
+  const scheduled = useScheduledTime();
   const meta = jobMeta(job);
   const partial = isPartial(job);
 
@@ -62,7 +79,7 @@ export const JobRow = memo(function JobRow({ job }: { job: JobStatus }) {
       : [
           t('system.job.lastRun', { time: relative(job.lastRunAt, now) }),
           job.durationMs === null ? null : t('system.job.took', { duration: formatDuration(job.durationMs) }),
-          job.nextRunAt === null ? t('system.job.nextRunUnknown') : t('system.job.nextRun', { time: relative(job.nextRunAt, now) }),
+          nextRunLabel(job.nextRunAt, now, t, scheduled),
         ]
           .filter(Boolean)
           .join(' · ');
@@ -161,7 +178,7 @@ export function About({ status }: { status: SystemStatus }) {
 }
 
 const styles = StyleSheet.create({
-  caption: { textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: spacing.xs },
+  caption: { marginBottom: spacing.sm },
   verdictLine: { flexDirection: 'row', marginBottom: spacing.sm },
   facts: { marginTop: spacing.md, gap: 2 },
   job: { paddingVertical: spacing.sm, gap: 2 },

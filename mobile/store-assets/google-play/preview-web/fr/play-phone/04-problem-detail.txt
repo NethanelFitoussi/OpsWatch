@@ -1,0 +1,133 @@
+# Why OpsWatch thinks this is a problem: the evidence, not just a red dot.
+# route: /problems/prb-checkout-5xx
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+Problèmes
+
+Mis à jour à l'instant
+
+Critique
+
+Actif
+
+En hausse
+checkout-api is returning HTTP 5xx
+6.8 % of checkout requests fail (threshold 5 %).
+Durée
+43 min, en cours
+Vu la première fois
+17 mars, 10:59 (il y a 43 min)
+Vu la dernière fois
+il y a 1 min
+Occurrences
+3 712
+Catégorie
+load-balancers
+Ressource
+app/prod-public-alb
+
+checkout-api
+Service touché
+
+
+Prendre en compte
+
+Ouvrir l’enquête
+RÉSUMÉ
+The load balancer reports 5xx responses from the checkout-api target group above the critical threshold for 43 minutes.
+Corrélation avec un déploiement
+
+A commencé 9 min après le déploiement v2.14.0 de checkout-api
+17 mars, 10:50 · 8f3c2a9
+
+Il s’agit uniquement de chronologie : cela ne prouve pas que le déploiement a causé le problème.
+Métriques
+checkout-api 5xx rate
+6.9 %
+09:44
+⚠ 1 % ⛔ 5 %
+11:42
+checkout-api p95 latency
+1.22 s
+09:44
+⚠ 500 ms ⛔ 1 s
+11:42
+checkout-api requests
+1 861/min
+09:44
+11:42
+
+INC-2291 Checkout failures
+Incident
+
+Erreurs liées
+
+TypeError: Cannot read properties of undefined (reading 'value')
+TypeError · 2 417 · il y a 1 min
+
+Alertes liées
+
+Critique
+checkout-5xx-high
+Threshold Crossed: 3 datapoints [6.8, 6.5, 7.1] were greater than the threshold (5.0).
+
+Preuves dans le code
+
+src/pricing/cart-pricing.ts · Lignes 41 à 58
+8f3c2a9 Batch currency lookups when pricing the cart
+The new batched lookup opens one database connection per cart line instead of reusing the pool client.
+
+PREUVES ET CAUSES POSSIBLES
+
+FAITS OBSERVÉS
+10:50
+
+checkout-api v2.14.0 deployed
+Ouvrir le déploiement
+
+10:53
+
+DB connections ↑ 140 → 890
+Ouvrir la ressource
+
+10:55
+
+DB write latency ↑ 2 ms → 18 ms
+Ouvrir la ressource
+
+10:57
+
+checkout latency p95 ↑ 180 ms → 1.2 s
+checkout-api
+
+10:59
+
+HTTP 5xx ↑ 0.2 % → 6.8 %
+checkout-api
+
+11:01
+
+New exception: TypeError in cart pricing
+Ouvrir l’erreur
+
+11:04
+
+Alarm checkout-5xx-high entered ALARM
+Ouvrir l’alerte
+
+
+HYPOTHÈSES
+Explications possibles, non confirmées. Confrontez-les aux faits ci-dessus.
+11:02
+
+Connection pool exhaustion caused by the new pricing code
+Confiance moyenne
+Ouvrir la preuve dans le code
+
+11:02
+
+Traffic increase
+Confiance faible
+
+Pourquoi cela se produit-il ?

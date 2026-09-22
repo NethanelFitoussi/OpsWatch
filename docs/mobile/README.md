@@ -90,6 +90,7 @@ Every command runs from `apps/mobile`. Each one is linked to the document that e
 | iOS release build, for TestFlight | `eas build --platform ios --profile production` | Cloud build; needs an Apple account ([ios.md](ios.md)) |
 | Check the config | `npx expo config --type public` | Shows the identifiers that would be built |
 | Check the toolchain | `npm run doctor` | `expo-doctor` |
+| Regenerate store screenshots | `npm run store:android` (Play) · `npm run store:capture` (previews) | [store-assets.md](store-assets.md) |
 
 The `production` profile refuses to build while the store identifiers are still `com.example.opswatch`. That is
 deliberate: an identifier cannot be changed after a first release ([release.md](release.md)).
@@ -112,6 +113,7 @@ deliberate: an identifier cannot be changed after a first release ([release.md](
 | [app-identity.md](app-identity.md) | Placeholders the owner must replace: ids, domains, icons, versions |
 | [troubleshooting.md](troubleshooting.md) | Common errors and fixes |
 | [merge-notes.md](merge-notes.md) | Merging `feature/mobile` with the web/API work |
+| [store-assets.md](store-assets.md) | Store screenshots: the pipeline, what is genuine, and how to regenerate |
 | [RECOVERY.md](RECOVERY.md) | Where the branch stands, the constraints it is bound by, and how to continue it |
 | [CHANGELOG.md](CHANGELOG.md) | Mobile release notes |
 

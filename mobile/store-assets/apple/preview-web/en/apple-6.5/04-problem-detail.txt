@@ -1,0 +1,133 @@
+# Why OpsWatch thinks this is a problem: the evidence, not just a red dot.
+# route: /problems/prb-checkout-5xx
+
+
+DEMO DATA: fictional, not from a real server
+Problems
+
+Updated just now
+
+Critical
+
+Active
+
+Rising
+checkout-api is returning HTTP 5xx
+6.8 % of checkout requests fail (threshold 5 %).
+Duration
+43 min, ongoing
+First seen
+Mar 17, 10:59 AM (43 min ago)
+Last seen
+1 min ago
+Occurrences
+3,712
+Category
+load-balancers
+Resource
+app/prod-public-alb
+
+checkout-api
+Affected service
+
+
+Acknowledge
+
+Open investigation
+SUMMARY
+The load balancer reports 5xx responses from the checkout-api target group above the critical threshold for 43 minutes.
+Deployment correlation
+
+Started 9 min after deployment v2.14.0 of checkout-api
+Mar 17, 10:50 AM · 8f3c2a9
+
+Timing only. This does not show that the deployment caused the problem.
+Metrics
+checkout-api 5xx rate
+6.9 %
+09:44 AM
+⚠ 1 % ⛔ 5 %
+11:42 AM
+checkout-api p95 latency
+1.22 s
+09:44 AM
+⚠ 500 ms ⛔ 1 s
+11:42 AM
+checkout-api requests
+1,861/min
+09:44 AM
+11:42 AM
+
+INC-2291 Checkout failures
+Incident
+
+Related errors
+
+TypeError: Cannot read properties of undefined (reading 'value')
+TypeError · 2,417 · 1 min ago
+
+Related alerts
+
+Critical
+checkout-5xx-high
+Threshold Crossed: 3 datapoints [6.8, 6.5, 7.1] were greater than the threshold (5.0).
+
+Code evidence
+
+src/pricing/cart-pricing.ts · Lines 41–58
+8f3c2a9 Batch currency lookups when pricing the cart
+The new batched lookup opens one database connection per cart line instead of reusing the pool client.
+
+EVIDENCE AND POSSIBLE CAUSES
+
+OBSERVED FACTS
+10:50 AM
+
+checkout-api v2.14.0 deployed
+Open the deployment
+
+10:53 AM
+
+DB connections ↑ 140 → 890
+Open the resource
+
+10:55 AM
+
+DB write latency ↑ 2 ms → 18 ms
+Open the resource
+
+10:57 AM
+
+checkout latency p95 ↑ 180 ms → 1.2 s
+checkout-api
+
+10:59 AM
+
+HTTP 5xx ↑ 0.2 % → 6.8 %
+checkout-api
+
+11:01 AM
+
+New exception: TypeError in cart pricing
+Open the error
+
+11:04 AM
+
+Alarm checkout-5xx-high entered ALARM
+Open the alert
+
+
+HYPOTHESES
+Possible explanations, not confirmed. Check them against the facts above.
+11:02 AM
+
+Connection pool exhaustion caused by the new pricing code
+Medium confidence
+Open the code evidence
+
+11:02 AM
+
+Traffic increase
+Low confidence
+
+Why is this happening?

@@ -69,9 +69,9 @@ it('uses the same placeholder identifier as app.config.ts', () => {
 /** Environment variables are the one place a wrong name costs a build rather than a page refresh. */
 it('documents exactly the environment variables the config reads', () => {
   const read = new Set([...appConfig.matchAll(/env\('([A-Z0-9_]+)'\)/g)].map((m) => m[1]!));
-  // Read elsewhere in the project rather than by app.config.ts: the parity run points at a contract checkout, and
-  // the mock server takes a port.
-  for (const name of ['OPSWATCH_CONTRACT_DIR']) read.add(name);
+  // Read by tooling rather than by app.config.ts: the parity run points at a contract checkout, and the screenshot
+  // capture takes a locale.
+  for (const name of ['OPSWATCH_CONTRACT_DIR', 'OPSWATCH_STORE_LOCALE']) read.add(name);
   // EAS sets this one for us; it is not something a reader ever sets.
   read.delete('EAS_BUILD_PROFILE');
   const undocumented = [...read].filter((name) => !allDocs.includes(name));

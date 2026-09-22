@@ -1,0 +1,179 @@
+# Exceptions grouped by fingerprint, with the stack frame that is yours.
+# route: /errors/err-checkout-currency
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+TypeError
+
+Mis à jour à l'instant
+
+Copier le message
+
+Nouvelle
+TypeError
+Observée ici pour la première fois.
+TypeError: Cannot read properties of undefined (reading 'value')
+Occurrences
+2 417
+Instances
+6
+
+checkout-api
+Service touché
+
+Route
+POST /v1/cart/price
+Vu la première fois
+17 mars, 11:01 (il y a 41 min)
+Vu la dernière fois
+17 mars, 11:41 (il y a 1 min)
+OCCURRENCES DANS LE TEMPS
+occurrences / 2 min
+115
+09:44
+11:42
+PILE D’APPELS
+Afficher plus (4)
+Brut
+
+Copier
+
+priceCart.lines.map
+src/pricing/cart-pricing.ts:52:38
+APP
+src/pricing/cart-pricing.ts
+
+Copier
+50
+const product = await client.query(PRODUCT_SQL, [line.productId]);
+51
+const rate = rates[line.currency];
+52
+▶
+return { ...line, unitPrice: product.rows[0].price * rate.value };
+53
+}),
+··· 1 cadre de bibliothèque
+priceCart
+src/pricing/cart-pricing.ts:45:18
+APP
+CartController.price
+src/http/cart-controller.ts:88:24
+APP
+··· 3 cadres de bibliothèque
+LOGS REPRÉSENTATIFS
+11:32:45 · Erreur · checkout-api
+
+Copier
+1
+{
+2
+"level": "error",
+3
+"msg": "TypeError: Cannot read properties of undefined (reading 'value')",
+4
+"route": "POST /v1/cart/price",
+5
+"duration_ms": 1332,
+6
+"request_id": "req-be031e",
+7
+"task": "checkout-api/4"
+8
+}
+11:27:49 · Erreur · checkout-api
+
+Copier
+1
+{
+2
+"level": "error",
+3
+"msg": "TypeError: Cannot read properties of undefined (reading 'value')",
+4
+"route": "POST /v1/cart/price",
+5
+"duration_ms": 1562,
+6
+"request_id": "req-3995bd",
+7
+"task": "checkout-api/6"
+8
+}
+11:27:12 · Erreur · checkout-api
+
+Copier
+1
+{
+2
+"level": "error",
+3
+"msg": "TypeError: Cannot read properties of undefined (reading 'value')",
+4
+"route": "POST /v1/cart/price",
+5
+"duration_ms": 1340,
+6
+"request_id": "req-709656",
+7
+"task": "checkout-api/1"
+8
+}
+11:20:25 · Erreur · checkout-api
+
+Copier
+1
+{
+2
+"level": "error",
+3
+"msg": "TypeError: Cannot read properties of undefined (reading 'value')",
+4
+"route": "POST /v1/cart/price",
+5
+"duration_ms": 1513,
+6
+"request_id": "req-26e4ca3",
+7
+"task": "checkout-api/6"
+8
+}
+11:19:11 · Erreur · checkout-api
+
+Copier
+1
+{
+2
+"level": "error",
+3
+"msg": "TypeError: Cannot read properties of undefined (reading 'value')",
+4
+"route": "POST /v1/cart/price",
+5
+"duration_ms": 1476,
+6
+"request_id": "req-4626893",
+7
+"task": "checkout-api/2"
+8
+}
+INSTANCES TOUCHÉES
+
+checkout-api/1
+
+checkout-api/2
+
+checkout-api/3
+
+checkout-api/4
+
+checkout-api/5
+
+checkout-api/6
+LIENS
+
+Ouvrir le problème associé
+Cette erreur fait partie d’un problème ouvert
+
+
+Expliquer cette erreur

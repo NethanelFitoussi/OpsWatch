@@ -66,7 +66,13 @@
     "export:web": "expo export --platform web --output-dir dist-web",
     "e2e:web": "playwright test --config e2e/web/playwright.config.ts",
     "doctor": "expo-doctor",
-    "check": "npm run lint && npm run typecheck && npm test"
+    "check": "npm run lint && npm run typecheck && npm test",
+    "store:export": "EXPO_PUBLIC_SCREENSHOT_AT=1773740520000 expo export --clear --platform web --output-dir dist-web",
+    "store:web": "playwright test --config e2e/store/playwright.config.ts",
+    "store:capture": "npm run store:export && npm run store:web",
+    "store:android": "bash e2e/store/capture-android.sh",
+    "store:validate": "tsx e2e/store/validate.ts",
+    "store:capture:fr": "npm run store:export && OPSWATCH_STORE_LOCALE=fr playwright test --config e2e/store/playwright.config.ts"
   },
   "private": true,
   "license": "MIT",

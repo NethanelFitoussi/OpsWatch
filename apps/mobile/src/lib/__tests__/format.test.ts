@@ -78,6 +78,15 @@ describe('formatAge', () => {
    * A phone whose clock is a minute slow makes every server timestamp look like the future. "Checked in 1 min" is not
    * a thing that can happen, and it appears on the one line whose job is to say how current the data is.
    */
+  /**
+   * The clamp is for timestamps that describe something already done. A schedule is not one of those: clamping it
+   * rendered "next run just now" for a job due in three minutes, which a store screenshot caught.
+   */
+  it('leaves formatRelative free to describe something that has not happened yet', () => {
+    expect(formatRelative(now + 3 * 60_000, now)).toBe('in 3 min');
+    expect(formatAge(now + 3 * 60_000, now)).toBe('just now');
+  });
+
   it('never renders the future, however far ahead the timestamp is', () => {
     expect(formatAge(now + 1, now)).toBe('just now');
     expect(formatAge(now + 60_000, now)).toBe('just now');
