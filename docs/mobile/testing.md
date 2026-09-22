@@ -228,6 +228,29 @@ Copy this list into the release issue and tick it on the release binaries ([rele
 - [ ] Small screens (iPhone SE class): no overlapping or clipped content
 - [ ] Large screens and tablets: layout uses the space, no stretched controls
 
+## Which documented commands have been run
+
+The documentation is written from commands that were executed, not from commands that ought to work. This says which
+is which, so nothing here reads as tested when it was not.
+
+| Command | Status |
+|---|---|
+| `npm ci`, `npm start`, `npm run check`, `npm test`, `npm run lint`, `npm run typecheck` | **Run** |
+| `npm run mock-server`, and the app driven against it over real HTTP from an emulator | **Run** |
+| `npm run export:web`, `npm run e2e:web` | **Run** — 36/36 at six device profiles |
+| `npm run doctor` (`expo-doctor`) | **Run** — 21/21 |
+| `npx expo config --type public`, with and without identifiers set | **Run** — including that the `production` profile refuses placeholders |
+| `sdkmanager`, `avdmanager`, `emulator`, `adb devices`, `adb reverse`, `adb logcat`, `adb install` | **Run** |
+| `cd android && ./gradlew assembleRelease` / `assembleDebug` | **Run** — APK built and installed on an Android 15 emulator |
+| `npx expo prebuild --platform android` | **Run** |
+| `npx expo prebuild --platform ios --no-install` | **Run on Linux** — generates and can be read, but nothing about it can be built or executed here |
+| `npm run ios`, `pod install`, `xcodebuild`, anything in the Simulator | **Not executable here.** Requires macOS. Written from the installed CLIs' own argument tables, and marked as untried in [ios.md](ios.md) |
+| `eas build`, `eas submit`, `eas init`, `eas env:*` | **Not executable here.** Requires an Expo account, which does not exist. Flags verified against the installed `eas-cli`; nothing has been submitted anywhere |
+| Anything touching the App Store, Google Play or a signing certificate | **Not executable here**, and deliberately not attempted |
+
+`npm test -- docs-match-project` keeps the rest honest between runs: it fails when a documented npm script, file path,
+EAS profile, bundle identifier or environment variable stops matching the project.
+
 ## What has actually been verified
 
 Recorded so it is clear what is tested and what is not. Dates are when the check last ran.

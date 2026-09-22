@@ -7,6 +7,9 @@
 OpsWatch tourne sur votre propre infrastructure et lit vos comptes AWS en lecture seule.
 Rien ne quitte votre réseau : pas de SaaS, aucun agent à installer dans vos applications.
 
+Il existe aussi une **application iOS et Android** pour garder un œil sur tout cela loin d'un bureau : voir
+[Application mobile](#application-mobile) et [`docs/mobile/`](docs/mobile/README.md) (documentation en anglais).
+
 ![Guide de démarrage](docs/screenshots/getting-started-light.png)
 
 ## État du projet
@@ -206,6 +209,30 @@ Signalez les vulnérabilités en privé comme indiqué dans [SECURITY.md](SECURI
 | `OPSWATCH_GOOGLE_ALLOWED_DOMAIN` | Non | Domaine Google Workspace auquel le compte Google doit appartenir |
 | `AWS_*`, `AWS_PROFILE` | Pour les méthodes rôle et ambiante | Identité AWS propre à OpsWatch |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests uniquement | Envoie tous les appels AWS vers un serveur moto |
+
+## Application mobile
+
+Une application iOS et Android qui accompagne un serveur OpsWatch auto-hébergé, dans
+[`apps/mobile`](apps/mobile). Elle répond en quelques secondes : *est-ce que tout va bien, qu'est-ce qui est cassé,
+est-ce grave, dois-je intervenir ?* Elle ne parle qu'à un seul serveur OpsWatch — celui que vous lui indiquez — et à
+rien d'autre. Elle n'appelle jamais directement AWS, GitHub, Cloudflare ni un fournisseur d'IA, et ne stocke aucun
+identifiant de fournisseur sur l'appareil : tout cela reste sur le serveur.
+
+Elle n'est **publiée ni sur l'App Store ni sur Google Play**, et les identifiants de magasin sont volontairement des
+valeurs de remplacement. Compilez-la vous-même, ou lancez la démonstration sans aucun serveur.
+
+```bash
+cd apps/mobile
+npm ci
+npm start          # puis `a` pour Android, `i` pour iOS (macOS), ou scannez le QR code
+```
+
+Sur l'écran de connexion, choisissez **Explore the demo** : données fictives, aucun serveur. Tout le reste — l'utiliser
+avec votre propre serveur, compiler pour Android et iOS, les tests, et le chemin vers chaque magasin — est dans
+**[`docs/mobile/`](docs/mobile/README.md)**, en anglais.
+
+**iOS n'a jamais été exécuté.** L'application a été développée sous Linux ; le projet iOS n'a été que généré et relu
+statiquement. [ios.md](docs/mobile/ios.md) contient la liste de vérification pour la première personne qui l'essaiera.
 
 ## Développement
 

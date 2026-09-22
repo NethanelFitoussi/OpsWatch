@@ -7,6 +7,9 @@
 OpsWatch runs on your own infrastructure and reads your AWS accounts with read-only access.
 Nothing leaves your network: no SaaS, no agent to install in your workloads.
 
+There is also an **iOS and Android app** for checking on things away from a desk — see
+[Mobile app](#mobile-app) and [`docs/mobile/`](docs/mobile/README.md).
+
 ![Getting started guide](docs/screenshots/getting-started-light.png)
 
 ## Status
@@ -227,6 +230,39 @@ one.
 the container, recreates it, and rebuilds the image — checking after each that the account is still there and
 that the database is on the volume rather than in the container. It uses its own Compose project and its own
 volume, so it never touches a running installation.
+
+## Mobile app
+
+An iOS and Android companion to a self-hosted OpsWatch server, in [`apps/mobile`](apps/mobile). It answers, in a few
+seconds: *is everything healthy, what is broken, how serious is it, do I need to act?* It talks to one OpsWatch server
+— the one you point it at — and to nothing else. It never calls AWS, GitHub, Cloudflare or an AI provider directly,
+and never stores a provider credential on the device: those stay on the server.
+
+It is **not published to the App Store or Google Play**, and the store identifiers are deliberate placeholders. Build
+it yourself, or run it against the demo with no server at all.
+
+```bash
+cd apps/mobile
+npm ci
+npm start          # then press `a` for Android, `i` for iOS (macOS), or scan the QR code
+```
+
+On the Connect screen choose **Explore the demo** for fictional data and no server. Everything else — running against
+your own server, Android and iOS builds, testing, and the route to each store — is in
+**[`docs/mobile/`](docs/mobile/README.md)**:
+
+| | |
+|---|---|
+| [Quick start and all the commands](docs/mobile/README.md) | Clone to running app |
+| [development.md](docs/mobile/development.md) | Simulators, emulators, phones, demo mode, and [connecting to your server](docs/mobile/development.md#connecting-to-an-opswatch-server) |
+| [testing.md](docs/mobile/testing.md) | The testing matrix, and what has actually been verified |
+| [android.md](docs/mobile/android.md) · [ios.md](docs/mobile/ios.md) | Building and releasing on each platform |
+| [expo-eas.md](docs/mobile/expo-eas.md) · [release.md](docs/mobile/release.md) | Build profiles, signing, store submission |
+| [configuration.md](docs/mobile/configuration.md) · [privacy.md](docs/mobile/privacy.md) · [security.md](docs/mobile/security.md) | Every setting, what is stored, and the security review |
+| [troubleshooting.md](docs/mobile/troubleshooting.md) | When it does not work |
+
+**iOS has never been run.** The app was developed on Linux; the iOS project has only been generated and inspected
+statically. [ios.md](docs/mobile/ios.md) has the checklist for whoever runs it first.
 
 ## Development
 
