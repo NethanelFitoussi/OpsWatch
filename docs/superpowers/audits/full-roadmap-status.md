@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 43 |
-| `PARTIAL` | 10 |
+| `DONE` | 44 |
+| `PARTIAL` | 9 |
 | `FOUNDATION_ONLY` | 10 |
 | `NOT_STARTED` | 28 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -74,7 +74,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | INT-11 | Problem detail + "Why this score" | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 | INT-12 | Health | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Distinguishes "healthy" from "cannot tell" |
 | INT-13 | Morning brief | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
-| INT-14 | Checkup | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | No API route and no contract schema, so mobile cannot show it. 6 of its checks read data OpsWatch does not collect and say so |
+| INT-14 | Checkup | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | `GET /api/v1/checkup` carries coverage as a required field. 6 checks read data OpsWatch does not collect and say so |
 | INT-15 | System status | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 
 ## Errors
@@ -276,11 +276,21 @@ longer needed for reports — the metrics job stores what §19 reads. Four remai
 `logvolume` and `baselines`, none of which another requirement waits on. **So Checkpoint B is finished for
 now**, and the queue moves to C.
 
+### DONE
+
+**Checkpoint C — Checkup on the API (INT-14).** Landed. `checkupSchema` is in the contract and
+`GET /api/v1/checkup` serves it, with `coverage` as a required field so a client cannot render "no findings"
+without saying how much of the catalogue answered.
+
 ### NOW
 
-**Checkpoint C — Checkup on the API (INT-14).** Add `checkupSchema` to the contract and `GET /api/v1/checkup`,
-so mobile can show what the web already shows. Small, and it closes a Web/API asymmetry that will otherwise
-harden.
+**Checkpoint E — Deployments → correlation (DEP-2, INV-2).** DEP-1 now records deployments, so the question
+"was there a deployment near this problem?" is answerable from stored rows alone. This is the first piece of
+the investigation engine and the one with the shortest path to being useful. Acceptance: a problem's detail
+names deployments within a window of its `firstSeenAt`, labelled as **correlation, not cause** — §J is
+explicit that timestamps correlating is never a claim of causation, and the UI must say which it is. Tests:
+window arithmetic, the ordering, and the wording. Browser: required. Mobile: `deploymentSummary` already
+exists in the contract, so the field is additive.
 
 **Checkpoint D — per-service SLO definitions (SLO-1, SLO-2).** The arithmetic and the rollups exist; what is
 missing is letting an operator *define* an SLO rather than measuring everything against a default 99.9 %, and
@@ -288,11 +298,10 @@ somewhere for a burn-rate alert to go (needs ALE-1).
 
 ### LATER
 
-**Checkpoint E — Deployments → correlation (DEP-1..3, INV-2).** Deployment collection first, then correlation.
-Timestamps correlating is never a claim of causation, and the UI must say which it is.
+**Checkpoint F — Repository intelligence (REPO-1..6).**
 
-**Checkpoint F — Repository intelligence (REPO-1..6).** The largest remaining block, and the one §J insists is
-deterministic *before* any AI. Needs an `integrations` table and a `services` table, neither of which exists.
+The largest remaining block, and the one §J insists is deterministic *before* any AI. Needs an `integrations`
+table and a `services` table, neither of which exists.
 
 **Checkpoint G — Investigation workspace (INV-1..5).** Depends on E and F.
 
