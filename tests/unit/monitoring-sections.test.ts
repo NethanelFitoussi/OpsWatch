@@ -18,7 +18,7 @@ describe('the sub-section catalogue', () => {
     expect(SUBSECTIONS).toEqual({
       // D2's order, with one deviation recorded there: the brief is the section default once Task 17
       // builds it. Until then the default has to be a page that exists, so Problems leads.
-      overview: ['brief', 'health', 'problems', 'insights', 'audit'],
+      overview: ['brief', 'health', 'problems', 'insights', 'checkup'],
       // Errors is its own section (D2), with the log sources it reads from beside the groups.
       errors: ['groups', 'sources'],
       containers: ['services', 'report'],
@@ -39,7 +39,7 @@ describe('the sub-section catalogue', () => {
   });
   it('recognises only its own segments', () => {
     expect(isSubsectionOf('databases', 'queries')).toBe(true);
-    expect(isSubsectionOf('databases', 'audit')).toBe(false);
+    expect(isSubsectionOf('databases', 'checkup')).toBe(false);
     expect(isSubsectionOf('databases', undefined)).toBe(false);
     expect(isSubsectionOf('databases', '')).toBe(false);
   });

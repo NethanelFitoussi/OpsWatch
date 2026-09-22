@@ -73,6 +73,14 @@ export type ProblemFilter = {
   status?: readonly ProblemStatus[];
   severity?: readonly ProblemSeverity[];
   kind?: readonly string[];
+  /**
+   * Wire-status filtering, which is not a plain `status IN (…)`.
+   *
+   * The contract's `new` and `active` are the same stored state — `open` — told apart by age, so a request
+   * for one of them is a status *and* a window on `firstSeenAt`. Each entry is one such pair and they are
+   * OR-ed, which is the only way `?status=new&status=resolved` can mean what it says.
+   */
+  statusWindows?: readonly { status: readonly ProblemStatus[]; firstSeenFromMs?: number; firstSeenToMs?: number }[];
   serviceId?: string;
   sinceMs?: number;
   /** A child collapsed behind a fleet problem is hidden unless a caller asks for it (§33.8). */
@@ -182,6 +190,18 @@ function conditions(filter: ProblemFilter) {
   if (filter.status?.length) where.push(inArray(problems.status, [...filter.status]));
   if (filter.severity?.length) where.push(inArray(problems.severity, [...filter.severity]));
   if (filter.kind?.length) where.push(inArray(problems.kind, [...filter.kind]));
+  if (filter.statusWindows?.length) {
+    const clauses = filter.statusWindows.map((window) =>
+      and(
+        inArray(problems.status, [...window.status]),
+        ...(window.firstSeenFromMs === undefined ? [] : [gte(problems.firstSeenAt, window.firstSeenFromMs)]),
+        ...(window.firstSeenToMs === undefined ? [] : [lt(problems.firstSeenAt, window.firstSeenToMs)]),
+      ),
+    );
+    // A single clause still goes through `or`, so one window and several behave identically.
+    const combined = or(...clauses);
+    if (combined !== undefined) where.push(combined);
+  }
   if (filter.serviceId !== undefined) where.push(eq(problems.serviceId, filter.serviceId));
   if (filter.sinceMs !== undefined) where.push(gte(problems.lastSeenAt, filter.sinceMs));
   if (!filter.includeGrouped) where.push(eq(problems.grouped, false));

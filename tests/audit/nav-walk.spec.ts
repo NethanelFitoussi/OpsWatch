@@ -65,7 +65,7 @@ test('walk every navigation entry', async ({ page }) => {
   if (!base) return;
 
   const paths: [string, string][] = [
-    ['Overview (default)', ''], ['Health page', '/overview/health'], ['Problems page', '/overview/problems'], ['Overview / Insights', '/overview/insights'], ['Overview / Audit', '/overview/audit'],
+    ['Overview (default)', ''], ['Health page', '/overview/health'], ['Problems page', '/overview/problems'], ['Overview / Insights', '/overview/insights'], ['Overview / Checkup', '/overview/checkup'],
     ['Containers / Services', '/containers/services'], ['Containers / Report', '/containers/report'],
     ['Databases / Instances', '/databases/instances'], ['Databases / Queries', '/databases/queries'], ['Databases / Report', '/databases/report'],
     ['LBs / List', '/load-balancers/list'], ['LBs / Report', '/load-balancers/report'],

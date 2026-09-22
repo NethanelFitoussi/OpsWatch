@@ -109,3 +109,48 @@ export const ENDPOINT_PAGINATION = {
 } as const satisfies Record<string, 'cursor' | 'bounded'>;
 
 export type PaginatedEndpoint = keyof typeof ENDPOINT_PAGINATION;
+
+/**
+ * The filters each list endpoint accepts, declared once so a client and the server cannot disagree about the
+ * vocabulary — the same reason `ENDPOINT_PAGINATION` exists.
+ *
+ * This was added after a real failure. The mobile app sent `?status=&severity=&service=` to `/problems`; the
+ * route read only `env`, `cursor` and `limit`, so every filter was dropped. Nothing errored. A chip lit up,
+ * a full unfiltered page came back, and the list rendered unchanged — which an on-call reader would take as
+ * "there is one critical problem" rather than "filtering did not happen". A silently ignored filter is worse
+ * than a missing one, because the answer looks like an answer.
+ *
+ * Two rules follow, and both are enforced rather than documented:
+ *
+ * - **Only what the server honours is declared here.** Declaring a filter nobody implements would move the
+ *   same bug one layer down.
+ * - **Anything not declared is rejected**, so a client that asks for something the server will not do finds
+ *   out rather than being handed a plausible wrong list.
+ */
+export const LIST_FILTERS = {
+  '/problems': {
+    /** Repeatable: `?status=new&status=active` means either. */
+    status: 'enum',
+    severity: 'enum',
+    /** The service id as a summary reports it. */
+    service: 'string',
+    /** Epoch milliseconds; a problem is included when it was last seen at or after it. */
+    since: 'epoch',
+  },
+  '/errors': {
+    status: 'enum',
+    service: 'string',
+    since: 'epoch',
+  },
+} as const satisfies Record<string, Record<string, 'enum' | 'string' | 'epoch'>>;
+
+export type FilteredEndpoint = keyof typeof LIST_FILTERS;
+export type ListFilterKind = 'enum' | 'string' | 'epoch';
+
+/** The parameters every list endpoint reads regardless, which a filter check must not reject. */
+export const RESERVED_LIST_PARAMS = ['env', 'cursor', 'limit', 'locale'] as const;
+
+/** Whether an endpoint declares filters at all, so a caller can tell "none allowed" from "not a list". */
+export function filtersFor(path: string): Record<string, ListFilterKind> | null {
+  return (LIST_FILTERS as Record<string, Record<string, ListFilterKind>>)[path] ?? null;
+}

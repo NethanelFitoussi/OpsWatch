@@ -26,13 +26,13 @@ const PROMISED_VALUES = [
   'briefSchema', 'can', 'changeSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
   'deploymentSummarySchema', 'deviceRegistrationSchema', 'encodeCursor', 'environmentId',
   'environmentListSchema', 'environmentSchema', 'environmentStatusSchema', 'epochSchema', 'errorDetailSchema',
-  'errorSummarySchema', 'evidenceSchema', 'familySchema', 'favoriteSchema', 'favoritesSchema',
+  'errorSummarySchema', 'evidenceSchema', 'familySchema', 'favoriteSchema', 'filtersFor', 'favoritesSchema',
   'healthCountsSchema', 'healthSchema', 'healthStatusSchema', 'idSchema', 'incidentDetailSchema',
   'incidentSummarySchema', 'infraDetailSchema', 'infraResourceSchema', 'investigationSchema', 'jobStatusSchema',
-  'lenientEnum', 'logEntrySchema', 'logSearchSchema', 'loginRequestSchema', 'meSchema', 'metricUnitSchema',
+  'lenientEnum', 'LIST_FILTERS', 'logEntrySchema', 'logSearchSchema', 'loginRequestSchema', 'meSchema', 'metricUnitSchema',
   'metricValueSchema', 'notificationPreferencesSchema', 'nullableNumberSchema', 'pageSchema',
   'parseEnvironmentId', 'permissionSchema', 'permissionsOf', 'problemDetailSchema', 'problemSummarySchema',
-  'refSchema', 'refTypeSchema', 'REPORT_PERIODS', 'REPORT_UNAVAILABLE_REASONS', 'reportFigureSchema',
+  'refSchema', 'refTypeSchema', 'RESERVED_LIST_PARAMS', 'REPORT_PERIODS', 'REPORT_UNAVAILABLE_REASONS', 'reportFigureSchema',
   'reportRowSchema', 'reportSchema', 'reportSectionSchema', 'reportUnavailableReasonSchema',
   'repositoryEvidenceSchema', 'roleSchema', 'searchResponseSchema',
   'searchResultSchema', 'seriesSchema', 'serverInfoSchema', 'serviceDetailSchema', 'serviceSummarySchema',
@@ -52,7 +52,7 @@ type PromisedTypes = [
   types.CursorPosition, types.DeploymentDetail, types.DeploymentStatus, types.DeploymentSummary,
   types.DeviceRegistration, types.Environment, types.EnvironmentKind, types.EnvironmentList,
   types.EnvironmentStatus, types.ErrorDetail, types.ErrorStatus, types.ErrorSummary, types.Evidence,
-  types.EvidenceKind, types.Family, types.Favorite, types.FavoriteType, types.Favorites, types.Feature,
+  types.EvidenceKind, types.Family, types.Favorite, types.FilteredEndpoint, types.ListFilterKind, types.FavoriteType, types.Favorites, types.Feature,
   types.Health, types.HealthCounts, types.HealthStatus, types.IncidentDetail, types.IncidentStatus,
   types.IncidentSummary, types.InfraCategory, types.InfraDetail, types.InfraResource, types.Investigation,
   types.JobStatus, types.LogEntry, types.LogLevel, types.LogSearch, types.LoginRequest, types.Me,
@@ -73,7 +73,7 @@ describe('the contract only ever adds', () => {
   });
 
   it('has not shrunk', () => {
-    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(115);
+    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(118);
   });
 
   it('exports every promised schema as something usable, not merely present', () => {
