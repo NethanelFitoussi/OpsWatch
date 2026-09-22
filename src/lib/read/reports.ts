@@ -4,6 +4,7 @@ import { PROBLEM_SEVERITIES, type ProblemSeverity } from '../db/schema';
 import type { Db } from '../db/client';
 import { kindsOfFamily, type ProblemFamily } from '../detect/family';
 import { readHistorySettings } from '../history/settings';
+import { countDeployments, listDeployments } from '../store/deployments';
 import { countOccurrences, enabledLogSources, recentErrorGroups } from '../store/errors';
 import { readHistoryRange } from '../store/history';
 import { countProblemsInWindow, worstSubjectsInWindow } from '../store/problems';
@@ -196,6 +197,42 @@ function availabilitySection(
   };
 }
 
+/**
+ * What shipped in the period, and how much of it failed.
+ *
+ * The collector only remembers deployments from the moment it first ran, so a report over a window that
+ * predates it would show a suspiciously quiet week. `not_collected` covers that: an environment the
+ * deployments job has never recorded anything for is not an environment where nothing shipped.
+ */
+function deploymentsSection(db: Db, query: ReportQuery, windows: ReturnType<typeof windowsFor>): ReportSection {
+  const filter = { connectionId: query.connectionId, scope: query.scope };
+  // Nothing recorded at all means the job has not run here, which is different from a quiet period.
+  if (countDeployments(db, filter).total === 0) return unavailableSection('deployments', 'not_collected');
+
+  const now = countDeployments(db, { ...filter, sinceMs: windows.period.from, untilMs: windows.period.to });
+  const before = countDeployments(db, { ...filter, sinceMs: windows.previous.from, untilMs: windows.previous.to });
+
+  const rows: ReportRow[] = listDeployments(db, { ...filter, sinceMs: windows.period.from, untilMs: windows.period.to }, REPORT_ROW_LIMIT).map(
+    (row) => ({
+      id: row.deploymentId,
+      label: `${row.serviceName} · ${row.taskDefinition}`,
+      // A deployment is one event, so the figure that means something about it is whether it failed.
+      value: row.status === 'failed' ? 1 : 0,
+      previous: null,
+      delta: null,
+      ...(row.status === 'failed' ? { severity: 'critical' as const } : {}),
+      ref: { type: 'deployment' as const, id: row.deploymentId, label: row.serviceName },
+    }),
+  );
+
+  return {
+    id: 'deployments',
+    figures: [figure('deployments', now.total, before.total), figure('deploymentsFailed', now.failed, before.failed)],
+    rows,
+    unavailable: null,
+  };
+}
+
 export function readReport(db: Db, query: ReportQuery, context: ReportContext): Report {
   const family = SECTION_FAMILY[query.section];
   const windows = windowsFor(query.period, context.nowMs);
@@ -206,7 +243,8 @@ export function readReport(db: Db, query: ReportQuery, context: ReportContext): 
 
   if (family !== undefined) sections.push(availabilitySection(db, query, family, windows));
   // Nothing in this build measures either, and saying so is the whole point of the distinction.
-  sections.push(unavailableSection('deployments', 'not_measured'));
+  sections.push(deploymentsSection(db, query, windows));
+  // Nothing in this build runs a synthetic check, and saying so is the point of the distinction.
   sections.push(unavailableSection('synthetics', 'not_measured'));
 
   return {
