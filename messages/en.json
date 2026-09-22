@@ -1161,6 +1161,80 @@
         "occurrences": "Occurrences",
         "flaps": "Times it came back"
       }
+    },
+    "health": {
+      "title": "Health",
+      "description": "Whether this environment is healthy, and what OpsWatch could not check.",
+      "status": {
+        "healthy": "Healthy",
+        "degraded": "Degraded",
+        "critical": "Critical",
+        "unknown": "Cannot be determined"
+      },
+      "statusHint": {
+        "healthy": "Everything OpsWatch checks is within its thresholds.",
+        "degraded": "Something needs attention, or part of this environment could not be read.",
+        "critical": "Something is seriously wrong.",
+        "unknown": "OpsWatch has not been able to read this environment, so it cannot say whether production is healthy. This is not the same as everything being fine."
+      },
+      "counts": {
+        "critical": "Critical problems",
+        "warning": "Warnings",
+        "services": "Healthy services",
+        "notMeasured": "Not measured"
+      },
+      "families": "What OpsWatch checks",
+      "family": {
+        "ecs": "Containers",
+        "rds": "Databases",
+        "alb": "Load balancers",
+        "alarms": "Alarms"
+      },
+      "familyStatus": {
+        "healthy": "Healthy",
+        "degraded": "Needs attention",
+        "critical": "Critical",
+        "unknown": "Not read"
+      },
+      "affected": "{affected} of {total} affected",
+      "unread": "Not read yet",
+      "unavailable": {
+        "denied": "OpsWatch is not allowed to read {family} in this account.",
+        "throttled": "AWS is rate-limiting requests for {family}; OpsWatch will try again.",
+        "timeout": "Reading {family} took too long.",
+        "unknown": "OpsWatch could not read {family}."
+      },
+      "topProblem": "Worst right now",
+      "noProblems": "No problem is open.",
+      "changes": "Recent changes",
+      "noChanges": "Nothing has changed in the last day.",
+      "change": {
+        "problem_opened": "A problem opened on {subject}.",
+        "problem_reopened": "A problem came back on {subject}.",
+        "problem_resolved": "A problem resolved on {subject}."
+      },
+      "notMeasured": "Not measured",
+      "waiting": "OpsWatch has not finished its first check of this environment.",
+      "waitingHint": "The first cycle runs within five minutes of a connection being added."
+    },
+    "brief": {
+      "title": "Morning brief",
+      "description": "What changed since yesterday, and what deserves attention first.",
+      "period": "Since {from}",
+      "mostImportant": "Start here",
+      "nothingImportant": "Nothing is open. There is nothing to start on.",
+      "changes": "What changed",
+      "noChanges": "Nothing opened or resolved in this period.",
+      "summary": {
+        "healthy": "Production looks healthy.",
+        "degraded": "Production needs attention.",
+        "critical": "Production has a critical problem.",
+        "unknown": "OpsWatch cannot say how production is; it has not been able to read this environment."
+      },
+      "opened": "{count, plural, =0 {nothing opened} one {# problem opened} other {# problems opened}}",
+      "resolved": "{count, plural, =0 {nothing resolved} one {# resolved} other {# resolved}}",
+      "waiting": "OpsWatch has not finished its first check of this environment.",
+      "waitingHint": "The first cycle runs within five minutes of a connection being added."
     }
   },
   "Insights": {

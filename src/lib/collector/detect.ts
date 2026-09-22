@@ -6,6 +6,7 @@ import type { Db } from '../db/client';
 import type { InsightKind } from '../monitoring/insights';
 import { INSIGHT_FAMILIES, loadFamily, type InsightFamily } from '../monitoring/overview';
 import { resolveTarget } from '../monitoring/target';
+import { recordFamilySnapshot } from '../store/health';
 import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
 import { RESOLVED_RETENTION_MS } from '../store/retention';
 import type { JobOutcome } from './runner';
@@ -41,6 +42,12 @@ export function familyOfKind(kind: string): InsightFamily | null {
   return FAMILY_OF[kind as InsightKind] ?? null;
 }
 
+/** A family is as bad as its worst insight; with none, and having been read, it is healthy. */
+function severityOf(insights: readonly { severity: string }[]): 'critical' | 'degraded' | null {
+  if (insights.some((insight) => insight.severity === 'critical')) return 'critical';
+  return insights.length > 0 ? 'degraded' : null;
+}
+
 export type DetectJobInput = {
   db: Db;
   connectionId: string;
@@ -61,6 +68,23 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
   );
   const read = new Set(families.filter(({ result }) => result.ok).map(({ family }) => family));
   const insights = families.flatMap(({ result }) => (result.ok ? result.data.insights : []));
+
+  // What each family looked like, written down so Health can answer instantly and without AWS. A family that
+  // could not be read says so, rather than being recorded as healthy — §2's rule that the two never look alike.
+  for (const { family, result } of families) {
+    const worst = result.ok ? severityOf(result.data.insights) : null;
+    recordFamilySnapshot(input.db, {
+      connectionId: input.connectionId,
+      scope: input.scope,
+      family,
+      status: result.ok ? (worst ?? 'healthy') : 'unknown',
+      total: result.ok ? result.data.total : null,
+      affected: result.ok ? result.data.affected : null,
+      readAt: input.nowMs,
+      unavailableReason: result.ok ? null : result.reason,
+      unavailableCode: result.ok ? null : (result.code ?? null),
+    });
+  }
 
   const live = listLiveProblems(input.db, input.connectionId, input.scope);
 

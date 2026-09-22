@@ -4,6 +4,7 @@ import type { DetectedProblem } from '../detect/types';
 import type { LiveProblem, Transition } from '../detect/lifecycle';
 import { severityForScore, scoreProblem } from '../detect/score';
 import { randomId } from '../crypto';
+import { appendEvent } from './events';
 import type { Db } from '../db/client';
 import {
   PROBLEM_SEVERITIES,
@@ -311,11 +312,32 @@ function scoredFields(problem: DetectedProblem, firstSeenAt: number, nowMs: numb
  * serving pages, and a cycle that opened two hundred problems inside a single transaction would not.
  */
 export function applyTransitions(db: Db, context: ProblemContext, transitions: readonly Transition[]): number {
+  /**
+   * A transition is something that happened, so it goes on the append-only spine (§9.3) as well as changing
+   * the row. This is what lets the Morning brief say what *changed* since someone last looked, without
+   * reading AWS a second time. The dedupe key makes a repeated cycle a no-op rather than a duplicate.
+   */
+  const note = (kind: 'problem_opened' | 'problem_reopened' | 'problem_resolved', id: string, at: number, row: ProblemRow | null) => {
+    appendEvent(db, {
+      at,
+      connectionId: context.connectionId,
+      scope: context.scope,
+      kind,
+      subjectType: row?.subjectType ?? 'service',
+      subjectId: row?.subjectId ?? id,
+      serviceId: row?.serviceId ?? null,
+      severity: row?.severity ?? null,
+      source: 'aws',
+      payload: { problemId: id, ...(row === null ? {} : { titleKey: row.titleKey, score: row.score }) },
+      dedupeKey: `${kind}:${id}:${at}`,
+    });
+  };
+
   for (const transition of transitions) {
     switch (transition.type) {
       case 'open': {
         const { problem, at } = transition;
-        insertProblem(db, {
+        const opened = insertProblem(db, {
           key: transition.key,
           connectionId: context.connectionId,
           scope: context.scope,
@@ -335,6 +357,7 @@ export function applyTransitions(db: Db, context: ProblemContext, transitions: r
           evidence: problem.evidence,
           ...scoredFields(problem, at, at),
         });
+        note('problem_opened', opened.id, at, opened);
         break;
       }
       case 'reopen': {
@@ -357,6 +380,7 @@ export function applyTransitions(db: Db, context: ProblemContext, transitions: r
           });
           replaceEvidence(db, id, problem.evidence);
         });
+        note('problem_reopened', id, at, findProblemById(db, id));
         break;
       }
       case 'touch': {
@@ -383,13 +407,15 @@ export function applyTransitions(db: Db, context: ProblemContext, transitions: r
           clearSinceAt: transition.clearSinceAt,
         });
         break;
-      case 'resolve':
-        updateProblem(db, transition.id, {
+      case 'resolve': {
+        const resolved = updateProblem(db, transition.id, {
           status: 'resolved',
           resolvedAt: transition.at,
           lastEvaluatedAt: transition.at,
         });
+        note('problem_resolved', transition.id, transition.at, resolved);
         break;
+      }
     }
   }
   return db

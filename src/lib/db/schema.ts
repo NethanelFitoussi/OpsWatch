@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import type { TokenAudience } from '@opswatch/contract';
 import {
   CONNECTION_METHODS,
@@ -240,3 +240,38 @@ export const incidentTimeline = sqliteTable('incident_timeline', {
 
 export type IncidentRow = typeof incidents.$inferSelect;
 export type IncidentTimelineRow = typeof incidentTimeline.$inferSelect;
+
+export const FAMILY_STATUSES = ['healthy', 'degraded', 'critical', 'unknown'] as const;
+export type FamilyStatus = (typeof FAMILY_STATUSES)[number];
+
+/**
+ * What the last detect cycle saw of one family of one environment.
+ *
+ * Health has to be instant and must cost nothing, so it reads this rather than AWS. The detect job already
+ * fetches all four families every five minutes and already knows how many resources each has and how many are
+ * affected; this is where it writes that down. Without it Health could only report `null` for every count -
+ * permitted by the contract, useless to a reader.
+ *
+ * One row per family per environment, replaced each cycle: it is a snapshot, not a history. History is what
+ * the events spine is for.
+ */
+export const familySnapshots = sqliteTable(
+  'family_snapshots',
+  {
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    family: text('family').notNull(),
+    status: text('status', { enum: FAMILY_STATUSES }).notNull(),
+    /** Null when the family could not be read: "not measured" is never written as 0 (§2.4). */
+    total: integer('total'),
+    affected: integer('affected'),
+    readAt: integer('read_at').notNull(),
+    /** Why it could not be read, for logic. The sentence a reader sees is built from these at read time. */
+    unavailableReason: text('unavailable_reason'),
+    unavailableCode: text('unavailable_code'),
+  },
+  (t) => [primaryKey({ columns: [t.connectionId, t.scope, t.family] })],
+);
+
+export type FamilySnapshotRow = typeof familySnapshots.$inferSelect;
+

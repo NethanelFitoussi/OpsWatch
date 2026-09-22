@@ -1161,6 +1161,80 @@
         "occurrences": "Occurrences",
         "flaps": "Retours"
       }
+    },
+    "health": {
+      "title": "Santé",
+      "description": "Si cet environnement est sain, et ce qu'OpsWatch n'a pas pu vérifier.",
+      "status": {
+        "healthy": "Sain",
+        "degraded": "Dégradé",
+        "critical": "Critique",
+        "unknown": "Impossible à déterminer"
+      },
+      "statusHint": {
+        "healthy": "Tout ce qu'OpsWatch vérifie reste dans ses seuils.",
+        "degraded": "Quelque chose demande attention, ou une partie de cet environnement n'a pas pu être lue.",
+        "critical": "Quelque chose de grave se produit.",
+        "unknown": "OpsWatch n'a pas pu lire cet environnement : il ne peut donc pas dire si la production est saine. Ce n'est pas la même chose que tout va bien."
+      },
+      "counts": {
+        "critical": "Problèmes critiques",
+        "warning": "Avertissements",
+        "services": "Services sains",
+        "notMeasured": "Non mesuré"
+      },
+      "families": "Ce qu'OpsWatch vérifie",
+      "family": {
+        "ecs": "Conteneurs",
+        "rds": "Bases de données",
+        "alb": "Répartiteurs de charge",
+        "alarms": "Alarmes"
+      },
+      "familyStatus": {
+        "healthy": "Sain",
+        "degraded": "À surveiller",
+        "critical": "Critique",
+        "unknown": "Non lu"
+      },
+      "affected": "{affected} sur {total} touchés",
+      "unread": "Pas encore lu",
+      "unavailable": {
+        "denied": "OpsWatch n'est pas autorisé à lire {family} dans ce compte.",
+        "throttled": "AWS limite le débit des requêtes pour {family} ; OpsWatch réessaiera.",
+        "timeout": "La lecture de {family} a pris trop de temps.",
+        "unknown": "OpsWatch n'a pas pu lire {family}."
+      },
+      "topProblem": "Le plus grave actuellement",
+      "noProblems": "Aucun problème n'est ouvert.",
+      "changes": "Changements récents",
+      "noChanges": "Rien n'a changé depuis un jour.",
+      "change": {
+        "problem_opened": "Un problème s'est ouvert sur {subject}.",
+        "problem_reopened": "Un problème est revenu sur {subject}.",
+        "problem_resolved": "Un problème est résolu sur {subject}."
+      },
+      "notMeasured": "Non mesuré",
+      "waiting": "OpsWatch n'a pas terminé sa première vérification de cet environnement.",
+      "waitingHint": "Le premier cycle s'exécute dans les cinq minutes suivant l'ajout d'une connexion."
+    },
+    "brief": {
+      "title": "Point du matin",
+      "description": "Ce qui a changé depuis hier, et ce qui mérite l'attention en premier.",
+      "period": "Depuis {from}",
+      "mostImportant": "Commencez ici",
+      "nothingImportant": "Rien n'est ouvert. Il n'y a rien à traiter.",
+      "changes": "Ce qui a changé",
+      "noChanges": "Rien ne s'est ouvert ni résolu sur cette période.",
+      "summary": {
+        "healthy": "La production semble saine.",
+        "degraded": "La production demande de l'attention.",
+        "critical": "La production a un problème critique.",
+        "unknown": "OpsWatch ne peut pas dire où en est la production : il n'a pas pu lire cet environnement."
+      },
+      "opened": "{count, plural, =0 {rien ouvert} one {# problème ouvert} other {# problèmes ouverts}}",
+      "resolved": "{count, plural, =0 {rien résolu} one {# résolu} other {# résolus}}",
+      "waiting": "OpsWatch n'a pas terminé sa première vérification de cet environnement.",
+      "waitingHint": "Le premier cycle s'exécute dans les cinq minutes suivant l'ajout d'une connexion."
     }
   },
   "Insights": {

@@ -5,7 +5,7 @@ import type { MonitoringSection } from './paths';
  * These segments are URL vocabulary and are never translated; `Sections.<section>.<segment>` holds their labels.
  */
 export const SUBSECTIONS = {
-  overview: ['problems', 'health', 'brief', 'insights', 'audit'],
+  overview: ['brief', 'health', 'problems', 'insights', 'audit'],
   containers: ['services', 'report'],
   databases: ['instances', 'queries', 'report'],
   'load-balancers': ['list', 'report'],
@@ -36,8 +36,6 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
  * that builds a page deletes its line here and nothing else. A section's default segment is never in it.
  */
 export const UNBUILT_SUBSECTIONS: readonly string[] = [
-  'overview/health',
-  'overview/brief',
   'overview/audit',
   'containers/report',
   'databases/report',

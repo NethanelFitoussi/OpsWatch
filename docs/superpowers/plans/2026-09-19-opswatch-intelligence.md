@@ -1287,3 +1287,47 @@ Found by a test that asserted ancestry and got `null`.
 - [ ] **Step 2: the job**, bounded by §9.2's 60 describe calls, recording `covered N of M`.
 - [ ] **Step 3: events** — `resource_appeared` and `resource_disappeared` on the spine.
 - [ ] **Step 4: gate and commit.**
+
+---
+
+## Phase 4 — The surfaces
+
+### Task 16: Health
+
+Implements the `health` shape of **D1** and §2's promise that an unreadable family and a healthy one never
+look the same.
+
+**What it reads, and what it must not.** Health has to be instant and must cost nothing, so it reads the
+database and never AWS. The detect job already fetches the four families every five minutes and already knows,
+per family, how many resources there are and how many are affected — so it now **writes that down**.
+
+**A table the spec's §9.3 list does not name, added deliberately:** `family_snapshots`, one row per
+`(connectionId, scope, family)`, holding what the last cycle saw — `status`, `total`, `affected`, `readAt`,
+and the failure when it could not be read. Without it Health could only report `null` for every count, which
+the contract permits but which makes the page useless. It is additive, it is written by a job that was already
+fetching the data, and it costs no extra request.
+
+**Lifecycle events.** `applyTransitions` now appends to the §9.3 events spine — `problem_opened`,
+`problem_reopened`, `problem_resolved` — which is what Task 17's brief reads to say what *changed*. The spine
+existed from Task 2 and nothing had ever written to it.
+
+- [x] **Step 1:** `family_snapshots` and its store, with an additive migration.
+- [x] **Step 2:** the detect job writes a snapshot per family, and appends a lifecycle event per transition.
+- [x] **Step 3:** `src/lib/read/health.ts` — the `health` shape, with `unavailable` carrying the sentence
+  twice (`messageKey` + `values` + `message`), as the contract addendum ruled.
+- [x] **Step 4:** `GET /api/v1/health`, the page, EN/FR, and `features.health`.
+- [x] **Step 5:** tests, a real browser check, gate, commit, integrate.
+
+### Task 17: The Morning brief
+
+Implements the `brief` shape of **D1**: health over a period rather than at an instant, which is why it
+carries `period` and `changes`.
+
+`changes` come from the events spine over the period — a problem that opened is a change, one that resolved is
+a change — so the brief answers "what happened since I last looked" from rows rather than from a second read
+of AWS. `mostImportant` is the bounded top-N's first entry.
+
+- [x] **Step 1:** `src/lib/read/brief.ts` over the events spine.
+- [x] **Step 2:** `GET /api/v1/brief`, the page, EN/FR, `features.brief`, and the brief becomes the
+  overview default as D2 intends.
+- [x] **Step 3:** tests, a real browser check, gate, commit, integrate.
