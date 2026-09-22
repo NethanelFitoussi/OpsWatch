@@ -1302,7 +1302,9 @@
         "occurrences": "Occurrences",
         "groups": "Error groups",
         "healthyShare": "Intervals with nothing affected (%)",
-        "intervals": "Intervals measured"
+        "intervals": "Intervals measured",
+        "deployments": "Deployments",
+        "deploymentsFailed": "Deployments that failed"
       },
       "columns": {
         "name": "Name",

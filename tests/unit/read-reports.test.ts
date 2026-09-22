@@ -12,6 +12,7 @@ import { PROBLEM_FAMILIES, kindsOfFamily } from '@/lib/detect/family';
 import { writeHistorySettings } from '@/lib/history/settings';
 import { opswatchDbProvider } from '@/lib/history/opswatch-db';
 import { insertProblem, updateProblem } from '@/lib/store/problems';
+import { recordDeployments } from '@/lib/store/deployments';
 import { recordError, upsertLogSource } from '@/lib/store/errors';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
@@ -147,16 +148,47 @@ describe('§2.6 — a section that cannot be answered says which and why', () =>
     expect(sectionOf(readReport(db, query, context), 'availability')?.unavailable).toBe('not_enough_history');
   });
 
-  it('deployments and synthetics read `not_measured`, because nothing in this build measures them', () => {
-    const db = createTestDb();
-    const report = readReport(db, query, context);
-    expect(sectionOf(report, 'deployments')?.unavailable).toBe('not_measured');
-    expect(sectionOf(report, 'synthetics')?.unavailable).toBe('not_measured');
+  it('synthetics reads `not_measured`, because nothing in this build runs a check', () => {
+    expect(sectionOf(readReport(createTestDb(), query, context), 'synthetics')?.unavailable).toBe('not_measured');
+  });
+
+  it('THE RULING: deployments read `not_collected` before the job has recorded any, not `not_measured`', () => {
+    // The collector only remembers deployments from the moment it first ran. A report over an earlier window
+    // would otherwise show a suspiciously quiet week, which is a claim nobody measured.
+    expect(sectionOf(readReport(createTestDb(), query, context), 'deployments')?.unavailable).toBe('not_collected');
   });
 
   it('a section nobody reports on is `not_measured` rather than a fabricated empty report', () => {
     const report = readReport(createTestDb(), { ...query, section: 'logs' }, context);
     expect(sectionOf(report, 'problems')?.unavailable).toBe('not_measured');
+  });
+});
+
+describe('deployments, once the job has recorded some', () => {
+  const shipped = (over: Record<string, unknown> = {}) => ({
+    deploymentId: 'd1', serviceId: 'prod/web', serviceName: 'web', cluster: 'prod',
+    taskDefinition: 'web:42', status: 'completed' as const,
+    startedAt: NOW - 2 * DAY, updatedAt: NOW - 2 * DAY, desiredCount: 3, runningCount: 3, failedTasks: 0,
+    ...over,
+  });
+
+  it('counts what shipped and what failed, against the period before', () => {
+    const db = createTestDb();
+    recordDeployments(db, env, [shipped(), shipped({ deploymentId: 'd2', status: 'failed', failedTasks: 1 })], NOW);
+    recordDeployments(db, env, [shipped({ deploymentId: 'd0', startedAt: NOW - 9 * DAY })], NOW);
+
+    const section = sectionOf(readReport(db, query, context), 'deployments');
+    expect(section?.unavailable).toBeNull();
+    expect(section?.figures.find((f) => f.id === 'deployments')).toMatchObject({ value: 2, previous: 1, delta: 1 });
+    expect(section?.figures.find((f) => f.id === 'deploymentsFailed')).toMatchObject({ value: 1, previous: 0 });
+  });
+
+  it('marks a failed deployment critical and points at it', () => {
+    const db = createTestDb();
+    recordDeployments(db, env, [shipped({ status: 'failed', failedTasks: 2 })], NOW);
+    const rows = sectionOf(readReport(db, query, context), 'deployments')?.rows ?? [];
+    expect(rows[0]).toMatchObject({ label: 'web · web:42', severity: 'critical' });
+    expect(rows[0]?.ref).toMatchObject({ type: 'deployment', id: 'd1' });
   });
 });
 

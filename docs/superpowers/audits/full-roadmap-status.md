@@ -25,9 +25,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 40 |
-| `PARTIAL` | 8 |
-| `FOUNDATION_ONLY` | 12 |
+| `DONE` | 41 |
+| `PARTIAL` | 10 |
+| `FOUNDATION_ONLY` | 10 |
 | `NOT_STARTED` | 30 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
@@ -63,7 +63,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INT-1 | Collector runtime, scheduling | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Visible on System status |
 | INT-2 | Single-writer lock (§33.4) | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Conditional UPDATE; refresh carries `AND owner = ?` |
-| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **10 jobs declared, 4 implemented** (`detect`, `errors`, `metrics`, `compact`). Remaining: `deployments`, `inventory`, `queries`, `logvolume`, `baselines`, `slo` |
+| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **10 jobs declared, 5 implemented** (`detect`, `errors`, `metrics`, `compact`, `deployments`). Remaining: `inventory`, `queries`, `logvolume`, `baselines`, `slo` |
 | INT-4 | Detector execution, isolation (§33.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Fired / clear / not_evaluated |
 | INT-5 | Problem identity (§33.2) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Length-prefixed key; digest pinned |
 | INT-6 | Lifecycle, reopen, flap | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
@@ -125,7 +125,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | REP-2 | Previous-period comparison | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Half-open windows; mutation-verified |
 | REP-3 | Markdown export | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Escaped; downloads with `nosniff` |
 | REP-4 | Availability / SLO in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Bucket approximation only, and says so. Real SLO arithmetic is SLO-1 |
-| REP-5 | Deployments and synthetics in a report | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | `FOUNDATION_ONLY` | Renders `not_measured` honestly; depends on DEP-1 and SYN-1 |
+| REP-5 | Deployments and synthetics in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Deployments are real; synthetics still `not_measured` (SYN-1) |
 | REP-6 | Overview / logs reports | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Only the four section reports exist |
 | REP-7 | Weekly send when a notifier exists | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on ALE-4 |
 
@@ -143,9 +143,9 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| DEP-1 | Deployment collection | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `deployments` job declared, not implemented; ECS already exposes deployment state |
+| DEP-1 | Deployment collection | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Records ECS deployments and their outcome; visible in section reports |
 | DEP-2 | Deployment ↔ problem correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on DEP-1. Timestamps correlating is never a claim of causation |
-| DEP-3 | Deployment history surface | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| DEP-3 | Deployment history surface | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | In reports only; no dedicated page or `/api/v1/deployments` |
 
 ## Repository / GitHub
 
@@ -270,11 +270,10 @@ in the product says "Coming soon". An E2E walks every section menu and asserts n
 
 ### NOW
 
-**Checkpoint B — the unimplemented collector jobs (INT-3, DEP-1).** `compact` is **done**, and with it HIS-6:
-the dispatcher returned early for any job without a connection, which every instance-scoped job is by
-definition, so retention had never run once. Six remain — `deployments` (unlocks DEP-2 and REP-5), `inventory`,
-`queries`, `logvolume` (would store what LOG-2 reads live), `baselines` and `slo` (SLO-1). `deployments` is the
-next one, because more depends on it than on the others. Depends on: nothing new.
+**Checkpoint B — the unimplemented collector jobs (INT-3).** `compact` and `deployments` are **done**, and with
+them HIS-6, DEP-1 and the deployments half of REP-5. Five remain: `inventory`, `queries`, `logvolume` (would
+store what LOG-2 reads live), `baselines` and `slo`. `slo` is the one worth doing next, because it is the only
+one another requirement waits on (SLO-1..3, and REP-4's real numbers). Depends on: nothing new.
 
 ### NEXT
 

@@ -2,6 +2,7 @@ import 'server-only';
 import { getDb } from '../db/client';
 import { env } from '../env';
 import { runCompactJob } from './compact-job';
+import { runDeploymentsJob } from './deployments-job';
 import { runDetectJob } from './detect';
 import { runErrorsJob } from './errors-job';
 import { runMetricsJob } from './metrics-job';
@@ -27,6 +28,8 @@ export const runJob: JobRun = async (job, nowMs) => {
   switch (job.id) {
     case 'detect':
       return runDetectJob(scoped);
+    case 'deployments':
+      return runDeploymentsJob(scoped);
     case 'errors':
       return runErrorsJob({ ...scoped, budgetGbPerDay: env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY });
     case 'metrics':
