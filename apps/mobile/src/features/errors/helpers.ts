@@ -59,10 +59,11 @@ export function errorStatusIcon(status: ErrorStatus): IconName {
 }
 
 /** Builds the query filters from the chip selection and the optional `?service=` route parameter. */
-export function errorFiltersFor(filter: ErrorStatusFilter, service?: string | null): ErrorFilters {
+export function errorFiltersFor(filter: ErrorStatusFilter, service?: string | null, since?: number | null): ErrorFilters {
   const out: ErrorFilters = {};
   if (filter !== 'all') out.status = filter;
   if (service) out.service = service;
+  if (since !== null && since !== undefined) out.since = since;
   return out;
 }
 

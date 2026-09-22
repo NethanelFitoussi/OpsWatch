@@ -3,10 +3,6 @@ import { translate } from '@/i18n';
 import {
   briefCountsLine,
   briefHeadline,
-  categoriesOf,
-  categoryFromValue,
-  categoryValue,
-  CATEGORY_ALL,
   DEFAULT_FILTERS,
   deploymentCorrelationText,
   durationText,
@@ -30,16 +26,20 @@ describe('toProblemFilters', () => {
   });
 
   it('drops the status for "all" and maps every narrowing filter', () => {
-    expect(toProblemFilters({ status: 'all', severities: ['warning', 'critical'], category: 'databases', since: 1000, service: 'svc-a' })).toEqual({
+    expect(toProblemFilters({ status: 'all', severities: ['warning', 'critical'], since: 1000, service: 'svc-a' })).toEqual({
       severity: ['critical', 'warning'],
-      category: 'databases',
       since: 1000,
       service: 'svc-a',
     });
   });
 
-  it('can leave the category out (for deriving the category chips)', () => {
-    expect(toProblemFilters({ ...DEFAULT_FILTERS, category: 'databases' }, { withCategory: false })).toEqual({ status: 'open' });
+  /**
+   * Only what the contract declares. `category` used to be sent and silently ignored; the server now answers 400 for
+   * an undeclared parameter, so sending one would break the whole list rather than quietly do nothing.
+   */
+  it('sends nothing the contract does not declare', () => {
+    const sent = Object.keys(toProblemFilters({ ...DEFAULT_FILTERS, severities: ['critical'], since: 1, service: 'a' }));
+    expect(sent.sort()).toEqual(['service', 'severity', 'since', 'status']);
   });
 
   it('passes a specific status through', () => {
@@ -60,15 +60,6 @@ describe('filter helpers', () => {
     expect(hasNarrowingFilters({ ...DEFAULT_FILTERS, service: 'svc' })).toBe(true);
   });
 
-  it('derives sorted, unique categories and keeps the selected one', () => {
-    expect(categoriesOf([{ category: 'rds' }, { category: 'ecs' }, { category: 'rds' }], null)).toEqual(['ecs', 'rds']);
-    expect(categoriesOf([], 'redis')).toEqual(['redis']);
-  });
-
-  it('round-trips category chip values', () => {
-    expect(categoryFromValue(categoryValue('databases'))).toBe('databases');
-    expect(categoryFromValue(CATEGORY_ALL)).toBeNull();
-  });
 });
 
 describe('problemDuration', () => {
@@ -127,9 +118,8 @@ describe('activeFilterLabels', () => {
   it('says nothing for the default open list, and names every filter otherwise', () => {
     expect(activeFilterLabels(t, DEFAULT_FILTERS, 'any', null)).toEqual([]);
     expect(activeFilterLabels(t, { ...DEFAULT_FILTERS, status: 'resolved' }, 'any', null)).toEqual(['Status: Resolved']);
-    expect(activeFilterLabels(t, { ...DEFAULT_FILTERS, severities: ['critical', 'warning'], category: 'databases', service: 'svc-a' }, '24h', 'checkout-api')).toEqual([
+    expect(activeFilterLabels(t, { ...DEFAULT_FILTERS, severities: ['critical', 'warning'], service: 'svc-a' }, '24h', 'checkout-api')).toEqual([
       'Severity: Critical, Warning',
-      'Category: databases',
       'Time: 24 h',
       'Service: checkout-api',
     ]);

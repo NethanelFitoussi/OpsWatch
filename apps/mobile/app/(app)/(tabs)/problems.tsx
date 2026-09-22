@@ -5,7 +5,6 @@ import { flattenPages, useProblems } from '@/api/queries';
 import { ProblemFilterHeader, ProblemListRow } from '@/features/problems/components';
 import {
   activeFilterLabels,
-  categoriesOf,
   DEFAULT_FILTERS,
   hasNarrowingFilters,
   parseSeverities,
@@ -29,17 +28,12 @@ export default function ProblemsScreen() {
   const setSeverities = useCallback((next: Severity[]) => router.setParams({ severity: next.length ? next.join(',') : undefined }), [router]);
 
   const [status, setStatus] = useState<StatusFilter>(DEFAULT_FILTERS.status);
-  const [category, setCategory] = useState<string | null>(null);
   const [range, setRange] = useState<TimeRange>('any');
   const [since, setSince] = useState<number | null>(null);
 
-  const state = { status, severities, category, since, service };
+  const state = { status, severities, since, service };
   const query = useProblems(toProblemFilters(state));
-  // Same query without the category, so the category chips do not disappear once one is chosen. When no category is
-  // selected both keys are identical and React Query fetches once.
-  const unfiltered = useProblems(toProblemFilters(state, { withCategory: false }));
-  const loaded = flattenPages(unfiltered.data);
-  const categories = categoriesOf(loaded, category);
+  const loaded = flattenPages(query.data);
   const serviceLabel = service ? (loaded.find((p) => p.service?.id === service)?.service?.label ?? service) : null;
 
   const quiet = status === DEFAULT_FILTERS.status && !hasNarrowingFilters(state);
@@ -67,9 +61,6 @@ export default function ProblemsScreen() {
             onStatus={setStatus}
             severities={severities}
             onSeverities={setSeverities}
-            categories={categories}
-            category={category}
-            onCategory={setCategory}
             range={range}
             onRange={(next) => {
               setRange(next);
@@ -80,7 +71,6 @@ export default function ProblemsScreen() {
             filtered={!quiet}
             onClearAll={() => {
               setStatus(DEFAULT_FILTERS.status);
-              setCategory(null);
               setRange('any');
               setSince(null);
               router.setParams({ service: undefined, severity: undefined });

@@ -18,21 +18,15 @@ export type TimeRange = (typeof TIME_RANGES)[number];
 const HOUR = 3_600_000;
 const RANGE_MS: Record<Exclude<TimeRange, 'any'>, number> = { '1h': HOUR, '6h': 6 * HOUR, '24h': 24 * HOUR, '7d': 7 * 24 * HOUR };
 
-/** Chip values of the category filter are prefixed so their test ids never clash with the other filters. */
-export const CATEGORY_ALL = 'cat:all';
-export const categoryValue = (category: string) => `cat:${category}`;
-export const categoryFromValue = (value: string): string | null => (value === CATEGORY_ALL ? null : value.slice(4));
-
 export type ProblemFilterState = {
   status: StatusFilter;
   severities: Severity[];
-  category: string | null;
   /** Epoch ms, computed once when the time range is chosen so the query key stays stable between renders. */
   since: number | null;
   service: string | null;
 };
 
-export const DEFAULT_FILTERS: ProblemFilterState = { status: 'open', severities: [], category: null, since: null, service: null };
+export const DEFAULT_FILTERS: ProblemFilterState = { status: 'open', severities: [], since: null, service: null };
 
 /**
  * The severity filter lives in the route (`/problems?severity=critical`), so Home can open the list already narrowed
@@ -49,27 +43,23 @@ export function sinceFor(range: TimeRange, now: number): number | null {
   return range === 'any' ? null : now - RANGE_MS[range];
 }
 
-/** Maps the screen's filter state to the query sent to the server. Unset filters are left out entirely. */
-export function toProblemFilters(state: ProblemFilterState, options: { withCategory?: boolean } = {}): ProblemFilters {
+/**
+ * Maps the screen's filter state to the query sent to the server. Unset filters are left out entirely, and only
+ * parameters the contract declares in `LIST_FILTERS` are ever sent: an undeclared one is a 400, not a no-op.
+ */
+export function toProblemFilters(state: ProblemFilterState): ProblemFilters {
   const filters: ProblemFilters = {};
   if (state.status !== 'all') filters.status = state.status;
   if (state.severities.length) filters.severity = [...state.severities].sort();
   if (state.service) filters.service = state.service;
-  if (state.category && options.withCategory !== false) filters.category = state.category;
   if (state.since !== null) filters.since = state.since;
   return filters;
 }
 
 export function hasNarrowingFilters(state: ProblemFilterState): boolean {
-  return state.severities.length > 0 || state.category !== null || state.since !== null || state.service !== null;
+  return state.severities.length > 0 || state.since !== null || state.service !== null;
 }
 
-/** Categories present in the loaded problems, sorted, always keeping the selected one so it can be cleared. */
-export function categoriesOf(problems: Pick<ProblemSummary, 'category'>[], selected: string | null): string[] {
-  const set = new Set(problems.map((p) => p.category).filter(Boolean));
-  if (selected) set.add(selected);
-  return [...set].sort((a, b) => a.localeCompare(b));
-}
 
 /** How long the problem has lasted: until it was last seen once resolved, until now otherwise. */
 export function problemDuration(problem: Pick<ProblemSummary, 'firstSeenAt' | 'lastSeenAt' | 'status'>, now: number): { ms: number; ongoing: boolean } {
@@ -109,7 +99,6 @@ export function activeFilterLabels(t: Translate, state: ProblemFilterState, rang
   const labels: string[] = [];
   if (state.status !== DEFAULT_FILTERS.status) labels.push(`${t('filter.status')}: ${state.status === 'all' ? t('filter.all') : t(`status.${state.status}`)}`);
   if (state.severities.length) labels.push(`${t('filter.severity')}: ${state.severities.map((severity) => t(`severity.${severity}`)).join(', ')}`);
-  if (state.category) labels.push(`${t('filter.category')}: ${state.category}`);
   if (range !== 'any') labels.push(`${t('filter.time')}: ${t(`time.range.${range}`)}`);
   if (state.service) labels.push(`${t('filter.service')}: ${serviceLabel ?? state.service}`);
   return labels;

@@ -75,18 +75,29 @@ import {
   type SyntheticDetail,
   type SyntheticSummary,
   type User,
+  systemStatusSchema,
+  type SystemStatus,
 } from './contract';
 import { request, type Transport } from './http';
 
+/**
+ * The filters each list endpoint honours. The vocabulary is the contract's (`LIST_FILTERS`); these types only give it
+ * concrete values. Anything not declared there is a 400, not a no-op, so nothing may be added here alone —
+ * `src/api/__tests__/pagination-agreement.test.ts` holds both halves together.
+ */
 export type ProblemFilters = {
   status?: ProblemStatus | 'open';
   severity?: Severity[];
   service?: string;
-  category?: string;
   /** Epoch ms lower bound on `lastSeenAt`. */
   since?: number;
 };
-export type ErrorFilters = { status?: ErrorSummary['status']; service?: string };
+export type ErrorFilters = {
+  status?: ErrorSummary['status'];
+  service?: string;
+  /** Epoch ms lower bound on `lastSeenAt`. */
+  since?: number;
+};
 export type AlertFilters = { status?: AlertSummary['status'] | 'history' };
 export type LogQuery = {
   text?: string;
@@ -110,6 +121,11 @@ export interface OpsWatchClient {
   me(): Promise<User>;
 
   environments(): Promise<Environment[]>;
+  /**
+   * What OpsWatch knows about itself. Not environment-scoped: it reports on the instance. Administrator-only, so a
+   * `forbidden` here is an ordinary answer for a non-admin account, not a failure.
+   */
+  systemStatus(): Promise<SystemStatus>;
   health(scope: Scope): Promise<Health>;
   brief(scope: Scope): Promise<Brief>;
 
@@ -210,6 +226,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
     me: () => get('/me', userSchema),
 
     environments: () => get('/environments', listOf(environmentSchema)),
+    systemStatus: () => get('/system/status', systemStatusSchema),
     health: (scope) => get('/health', healthSchema, env(scope)),
     brief: (scope) => get('/brief', briefSchema, env(scope)),
 
@@ -219,7 +236,6 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
         status: f.status,
         severity: f.severity,
         service: f.service,
-        category: f.category,
         since: f.since,
         cursor,
       }),
@@ -228,7 +244,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
       await request(transport, { method: 'POST', path: p(`/problems/${enc(id)}/acknowledge`), schema: empty, token: getToken(), query: env(scope) });
     },
 
-    errors: (scope, f, cursor) => get('/errors', pageSchema(errorSummarySchema), { ...env(scope), status: f.status, service: f.service, cursor }),
+    errors: (scope, f, cursor) => get('/errors', pageSchema(errorSummarySchema), { ...env(scope), status: f.status, service: f.service, since: f.since, cursor }),
     error: (scope, id) => get(`/errors/${enc(id)}`, errorDetailSchema, env(scope)),
 
     services: (scope) => get('/services', listOf(serviceSummarySchema), env(scope)),

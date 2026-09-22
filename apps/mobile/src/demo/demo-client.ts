@@ -119,6 +119,7 @@ export function createDemoClient(options: DemoClientOptions = {}): OpsWatchClien
     incidents: (scope, cursor) => delay(() => engine.listIncidents(fresh(), scope.env, cursor)),
     incident: (_scope, id) => delay(() => found(engine.findById(fresh().incidents, id))),
 
+    systemStatus: () => delay(() => fresh().systemStatus),
     synthetics: () => delay(() => fresh().synthetics),
     synthetic: (_scope, id) => delay(() => found(engine.findById(fresh().synthetics, id))),
 

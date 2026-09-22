@@ -42,7 +42,7 @@ export function routeForRef(ref: Pick<Ref, 'type' | 'id'>): string | null {
 }
 
 /** Top-level screens reachable by link without an id. */
-const STATIC_PATHS = new Set(['/', '/problems', '/alerts', '/services', '/errors', '/incidents', '/synthetics', '/slos', '/deployments', '/logs', '/infrastructure', '/brief', '/search', '/ask', '/settings']);
+const STATIC_PATHS = new Set(['/', '/problems', '/alerts', '/services', '/errors', '/incidents', '/synthetics', '/slos', '/deployments', '/logs', '/infrastructure', '/brief', '/search', '/ask', '/settings', '/system']);
 
 /**
  * Parses an incoming link into an in-app path, or null when it is not allowed.

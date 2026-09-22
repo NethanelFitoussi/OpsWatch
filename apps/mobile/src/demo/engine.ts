@@ -49,7 +49,6 @@ export function listProblems(data: DemoDataset, env: string | undefined, f: Prob
       if (f.status && f.status !== 'open' && p.status !== f.status) return false;
       if (f.severity?.length && !f.severity.includes(p.severity)) return false;
       if (f.service && p.service?.id !== f.service) return false;
-      if (f.category && p.category !== f.category) return false;
       if (f.since && p.lastSeenAt < f.since) return false;
       return true;
     })
@@ -61,7 +60,7 @@ export function listProblems(data: DemoDataset, env: string | undefined, f: Prob
 export function listErrors(data: DemoDataset, env: string | undefined, f: ErrorFilters, cursor?: string | null): Page<ErrorSummary> {
   if (!isProductionEnv(data, env)) return { items: [], nextCursor: null };
   const items = data.errors
-    .filter((e) => (!f.status || e.status === f.status) && (!f.service || e.service?.id === f.service))
+    .filter((e) => (!f.status || e.status === f.status) && (!f.service || e.service?.id === f.service) && (!f.since || e.lastSeenAt >= f.since))
     .sort((a, b) => b.lastSeenAt - a.lastSeenAt)
     .map(errorSummaryOf);
   return paginate(items, cursor, DEMO_PAGE_SIZE);

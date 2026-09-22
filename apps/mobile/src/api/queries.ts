@@ -16,6 +16,7 @@ export function useScope(): Scope {
 
 export const keys = {
   environments: () => ['environments', 'list'] as const,
+  systemStatus: () => ['system', 'detail'] as const,
   health: (s: Scope) => ['health', 'list', s.env ?? null] as const,
   brief: (s: Scope) => ['brief', 'list', s.env ?? null] as const,
   problems: (s: Scope, f: ProblemFilters) => ['problems', 'list', s.env ?? null, f] as const,
@@ -55,6 +56,20 @@ function useSignedIn(): boolean {
 export function useEnvironments() {
   const { client } = useSession();
   return useQuery({ queryKey: keys.environments(), queryFn: () => client.environments(), enabled: useSignedIn(), staleTime: 5 * 60_000 });
+}
+
+/**
+ * Instance-wide, not environment-scoped, and administrator-only. A `forbidden` answer is a normal outcome for an
+ * ordinary account, so it is not retried: retrying a permission will not change it.
+ */
+export function useSystemStatus() {
+  const { client } = useSession();
+  return useQuery({
+    queryKey: keys.systemStatus(),
+    queryFn: () => client.systemStatus(),
+    enabled: useSignedIn(),
+    refetchInterval: 30_000,
+  });
 }
 
 export function useHealth() {

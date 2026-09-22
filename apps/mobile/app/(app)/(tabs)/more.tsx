@@ -22,7 +22,12 @@ const OPERATE: Entry[] = [
   { href: '/slos', label: 'nav.slos', icon: 'speedometer-outline', feature: 'slos' },
   { href: '/brief', label: 'nav.brief', icon: 'sunny-outline', feature: 'brief' },
 ];
-const ACCOUNT: Entry[] = [{ href: '/settings', label: 'nav.settings', icon: 'settings-outline' }];
+const ACCOUNT: Entry[] = [
+  // No capability flag: every server implements it, and an account without permission gets an explanation rather
+  // than an error, so hiding the entry would only make the feature undiscoverable.
+  { href: '/system', label: 'nav.system', icon: 'pulse-outline' },
+  { href: '/settings', label: 'nav.settings', icon: 'settings-outline' },
+];
 
 /**
  * Every secondary destination. Entries for capabilities the server lacks stay visible (so people know they exist)

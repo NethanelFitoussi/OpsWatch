@@ -6,6 +6,7 @@
  *
  *   npm run mock-server                 # http://localhost:4010, AI enabled
  *   npm run mock-server -- --port 4011 --no-ai --latency 400
+ *   npm run mock-server -- --forbid-system   # /system/status answers 403, as it does for a non-administrator
  *
  * Sign in with demo@opswatch.dev / opswatch-demo. From an Android emulator the host is http://10.0.2.2:4010.
  * Plain HTTP is only accepted by development builds, after enabling "Allow plain HTTP" on the Connect screen.
@@ -14,13 +15,15 @@
 import { randomBytes } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters } from '../src/api/client';
-import { API_PREFIX, type Favorite, type LogLevel, type Ref, type Severity } from '../src/api/contract';
+import { API_PREFIX, filtersFor, RESERVED_LIST_PARAMS, type Favorite, type LogLevel, type Ref, type Severity } from '../src/api/contract';
 import * as engine from '../src/demo/engine';
 import { buildDemoDataset, DEMO_CREDENTIALS, type DemoDataset } from '../src/demo/fixtures';
 
 export type MockServerOptions = {
   port?: number;
   ai?: boolean;
+  /** Answer `GET /system/status` with 403, the way a real server answers a non-administrator. */
+  forbidSystem?: boolean;
   latencyMs?: number;
   /** Rejects every authenticated request with 401 after this many, to test session expiry. 0 = never. */
   expireAfter?: number;
@@ -29,6 +32,7 @@ export type MockServerOptions = {
 type Json = Record<string, unknown> | unknown[];
 
 export function createMockServer(options: MockServerOptions = {}): { server: Server; tokens: Set<string> } {
+  const forbidSystem = options.forbidSystem === true;
   const tokens = new Set<string>();
   const searches = new Map<string, { query: LogQuery; env?: string; polls: number }>();
   let favorites: Favorite[] = [{ type: 'service', id: 'svc-checkout-api', label: 'checkout-api' }];
@@ -111,6 +115,16 @@ export function createMockServer(options: MockServerOptions = {}): { server: Ser
     const [root, id, action] = segments;
     const cursor = q.get('cursor');
 
+    // The real server answers 400 for a query parameter it does not honour (LIST_FILTERS). The mock does the same,
+    // because a mock that quietly accepts anything hides exactly the class of bug this rule exists to prevent: a
+    // filter the app sends and the server ignores looks like it works until you test against something real.
+    const declared = filtersFor(`/${root}`);
+    if (method === 'GET' && declared) {
+      const allowed = new Set<string>([...Object.keys(declared), ...RESERVED_LIST_PARAMS]);
+      const unknown = [...q.keys()].find((name) => !allowed.has(name));
+      if (unknown !== undefined) return fail(res, 400, 'invalid_request', `Unknown query parameter: ${unknown}`);
+    }
+
     try {
       switch (`${method} ${root}${id ? '/:id' : ''}${action ? `/${action}` : ''}`) {
         case 'POST auth/:id':
@@ -123,6 +137,13 @@ export function createMockServer(options: MockServerOptions = {}): { server: Ser
           return send(res, 200, { email: DEMO_CREDENTIALS.email, name: 'Demo user' });
         case 'GET environments':
           return send(res, 200, { items: d.environments });
+        // `/system/status` is administrator-only on a real server. The mock answers it, so the screen and its
+        // degraded states can be exercised; `--forbid-system` makes it answer 403 instead, which is what a
+        // non-administrator sees and is an ordinary answer rather than a failure.
+        case 'GET system/:id':
+          if (id !== 'status') break;
+          if (forbidSystem) return fail(res, 403, 'forbidden', 'Only an administrator can see system status.');
+          return send(res, 200, { ...d.systemStatus, generatedAt: now });
         case 'GET health':
           return send(res, 200, engine.healthFor(d, env, now));
         case 'GET brief':
@@ -132,7 +153,6 @@ export function createMockServer(options: MockServerOptions = {}): { server: Ser
             status: (q.get('status') as ProblemFilters['status']) ?? undefined,
             severity: q.getAll('severity') as Severity[],
             service: q.get('service') ?? undefined,
-            category: q.get('category') ?? undefined,
             since: q.get('since') ? Number(q.get('since')) : undefined,
           };
           return send(res, 200, engine.listProblems(d, env, filters, cursor));
@@ -150,7 +170,11 @@ export function createMockServer(options: MockServerOptions = {}): { server: Ser
           return send(res, 204);
         }
         case 'GET errors':
-          return send(res, 200, engine.listErrors(d, env, { status: (q.get('status') as ErrorFilters['status']) ?? undefined, service: q.get('service') ?? undefined }, cursor));
+          return send(res, 200, engine.listErrors(d, env, {
+            status: (q.get('status') as ErrorFilters['status']) ?? undefined,
+            service: q.get('service') ?? undefined,
+            since: q.get('since') ? Number(q.get('since')) : undefined,
+          }, cursor));
         case 'GET errors/:id': {
           const error = engine.findById(d.errors, id!);
           return found(res, error) ? send(res, 200, error) : undefined;
@@ -284,6 +308,7 @@ if (isMain && !process.env.JEST_WORKER_ID) {
   const port = Number(argValue('--port') ?? process.env.PORT ?? 4010);
   const { server } = createMockServer({
     ai: !process.argv.includes('--no-ai'),
+    forbidSystem: process.argv.includes('--forbid-system'),
     latencyMs: Number(argValue('--latency') ?? 0),
     expireAfter: Number(argValue('--expire-after') ?? 0),
   });

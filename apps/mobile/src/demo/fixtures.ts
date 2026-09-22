@@ -26,6 +26,8 @@ import type {
   ServiceDetail,
   SloDetail,
   SyntheticDetail,
+
+  SystemStatus,
 } from '@/api/contract';
 
 const MIN = 60_000;
@@ -51,6 +53,7 @@ export type DemoDataset = {
   deployments: DeploymentDetail[];
   investigations: Investigation[];
   repository: RepositoryEvidence[];
+  systemStatus: SystemStatus;
 };
 
 /**
@@ -933,8 +936,31 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
       features: {
         health: true, brief: true, problems: true, errors: true, services: true, infrastructure: true, logs: true, alerts: true,
         incidents: true, synthetics: true, slos: true, deployments: true, investigations: true, repository: true, ai: true,
-        search: true, favorites: true, environments: true, push: false,
+        search: true, favorites: true, environments: true,
+        // The app has no Reports surface, so the demo server does not advertise one: a capability nothing consumes
+        // would only inflate the count the Connect screen shows.
+        reports: false,
+        push: false,
       },
+    },
+    systemStatus: {
+      version: '0.1.0-demo',
+      generatedAt: now,
+      collector: { owner: 'opswatch-collector-1', heartbeatAt: now - 20_000, alive: true, neverRan: false },
+      jobs: [
+        // A healthy spread, plus the two states that are easy to get wrong: a job that has never run, and one that
+        // ran and failed. Both are visible in the demo so the screen's worst case is exercised in ordinary use.
+        { job: 'inventory', everyMs: 5 * MIN, lastRunAt: now - 2 * MIN, lastStatus: 'ok', durationMs: 8_400, covered: 18, total: 18, truncated: false, errorCode: null, nextRunAt: now + 3 * MIN },
+        { job: 'metrics', everyMs: MIN, lastRunAt: now - 40_000, lastStatus: 'ok', durationMs: 2_100, covered: 18, total: 18, truncated: false, errorCode: null, nextRunAt: now + 20_000 },
+        { job: 'detect', everyMs: MIN, lastRunAt: now - 30_000, lastStatus: 'ok', durationMs: 640, covered: null, total: null, truncated: false, errorCode: null, nextRunAt: now + 30_000 },
+        { job: 'errors', everyMs: 15 * MIN, lastRunAt: now - 6 * MIN, lastStatus: 'failed', durationMs: 12_000, covered: 3, total: 7, truncated: true, errorCode: 'ThrottlingException', nextRunAt: now + 9 * MIN },
+        { job: 'compaction', everyMs: DAY, lastRunAt: null, lastStatus: null, durationMs: null, covered: null, total: null, truncated: false, errorCode: null, nextRunAt: now + 4 * HOUR },
+      ],
+      environments: [
+        { connectionId: 'conn-prod', scope: 'eu-west-1', lastReadAt: now - 2 * MIN, familiesRead: 6, familiesTotal: 6 },
+        { connectionId: 'conn-staging', scope: 'eu-west-1', lastReadAt: now - 11 * MIN, familiesRead: 4, familiesTotal: 6 },
+      ],
+      database: { sizeBytes: 48_200_000, schemaVersion: 6 },
     },
     environments: [
       { id: 'prod-eu-west-1', name: 'Production', kind: 'production', description: 'AWS eu-west-1' },
