@@ -13,7 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "lint:template": "tsx scripts/write-sample-template.ts && docker run --rm -v \"$PWD/tmp:/data\" python:3.13-slim sh -c \"pip install -q --root-user-action=ignore --disable-pip-version-check cfn-lint==1.56.3 && cfn-lint /data/opswatch-sample.yaml\"",
     "e2e": "playwright test --config tests/e2e/playwright.config.ts",
-    "verify:persistence": "bash scripts/verify-persistence.sh"
+    "verify:persistence": "bash scripts/verify-persistence.sh",
+    "audit:nav": "playwright test --config tests/audit/playwright.config.ts nav-walk"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.1134.0",
