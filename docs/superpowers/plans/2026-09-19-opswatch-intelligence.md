@@ -1175,3 +1175,74 @@ this, the children §33.8 talks about would never exist.
 - [x] **Step 4: Run the test** → PASS.
 - [x] **Step 5: Add `'lib/detect/aws.ts'` to `SERVER_ONLY_MODULES`.**
 - [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): the Stage 2 rules as detectors, with fleets expanded to members`.
+
+---
+
+## Phase 3 — The collector
+
+### Task 9: The collector runtime and its cycle
+
+Implements §9.2 (one runner, the job schedule, bounded jobs, the off switch) and **D4** (what a fresh install
+actually runs).
+
+**Files:**
+- Create: `src/lib/collector/jobs.ts`, `src/lib/collector/runner.ts`
+- Create: `tests/unit/collector-jobs.test.ts`, `tests/unit/collector-runner.test.ts`
+- Modify: `src/lib/env.ts` (`OPSWATCH_COLLECTOR`, `OPSWATCH_ROLE`), `src/instrumentation-node.ts`,
+  `tests/unit/module-boundaries.test.ts`
+
+**The shape.** The decision — *which jobs are due, for which environments, right now* — is a pure function
+over the clock and the last-run times, tested with literals. The runtime around it is a thin loop that claims
+the lock, asks that function, runs what it returns and records each run. Nothing schedules itself with a
+`setTimeout` captured at import time, because that cannot be tested and cannot be stopped.
+
+**Interfaces:**
+- `src/lib/collector/jobs.ts`
+  - `JOB_IDS` / `JobId` — the ten jobs of §9.2's table.
+  - `export type JobSpec = { id; everyMs; cap: number | null; scope: 'environment' | 'instance'; freshInstall: boolean }`
+  - `JOBS: Record<JobId, JobSpec>` — the schedule and the caps, in one place.
+  - `FRESH_INSTALL_JOBS` — **D4**: `inventory` (30 min), `detect` (5 min) and `compact` (24 h), and nothing
+    else. `metrics` waits for the history switch (Task 24); `errors` waits for an enabled `log_source`
+    (Task 20). A fresh install therefore spends **no extra AWS request**: `detect` runs over data the page
+    already fetched, and `inventory` is `Describe*`, which §9.5 records as throttled but not billed.
+- `src/lib/collector/runner.ts`
+  - `COLLECTOR_TICK_MS` 15 s — how often the loop wakes, well inside `LOCK_HEARTBEAT_MS`.
+  - `export function collectorEnabled(source: NodeJS.ProcessEnv): boolean` — false for
+    `OPSWATCH_COLLECTOR=off`. `OPSWATCH_ROLE=collector` is for a second container from the same image that
+    runs the collector alone; `OPSWATCH_ROLE=web` disables it. Neither set means the application process
+    runs it, which is the single-container default.
+  - `export function collectorOwner(): string` — `${process.pid}:${randomId()}`, per §33.4, never derived
+    from anything a user can set.
+  - `export type DueJob = { id: JobId; connectionId: string | null; scope: string | null }`
+  - `export function dueJobs(input: { nowMs; environments; lastRunAt; enabled }): DueJob[]` — **pure**. A job
+    is due when it has never run, or when `nowMs - lastRunAt >= everyMs`. Environment-scoped jobs yield one
+    entry per environment; instance-scoped jobs yield one.
+  - `export function startCollector(deps: CollectorDeps): { stop: () => Promise<void> }` — claims the lock,
+    refreshes it, and on each tick runs what `dueJobs` returns. Every dependency is injected: the clock, the
+    timer, the database, the environment list and the job implementations.
+
+**The rules.**
+
+1. **One runner.** The loop does nothing at all until `claimCollectorLock` returns true, and re-claims on
+   every tick so a stale lock is picked up within one tick of going stale.
+2. **A refresh that changes no row aborts the cycle** (§33.4). The process lost the lock while it was busy;
+   continuing would mean two collectors writing.
+3. **Every run is recorded** through `startRun`/`finishRun`, including a failure, so System status can tell
+   "it failed" from "it never ran". A job that throws is caught, recorded `failed` with its error *code*, and
+   the next job still runs — one broken job must not stop the cycle, the same rule the detector framework has.
+4. **Jobs run one at a time.** better-sqlite3 is synchronous and the point of §9.2's bounded transactions is
+   that the event loop keeps serving pages; running jobs concurrently would defeat it.
+5. **Nothing is logged but one JSON line per failure**, carrying the job and an error code — never a
+   credential, a resource name, a query or a result (§12.6).
+
+- [x] **Step 1: Write the failing tests.** `collector-jobs.test.ts` pins the schedule and the caps against
+  §9.2's table and asserts `FRESH_INSTALL_JOBS` is exactly D4's three. `collector-runner.test.ts` covers:
+  `dueJobs` with never-run and just-run jobs, per-environment fan-out, the off switch and the roles, that the
+  loop runs nothing without the lock, that a failed refresh aborts, that a throwing job is recorded and the
+  next still runs, and that `stop()` ends it.
+- [x] **Step 2: Run them to see them fail.** → FAIL.
+- [x] **Step 3: Write `jobs.ts` and `runner.ts`; add the two environment variables.**
+- [x] **Step 4: Run the tests** → PASS.
+- [x] **Step 5: Start it from `instrumentation-node.ts`**, after the database is opened, and add both files to
+  `SERVER_ONLY_MODULES`.
+- [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(collector): the runtime, its lock loop and the job schedule`.
