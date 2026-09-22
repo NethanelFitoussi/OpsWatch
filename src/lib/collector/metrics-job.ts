@@ -3,7 +3,10 @@ import type { Db } from '../db/client';
 import { opswatchDbProvider } from '../history/opswatch-db';
 import { RESOLUTION_MS, type HistoryPoint } from '../history/provider';
 import { readHistorySettings } from '../history/settings';
+import { listLoadBalancers, loadBalancerQueries } from '../monitoring/elb';
+import { getMetricSeries, seriesById } from '../monitoring/metrics';
 import { INSIGHT_FAMILIES, loadFamily } from '../monitoring/overview';
+import { recentWindow } from '../monitoring/shared/time-range';
 import { resolveTarget } from '../monitoring/target';
 import { JOBS } from './jobs';
 import type { JobOutcome } from './runner';
@@ -19,6 +22,23 @@ import type { JobOutcome } from './runner';
  * backend changes one setting and this job does not know the difference.
  */
 export const METRICS_RESOLUTION = '5m' as const;
+
+/**
+ * How many load balancers one cycle stores availability for. §19's SLO arithmetic reads these rollups, and
+ * an account with hundreds of load balancers must not turn a five-minute job into an unbounded fan-out.
+ */
+export const SLO_LOAD_BALANCER_LIMIT = 25;
+
+/** The metrics §19 computes availability from: good = requests − (elb5xx + target5xx). */
+const AVAILABILITY_METRICS = ['requests', 'elb5xx', 'target5xx'] as const;
+
+/**
+ * Sums a series over the interval. `null` when CloudWatch returned no datapoint at all, which the SLO
+ * arithmetic reads as an unmeasured interval rather than as zero traffic (§19, §2.4).
+ */
+function sumOf(values: readonly number[]): number | null {
+  return values.length === 0 ? null : values.reduce((total, value) => total + value, 0);
+}
 
 export type MetricsJobInput = {
   db: Db;
@@ -74,10 +94,47 @@ export async function runMetricsJob(input: MetricsJobInput): Promise<JobOutcome>
     });
   }
 
+  // Availability rollups, which are what §19's SLO arithmetic reads back. Behind the same history switch:
+  // nothing here runs on an installation that has not asked for history.
+  const balancers = await listLoadBalancers(target.data);
+  let lbCovered = 0;
+  const lbTotal = balancers.ok ? Math.min(balancers.data.length, SLO_LOAD_BALANCER_LIMIT) : 0;
+
+  if (balancers.ok && balancers.data.length > 0) {
+    const chosen = balancers.data.slice(0, SLO_LOAD_BALANCER_LIMIT);
+    const queries = chosen.flatMap((balancer, index) => loadBalancerQueries(balancer, `lb${index}`));
+    const window = recentWindow(RESOLUTION_MS[METRICS_RESOLUTION] / 60_000, input.nowMs);
+    const series = await getMetricSeries(target.data, queries, window);
+
+    if (series.ok) {
+      for (const [index, balancer] of chosen.entries()) {
+        lbCovered += 1;
+        const values: Record<(typeof AVAILABILITY_METRICS)[number], number | null> = {
+          requests: sumOf(seriesById(series.data, `lb${index}req`).values),
+          elb5xx: sumOf(seriesById(series.data, `lb${index}elb5xx`).values),
+          target5xx: sumOf(seriesById(series.data, `lb${index}t5xx`).values),
+        };
+        for (const metric of AVAILABILITY_METRICS) {
+          points.push({
+            category: 'metric',
+            subjectId: balancer.name,
+            metric,
+            connectionId: input.connectionId,
+            scope: input.scope,
+            intervalStart,
+            resolution: METRICS_RESOLUTION,
+            value: values[metric],
+            samples: 1,
+          });
+        }
+      }
+    }
+  }
+
   await provider.write(points, input.nowMs);
   return {
-    covered: read,
-    total: INSIGHT_FAMILIES.length,
-    truncated: read < INSIGHT_FAMILIES.length || points.length >= cap,
+    covered: read + lbCovered,
+    total: INSIGHT_FAMILIES.length + lbTotal,
+    truncated: read < INSIGHT_FAMILIES.length || lbCovered < lbTotal || points.length >= cap,
   };
 }

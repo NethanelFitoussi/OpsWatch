@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, eq, gte, lt, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { historyPoints, historyWatermarks, type HistoryPointRow } from '../db/schema';
 
@@ -108,4 +108,34 @@ export function readWatermark(db: Db, series: HistorySeries): number {
 
 export function purgeHistoryBefore(db: Db, beforeMs: number): number {
   return db.delete(historyPoints).where(lt(historyPoints.intervalStart, beforeMs)).run().changes;
+}
+
+/**
+ * Which subjects have a stored series for one metric in a window.
+ *
+ * A report needs to know what it can compute availability for without being told in advance which load
+ * balancers exist — the answer is whatever the metrics job has written, which is also the honest scope for
+ * a figure read back from storage.
+ */
+export function listHistorySubjects(
+  db: Db,
+  query: { category: string; connectionId: string; scope: string; metric: string; resolution: string; fromMs: number; toMs: number },
+): string[] {
+  return db
+    .selectDistinct({ subjectId: historyPoints.subjectId })
+    .from(historyPoints)
+    .where(
+      and(
+        eq(historyPoints.category, query.category),
+        eq(historyPoints.connectionId, query.connectionId),
+        eq(historyPoints.scope, query.scope),
+        eq(historyPoints.metric, query.metric),
+        eq(historyPoints.resolution, query.resolution),
+        gte(historyPoints.intervalStart, query.fromMs),
+        lt(historyPoints.intervalStart, query.toMs),
+      ),
+    )
+    .orderBy(asc(historyPoints.subjectId))
+    .all()
+    .map((row) => row.subjectId);
 }
