@@ -30,8 +30,8 @@ test('a sub-page no task has built is disabled, and nothing in the menu links to
   await page.goto(`/en/c/${connectionId}/us-east-1/overview/insights`);
   const nav = page.getByRole('navigation', { name: 'Overview pages' });
   await expect(nav.getByRole('link', { name: 'Insights' })).toHaveAttribute('aria-current', 'page');
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Audit' })).toContainText('Coming soon');
-  await expect(nav.locator('a[href*="/overview/audit"]')).toHaveCount(0);
+  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Checkup' })).toContainText('Coming soon');
+  await expect(nav.locator('a[href*="/overview/checkup"]')).toHaveCount(0);
 });
 
 test('the breadcrumb names the section, the connection and the sub-page', async ({ page }) => {

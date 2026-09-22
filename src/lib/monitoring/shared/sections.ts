@@ -5,7 +5,7 @@ import type { MonitoringSection } from './paths';
  * These segments are URL vocabulary and are never translated; `Sections.<section>.<segment>` holds their labels.
  */
 export const SUBSECTIONS = {
-  overview: ['brief', 'health', 'problems', 'insights', 'audit'],
+  overview: ['brief', 'health', 'problems', 'insights', 'checkup'],
   errors: ['groups', 'sources'],
   containers: ['services', 'report'],
   databases: ['instances', 'queries', 'report'],
@@ -38,7 +38,7 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
  */
 export const UNBUILT_SUBSECTIONS: readonly string[] = [
   'errors/sources',
-  'overview/audit',
+  'overview/checkup',
   'logs/volume',
   'logs/endpoints',
 ];
@@ -62,7 +62,7 @@ export const SUBSECTION_ICONS: Record<
   health: 'health',
   brief: 'brief',
   insights: 'insights',
-  audit: 'audit',
+  checkup: 'audit',
   services: 'list',
   instances: 'list',
   list: 'list',

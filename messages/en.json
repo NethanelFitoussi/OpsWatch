@@ -1359,7 +1359,7 @@
       "health": "Health",
       "brief": "Morning brief",
       "insights": "Insights",
-      "audit": "Audit"
+      "checkup": "Checkup"
     },
     "containers": {
       "services": "Services",

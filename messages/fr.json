@@ -1359,7 +1359,7 @@
       "health": "Santé",
       "brief": "Point du matin",
       "insights": "Analyses",
-      "audit": "Audit"
+      "checkup": "Bilan"
     },
     "containers": {
       "services": "Services",
