@@ -1363,3 +1363,23 @@ noticed either would start a new group every time anyone shipped.
   names do **not** collide.
 - [x] **Step 2: the module.**
 - [x] **Step 3: gate and commit.**
+
+### Task 19b: System status
+
+Implements §21's System status and the mission's **Phase T**: OpsWatch must explain when *OpsWatch itself* is
+unhealthy, and "production is healthy" must never be confused with "OpsWatch cannot determine production
+health".
+
+It is admin-only and reads the database alone: `collector_runs` for what each job did, `collector_lock` for
+who is collecting, `family_snapshots` for when each environment was last read, and the migration table for the
+schema version. No AWS call, so the page that tells you monitoring is broken does not itself depend on the
+thing that is broken.
+
+**Files:** `src/lib/read/system.ts`, `GET /api/v1/system/status`, `/settings/status`, and `GET /api/health`
+for a reverse proxy — `{ status, version }` and nothing else, unauthenticated, naming nothing about the
+instance.
+
+- [x] **Step 1:** the read service — per job the last run, its duration, coverage, truncation and next run;
+  the lock holder; per environment when it was last read; database size and the schema version.
+- [x] **Step 2:** `GET /api/v1/system/status` (admin), `GET /api/health` (public), the page, EN/FR.
+- [x] **Step 3:** tests, browser check, gate, commit, integrate.

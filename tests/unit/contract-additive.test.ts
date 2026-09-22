@@ -25,16 +25,17 @@ const PROMISED_VALUES = [
   'alertDetailSchema', 'alertSummarySchema', 'allowedActionsSchema', 'apiErrorBodySchema', 'authSessionSchema',
   'briefSchema', 'can', 'changeSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
   'deploymentSummarySchema', 'deviceRegistrationSchema', 'encodeCursor', 'environmentId',
-  'environmentListSchema', 'environmentSchema', 'epochSchema', 'errorDetailSchema', 'errorSummarySchema',
-  'evidenceSchema', 'familySchema', 'favoriteSchema', 'favoritesSchema', 'healthCountsSchema', 'healthSchema',
-  'healthStatusSchema', 'idSchema', 'incidentDetailSchema', 'incidentSummarySchema', 'infraDetailSchema',
-  'infraResourceSchema', 'investigationSchema', 'lenientEnum', 'logEntrySchema', 'logSearchSchema',
-  'loginRequestSchema', 'meSchema', 'metricUnitSchema', 'metricValueSchema', 'notificationPreferencesSchema',
-  'nullableNumberSchema', 'pageSchema', 'parseEnvironmentId', 'permissionSchema', 'permissionsOf',
-  'problemDetailSchema', 'problemSummarySchema', 'refSchema', 'refTypeSchema', 'repositoryEvidenceSchema',
-  'roleSchema', 'searchResponseSchema', 'searchResultSchema', 'seriesSchema', 'serverInfoSchema',
-  'serviceDetailSchema', 'serviceSummarySchema', 'sessionListSchema', 'sessionSummarySchema', 'severitySchema',
-  'sloDetailSchema', 'sloSummarySchema', 'stackFrameSchema', 'syntheticDetailSchema', 'syntheticSummarySchema',
+  'environmentListSchema', 'environmentSchema', 'environmentStatusSchema', 'epochSchema', 'errorDetailSchema',
+  'errorSummarySchema', 'evidenceSchema', 'familySchema', 'favoriteSchema', 'favoritesSchema',
+  'healthCountsSchema', 'healthSchema', 'healthStatusSchema', 'idSchema', 'incidentDetailSchema',
+  'incidentSummarySchema', 'infraDetailSchema', 'infraResourceSchema', 'investigationSchema', 'jobStatusSchema',
+  'lenientEnum', 'logEntrySchema', 'logSearchSchema', 'loginRequestSchema', 'meSchema', 'metricUnitSchema',
+  'metricValueSchema', 'notificationPreferencesSchema', 'nullableNumberSchema', 'pageSchema',
+  'parseEnvironmentId', 'permissionSchema', 'permissionsOf', 'problemDetailSchema', 'problemSummarySchema',
+  'refSchema', 'refTypeSchema', 'repositoryEvidenceSchema', 'roleSchema', 'searchResponseSchema',
+  'searchResultSchema', 'seriesSchema', 'serverInfoSchema', 'serviceDetailSchema', 'serviceSummarySchema',
+  'sessionListSchema', 'sessionSummarySchema', 'severitySchema', 'sloDetailSchema', 'sloSummarySchema',
+  'stackFrameSchema', 'syntheticDetailSchema', 'syntheticSummarySchema', 'systemStatusSchema',
   'tokenAudienceSchema', 'trendSchema', 'userPreferencesSchema', 'userSchema',
 ];
 
@@ -44,16 +45,22 @@ const PROMISED_VALUES = [
  * typecheck` fails, which is the same gate by a different route.
  */
 type PromisedTypes = [
-  types.AiAnswer, types.AlertDetail, types.AlertStatus, types.AlertSummary, types.ApiErrorBody, types.ApiErrorCode, types.AuthSession, types.Brief, types.Change,
-  types.ChangeDirection, types.Commit, types.CursorPosition, types.DeploymentDetail, types.DeploymentStatus, types.DeploymentSummary,
-  types.DeviceRegistration, types.Environment, types.EnvironmentKind, types.EnvironmentList, types.ErrorDetail, types.ErrorStatus, types.ErrorSummary,
-  types.Evidence, types.EvidenceKind, types.Family, types.Favorite, types.FavoriteType, types.Favorites, types.Feature, types.Health, types.HealthCounts,
-  types.HealthStatus, types.IncidentDetail, types.IncidentStatus, types.IncidentSummary, types.InfraCategory, types.InfraDetail, types.InfraResource,
-  types.Investigation, types.LogEntry, types.LogLevel, types.LogSearch, types.LoginRequest, types.Me, types.MetricUnit, types.MetricValue, types.NotificationCategory,
-  types.NotificationPreferences, types.Page<unknown>, types.PaginatedEndpoint, types.Permission, types.ProblemDetail, types.ProblemStatus, types.ProblemSummary,
-  types.Ref, types.RefType, types.RepositoryEvidence, types.Role, types.SearchResponse, types.SearchResult, types.Series, types.ServerInfo, types.ServiceDetail,
-  types.ServiceSummary, types.SessionList, types.SessionSummary, types.Severity, types.SloDetail, types.SloStatus, types.SloSummary, types.StackFrame,
-  types.SyntheticDetail, types.SyntheticStatus, types.SyntheticSummary, types.TokenAudience, types.Trend, types.User, types.UserPreferences,
+  types.AiAnswer, types.AlertDetail, types.AlertStatus, types.AlertSummary, types.ApiErrorBody,
+  types.ApiErrorCode, types.AuthSession, types.Brief, types.Change, types.ChangeDirection, types.Commit,
+  types.CursorPosition, types.DeploymentDetail, types.DeploymentStatus, types.DeploymentSummary,
+  types.DeviceRegistration, types.Environment, types.EnvironmentKind, types.EnvironmentList,
+  types.EnvironmentStatus, types.ErrorDetail, types.ErrorStatus, types.ErrorSummary, types.Evidence,
+  types.EvidenceKind, types.Family, types.Favorite, types.FavoriteType, types.Favorites, types.Feature,
+  types.Health, types.HealthCounts, types.HealthStatus, types.IncidentDetail, types.IncidentStatus,
+  types.IncidentSummary, types.InfraCategory, types.InfraDetail, types.InfraResource, types.Investigation,
+  types.JobStatus, types.LogEntry, types.LogLevel, types.LogSearch, types.LoginRequest, types.Me,
+  types.MetricUnit, types.MetricValue, types.NotificationCategory, types.NotificationPreferences,
+  types.Page<unknown>, types.PaginatedEndpoint, types.Permission, types.ProblemDetail, types.ProblemStatus,
+  types.ProblemSummary, types.Ref, types.RefType, types.RepositoryEvidence, types.Role, types.SearchResponse,
+  types.SearchResult, types.Series, types.ServerInfo, types.ServiceDetail, types.ServiceSummary,
+  types.SessionList, types.SessionSummary, types.Severity, types.SloDetail, types.SloStatus, types.SloSummary,
+  types.StackFrame, types.SyntheticDetail, types.SyntheticStatus, types.SyntheticSummary, types.SystemStatus,
+  types.TokenAudience, types.Trend, types.User, types.UserPreferences,
 ];
 
 describe('the contract only ever adds', () => {
@@ -62,7 +69,7 @@ describe('the contract only ever adds', () => {
   });
 
   it('has not shrunk', () => {
-    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(105);
+    expect(PROMISED_VALUES.length).toBeGreaterThanOrEqual(108);
   });
 
   it('exports every promised schema as something usable, not merely present', () => {
