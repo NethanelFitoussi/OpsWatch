@@ -1373,6 +1373,58 @@
         "warning": "Avertissement",
         "info": "Information"
       }
+    },
+    "sources": {
+      "title": "Sources de journaux",
+      "description": "Les groupes de journaux dont OpsWatch lit les erreurs, et la façon de lire chacun.",
+      "privacy": "OpsWatch enregistre où chercher dans une ligne de journal — les chemins ci-dessous — jamais le contenu. Les lignes restent dans CloudWatch.",
+      "cost": "Ce que cela coûte",
+      "budget": "Scanné aujourd’hui : {scanned} Go sur {limit} Go. Reste {remaining} Go.",
+      "budgetExhausted": "Le budget du jour est épuisé : aucune requête de journaux ne sera lancée avant demain.",
+      "costHint": "CloudWatch Logs Insights est facturé au gigaoctet scanné. OPSWATCH_LOGS_BUDGET_GB_PER_DAY est un arrêt ferme, pas un avertissement.",
+      "configured": "Sources configurées",
+      "noneConfigured": "Aucun groupe de journaux n’est activé : aucune erreur n’est collectée.",
+      "noneConfiguredHint": "Ce n’est pas la même chose qu’une absence d’erreurs. Cherchez ci-dessous pour en ajouter un.",
+      "on": "Collecte active",
+      "off": "Collecte inactive",
+      "edit": "Modifier",
+      "find": "Trouver un groupe de journaux",
+      "searchLabel": "Rechercher des groupes",
+      "searchPlaceholder": "Une partie du nom d’un groupe",
+      "searchAction": "Rechercher",
+      "noMatches": "Aucun groupe ne correspond à « {search} ».",
+      "size": "{gb} Go stockés",
+      "sizeUnknown": "Taille non mesurée",
+      "retention": "conservé {days} jours",
+      "noRetention": "conservé indéfiniment",
+      "configure": "Configurer une source",
+      "logGroup": "Groupe de journaux",
+      "preset": "Format des journaux",
+      "presets": {
+        "json": "Journaux JSON",
+        "api": "Journaux JSON, format API",
+        "plain": "Texte brut, une ligne par entrée"
+      },
+      "fields": "Où trouver chaque champ",
+      "fieldsHint": "Laissez un champ vide pour utiliser le chemin du modèle. Seuls les chemins sont enregistrés.",
+      "field": {
+        "level": "Niveau",
+        "type": "Type d’exception",
+        "message": "Message",
+        "stack": "Pile d’appels",
+        "route": "Route ou chemin"
+      },
+      "service": "Service concerné (facultatif)",
+      "enable": "Collecter les erreurs de ce groupe",
+      "save": "Enregistrer",
+      "saved": "Enregistré.",
+      "errors": {
+        "invalid_group": "Saisissez un nom de groupe de journaux.",
+        "invalid_map": "Une source ne peut pas être activée sans chemin vers le champ message : rien ne pourrait en être lu.",
+        "invalid_format": "Choisissez un format de journaux.",
+        "search_failed": "OpsWatch n’a pas pu lister les groupes de journaux. Vérifiez la connexion et sa permission logs, puis réessayez.",
+        "invalid_search": "Cette recherche est trop longue."
+      }
     }
   },
   "Insights": {
