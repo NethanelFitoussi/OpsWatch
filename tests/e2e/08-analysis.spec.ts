@@ -27,11 +27,12 @@ test('the section menu lists the sub-pages, marks the active one and keeps the r
 });
 
 test('a sub-page no task has built is disabled, and nothing in the menu links to it', async ({ page }) => {
-  await page.goto(`/en/c/${connectionId}/us-east-1/overview/insights`);
-  const nav = page.getByRole('navigation', { name: 'Overview pages' });
-  await expect(nav.getByRole('link', { name: 'Insights' })).toHaveAttribute('aria-current', 'page');
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Checkup' })).toContainText('Coming soon');
-  await expect(nav.locator('a[href*="/overview/checkup"]')).toHaveCount(0);
+  // Overview is fully built now, so the treatment is shown where it is still true: Logs.
+  await page.goto(`/en/c/${connectionId}/us-east-1/logs/search`);
+  const nav = page.getByRole('navigation', { name: 'Logs pages' });
+  await expect(nav.getByRole('link', { name: 'Search' })).toHaveAttribute('aria-current', 'page');
+  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Volume' })).toContainText('Coming soon');
+  await expect(nav.locator('a[href*="/logs/volume"]')).toHaveCount(0);
 });
 
 test('the breadcrumb names the section, the connection and the sub-page', async ({ page }) => {

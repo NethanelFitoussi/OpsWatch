@@ -1320,6 +1320,59 @@
       "approximation": "Measured over stored 5-minute intervals, not per request: a read-only AWS account gives no request histogram. Intervals OpsWatch could not measure are left out rather than counted as healthy.",
       "notMeasured": "Not measured",
       "export": "Export as Markdown"
+    },
+    "checkup": {
+      "title": "Checkup",
+      "description": "A catalogue of checks over how this environment is set up. It reads what OpsWatch already stored, so running it costs nothing.",
+      "coverage": "{ran} of {total} checks ran. {notRun} could not.",
+      "noFindings": "Nothing to report from the checks that ran.",
+      "noFindingsHint": "That is a measured statement, not an empty page: the checks below could not run, and are listed so you can see what was not looked at.",
+      "findings": "Findings",
+      "couldNotRun": "Checks that could not run",
+      "difference": "A finding is about how this environment is set up, and stays until someone changes a setting. A problem is something breaking now, and resolves itself when it stops.",
+      "reason": {
+        "denied": "The permission this needs was refused, so the answer cannot be known from here.",
+        "not_collected": "OpsWatch does not collect the data this check reads yet.",
+        "cap": "The scope was cut short to stay inside the query budget.",
+        "unsupported": "This resource cannot answer the question."
+      },
+      "check": {
+        "permissions_untested": "This connection has never been tested",
+        "permissions_denied": "AWS refused {count, plural, one {one permission} other {# permissions}}: {services}",
+        "permissions_errored": "AWS returned an error for {count, plural, one {one permission} other {# permissions}}: {services}",
+        "account_mismatch": "The credentials reach a different AWS account than the one configured",
+        "family_unreadable": "{family} could not be read ({reason})",
+        "errors_not_collected": "No log group is switched on, so no errors are being collected",
+        "history_off": "Historical collection is off, so there are no baselines, SLOs or long-term reports",
+        "logs_budget_exhausted": "Today’s log scanning budget is used up ({scanned} of {limit} GB)",
+        "collector_never_ran": "The collector has never run, so nothing has been measured",
+        "collector_job_failing": "{count, plural, one {One job is} other {# jobs are}} failing: {jobs}",
+        "template_outdated": "The CloudFormation stack is version {version}; the current one is {current}",
+        "log_retention_missing": "Log groups with no retention setting",
+        "log_group_share": "Log groups taking a large share of the account total",
+        "alarm_coverage": "Flagged resources with no CloudWatch alarm",
+        "pi_disabled": "Database instances with Performance Insights disabled",
+        "container_insights": "ECS clusters without Container Insights",
+        "idle_load_balancer": "Load balancers with no requests"
+      },
+      "fix": {
+        "permissions_untested": "Open the connection and test it.",
+        "permissions_denied": "Update the CloudFormation stack so the role may read these services.",
+        "permissions_errored": "Retry the connection test; if it persists, check the role and the region.",
+        "account_mismatch": "Check the role ARN and the account id on the connection.",
+        "family_unreadable": "Check the permission for this service, then test the connection again.",
+        "errors_not_collected": "Choose the log groups to read in Errors, Log sources.",
+        "history_off": "Turn it on in Settings, Data & history, where its cost is stated first.",
+        "logs_budget_exhausted": "Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY, or wait until tomorrow.",
+        "collector_never_ran": "Check System status; the collector starts with the server.",
+        "collector_job_failing": "Open System status to see what each job reported.",
+        "template_outdated": "Update the stack from the connection page to unlock the newer checks."
+      },
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Information"
+      }
     }
   },
   "Insights": {

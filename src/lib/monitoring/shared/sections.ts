@@ -38,7 +38,6 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
  */
 export const UNBUILT_SUBSECTIONS: readonly string[] = [
   'errors/sources',
-  'overview/checkup',
   'logs/volume',
   'logs/endpoints',
 ];

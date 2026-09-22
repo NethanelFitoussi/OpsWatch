@@ -56,17 +56,14 @@ test('Problems says which of its two empty states applies, never the wrong one',
   expect([listed, looked, waiting].filter(Boolean)).toHaveLength(1);
 });
 
-test('the overview menu links every built page and marks the one that is not', async ({ page }) => {
+test('the overview menu links every page it names, with none left disabled', async ({ page }) => {
   await page.goto(problemsUrl());
   const nav = page.getByRole('navigation', { name: 'Overview pages' });
-  // All three intelligence pages are built now, so all three are links.
-  for (const label of ['Morning brief', 'Health', 'Problems', 'Insights']) {
+  // Every Overview sub-page is built now, Checkup included, so every entry is a link.
+  for (const label of ['Morning brief', 'Health', 'Problems', 'Insights', 'Checkup']) {
     await expect(nav.getByRole('link', { name: label })).toBeVisible();
   }
-  // Audit is the one that remains: named so a reader knows where it will be, and not a link, so nobody
-  // reaches a 404.
-  await expect(nav.getByText('Audit')).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Audit' })).toHaveCount(0);
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(0);
 });
 
 test('GET /api/v1/problems answers the shape every client parses', async ({ page }) => {
