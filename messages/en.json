@@ -1373,6 +1373,58 @@
         "warning": "Warning",
         "info": "Information"
       }
+    },
+    "sources": {
+      "title": "Log sources",
+      "description": "Which log groups OpsWatch reads errors from, and how to read each one.",
+      "privacy": "OpsWatch stores where to look in a log line — the field paths below — and never the log content itself. Lines stay in CloudWatch.",
+      "cost": "What this costs",
+      "budget": "Scanned today: {scanned} GB of {limit} GB. {remaining} GB left.",
+      "budgetExhausted": "Today’s budget is used up, so no further log queries will run until tomorrow.",
+      "costHint": "CloudWatch Logs Insights is billed per gigabyte scanned. OPSWATCH_LOGS_BUDGET_GB_PER_DAY is a hard stop, not a warning.",
+      "configured": "Configured sources",
+      "noneConfigured": "No log group is switched on, so no errors are being collected.",
+      "noneConfiguredHint": "That is not the same as there being no errors. Search below to add one.",
+      "on": "Collecting",
+      "off": "Not collecting",
+      "edit": "Edit",
+      "find": "Find a log group",
+      "searchLabel": "Search log groups",
+      "searchPlaceholder": "Part of a log group name",
+      "searchAction": "Search",
+      "noMatches": "No log group matched “{search}”.",
+      "size": "{gb} GB stored",
+      "sizeUnknown": "Size not measured",
+      "retention": "kept {days} days",
+      "noRetention": "kept forever",
+      "configure": "Configure a source",
+      "logGroup": "Log group",
+      "preset": "Log format",
+      "presets": {
+        "json": "JSON logs",
+        "api": "JSON logs, API shape",
+        "plain": "Plain text, one line per entry"
+      },
+      "fields": "Where to find each field",
+      "fieldsHint": "Leave a field blank to use the preset’s path. Only the paths are stored.",
+      "field": {
+        "level": "Level",
+        "type": "Exception type",
+        "message": "Message",
+        "stack": "Stack trace",
+        "route": "Route or path"
+      },
+      "service": "Service this belongs to (optional)",
+      "enable": "Collect errors from this log group",
+      "save": "Save",
+      "saved": "Saved.",
+      "errors": {
+        "invalid_group": "Enter a log group name.",
+        "invalid_map": "A source cannot be switched on without a path to the message field — nothing could be read from it.",
+        "invalid_format": "Choose a log format.",
+        "search_failed": "OpsWatch could not list log groups. Check the connection and its logs permission, then try again.",
+        "invalid_search": "That search is too long."
+      }
     }
   },
   "Insights": {
