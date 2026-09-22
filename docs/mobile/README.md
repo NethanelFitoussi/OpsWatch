@@ -82,6 +82,7 @@ screen, choose **Explore the demo** to use the app without a server.
 | [app-identity.md](app-identity.md) | Placeholders the owner must replace: ids, domains, icons, versions |
 | [troubleshooting.md](troubleshooting.md) | Common errors and fixes |
 | [merge-notes.md](merge-notes.md) | Merging `feature/mobile` with the web/API work |
+| [RECOVERY.md](RECOVERY.md) | Where the branch stands, the constraints it is bound by, and how to continue it |
 | [CHANGELOG.md](CHANGELOG.md) | Mobile release notes |
 
 ## License
