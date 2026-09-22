@@ -1,0 +1,334 @@
+# OpsWatch — full roadmap status
+
+**Reconciled against `main` = `origin/main` = `fec8758` on 2026-09-22.** Verified by reading the code, running
+the gates, and walking the signed-in application in the running Docker instance — not by trusting what earlier
+documents claim was finished.
+
+This file is the durable source of truth for implementation status. A fresh session should be able to open it
+and know what OpsWatch is meant to become, what genuinely works, and what to do next, without this
+conversation.
+
+## How to read a status
+
+| Status | Means |
+|---|---|
+| `DONE` | The end-to-end behaviour exists: real data, reachable by a signed-in user, tested, seen in a browser |
+| `PARTIAL` | Some of the journey works; a named piece is missing |
+| `FOUNDATION_ONLY` | Schema, contract, store or job exists; no user can reach it |
+| `NOT_STARTED` | Nothing beyond, at most, a contract schema |
+| `BLOCKED_EXTERNAL` | Needs a credential, account or device nobody here has |
+| `INTENTIONALLY_DEFERRED` | Decided against for this mission, with a reason |
+
+A schema, a migration, a placeholder page, a demo fixture or an unused service is **not** `DONE`.
+
+## Counts
+
+| Status | Count |
+|---|---|
+| `DONE` | 38 |
+| `PARTIAL` | 9 |
+| `FOUNDATION_ONLY` | 12 |
+| `NOT_STARTED` | 31 |
+| `BLOCKED_EXTERNAL` | 4 |
+| `INTENTIONALLY_DEFERRED` | 3 |
+| **Total audited** | **97** |
+
+Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**obile · **R**eal data · **T**ests ·
+**V**erified in a browser. `·` means not applicable.
+
+---
+
+## Core / AWS
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| AWS-1 | Account connection | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-2 | Role / ambient / keys | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-3 | Permission testing, stored result | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Feeds Checkup's first finding |
+| AWS-4 | CloudFormation template v1 | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-5 | CloudFormation template v2 | ✗ | ✗ | · | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | §22: two new actions for ElastiCache + alarm history. Prepare and test; **never deploy automatically** |
+| AWS-6 | Environments (connection × region) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-7 | ECS | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-8 | RDS | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-9 | ALB / ELB | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-10 | Alarms | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-11 | CloudWatch metrics | ✓ | · | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | — |
+| AWS-12 | ElastiCache / Redis | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on AWS-5. Until the stack is updated the page must show "update your stack", not an empty grid |
+| AWS-13 | CloudTrail | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | Not in any spec section; no IAM action requested |
+| AWS-14 | CloudFront | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Mobile's `family.unavailable` example names it; no collector reads it |
+
+## Intelligence
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| INT-1 | Collector runtime, scheduling | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Visible on System status |
+| INT-2 | Single-writer lock (§33.4) | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Conditional UPDATE; refresh carries `AND owner = ?` |
+| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **10 jobs declared, 3 implemented** (`detect`, `errors`, `metrics`). The other 7 return "covered 0" |
+| INT-4 | Detector execution, isolation (§33.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Fired / clear / not_evaluated |
+| INT-5 | Problem identity (§33.2) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Length-prefixed key; digest pinned |
+| INT-6 | Lifecycle, reopen, flap | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| INT-7 | Severity and score (§33.7) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Fresh subjects rescale rather than zero-fill |
+| INT-8 | Evidence bundle | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| INT-9 | Fleet collapse (§33.8) | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Lifecycle transition, hysteresis of 2 |
+| INT-10 | Problems list | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Now filterable |
+| INT-11 | Problem detail + "Why this score" | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| INT-12 | Health | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Distinguishes "healthy" from "cannot tell" |
+| INT-13 | Morning brief | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| INT-14 | Checkup | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | No API route and no contract schema, so mobile cannot show it. 6 of its checks read data OpsWatch does not collect and say so |
+| INT-15 | System status | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+
+## Errors
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ERR-1 | Fingerprints (§33.13) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Survives a rebuild; mutation-verified |
+| ERR-2 | Groups, hourly occurrences | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| ERR-3 | Collection job | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | — |
+| ERR-4 | Logs Insights budget hard stop (§9.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Stated on Errors, Log sources and Checkup |
+| ERR-5 | Log sources: choose what is read | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Web only by design; mobile does not configure |
+| ERR-6 | Errors list | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| ERR-7 | Error detail, stack, trend | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| ERR-8 | new / regressed / resolved | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| ERR-9 | Problem ↔ error correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `errorDetail` has the field; nothing links a group to a problem |
+| ERR-10 | Pattern discovery (`pattern` command) | ✗ | ✗ | · | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | §18/§29: availability unverified; must fall back to own fingerprinting |
+
+## Logs
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| LOG-1 | Search | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Non-v1 route; `features.logs` still false |
+| LOG-2 | Volume and retention | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Costs nothing against the budget, and says so |
+| LOG-3 | Endpoints / slow routes | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | **The last `UNBUILT_SUBSECTIONS` entry.** §3b: one Insights query per window, p95 per route, refuse windows > 24 h |
+| LOG-4 | Single log entry endpoint | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Mobile asks for `GET /logs/{id}`; deep links currently open the surrounding search |
+| LOG-5 | `features.logs` on `/api/v1` | ✗ | ✗ | ✓ | · | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Logs are served by the older non-v1 route; no v1 endpoint exists |
+
+## Historical data
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| HIS-1 | `HistoricalStorageProvider` + conformance suite | ✓ | · | · | · | · | ✓ | ✓ | · | `DONE` | Five guarantees, each checked |
+| HIS-2 | OpsWatch DB provider | ✓ | · | · | · | · | ✓ | ✓ | · | `DONE` | Passes the suite |
+| HIS-3 | History switch, off by default (§31.1) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Enforced at the schema default and before `resolveTarget` |
+| HIS-4 | Intervals and retention settings | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | — |
+| HIS-5 | Cost estimate per billing unit (§33.12) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Never one blended number |
+| HIS-6 | Retention purge actually running | ✓ | · | · | · | · | ✗ | ✓ | ✗ | `PARTIAL` | `purgeHistoryBefore` exists; the `compact` job that would call it is not implemented (INT-3) |
+| HIS-7 | Filesystem / export provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The interface allows it; nobody wrote one |
+| HIS-8 | Elasticsearch / OpenSearch provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | §C: a basic install must not require one |
+| HIS-9 | Vector / semantic provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | Same reason; §Q says semantic *may* improve matching, deterministic first |
+| HIS-10 | Backup / restore / export / migration | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §F lists Backup/Export as a settings area |
+
+## Reports
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| REP-1 | Section reports ×4 | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | — |
+| REP-2 | Previous-period comparison | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Half-open windows; mutation-verified |
+| REP-3 | Markdown export | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Escaped; downloads with `nosniff` |
+| REP-4 | Availability / SLO in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Bucket approximation only, and says so. Real SLO arithmetic is SLO-1 |
+| REP-5 | Deployments and synthetics in a report | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | `FOUNDATION_ONLY` | Renders `not_measured` honestly; depends on DEP-1 and SYN-1 |
+| REP-6 | Overview / logs reports | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Only the four section reports exist |
+| REP-7 | Weekly send when a notifier exists | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on ALE-4 |
+
+## Investigation / correlation
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| INV-1 | Investigation timeline | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `investigationSchema` exists; nothing produces one |
+| INV-2 | Cross-signal correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §7 |
+| INV-3 | Observed fact vs correlation vs hypothesis | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §N's three bands; the distinction the whole feature rests on |
+| INV-4 | Probable-cause evidence chain | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on INV-2, DEP-2, REPO-* |
+| INV-5 | Investigation workspace (§R) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+
+## Deployments
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| DEP-1 | Deployment collection | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `deployments` job declared, not implemented; ECS already exposes deployment state |
+| DEP-2 | Deployment ↔ problem correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on DEP-1. Timestamps correlating is never a claim of causation |
+| DEP-3 | Deployment history surface | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+
+## Repository / GitHub
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| REPO-1 | GitHub connection | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | No integrations table, no OAuth or PAT flow |
+| REPO-2 | Repository storage | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| REPO-3 | Service → repository mapping | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §I: explicit and correctable, not guesswork alone. No `services` table yet either |
+| REPO-4 | Commits, metadata, diffs, files | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `commitSchema` exists |
+| REPO-5 | Line-level code evidence | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `repositoryEvidenceSchema` exists |
+| REPO-6 | Deterministic code correlation (§J) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Deterministic pipeline **before** any AI |
+| REPO-7 | Proposed fix + patch preview (§L, §O) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Read-only against the customer repository |
+
+## Alerts / Notifications
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ALE-1 | Alert model and rules | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `alertSummary`/`alertDetail` exist; mobile renders them; nothing produces one |
+| ALE-2 | Alert lifecycle, acknowledge | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| ALE-3 | Notification preferences | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Contract + mobile UI; no server storage |
+| ALE-4 | Delivery (email / Slack / webhook) | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| ALE-5 | Push notifications | ✗ | ✗ | ✓ | · | ✓ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs an EAS project and APNs/FCM credentials |
+| ALE-6 | Deduplication / noise control | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+
+## Incidents
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| INC-1 | Incident storage | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | `incidents` + `incident_timeline` tables and a store exist; no job, route or page |
+| INC-2 | Creation, lifecycle, resolution | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| INC-3 | Related problems, timeline, evidence | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+
+## Synthetics
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| SYN-1 | Checks, status, history, failures | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Contract + mobile screens; nothing runs a check. Health reports `synthetics: null` honestly |
+| SYN-2 | Problem integration | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+
+## SLO
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| SLO-1 | Definitions and measurement (§19) | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `slo` job declared, not implemented. Needs HIS-* rollups, which now exist |
+| SLO-2 | Error budget and burn rate | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | 14.4× / 1 h and 6× / 6 h multi-window |
+| SLO-3 | "Not enough history" below a quarter | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Reports already do this for availability |
+
+## Cloudflare
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| CF-1 | Account / zone integration | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §20 designed; `provider_connections` was to become `integrations` |
+| CF-2 | Traffic, cache, security events | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Every adaptive-dataset tile must carry the "estimated" marker |
+| CF-3 | Zero Trust sessions / identities | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs a Cloudflare account with Zero Trust |
+
+## AI / Ask OpsWatch
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| AI-1 | Off by default | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `DONE` | `features.ai` is false; no AI menu entry anywhere |
+| AI-2 | Provider settings, encrypted credentials | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | `encrypt()` already supports a purpose-scoped key |
+| AI-3 | Provider connection test | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | One-token completion stored as a capability check |
+| AI-4 | Structured internal tools | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | §23: ≤6 calls, ≤60 s, ≤32 KB per result, <100 KB context |
+| AI-5 | Ask OpsWatch API + web UI | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | `aiAnswerSchema` exists |
+| AI-6 | No uncontrolled log/database dump | ✓ | · | · | · | · | ✓ | ✓ | · | `DONE` | Vacuously: nothing queries an AI. Must stay true when AI-4 lands |
+| AI-7 | No automatic infrastructure/repo modification | ✓ | · | · | · | · | ✓ | ✓ | ✓ | `DONE` | No write path to AWS or a repository exists at all |
+
+## API / Platform
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| API-1 | `/api/v1` with envelope and error model | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| API-2 | OpenAPI document | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `DONE` | Path and query parameters both derived, never listed twice |
+| API-3 | Canonical contract (§33.1 additive) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | · | `DONE` | Guard test fails if a name is removed |
+| API-4 | Cursor pagination (§33.6) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Immutable `(seq, id)` |
+| API-5 | List filtering | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Honoured or 400; never silently dropped |
+| API-6 | Capability flags | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| API-7 | Auth: cookie + bearer, audience-scoped | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
+| API-8 | Public API documentation | ✗ | ✗ | · | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | The OpenAPI document is served; no prose guide (§Z) |
+
+## UX
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| UX-1 | Navigation, section menus | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | One unbuilt segment left, correctly disabled |
+| UX-2 | EN / FR parity | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Enforced by test |
+| UX-3 | Responsive down to 360 px | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `PARTIAL` | Every new page is tested at 360 px; §U's full pass across older pages is not done |
+| UX-4 | Honest empty / unavailable / not-run states | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The product's central rule (§2.4, §2.6) |
+| UX-5 | Loading and stale states | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Suspense cards; problems mark staleness |
+| UX-6 | Accessibility pass (§V) | · | · | · | ✗ | ✗ | · | ✗ | ✗ | `NOT_STARTED` | Severity is never colour-alone today, but no audit has been run |
+| UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
+| UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | Getting-started and setup exist; not the staged wizard §D describes |
+| UX-9 | Integration centre (§E) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Needs more than one integration to centre |
+| UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
+| UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
+| UX-12 | Global search | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | §21's `search_index` |
+| UX-13 | Audit log (§21) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Append-only, admin-only. The name Checkup was freed for exactly this |
+
+## Mobile dependencies on this server
+
+| ID | Mobile needs | Status here | What mobile does meanwhile |
+|---|---|---|---|
+| MOB-1 | Errors endpoints | `DONE` | Screens work against a real server |
+| MOB-2 | System status | `DONE` | Screen built and shipping |
+| MOB-3 | List filters | `DONE` | Was silently dropping them; fixed and declared in the contract |
+| MOB-4 | Single log entry (`GET /logs/{id}`) | `NOT_STARTED` (LOG-4) | Deep links open the surrounding search |
+| MOB-5 | Repository evidence | `FOUNDATION_ONLY` (REPO-5) | Gated by `features.repository` |
+| MOB-6 | AI / Ask OpsWatch | `NOT_STARTED` (AI-5) | Entry points hidden by the capability gate |
+| MOB-7 | Push devices + sender | `BLOCKED_EXTERNAL` (ALE-5) | Local notifications; screen says push is unavailable |
+| MOB-8 | Session listing / revocation | `DONE` | `/me/sessions` exists |
+| MOB-9 | `changeSchema.at` | `DONE` | Added; brief can place changes in time |
+| MOB-10 | Contract package on `main` | `DONE` | `packages/contract` has been on `main` since 2026-09-20 |
+
+---
+
+## Remaining work queue, in dependency order
+
+### NOW
+
+**Checkpoint A — Logs → Endpoints (LOG-3).** The last `UNBUILT_SUBSECTIONS` entry, so finishing it takes the
+"Coming soon" mechanism to zero. Everything it needs exists: the `log_source` field map (ERR-5) supplies the
+route and duration fields, the budget hard stop (ERR-4) bounds the query, and the Logs section already refuses
+windows over 24 hours. Acceptance: p95 and count per route from one bounded Insights query; the scanned bytes
+stated; a mapping that matches nothing says so and shows the first lines it saw, so the operator can correct
+the field names rather than guess. Tests: unit for the query builder and the row parser, E2E for reachability,
+the cost statement and the no-match state. Browser: required. Mobile: none.
+
+### NEXT
+
+**Checkpoint B — the unimplemented collector jobs (INT-3, HIS-6, DEP-1).** Seven of ten jobs are scheduled and
+do nothing. `compact` is the one with a correctness consequence: `purgeHistoryBefore` exists and nothing calls
+it, so retention is a setting that does not take effect. `deployments` unlocks DEP-2 and REP-5. `logvolume`
+would store what LOG-2 now reads live. Depends on: nothing new.
+
+**Checkpoint C — Checkup on the API (INT-14).** Add `checkupSchema` to the contract and `GET /api/v1/checkup`,
+so mobile can show what the web already shows. Small, and it closes a Web/API asymmetry that will otherwise
+harden.
+
+**Checkpoint D — SLOs (SLO-1..3).** Now unblocked: §19's arithmetic needs stored rollups, which HIS-1/2 provide.
+Gives REP-4 its real numbers instead of the bucket approximation.
+
+### LATER
+
+**Checkpoint E — Deployments → correlation (DEP-1..3, INV-2).** Deployment collection first, then correlation.
+Timestamps correlating is never a claim of causation, and the UI must say which it is.
+
+**Checkpoint F — Repository intelligence (REPO-1..6).** The largest remaining block, and the one §J insists is
+deterministic *before* any AI. Needs an `integrations` table and a `services` table, neither of which exists.
+
+**Checkpoint G — Investigation workspace (INV-1..5).** Depends on E and F.
+
+**Checkpoint H — AI (AI-2..5).** Last by design (§M): deterministic first, AI second, over a bounded context.
+
+**Checkpoint I — Alerts, incidents, synthetics (ALE-*, INC-*, SYN-*).** Contract and mobile UI exist; each
+needs a producer.
+
+**Checkpoint J — The finishing passes (UX-3, UX-6, UX-7, API-8, §Z).** Accessibility, responsive, dark mode,
+documentation. Genuinely last: they audit surfaces that must exist first.
+
+### EXTERNAL BLOCKERS
+
+| Item | Needs |
+|---|---|
+| ALE-5 push end to end | An EAS project and APNs/FCM credentials |
+| CF-3 Cloudflare Zero Trust | A Cloudflare account with Zero Trust |
+| Mobile store release | macOS, Apple and Google developer accounts |
+| AWS-5 stack v2 deployment | The owner's decision. May be prepared and tested here, **never deployed automatically** |
+
+---
+
+## Keeping this current
+
+```sh
+npm run roadmap:check
+```
+
+Structural drift only — a segment with no page, a page still marked unbuilt, a declared filter its route
+ignores, a capability advertised without a route, a stub marker in shipped source, documentation pointing at a
+route that no longer exists. It prints contract schemas nothing serves as **notes**, since the contract is
+allowed to run ahead of the server.
+
+It will never tell you a feature is complete. Whether a page tells the truth when it has no data, and whether
+an operator can finish the journey it exists for, are judgements it prints as questions and leaves to a person.
+
+When a capability is finished: update its row here, update what remains, run the checker, and commit the status
+change **with** the implementation so the two cannot drift.
