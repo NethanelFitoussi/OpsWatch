@@ -36,7 +36,7 @@ describe('monitoring paths', () => {
     expect(withRegion('/c/abc123def456/eu-west-1/containers/prod/web', 'us-east-1')).toBe('/c/abc123def456/us-east-1/containers/services');
     expect(withRegion('/accounts', 'us-east-1')).toBe('/accounts');
     expect(switchConnectionPath('/c/abc123def456/eu-west-1/alarms', target)).toBe('/c/def456abc123/us-east-1/alarms/list');
-    expect(switchConnectionPath('/accounts', target)).toBe('/c/def456abc123/us-east-1/overview/problems');
+    expect(switchConnectionPath('/accounts', target)).toBe('/c/def456abc123/us-east-1/overview/brief');
   });
 
   it('carries the filters of the current page into the new region', () => {
@@ -54,7 +54,7 @@ describe('monitoring paths', () => {
 
   it('switches connection without leaving the account pages', () => {
     expect(switchConnectionPath('/accounts/abc123def456', target)).toBe('/accounts/def456abc123');
-    expect(switchConnectionPath('/accounts/new', target)).toBe('/c/def456abc123/us-east-1/overview/problems');
+    expect(switchConnectionPath('/accounts/new', target)).toBe('/c/def456abc123/us-east-1/overview/brief');
     expect(switchConnectionPath('/c/abc123def456/eu-west-1/logs', target)).toBe('/c/def456abc123/us-east-1/logs/search');
   });
 });

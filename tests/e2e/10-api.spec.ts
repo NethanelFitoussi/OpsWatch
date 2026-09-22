@@ -39,10 +39,12 @@ test('server info is public, says what it can do, and carries no credential', as
   expect(info.apiVersion).toBe(1);
   expect(info.auth.password).toBe(true);
   expect(info.demo).toBe(false);
-  // Environments is the only capability this slice implements; push is declared off for this mission.
+  // Push is declared off for this mission; the rest report exactly what this build serves.
   expect(info.features.environments).toBe(true);
   expect(info.features.push).toBe(false);
-  expect(info.features.health).toBe(false);
+  // Built and served; the ones still false are the ones with no implementation behind them.
+  expect(info.features.health).toBe(true);
+  expect(info.features.errors).toBe(false);
   const body = await request.get(v1('/server')).then((r) => r.text());
   for (const secret of [ADMIN.password, 'passwordHash', 'OPSWATCH_SECRET', 'sqlite']) {
     expect(body).not.toContain(secret);
