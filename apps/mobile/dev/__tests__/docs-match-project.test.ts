@@ -118,3 +118,31 @@ it('keeps the mobile .env.example in step with what the app reads', () => {
     expect(text).not.toContain(forbidden);
   }
 });
+
+/**
+ * The root README is where someone lands first, so the mobile app has to be findable from it and every link it makes
+ * has to work. A mobile document renamed or removed without updating the README leaves the only entry point broken.
+ */
+describe('the root README', () => {
+  const readme = readFileSync(join(REPO, 'README.md'), 'utf8');
+
+  it('points at the mobile documentation', () => {
+    expect(readme).toContain('docs/mobile/README.md');
+    expect(readme).toMatch(/##\s+Mobile app/);
+  });
+
+  it('links only to mobile documents that exist', () => {
+    const broken = [...readme.matchAll(/\]\((docs\/mobile\/[A-Za-z0-9._-]+\.md)(?:#[^)]*)?\)/g)]
+      .map((m) => m[1]!)
+      .filter((path) => !existsSync(join(REPO, path)));
+    expect([...new Set(broken)]).toEqual([]);
+  });
+
+  it('names every mobile document that a reader should be able to reach', () => {
+    const reachable = new Set([...readme.matchAll(/docs\/mobile\/([A-Za-z0-9._-]+\.md)/g)].map((m) => m[1]!));
+    // Internal notes are reached from the mobile README, not the root one.
+    const internal = new Set(['merge-notes.md', 'RECOVERY.md', 'CHANGELOG.md', 'api-contract.md', 'architecture.md', 'app-identity.md', 'notifications.md']);
+    const unreachable = docFiles.filter((name) => !reachable.has(name) && !internal.has(name));
+    expect(unreachable).toEqual([]);
+  });
+});

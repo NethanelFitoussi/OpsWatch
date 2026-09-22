@@ -18,6 +18,57 @@ project. Steps marked **Requires Apple credentials** can only be done by the own
 | Installing an internal build on a registered iPhone | No (link from EAS) |
 | TestFlight and App Store Connect | No (web + TestFlight app) |
 
+## What you need on the Mac
+
+| Requirement | Why | Notes |
+|---|---|---|
+| macOS | Xcode runs nowhere else | |
+| **Xcode**, from the Mac App Store | Compiler, simulators, signing | Open it once, accept the licence, and let it install the additional components it asks for |
+| Xcode Command Line Tools | `xcodebuild`, `xcrun` | `xcode-select --install`, then `sudo xcode-select -s /Applications/Xcode.app` if it points elsewhere |
+| An iOS simulator runtime | Running without a device | Xcode → Settings → Platforms → iOS |
+| **CocoaPods** | Native dependencies | `brew install cocoapods` (or `sudo gem install cocoapods`). See below — you rarely run it yourself |
+| Node 22 and `npm ci` | Everything else | [development.md](development.md#install) |
+| Watchman *(optional)* | Faster file watching | `brew install watchman` |
+
+### CocoaPods, and why you usually do not touch it
+
+The `ios/` folder is **generated and git-ignored** (`apps/mobile/.gitignore`). It is produced by `expo prebuild` from
+`app.config.ts` and the installed packages, and it contains a `Podfile` — the app's native dependencies really are
+installed with CocoaPods, and the pinned platform is **iOS 16.4**.
+
+You do not normally run `pod install` by hand, because the Expo commands do it for you:
+
+```bash
+cd apps/mobile
+npm run ios                                   # expo run:ios: prebuild + pod install + build + launch
+npx expo prebuild --platform ios              # regenerate ios/ and install pods
+npx expo prebuild --platform ios --no-install # regenerate ios/ but skip npm and pods (what was done on Linux)
+```
+
+Run it yourself only after editing the `Podfile` directly, or when a pod install was interrupted:
+
+```bash
+cd apps/mobile/ios && pod install
+```
+
+Because `ios/` is generated, **never edit it expecting the change to last**: the next `expo prebuild` recreates it.
+Native configuration belongs in `app.config.ts` or a config plugin. If the folder gets into a bad state, delete it and
+regenerate — nothing is lost:
+
+```bash
+rm -rf apps/mobile/ios && cd apps/mobile && npx expo prebuild --platform ios
+```
+
+### When pods fail
+
+| Symptom | Cause and fix |
+|---|---|
+| `CocoaPods could not find compatible versions` | Stale local spec repo: `pod repo update`, then `pod install` again |
+| `Podfile.lock` conflicts after changing dependencies | Delete `ios/Pods` and `ios/Podfile.lock`, then `pod install`. Both are generated |
+| The build picks up an old native module | `npx expo prebuild --platform ios --clean`, then build again |
+| `xcodebuild` cannot find a scheme | The scheme is `OpsWatch`; pass `--scheme OpsWatch` to `expo run:ios` if a second one appears |
+| Builds succeed but the app shows an old bundle | The JavaScript bundle is cached like Android's. The Android section explains the same trap: [android.md](android.md#make-sure-you-are-testing-the-apk-you-just-built) |
+
 ## What has been checked without a Mac
 
 `npx expo prebuild --platform ios --no-install` generates the `ios/` folder (git-ignored). It was generated and read

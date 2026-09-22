@@ -29,6 +29,33 @@ export EAS_PROJECT_ID=00000000-0000-0000-0000-000000000000
 `EXPO_OWNER` in `owner`. The slug is `opswatch`. Without a project id the app still works; only push registration
 reports that this build has no push project.
 
+## Which kind of build, and when
+
+Four different things get called "a build". Picking the wrong one is the most common way to lose an afternoon.
+
+| You want to… | Use | Command | Needs |
+|---|---|---|---|
+| See the app working, now | **Expo Go** | `npm start`, press `s`, then `a` / `i` / scan | Nothing but the Expo Go app |
+| Develop day to day, with this app's own native modules | **Development build** | `npm run android` / `npm run ios` (local), or `eas build --profile development` | Android SDK + JDK, or a Mac — or an Expo account for the cloud version |
+| Work against a local plain-HTTP server | **Development build** | as above | A release build refuses plain HTTP ([development.md](development.md#http-or-https)) |
+| Hand a release-like build to a tester | **Preview build** | `eas build --profile preview` | An Expo account |
+| Test the real thing locally before a release | **Local release build** | `cd android && ./gradlew assembleRelease` (Android), `npx expo run:ios --configuration Release` (iOS) | The native toolchain |
+| Submit to a store | **Production build** | `eas build --profile production` | An Expo account, and store accounts |
+
+**Expo Go vs a development build** is the distinction that matters most. Expo Go is a pre-built host app: it can only
+run the native modules Expo ships with it, and it ignores `app.config.ts`'s native settings entirely — so
+identifiers, permissions, URL schemes and push behaviour are *not* what your app will have. A development build is
+your app, with your native modules and your configuration, plus a dev menu and fast refresh. Anything about
+identity, permissions, deep links or notifications must be tested on a development build, never on Expo Go.
+
+`expo-dev-client` is a dependency of this app, so `npm start` serves a development build by default. Press `s` to
+switch the dev server to Expo Go.
+
+**Local vs EAS.** They produce the same app. Local builds need the toolchain (and a Mac for iOS) and no account; EAS
+builds need an account and no toolchain, which is how iOS builds are produced from Linux. Signing is the real
+difference: EAS can manage credentials for you, whereas a local release build needs you to hold the keystore or the
+Apple certificates yourself ([android.md](android.md#signing), [ios.md](ios.md#signing-certificates-provisioning-profiles)).
+
 ## Build profiles
 
 `apps/mobile/eas.json` is committed. It requires EAS CLI `>= 16.0.0`, builds on Node 22.19.0, and sets
@@ -36,7 +63,7 @@ reports that this build has no push project.
 
 | Profile | Extends | Purpose | Distribution | Output |
 |---------|---------|---------|--------------|--------|
-| `base` | — | Shared settings: Node version and the `OPSWATCH_IOS_BUNDLE_ID` / `OPSWATCH_ANDROID_PACKAGE` env values | — | — |
+| `base` | — | Shared settings only: the Node version. It deliberately sets **no** identifiers, so an EAS environment variable is not shadowed | — | — |
 | `development` | `base` | Development client (`developmentClient: true`), channel `development` | Internal | iOS simulator (`ios.simulator: true`); Android APK |
 | `development-device` | `development` | The same for a registered iPhone (`ios.simulator: false`) | Internal | iOS device build |
 | `preview` | `base` | Release-like build for testers, channel `preview` | Internal | Android APK (`buildType: "apk"`); iOS ad hoc |
