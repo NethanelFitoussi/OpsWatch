@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 39 |
-| `PARTIAL` | 9 |
+| `DONE` | 40 |
+| `PARTIAL` | 8 |
 | `FOUNDATION_ONLY` | 12 |
 | `NOT_STARTED` | 30 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -63,7 +63,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INT-1 | Collector runtime, scheduling | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Visible on System status |
 | INT-2 | Single-writer lock (§33.4) | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Conditional UPDATE; refresh carries `AND owner = ?` |
-| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **10 jobs declared, 3 implemented** (`detect`, `errors`, `metrics`). The other 7 return "covered 0" |
+| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **10 jobs declared, 4 implemented** (`detect`, `errors`, `metrics`, `compact`). Remaining: `deployments`, `inventory`, `queries`, `logvolume`, `baselines`, `slo` |
 | INT-4 | Detector execution, isolation (§33.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Fired / clear / not_evaluated |
 | INT-5 | Problem identity (§33.2) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Length-prefixed key; digest pinned |
 | INT-6 | Lifecycle, reopen, flap | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
@@ -111,7 +111,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | HIS-3 | History switch, off by default (§31.1) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Enforced at the schema default and before `resolveTarget` |
 | HIS-4 | Intervals and retention settings | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | — |
 | HIS-5 | Cost estimate per billing unit (§33.12) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Never one blended number |
-| HIS-6 | Retention purge actually running | ✓ | · | · | · | · | ✗ | ✓ | ✗ | `PARTIAL` | `purgeHistoryBefore` exists; the `compact` job that would call it is not implemented (INT-3) |
+| HIS-6 | Retention purge actually running | ✓ | · | · | · | · | ✓ | ✓ | · | `DONE` | `compact` runs it daily at the operator's chosen retention. The dispatcher discarded every instance-scoped job, so this had never run |
 | HIS-7 | Filesystem / export provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The interface allows it; nobody wrote one |
 | HIS-8 | Elasticsearch / OpenSearch provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | §C: a basic install must not require one |
 | HIS-9 | Vector / semantic provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | Same reason; §Q says semantic *may* improve matching, deterministic first |
@@ -270,10 +270,11 @@ in the product says "Coming soon". An E2E walks every section menu and asserts n
 
 ### NOW
 
-**Checkpoint B — the unimplemented collector jobs (INT-3, HIS-6, DEP-1).** Seven of ten jobs are scheduled and
-do nothing. `compact` is the one with a correctness consequence: `purgeHistoryBefore` exists and nothing calls
-it, so retention is a setting that does not take effect. `deployments` unlocks DEP-2 and REP-5. `logvolume`
-would store what LOG-2 now reads live. Depends on: nothing new.
+**Checkpoint B — the unimplemented collector jobs (INT-3, DEP-1).** `compact` is **done**, and with it HIS-6:
+the dispatcher returned early for any job without a connection, which every instance-scoped job is by
+definition, so retention had never run once. Six remain — `deployments` (unlocks DEP-2 and REP-5), `inventory`,
+`queries`, `logvolume` (would store what LOG-2 reads live), `baselines` and `slo` (SLO-1). `deployments` is the
+next one, because more depends on it than on the others. Depends on: nothing new.
 
 ### NEXT
 
