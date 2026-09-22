@@ -12,7 +12,16 @@ services:
       # then put it behind an HTTPS reverse proxy and set OPSWATCH_PUBLIC_URL (see README).
       - "127.0.0.1:3000:3000"
     env_file: .env
+    environment:
+      # Pinned here on purpose, and NOT left to `.env`. Compose gives `environment` precedence over
+      # `env_file`, and `.env` is also what `npm run dev` reads — so an OPSWATCH_DATA_DIR set for a local
+      # run would otherwise send the container's database into its own writable layer, leaving this volume
+      # empty and discarding the admin account and every encrypted credential on the next rebuild.
+      OPSWATCH_DATA_DIR: /data
     volumes:
+      # Everything that must survive a rebuild: the database, and with it the admin account, the encrypted
+      # integration credentials, the settings and the collected history. Recreating the container is safe;
+      # `docker compose down -v` deletes this volume and is not.
       - opswatch-data:/data
     # OpsWatch's own AWS identity: put AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env.
     # AWS_PROFILE with a mounted ~/.aws is meant for `npm run dev`: this container runs as uid 1001

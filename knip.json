@@ -1,5 +1,15 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["scripts/*.ts", "tests/e2e/global-setup.ts"],
-  "ignore": ["src/components/ui/**", "tests/stubs/**", "apps/**"]
+  "entry": [
+    "scripts/*.ts",
+    "tests/e2e/global-setup.ts",
+    "packages/contract/index.ts",
+    "tests/persistence/playwright.config.ts",
+    "tests/persistence/*.spec.ts"
+  ],
+  "ignore": [
+    "src/components/ui/**",
+    "tests/stubs/**",
+    "apps/**"
+  ]
 }

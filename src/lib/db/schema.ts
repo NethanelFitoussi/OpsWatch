@@ -1,4 +1,6 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import type { TokenAudience } from '@opswatch/contract';
 import {
   CONNECTION_METHODS,
   CONNECTION_STATUSES,
@@ -19,6 +21,14 @@ export const sessions = sqliteTable('sessions', {
     .references(() => adminUser.id, { onDelete: 'cascade' }),
   expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  /**
+   * Which kind of client this session was minted for: `web` for the browser cookie, `api` for a bearer token. A
+   * session is only accepted where its own audience belongs, so neither can be replayed as the other. Rows written
+   * before the API existed are browser sessions, which is what the default says.
+   */
+  audience: text('audience').notNull().default('web').$type<TokenAudience>(),
+  /** Null until the session is presented a second time. `GET /me/sessions` shows it, so a stale device stands out. */
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
 });
 
 export const connections = sqliteTable('connections', {
@@ -49,3 +59,184 @@ export const settings = sqliteTable('settings', {
 });
 
 export type ConnectionRow = typeof connections.$inferSelect;
+
+export const PROBLEM_STATUSES = ['open', 'acknowledged', 'resolved', 'closed'] as const;
+export const PROBLEM_SEVERITIES = ['critical', 'warning', 'info'] as const;
+export const SUBJECT_TYPES = ['service', 'resource', 'cluster', 'error_group', 'synthetic', 'integration'] as const;
+export const EVIDENCE_KINDS = ['metric', 'event', 'log', 'check', 'inventory'] as const;
+
+export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
+export type ProblemSeverity = (typeof PROBLEM_SEVERITIES)[number];
+export type SubjectType = (typeof SUBJECT_TYPES)[number];
+export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
+
+export const problems = sqliteTable(
+  'problems',
+  {
+    // The cursor axis of §33.6: AUTOINCREMENT, so a purge never lets SQLite reuse a rowid.
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    key: text('key').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    kind: text('kind').notNull(),
+    subjectType: text('subject_type', { enum: SUBJECT_TYPES }).notNull(),
+    subjectId: text('subject_id').notNull(),
+    subjectName: text('subject_name').notNull(),
+    serviceId: text('service_id'),
+    source: text('source').notNull(),
+    titleKey: text('title_key').notNull(),
+    values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+    severity: text('severity', { enum: PROBLEM_SEVERITIES }).notNull(),
+    score: integer('score').notNull(),
+    scoreTerms: text('score_terms', { mode: 'json' }).$type<StoredScoreTerms>().notNull(),
+    status: text('status', { enum: PROBLEM_STATUSES }).notNull(),
+    href: text('href').notNull(),
+    firstSeenAt: integer('first_seen_at').notNull(),
+    lastSeenAt: integer('last_seen_at').notNull(),
+    lastEvaluatedAt: integer('last_evaluated_at').notNull(),
+    clearStreak: integer('clear_streak').notNull().default(0),
+    clearSinceAt: integer('clear_since_at'),
+    occurrences: integer('occurrences').notNull().default(1),
+    flapCount: integer('flap_count').notNull().default(0),
+    acknowledgedBy: text('acknowledged_by'),
+    acknowledgedAt: integer('acknowledged_at'),
+    resolvedAt: integer('resolved_at'),
+    investigationId: text('investigation_id'),
+    incidentId: text('incident_id'),
+    previousProblemId: text('previous_problem_id'),
+    fleetProblemId: text('fleet_problem_id'),
+    grouped: integer('grouped', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    // One live row per dedupe key. A resolved row leaves the index, so a new row may take its place.
+    uniqueIndex('problems_open_key').on(t.key).where(sql`resolved_at is null`),
+    index('problems_env_seq').on(t.connectionId, t.scope, t.seq),
+    index('problems_key_resolved').on(t.key, t.resolvedAt),
+    index('problems_service').on(t.serviceId, t.seq),
+  ],
+);
+
+export const problemEvidence = sqliteTable(
+  'problem_evidence',
+  {
+    id: text('id').primaryKey(),
+    problemId: text('problem_id').notNull().references(() => problems.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    kind: text('kind', { enum: EVIDENCE_KINDS }).notNull(),
+    labelKey: text('label_key').notNull(),
+    values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+    // null is "not measured" (§2.4). It is never written as 0.
+    value: real('value'),
+    unit: text('unit'),
+    at: integer('at').notNull(),
+    seriesRef: text('series_ref'),
+    href: text('href'),
+  },
+  (t) => [index('problem_evidence_problem').on(t.problemId, t.position)],
+);
+
+export type ProblemRow = typeof problems.$inferSelect;
+export type ProblemEvidenceRow = typeof problemEvidence.$inferSelect;
+/** Written by Task 5's scoreProblem; stored verbatim so the page can render the arithmetic it used. */
+export type StoredScoreTerms = {
+  s: number; b: number | null; t: number; u: number | null; d: number;
+  weights: { s: number; b: number; t: number; u: number; d: number };
+  availableWeight: number; rescaled: boolean; floored: boolean; score: number;
+};
+
+export const EVENT_KINDS = [
+  'problem_opened', 'problem_reopened', 'problem_acknowledged', 'problem_resolved',
+  'problem_grouped', 'problem_ungrouped', 'fleet_opened', 'fleet_resolved',
+  'resource_appeared', 'resource_disappeared', 'error_group_appeared', 'error_group_regressed',
+  'collector_job_capped', 'collector_job_failed',
+] as const;
+
+export type EventKind = (typeof EVENT_KINDS)[number];
+
+export const events = sqliteTable('events', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  at: integer('at').notNull(),
+  connectionId: text('connection_id'),
+  scope: text('scope'),
+  kind: text('kind', { enum: EVENT_KINDS }).notNull(),
+  subjectType: text('subject_type', { enum: SUBJECT_TYPES }).notNull(),
+  subjectId: text('subject_id').notNull(),
+  serviceId: text('service_id'),
+  severity: text('severity', { enum: PROBLEM_SEVERITIES }),
+  source: text('source').notNull(),
+  payload: text('payload', { mode: 'json' }).$type<Record<string, string | number | null>>().notNull(),
+  dedupeKey: text('dedupe_key'),
+}, (t) => [
+  index('events_at').on(t.at),
+  index('events_service_at').on(t.serviceId, t.at),
+  index('events_subject_at').on(t.subjectId, t.at),
+  uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
+]);
+
+export const COLLECTOR_RUN_STATUSES = ['running', 'ok', 'failed', 'skipped'] as const;
+
+export const collectorRuns = sqliteTable('collector_runs', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  job: text('job').notNull(),
+  connectionId: text('connection_id'),
+  scope: text('scope'),
+  startedAt: integer('started_at').notNull(),
+  finishedAt: integer('finished_at'),
+  status: text('status', { enum: COLLECTOR_RUN_STATUSES }).notNull(),
+  covered: integer('covered'),
+  total: integer('total'),
+  truncated: integer('truncated', { mode: 'boolean' }).notNull().default(false),
+  errorCode: text('error_code'),
+}, (t) => [index('collector_runs_job').on(t.job, t.startedAt)]);
+
+export type EventRow = typeof events.$inferSelect;
+export type CollectorRunRow = typeof collectorRuns.$inferSelect;
+
+/** Exactly one row, id = 1. Seeded by the first claim, never by a migration. */
+export const collectorLock = sqliteTable('collector_lock', {
+  id: integer('id').primaryKey(),
+  owner: text('owner').notNull(),
+  heartbeatAt: integer('heartbeat_at').notNull(),
+});
+export type CollectorLockRow = typeof collectorLock.$inferSelect;
+
+export const INCIDENT_STATUSES = ['investigating', 'identified', 'monitoring', 'resolved'] as const;
+export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
+
+export const incidents = sqliteTable('incidents', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  connectionId: text('connection_id').notNull(),
+  scope: text('scope').notNull(),
+  titleKey: text('title_key').notNull(),
+  values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+  status: text('status', { enum: INCIDENT_STATUSES }).notNull(),
+  severity: text('severity', { enum: PROBLEM_SEVERITIES }).notNull(),
+  startedAt: integer('started_at').notNull(),
+  resolvedAt: integer('resolved_at'),
+  serviceIds: text('service_ids', { mode: 'json' }).$type<string[]>().notNull(),
+  origin: text('origin', { enum: ['auto', 'user'] as const }).notNull(),
+  dismissedAt: integer('dismissed_at'),
+}, (t) => [index('incidents_env_seq').on(t.connectionId, t.scope, t.seq)]);
+
+export const INCIDENT_TIMELINE_KINDS = ['status_change', 'event', 'note'] as const;
+export type IncidentTimelineKind = (typeof INCIDENT_TIMELINE_KINDS)[number];
+
+export const incidentTimeline = sqliteTable('incident_timeline', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }),
+  id: text('id').notNull().unique(),
+  incidentId: text('incident_id').notNull().references(() => incidents.id, { onDelete: 'cascade' }),
+  at: integer('at').notNull(),
+  kind: text('kind', { enum: INCIDENT_TIMELINE_KINDS }).notNull(),
+  eventId: text('event_id'),
+  actorId: text('actor_id'),
+  messageKey: text('message_key'),
+  values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+  note: text('note'),
+}, (t) => [index('incident_timeline_incident').on(t.incidentId, t.at)]);
+
+export type IncidentRow = typeof incidents.$inferSelect;
+export type IncidentTimelineRow = typeof incidentTimeline.$inferSelect;

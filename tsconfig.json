@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@opswatch/contract": ["./packages/contract/index.ts"]
     }
   },
   "include": [

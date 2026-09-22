@@ -15,6 +15,41 @@
       "when": 1789720658249,
       "tag": "0001_lethal_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789731290993,
+      "tag": "0002_damp_mother_askani",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789885795704,
+      "tag": "0003_complex_mindworm",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789886294532,
+      "tag": "0004_happy_lyja",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789886498271,
+      "tag": "0005_groovy_spencer_smythe",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789886681849,
+      "tag": "0006_early_magma",
+      "breakpoints": true
     }
   ]
 }
