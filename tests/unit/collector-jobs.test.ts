@@ -32,15 +32,23 @@ describe('the job catalogue', () => {
 
   it('runs only the jobs that cost a fresh install nothing', () => {
     // The promise a fresh installation makes: no extra AWS request. `detect` reads what the pages already
-    // fetched, `inventory` is Describe* (throttled but not billed, §9.5), `compact` touches no provider, and
-    // `errors` finds no enabled log source, so it does nothing at all until someone opts one in.
-    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'errors', 'inventory']);
+    // fetched, `inventory` is Describe* (throttled but not billed, §9.5), `compact` touches no provider,
+    // `errors` finds no enabled log source, and `metrics` finds history switched off - so each of the five
+    // is scheduled and none of them spends anything until an operator asks for it.
+    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'errors', 'inventory', 'metrics']);
   });
 
   it('leaves every job that would spend money on a fresh install switched off', () => {
-    for (const id of ['metrics', 'deployments', 'queries', 'logvolume', 'baselines', 'slo'] as const) {
+    for (const id of ['deployments', 'queries', 'logvolume', 'baselines', 'slo'] as const) {
       expect(JOBS[id].freshInstall, id).toBe(false);
     }
+  });
+
+  it('schedules `metrics` but gates it on the history switch, not on the schedule', () => {
+    // Gating it here too would mean an operator who enables history has to restart for it to take effect.
+    // While history is off the job makes no AWS request at all, which is what §31.1 actually requires.
+    expect(JOBS.metrics.freshInstall).toBe(true);
+    expect(JOBS.metrics.cap).toBe(500);
   });
 
   it('lets `errors` run from the start only because an opted-out source costs nothing', () => {

@@ -1411,6 +1411,71 @@
       "version": "OpsWatch version",
       "notMeasured": "Not measured",
       "adminOnly": "Only an administrator can see this page."
+    },
+    "history": {
+      "title": "Data & history",
+      "description": "Historical collection adds recurring AWS requests, so OpsWatch shows what it would cost before you turn it on.",
+      "state": {
+        "on": "Collecting history",
+        "off": "Not collecting history"
+      },
+      "enable": "Collect history",
+      "offExplained": "While this is off OpsWatch makes no recurring AWS request for history, and every live page keeps working exactly as it does now.",
+      "limited": "What stays limited without history",
+      "limits": {
+        "baselines": "Baselines",
+        "anomalies": "Anomaly detection",
+        "whatsNew": "\"What’s new\" over time",
+        "slos": "SLOs",
+        "incidentTimelines": "Incident timelines",
+        "reports": "Long-term reports",
+        "correlation": "Cross-provider correlation"
+      },
+      "interval": "How often",
+      "intervalOption": "{minutes, plural, one {every minute} other {every # minutes}}",
+      "intervalConsequence": "{cycles} cycles a month, {metrics} metrics requested",
+      "categories": "What to collect",
+      "preset": {
+        "minimal": "Minimal",
+        "standard": "Standard",
+        "detailed": "Detailed",
+        "custom": "Custom"
+      },
+      "category": {
+        "infrastructure": "Infrastructure metrics",
+        "application": "Application metrics",
+        "database": "Database metrics",
+        "cache": "Cache",
+        "logs": "Log volume",
+        "errors": "Errors",
+        "synthetics": "Synthetic results",
+        "deployments": "Deployments",
+        "problems": "Problems",
+        "incidents": "Incidents",
+        "alerts": "Alert history"
+      },
+      "estimate": "Estimated monthly cost",
+      "estimateCaveat": "An estimate from published prices and your discovered resources. It is not a bill, and OpsWatch cannot see your account’s actual rates.",
+      "lineMetrics": "Metrics: {metrics} requested a month",
+      "lineScanned": "Log scanning: about {gigabytes} GB a month",
+      "volatile": "This half moves with how much your application logs, so it is the one that can surprise.",
+      "total": "Estimated total",
+      "retention": "Keep history for",
+      "retentionDays": "{days} days",
+      "provider": "Stored by",
+      "save": "Save",
+      "saved": "Saved.",
+      "errors": {
+        "invalid_interval": "Choose an interval between 1 and 1440 minutes.",
+        "invalid_retention": "Choose a retention between 1 and 3650 days."
+      }
+    },
+    "more": {
+      "title": "More settings",
+      "history": "Data & history",
+      "historyHint": "Whether OpsWatch collects history, what it would cost, and how long it is kept.",
+      "status": "System status",
+      "statusHint": "Whether the collector is running, when each job last ran, and the state of the database."
     }
   },
   "Api": {

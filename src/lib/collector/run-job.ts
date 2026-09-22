@@ -3,6 +3,7 @@ import { getDb } from '../db/client';
 import { env } from '../env';
 import { runDetectJob } from './detect';
 import { runErrorsJob } from './errors-job';
+import { runMetricsJob } from './metrics-job';
 import type { JobRun } from './runner';
 
 /**
@@ -21,6 +22,9 @@ export const runJob: JobRun = async (job, nowMs) => {
       return runDetectJob(scoped);
     case 'errors':
       return runErrorsJob({ ...scoped, budgetGbPerDay: env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY });
+    case 'metrics':
+      // It checks the history switch itself and does nothing while history is off (§31.1).
+      return runMetricsJob(scoped);
     default:
       return { covered: 0, total: 0 };
   }

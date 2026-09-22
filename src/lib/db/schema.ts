@@ -453,3 +453,41 @@ export const historyWatermarks = sqliteTable(
 
 export type HistoryPointRow = typeof historyPoints.$inferSelect;
 
+export const HISTORY_CATEGORIES = [
+  'infrastructure',
+  'application',
+  'database',
+  'cache',
+  'logs',
+  'errors',
+  'synthetics',
+  'deployments',
+  'problems',
+  'incidents',
+  'alerts',
+] as const;
+export type HistoryCategoryId = (typeof HISTORY_CATEGORIES)[number];
+
+/**
+ * Historical collection settings (§31.1). One row, id = 1, like the other settings.
+ *
+ * **Disabled by default, and that is the owner's binding ruling**: a fresh installation must never add AWS
+ * polling cost without an explicit action. While it is off there is no recurring polling at all and every
+ * live page keeps working exactly as it does today.
+ */
+export const historySettings = sqliteTable('history_settings', {
+  id: integer('id').primaryKey(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  /** Minutes between cycles when enabled. No hardcoded default beyond the form's initial suggestion. */
+  intervalMinutes: integer('interval_minutes').notNull().default(5),
+  /** Which categories are collected. Granular, because paying for all of them to get one is not a choice. */
+  categories: text('categories', { mode: 'json' }).$type<HistoryCategoryId[]>().notNull(),
+  /** How long history is kept, in days. */
+  retentionDays: integer('retention_days').notNull().default(90),
+  /** Which provider stores it. `opswatch-db` is the default and the only one this phase ships. */
+  providerId: text('provider_id').notNull().default('opswatch-db'),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export type HistorySettingsRow = typeof historySettings.$inferSelect;
+
