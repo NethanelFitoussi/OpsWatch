@@ -30,7 +30,7 @@ describe('sectionLinks', () => {
   it('marks the sub-pages no task has built, so the menu disables them instead of linking to a 404', () => {
     expect(sectionLinks(scope, 'logs', '').map((link) => [link.subsection, link.comingSoon])).toEqual([
       ['search', false],
-      ['volume', true],
+      ['volume', false],
       ['endpoints', true],
     ]);
   });

@@ -27,12 +27,12 @@ test('the section menu lists the sub-pages, marks the active one and keeps the r
 });
 
 test('a sub-page no task has built is disabled, and nothing in the menu links to it', async ({ page }) => {
-  // Overview is fully built now, so the treatment is shown where it is still true: Logs.
+  // Endpoints is the last unbuilt segment, so it is where the treatment is still true.
   await page.goto(`/en/c/${connectionId}/us-east-1/logs/search`);
   const nav = page.getByRole('navigation', { name: 'Logs pages' });
   await expect(nav.getByRole('link', { name: 'Search' })).toHaveAttribute('aria-current', 'page');
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Volume' })).toContainText('Coming soon');
-  await expect(nav.locator('a[href*="/logs/volume"]')).toHaveCount(0);
+  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Endpoints' })).toContainText('Coming soon');
+  await expect(nav.locator('a[href*="/logs/endpoints"]')).toHaveCount(0);
 });
 
 test('the breadcrumb names the section, the connection and the sub-page', async ({ page }) => {
@@ -47,8 +47,8 @@ test('the section menu is a scrollable strip at 360 px and nothing overflows', a
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto(`/en/c/${connectionId}/us-east-1/logs/search`);
   const nav = page.getByRole('navigation', { name: 'Logs pages' });
-  // Volume and Endpoints have no page yet, so the strip shows them disabled rather than linking to a 404.
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Volume' })).toBeVisible();
+  // Volume is built and links; Endpoints has no page yet, so the strip shows it disabled rather than a 404.
+  await expect(nav.getByRole('link', { name: 'Volume' })).toBeVisible();
   await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Endpoints' })).toBeVisible();
   const root = page.locator('html');
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
