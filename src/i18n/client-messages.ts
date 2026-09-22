@@ -15,6 +15,7 @@ export const CLIENT_NAMESPACES = [
   'GettingStarted.diagram',
   'Monitoring.client',
   'Monitoring.sources',
+  'Monitoring.endpoints',
   'Settings',
 ] as const;
 

@@ -1443,6 +1443,48 @@
       "notMeasured": "Non mesuré",
       "empty": "Cette région n’a aucun groupe de journaux.",
       "noQueryCost": "Lu depuis les métriques CloudWatch et DescribeLogGroups : cette page ne consomme rien du budget quotidien de scan des journaux."
+    },
+    "endpoints": {
+      "title": "Points d’accès les plus lents",
+      "description": "Quelles routes sont lentes, mesuré depuis les journaux de votre application.",
+      "whyLogs": "CloudWatch ne peut pas répondre : un répartiteur de charge mesure la latence d’un groupe cible entier, jamais par chemin. Les journaux de votre application sont la seule source dans un compte AWS en lecture seule ; cette page a donc besoin de savoir quels champs portent la route et la durée.",
+      "cost": "Ce que coûte une requête",
+      "why": "Cette page ne lance rien tant que vous ne le demandez pas. Chaque exécution scanne des journaux, et c’est le scan que CloudWatch facture.",
+      "budget": "Scanné aujourd’hui : {scanned} Go sur {limit} Go. Reste {remaining} Go.",
+      "costHint": "CloudWatch Logs Insights est facturé au gigaoctet scanné. OPSWATCH_LOGS_BUDGET_GB_PER_DAY est un arrêt ferme, pas un avertissement.",
+      "noSources": "Aucun groupe de journaux n’est activé : il n’y a rien à interroger.",
+      "noSourcesHint": "Choisissez les groupes à lire dans Erreurs, Sources de journaux. Ce n’est pas la même chose que l’absence de points d’accès lents.",
+      "configure": "Lancer une requête",
+      "sources": "Lecture de {count, plural, one {un groupe} other {# groupes}} : {groups}",
+      "preset": "Modèle de champs",
+      "presetCustom": "Personnalisé",
+      "presets": {
+        "json": "Journaux JSON (path, duration_ms)",
+        "api": "Format API (route, duration)"
+      },
+      "routeField": "Champ contenant la route",
+      "durationField": "Champ contenant la durée en millisecondes",
+      "window": "Période",
+      "hours": "{hours, plural, one {Dernière heure} other {Dernières # heures}}",
+      "windowHint": "Rien au-delà d’une journée, comme le reste de la section Journaux : une période plus large scanne davantage et coûte plus cher.",
+      "run": "Lancer",
+      "results": "Résultats",
+      "scanned": "Cette requête a scanné {mb} Mo.",
+      "route": "Route",
+      "hits": "Requêtes",
+      "p95": "p95",
+      "average": "Moyenne",
+      "max": "La plus lente",
+      "p95Hint": "p95 signifie que 95 requêtes sur 100 vers cette route ont été plus rapides que cela. C’est le chiffre qui décrit ce que la plupart des gens ont vécu, et qu’une moyenne masque.",
+      "notMeasured": "Non mesuré",
+      "noMatch": "Aucune ligne de journal ne contenait à la fois « {route} » et « {duration} ». Les noms de champs sont probablement différents — voici à quoi ressemblent vos journaux.",
+      "samplesTitle": "Lignes récentes de ces groupes",
+      "errors": {
+        "invalid_field": "Un nom de champ ne peut contenir que lettres, chiffres, points, tirets, tirets bas et @.",
+        "no_sources": "Aucun groupe de journaux activé. Choisissez-en un dans Erreurs, Sources de journaux.",
+        "budget_exhausted": "Le budget de scan du jour est épuisé : cette requête n’a pas été lancée.",
+        "query_failed": "La requête n’a pas pu être lancée. Vérifiez la connexion et sa permission logs, puis réessayez."
+      }
     }
   },
   "Insights": {

@@ -21,8 +21,7 @@ test('the Logs menu links to Volume instead of disabling it', async ({ page }) =
   await page.goto(monitoringUrl(connectionId, 'logs', 'search'));
   const nav = page.getByRole('navigation', { name: 'Logs pages' });
   await expect(nav.getByRole('link', { name: 'Volume' })).toBeVisible();
-  // Endpoints is the one that remains, so the disabled treatment is still shown where it is true.
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Endpoints' })).toContainText('Coming soon');
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(0);
 });
 
 test('Volume opens by clicking and lists the log groups with their retention', async ({ page }) => {

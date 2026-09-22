@@ -89,12 +89,21 @@ describe('the sub-pages no task has built yet', () => {
   });
 
   it('marks a segment built or not', () => {
-    expect(isSubsectionBuilt('databases', 'instances')).toBe(true);
-    expect(isSubsectionBuilt('databases', 'queries')).toBe(true);
-    expect(isSubsectionBuilt('logs', 'search')).toBe(true);
-    expect(isSubsectionBuilt('logs', 'volume')).toBe(true);
-    // The last one still unbuilt, which is what keeps this assertion meaningful.
-    expect(isSubsectionBuilt('logs', 'endpoints')).toBe(false);
+    // Every segment in the catalogue is built today, which is what an empty UNBUILT_SUBSECTIONS means.
+    for (const section of MONITORING_SECTIONS) {
+      for (const subsection of subsectionsOf(section)) {
+        expect(isSubsectionBuilt(section, subsection), `${section}/${subsection}`).toBe(true);
+      }
+    }
+    expect(UNBUILT_SUBSECTIONS).toEqual([]);
+  });
+
+  it('answers from the live list, so the treatment returns the moment a segment is added to it', () => {
+    for (const section of MONITORING_SECTIONS) {
+      for (const subsection of subsectionsOf(section)) {
+        expect(isSubsectionBuilt(section, subsection)).toBe(!UNBUILT_SUBSECTIONS.includes(`${section}/${subsection}`));
+      }
+    }
   });
 
   it('never leaves a section pointing at a page that does not exist', () => {

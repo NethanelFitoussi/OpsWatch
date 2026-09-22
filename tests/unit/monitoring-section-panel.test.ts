@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sectionLinks } from '@/components/monitoring/section-layout';
+import { isSubsectionBuilt } from '@/lib/monitoring/shared/sections';
 
 describe('sectionLinks', () => {
   const scope = { connectionId: 'abc123def456', region: 'eu-west-1' };
@@ -27,11 +28,22 @@ describe('sectionLinks', () => {
     ]);
   });
 
-  it('marks the sub-pages no task has built, so the menu disables them instead of linking to a 404', () => {
+  it('links every sub-page, now that none is unbuilt', () => {
     expect(sectionLinks(scope, 'logs', '').map((link) => [link.subsection, link.comingSoon])).toEqual([
       ['search', false],
       ['volume', false],
-      ['endpoints', true],
+      ['endpoints', false],
     ]);
+  });
+
+  it('derives comingSoon from the catalogue rather than from a list of its own', () => {
+    // UNBUILT_SUBSECTIONS is empty today, so every link is enabled and this cannot assert a disabled one.
+    // That the treatment still works in both directions is guarded where it can be: the filesystem-backed
+    // check in monitoring-sections.test.ts and `npm run roadmap:check`, both mutation-verified.
+    for (const section of ['logs', 'overview', 'errors'] as const) {
+      for (const link of sectionLinks(scope, section, '')) {
+        expect(link.comingSoon, `${section}/${link.subsection}`).toBe(!isSubsectionBuilt(section, link.subsection));
+      }
+    }
   });
 });
