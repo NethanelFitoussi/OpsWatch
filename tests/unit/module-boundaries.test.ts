@@ -62,6 +62,7 @@ const SERVER_ONLY_MODULES = [
   'lib/detect/lifecycle.ts',
   'lib/detect/fleet.ts',
   'lib/detect/aws.ts',
+  'lib/detect/fingerprint.ts',
   'lib/collector/jobs.ts',
   'lib/collector/runner.ts',
   'lib/collector/run-job.ts',
