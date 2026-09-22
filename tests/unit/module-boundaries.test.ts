@@ -65,6 +65,7 @@ const SERVER_ONLY_MODULES = [
   'lib/collector/jobs.ts',
   'lib/collector/runner.ts',
   'lib/collector/run-job.ts',
+  'lib/collector/detect.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',
