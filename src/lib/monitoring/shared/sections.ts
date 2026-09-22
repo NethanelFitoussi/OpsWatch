@@ -6,6 +6,7 @@ import type { MonitoringSection } from './paths';
  */
 export const SUBSECTIONS = {
   overview: ['brief', 'health', 'problems', 'insights', 'audit'],
+  errors: ['groups', 'sources'],
   containers: ['services', 'report'],
   databases: ['instances', 'queries', 'report'],
   'load-balancers': ['list', 'report'],
@@ -36,6 +37,7 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
  * that builds a page deletes its line here and nothing else. A section's default segment is never in it.
  */
 export const UNBUILT_SUBSECTIONS: readonly string[] = [
+  'errors/sources',
   'overview/audit',
   'containers/report',
   'databases/report',
@@ -58,6 +60,8 @@ export const SUBSECTION_ICONS: Record<
   string,
   'list' | 'report' | 'audit' | 'queries' | 'volume' | 'endpoints' | 'search' | 'insights' | 'problems' | 'health' | 'brief'
 > = {
+  groups: 'list',
+  sources: 'list',
   problems: 'problems',
   health: 'health',
   brief: 'brief',

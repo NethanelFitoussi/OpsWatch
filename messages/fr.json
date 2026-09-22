@@ -13,6 +13,7 @@
       "signOut": "Se déconnecter",
       "mainNavigation": "Navigation principale",
       "overview": "Vue d'ensemble",
+      "errors": "Erreurs",
       "loadBalancers": "Répartiteurs de charge",
       "alarms": "Alarmes"
     },
@@ -1235,6 +1236,44 @@
       "resolved": "{count, plural, =0 {rien résolu} one {# résolu} other {# résolus}}",
       "waiting": "OpsWatch n'a pas terminé sa première vérification de cet environnement.",
       "waitingHint": "Le premier cycle s'exécute dans les cinq minutes suivant l'ajout d'une connexion."
+    },
+    "errors": {
+      "title": "Erreurs",
+      "description": "Les erreurs regroupées par ce qu'elles sont, pas par leur fréquence.",
+      "whatsNew": "Nouveautés",
+      "setNew": "Nouvelles",
+      "setRegressed": "De retour",
+      "setSpiking": "En aggravation",
+      "none": "Rien dans cet ensemble.",
+      "status": {
+        "new": "Nouvelle",
+        "recurring": "Récurrente",
+        "regression": "De retour",
+        "resolved": "Résolue"
+      },
+      "statusLabel": "Statut",
+      "occurrencesLabel": "Occurrences",
+      "occurrences": "{count, plural, one {# fois} other {# fois}} le dernier jour",
+      "occurrencesUnknown": "Non comptées",
+      "instances": "{count} instances",
+      "trend": {
+        "rising": "En hausse",
+        "falling": "En baisse",
+        "stable": "Stable"
+      },
+      "firstSeen": "Première fois",
+      "cameBack": "Revenue le",
+      "lastSeen": "Dernière fois",
+      "frames": "Où cela se produit",
+      "noFrames": "Cette erreur n'a pas de trace d'appels : elle est regroupée par son message et son groupe de journaux.",
+      "noSources": "OpsWatch ne lit les erreurs d'aucun groupe de journaux pour l'instant.",
+      "noSourcesHint": "La collecte d'erreurs est désactivée tant que vous n'avez pas choisi un groupe de journaux. CloudWatch Logs Insights est facturé au gigaoctet analysé : OpsWatch n'en lit jamais un que vous ne lui avez pas demandé.",
+      "noneEnabled": "Aucun groupe de journaux n'est activé pour la collecte d'erreurs.",
+      "noneEnabledHint": "Activez-en un et OpsWatch regroupera ses erreurs sous quinze minutes.",
+      "empty": "Aucune erreur n'a été collectée dans les groupes de journaux que vous avez activés.",
+      "emptyHint": "OpsWatch les lit toutes les quinze minutes.",
+      "budgetStopped": "La collecte d'erreurs s'est arrêtée pour aujourd'hui : elle a atteint son budget d'analyse.",
+      "budgetHint": "Elle reprend demain. Augmentez OPSWATCH_LOGS_BUDGET_GB_PER_DAY pour analyser davantage, en sachant que CloudWatch facture au gigaoctet."
     }
   },
   "Insights": {
@@ -1297,6 +1336,10 @@
       "search": "Recherche",
       "volume": "Volume",
       "endpoints": "Points d'entrée"
+    },
+    "errors": {
+      "groups": "Groupes d'erreurs",
+      "sources": "Sources de journaux"
     }
   },
   "Settings": {

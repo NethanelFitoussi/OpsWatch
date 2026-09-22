@@ -17,6 +17,8 @@ describe('the sub-section catalogue', () => {
       // D2's order, with one deviation recorded there: the brief is the section default once Task 17
       // builds it. Until then the default has to be a page that exists, so Problems leads.
       overview: ['brief', 'health', 'problems', 'insights', 'audit'],
+      // Errors is its own section (D2), with the log sources it reads from beside the groups.
+      errors: ['groups', 'sources'],
       containers: ['services', 'report'],
       databases: ['instances', 'queries', 'report'],
       'load-balancers': ['list', 'report'],
@@ -54,6 +56,7 @@ describe('the sub-pages no task has built yet', () => {
       'alarms/report',
       'containers/report',
       'databases/report',
+      'errors/sources',
       'load-balancers/report',
       'logs/endpoints',
       'logs/volume',

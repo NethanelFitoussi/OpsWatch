@@ -1,9 +1,9 @@
-import { BookOpen, Cloud, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bug, Cloud, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
 import { defaultSubsection } from '@/lib/monitoring/shared/sections';
 import { parseMonitoringPath, subsectionPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
-type NavKey = 'overview' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'settings' | 'accounts';
+type NavKey = 'overview' | 'errors' | 'containers' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'gettingStarted' | 'settings' | 'accounts';
 export type NavItem = {
   key: NavKey;
   /** A Lucide icon, or the AWS service icon of a section about that service. */
@@ -13,6 +13,7 @@ export type NavItem = {
 /** A section's own `Common.nav` key, so its name is written once for the rail, the breadcrumb and the section menu. */
 export const SECTION_NAV_KEY: Record<MonitoringSection, NavKey> = {
   overview: 'overview',
+  errors: 'errors',
   containers: 'containers',
   databases: 'databases',
   'load-balancers': 'loadBalancers',
@@ -22,6 +23,7 @@ export const SECTION_NAV_KEY: Record<MonitoringSection, NavKey> = {
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'overview', kind: 'monitoring', section: 'overview', icon: LayoutDashboard },
+  { key: 'errors', kind: 'monitoring', section: 'errors', icon: Bug },
   { key: 'containers', kind: 'monitoring', section: 'containers', icon: 'ecs' },
   { key: 'databases', kind: 'monitoring', section: 'databases', icon: 'rds' },
   { key: 'loadBalancers', kind: 'monitoring', section: 'load-balancers', icon: 'elb' },

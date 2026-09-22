@@ -13,6 +13,7 @@
       "signOut": "Sign out",
       "mainNavigation": "Main navigation",
       "overview": "Overview",
+      "errors": "Errors",
       "loadBalancers": "Load balancers",
       "alarms": "Alarms"
     },
@@ -1235,6 +1236,44 @@
       "resolved": "{count, plural, =0 {nothing resolved} one {# resolved} other {# resolved}}",
       "waiting": "OpsWatch has not finished its first check of this environment.",
       "waitingHint": "The first cycle runs within five minutes of a connection being added."
+    },
+    "errors": {
+      "title": "Errors",
+      "description": "Errors grouped by what they are, not by how often they happened.",
+      "whatsNew": "What's new",
+      "setNew": "New",
+      "setRegressed": "Came back",
+      "setSpiking": "Getting worse",
+      "none": "Nothing in this set.",
+      "status": {
+        "new": "New",
+        "recurring": "Recurring",
+        "regression": "Came back",
+        "resolved": "Resolved"
+      },
+      "statusLabel": "Status",
+      "occurrencesLabel": "Occurrences",
+      "occurrences": "{count, plural, one {# time} other {# times}} in the last day",
+      "occurrencesUnknown": "Not counted",
+      "instances": "{count} instances",
+      "trend": {
+        "rising": "Rising",
+        "falling": "Falling",
+        "stable": "Steady"
+      },
+      "firstSeen": "First seen",
+      "cameBack": "Came back",
+      "lastSeen": "Last seen",
+      "frames": "Where it happens",
+      "noFrames": "This error has no stack trace, so it is grouped by its message and its log group.",
+      "noSources": "OpsWatch is not reading errors from any log group yet.",
+      "noSourcesHint": "Error collection is off until you choose a log group. CloudWatch Logs Insights is billed per gigabyte scanned, so OpsWatch never reads one you have not asked it to.",
+      "noneEnabled": "No log group is switched on for error collection.",
+      "noneEnabledHint": "Switch one on and OpsWatch will start grouping its errors within fifteen minutes.",
+      "empty": "No errors have been collected from the log groups you switched on.",
+      "emptyHint": "OpsWatch reads them every fifteen minutes.",
+      "budgetStopped": "Error collection stopped for today because it reached its scanning budget.",
+      "budgetHint": "It resumes tomorrow. Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY to scan more, knowing that CloudWatch bills per gigabyte."
     }
   },
   "Insights": {
@@ -1297,6 +1336,10 @@
       "search": "Search",
       "volume": "Volume",
       "endpoints": "Endpoints"
+    },
+    "errors": {
+      "groups": "Error groups",
+      "sources": "Log sources"
     }
   },
   "Settings": {

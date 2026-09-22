@@ -17,7 +17,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   brief: true,
   // GET /problems and /problems/{id} serve real rows the collector wrote.
   problems: true,
-  errors: false,
+  // GET /errors and /errors/{id} serve the groups the errors job collects.
+  errors: true,
   services: false,
   infrastructure: false,
   logs: false,
