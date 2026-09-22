@@ -142,6 +142,7 @@ export type ErrorFilter = {
   connectionId: string;
   scope: string;
   status?: readonly ErrorGroupStatus[];
+  serviceId?: string;
   sinceMs?: number;
 };
 
@@ -154,6 +155,7 @@ export function pageErrorGroups(
 ): SeqPage<ErrorGroupRow> {
   const where = [eq(errorGroups.connectionId, filter.connectionId), eq(errorGroups.scope, filter.scope)];
   if (filter.status?.length) where.push(inArray(errorGroups.status, [...filter.status]));
+  if (filter.serviceId !== undefined) where.push(eq(errorGroups.serviceId, filter.serviceId));
   if (filter.sinceMs !== undefined) where.push(gte(errorGroups.lastSeenAt, filter.sinceMs));
   if (cursor !== null) where.push(gt(errorGroups.seq, cursor.afterSeq));
 

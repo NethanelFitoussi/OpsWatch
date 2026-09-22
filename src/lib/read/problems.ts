@@ -98,10 +98,36 @@ export type ProblemsQuery = {
   connectionId: string;
   scope: string;
   status?: readonly StoredStatus[];
+  /** The contract's statuses, as a client sends them. Translated here; the store never sees a wire word. */
+  wireStatus?: readonly ProblemStatus[];
   severity?: readonly ProblemSeverity[];
+  serviceId?: string;
+  sinceMs?: number;
   cursor?: CursorPosition | null;
   limit?: number;
 };
+
+/**
+ * A wire status, as the store must ask for it.
+ *
+ * `new` and `active` are one stored state told apart by age, so each becomes a status plus a window on
+ * `firstSeenAt`. Doing this in SQL rather than by filtering a page afterwards matters: a page filtered after
+ * it was fetched is short by however many rows it dropped, and the cursor then skips the rest.
+ */
+export function statusWindowsFor(
+  statuses: readonly ProblemStatus[],
+  nowMs: number,
+): { status: readonly StoredStatus[]; firstSeenFromMs?: number; firstSeenToMs?: number }[] {
+  const boundary = nowMs - PROBLEM_NEW_MS;
+  return statuses.map((status) => {
+    if (status === 'acknowledged') return { status: ['acknowledged' as const] };
+    // `closed` is a stored state no client is shown; to a reader it is resolved, so it answers here too.
+    if (status === 'resolved') return { status: ['resolved' as const, 'closed' as const] };
+    return status === 'new'
+      ? { status: ['open' as const], firstSeenFromMs: boundary }
+      : { status: ['open' as const], firstSeenToMs: boundary };
+  });
+}
 
 /** One page of problems, oldest first on the immutable cursor axis. */
 export function listProblems(db: Db, query: ProblemsQuery, context: ReadContext) {
@@ -109,7 +135,10 @@ export function listProblems(db: Db, query: ProblemsQuery, context: ReadContext)
     connectionId: query.connectionId,
     scope: query.scope,
     ...(query.status === undefined ? {} : { status: query.status }),
+    ...(query.wireStatus === undefined ? {} : { statusWindows: statusWindowsFor(query.wireStatus, context.nowMs) }),
     ...(query.severity === undefined ? {} : { severity: query.severity }),
+    ...(query.serviceId === undefined ? {} : { serviceId: query.serviceId }),
+    ...(query.sinceMs === undefined ? {} : { sinceMs: query.sinceMs }),
   };
   const page = pageProblems(db, filter, toStoreCursor(query.cursor ?? null), pageLimit(query.limit));
   return toPage(page, (row) => toSummary(row, listEvidence(db, row.id), context));
