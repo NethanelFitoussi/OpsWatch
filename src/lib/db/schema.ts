@@ -275,3 +275,112 @@ export const familySnapshots = sqliteTable(
 
 export type FamilySnapshotRow = typeof familySnapshots.$inferSelect;
 
+export const ERROR_GROUP_STATUSES = ['new', 'regressed', 'ongoing', 'resolved', 'muted'] as const;
+export type ErrorGroupStatus = (typeof ERROR_GROUP_STATUSES)[number];
+
+/**
+ * An error group (§4.4): a fingerprint, not an occurrence. It is what a screen lists, counts and follows.
+ *
+ * `fingerprintVersion` is stored on every row so that changing the algorithm bumps the version and produces
+ * new groups rather than silently re-merging history — the group page can then say "regrouped in version N"
+ * when both exist.
+ */
+export const errorGroups = sqliteTable(
+  'error_groups',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    fingerprint: text('fingerprint').notNull(),
+    fingerprintVersion: integer('fingerprint_version').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    serviceId: text('service_id'),
+    logSourceId: text('log_source_id').notNull(),
+    exceptionType: text('exception_type'),
+    /** One real message, kept so a reader sees what it actually looked like. */
+    sampleMessage: text('sample_message').notNull(),
+    /** What the fingerprint was computed over. Stored so a regrouping can be explained. */
+    normalizedMessage: text('normalized_message').notNull(),
+    topFrames: text('top_frames', { mode: 'json' }).$type<string[]>().notNull(),
+    firstSeenAt: integer('first_seen_at').notNull(),
+    lastSeenAt: integer('last_seen_at').notNull(),
+    status: text('status', { enum: ERROR_GROUP_STATUSES }).notNull(),
+    /** When it entered its current status. For a regression this is when it came back, not when it began. */
+    statusSince: integer('status_since').notNull(),
+    lastDeploymentId: text('last_deployment_id'),
+    problemId: text('problem_id'),
+    mutedReason: text('muted_reason'),
+  },
+  (t) => [
+    // One group per fingerprint per environment, per algorithm version.
+    uniqueIndex('error_groups_fingerprint').on(t.connectionId, t.scope, t.fingerprint, t.fingerprintVersion),
+    index('error_groups_env_seq').on(t.connectionId, t.scope, t.seq),
+    index('error_groups_last_seen').on(t.connectionId, t.scope, t.lastSeenAt),
+  ],
+);
+
+/**
+ * Occurrences, rolled up by hour. §4.4 counts over a window, and an hourly bucket is what makes "three times
+ * the baseline for this hour of the week" answerable without keeping every line.
+ */
+export const errorOccurrences = sqliteTable(
+  'error_occurrences',
+  {
+    groupId: text('group_id')
+      .notNull()
+      .references(() => errorGroups.id, { onDelete: 'cascade' }),
+    /** The hour this bucket covers, as epoch milliseconds truncated to the hour. */
+    hourAt: integer('hour_at').notNull(),
+    count: integer('count').notNull(),
+    /** How many distinct instances reported it in that hour. Null when the source does not say. */
+    instances: integer('instances'),
+  },
+  (t) => [primaryKey({ columns: [t.groupId, t.hourAt] })],
+);
+
+/**
+ * A log group OpsWatch may read errors from, and how to parse it.
+ *
+ * **Opt-in per source, off by default**, because Logs Insights is billed per gigabyte scanned and is the one
+ * cost that can surprise (§9.5). A disabled source costs nothing at all. The field *mapping* is stored here;
+ * the log content is not.
+ */
+export const logSources = sqliteTable(
+  'log_sources',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    logGroup: text('log_group').notNull(),
+    serviceId: text('service_id'),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+    format: text('format', { enum: ['json', 'regex'] as const }).notNull(),
+    /** Which field holds the level, the type, the message, the stack, the route. Never the content itself. */
+    fieldMap: text('field_map', { mode: 'json' }).$type<Record<string, string>>().notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('log_sources_group').on(t.connectionId, t.scope, t.logGroup)],
+);
+
+/**
+ * Where a reader had got to. "What's new" is measured against the last time *you* looked, not against a
+ * fixed window, which is what makes a morning brief personal rather than generic.
+ */
+export const userMarks = sqliteTable(
+  'user_marks',
+  {
+    adminUserId: integer('admin_user_id')
+      .notNull()
+      .references(() => adminUser.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    seenAt: integer('seen_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.adminUserId, t.kind, t.connectionId, t.scope] })],
+);
+
+export type ErrorGroupRow = typeof errorGroups.$inferSelect;
+export type ErrorOccurrenceRow = typeof errorOccurrences.$inferSelect;
+export type LogSourceRow = typeof logSources.$inferSelect;
+

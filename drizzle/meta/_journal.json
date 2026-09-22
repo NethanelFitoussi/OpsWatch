@@ -57,6 +57,13 @@
       "when": 1790068411570,
       "tag": "0007_quick_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790071418434,
+      "tag": "0008_white_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

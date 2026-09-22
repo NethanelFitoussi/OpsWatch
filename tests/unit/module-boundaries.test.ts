@@ -55,6 +55,7 @@ const SERVER_ONLY_MODULES = [
   'lib/store/collector.ts',
   'lib/store/incidents.ts',
   'lib/store/retention.ts',
+  'lib/store/errors.ts',
   'lib/detect/key.ts',
   'lib/detect/score.ts',
   'lib/detect/types.ts',
