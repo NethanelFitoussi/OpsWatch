@@ -1411,6 +1411,71 @@
       "version": "Version d'OpsWatch",
       "notMeasured": "Non mesuré",
       "adminOnly": "Seul un administrateur peut voir cette page."
+    },
+    "history": {
+      "title": "Données et historique",
+      "description": "La collecte d’historique ajoute des requêtes AWS récurrentes : OpsWatch en indique le coût avant que vous ne l’activiez.",
+      "state": {
+        "on": "Historique collecté",
+        "off": "Historique non collecté"
+      },
+      "enable": "Collecter l’historique",
+      "offExplained": "Tant que c'est désactivé, OpsWatch n'effectue aucune requête AWS récurrente pour l'historique, et toutes les pages en direct continuent de fonctionner exactement comme maintenant.",
+      "limited": "Ce qui reste limité sans historique",
+      "limits": {
+        "baselines": "Références",
+        "anomalies": "Détection d'anomalies",
+        "whatsNew": "« Nouveautés » dans le temps",
+        "slos": "SLO",
+        "incidentTimelines": "Chronologies d'incidents",
+        "reports": "Rapports de long terme",
+        "correlation": "Corrélation entre fournisseurs"
+      },
+      "interval": "À quelle fréquence",
+      "intervalOption": "{minutes, plural, one {chaque minute} other {toutes les # minutes}}",
+      "intervalConsequence": "{cycles} cycles par mois, {metrics} métriques demandées",
+      "categories": "Quoi collecter",
+      "preset": {
+        "minimal": "Minimal",
+        "standard": "Standard",
+        "detailed": "Détaillé",
+        "custom": "Personnalisé"
+      },
+      "category": {
+        "infrastructure": "Métriques d’infrastructure",
+        "application": "Métriques applicatives",
+        "database": "Métriques de base de données",
+        "cache": "Cache",
+        "logs": "Volume de journaux",
+        "errors": "Erreurs",
+        "synthetics": "Résultats synthétiques",
+        "deployments": "Déploiements",
+        "problems": "Problèmes",
+        "incidents": "Incidents",
+        "alerts": "Historique des alertes"
+      },
+      "estimate": "Coût mensuel estimé",
+      "estimateCaveat": "Une estimation à partir des tarifs publiés et des ressources découvertes. Ce n'est pas une facture : OpsWatch ne voit pas les tarifs réels de votre compte.",
+      "lineMetrics": "Métriques : {metrics} demandées par mois",
+      "lineScanned": "Analyse de journaux : environ {gigabytes} Go par mois",
+      "volatile": "Cette moitié varie selon ce que votre application journalise : c'est celle qui peut surprendre.",
+      "total": "Total estimé",
+      "retention": "Conserver l'historique",
+      "retentionDays": "{days} jours",
+      "provider": "Stocké par",
+      "save": "Enregistrer",
+      "saved": "Enregistré.",
+      "errors": {
+        "invalid_interval": "Choisissez un intervalle entre 1 et 1440 minutes.",
+        "invalid_retention": "Choisissez une conservation entre 1 et 3650 jours."
+      }
+    },
+    "more": {
+      "title": "Autres paramètres",
+      "history": "Données et historique",
+      "historyHint": "Si OpsWatch collecte l’historique, ce que cela coûterait et combien de temps il est conservé.",
+      "status": "État du système",
+      "statusHint": "Si le collecteur fonctionne, la dernière exécution de chaque tâche et l’état de la base de données."
     }
   },
   "Api": {

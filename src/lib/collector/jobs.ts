@@ -41,8 +41,12 @@ const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
 export const JOBS: Record<JobId, JobSpec> = {
-  // Behind the history switch (Task 24): rollups are what §33.2 calls a storage-provider concern.
-  metrics: { id: 'metrics', everyMs: 5 * MINUTE, cap: 500, scope: 'environment', freshInstall: false },
+  /**
+   * Rollups, which §33.2 calls a storage-provider concern. Scheduled from the start but gated by the history
+   * switch inside the job itself: while history is off it makes no AWS request at all. Gating it here as
+   * well would mean an operator who enables history has to restart for it to take effect.
+   */
+  metrics: { id: 'metrics', everyMs: 5 * MINUTE, cap: 500, scope: 'environment', freshInstall: true },
   // Runs over data the pages already fetched, so it costs nothing extra.
   detect: { id: 'detect', everyMs: 5 * MINUTE, cap: null, scope: 'environment', freshInstall: true },
   deployments: { id: 'deployments', everyMs: 5 * MINUTE, cap: 100, scope: 'environment', freshInstall: false },
