@@ -1,6 +1,19 @@
 'use client';
 
-import { ChartColumn, ClipboardCheck, FileText, LayoutList, Lightbulb, Route, Search, Table2, type LucideIcon } from 'lucide-react';
+import {
+  ChartColumn,
+  ClipboardCheck,
+  FileText,
+  HeartPulse,
+  LayoutList,
+  Lightbulb,
+  Route,
+  Search,
+  Sunrise,
+  Table2,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { SUBSECTION_ICONS } from '@/lib/monitoring/shared/sections';
@@ -10,6 +23,9 @@ export type SectionLink = { subsection: string; href: string; label: string; com
 
 /** One icon per sub-page kind, so every entry reads at a glance. */
 const ICONS: Record<string, LucideIcon> = {
+  problems: TriangleAlert,
+  health: HeartPulse,
+  brief: Sunrise,
   insights: Lightbulb,
   audit: ClipboardCheck,
   list: LayoutList,

@@ -13,7 +13,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   environments: true,
   health: false,
   brief: false,
-  problems: false,
+  // GET /problems and /problems/{id} serve real rows the collector wrote.
+  problems: true,
   errors: false,
   services: false,
   infrastructure: false,

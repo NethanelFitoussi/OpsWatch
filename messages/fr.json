@@ -1106,6 +1106,61 @@
         "title": "Groupes de journaux",
         "billed": "Les requêtes Logs Insights sont facturées par AWS au Go de journaux analysé."
       }
+    },
+    "problems": {
+      "title": "Problèmes",
+      "description": "Ce qu'OpsWatch estime défaillant en ce moment, le plus grave en premier.",
+      "empty": "Rien ne va mal dans cet environnement.",
+      "emptyHint": "OpsWatch vérifie toutes les cinq minutes. Un problème apparaît ici dès qu'un détecteur en ouvre un.",
+      "waiting": "OpsWatch n'a pas terminé sa première vérification de cet environnement.",
+      "waitingHint": "Le premier cycle s'exécute dans les cinq minutes suivant l'ajout d'une connexion.",
+      "counts": "{critical} critiques, {warning} avertissements, {info} informations",
+      "columns": {
+        "problem": "Problème",
+        "severity": "Gravité",
+        "score": "Score",
+        "subject": "Sujet",
+        "firstSeen": "Première fois",
+        "lastSeen": "Dernière fois",
+        "occurrences": "Vu"
+      },
+      "status": {
+        "new": "Nouveau",
+        "active": "Actif",
+        "acknowledged": "Pris en compte",
+        "resolved": "Résolu"
+      },
+      "stale": "Pas vérifié récemment",
+      "staleHint": "OpsWatch n'a pas pu évaluer ce sujet depuis plus d'une heure : il n'est donc ni confirmé ni levé.",
+      "occurrencesValue": "{count, plural, one {# fois} other {# fois}}",
+      "detail": {
+        "back": "Tous les problèmes",
+        "evidence": "Preuves",
+        "evidenceDescription": "Ce que le détecteur a réellement lu. Chaque élément est un fait observé.",
+        "noEvidence": "Aucune preuve n'a été enregistrée.",
+        "notMeasured": "Non mesuré",
+        "why": "Pourquoi ce score",
+        "whyDescription": "Le score est de {score} sur 100. Chaque terme est multiplié par son poids et le total est ramené au poids réellement disponible.",
+        "term": {
+          "s": "Niveau du détecteur",
+          "b": "Étendue",
+          "t": "Persistance",
+          "u": "Exposé aux utilisateurs",
+          "d": "Écart à la référence"
+        },
+        "unavailable": "Pas encore connu",
+        "unavailableHint": "Ce terme est écarté plutôt que compté comme zéro, et le score est ramené au reste.",
+        "weight": "Poids",
+        "value": "Valeur",
+        "contribution": "Apporte",
+        "rescaled": "Ramené à {available} sur 100, car tous les termes n'ont pas pu être mesurés.",
+        "floored": "Relevé au plancher critique : le sujet est totalement défaillant.",
+        "notFound": "Ce problème n'existe pas dans cet environnement.",
+        "firstSeen": "Première fois",
+        "lastSeen": "Dernière fois",
+        "occurrences": "Occurrences",
+        "flaps": "Retours"
+      }
     }
   },
   "Insights": {
@@ -1141,6 +1196,9 @@
   },
   "Sections": {
     "overview": {
+      "problems": "Problèmes",
+      "health": "Santé",
+      "brief": "Point du matin",
       "insights": "Analyses",
       "audit": "Audit"
     },
