@@ -1383,3 +1383,30 @@ instance.
   the lock holder; per environment when it was last read; database size and the schema version.
 - [x] **Step 2:** `GET /api/v1/system/status` (admin), `GET /api/health` (public), the page, EN/FR.
 - [x] **Step 3:** tests, browser check, gate, commit, integrate.
+
+---
+
+## Phase 6 — Historical storage
+
+### Task 22: `HistoricalStorageProvider` and its conformance suite
+
+Implements **§33.10**: the interface is not a list of method names, it is a set of guarantees, and a provider
+that cannot pass the conformance suite is not shipped.
+
+**Files:** `src/lib/history/provider.ts`, `tests/helpers/history-conformance.ts`.
+
+The five guarantees, each of which the suite checks:
+
+1. **Idempotent writes**, keyed by `(category, subjectId, intervalStart, resolution)`. Writing the same batch
+   twice leaves the same state, so a crash mid-batch is recovered by replaying it rather than by reasoning
+   about what got through.
+2. **All-or-nothing visibility.** A reader never sees half a batch.
+3. **A watermark on every read** — the instant up to which data is complete. A partial interval is never
+   returned without saying so.
+4. **Clock skew is rejected, not stored.** A timestamp outside the stated skew is refused, because a writer
+   whose clock is wrong would otherwise poison a series silently.
+5. **Detectors read at or below the watermark**, so an eventually-consistent backend can never open a problem
+   from half a cycle.
+
+- [x] **Step 1:** the interface, its types and the conformance suite.
+- [x] **Step 2:** gate and commit; Task 23 provides the first implementation and runs the suite against it.

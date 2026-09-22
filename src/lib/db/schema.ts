@@ -405,3 +405,51 @@ export const logsUsage = sqliteTable(
 
 export type LogsUsageRow = typeof logsUsage.$inferSelect;
 
+/**
+ * The default historical store (§33.9's first provider): history in the OpsWatch database itself.
+ *
+ * The primary key *is* §33.10's idempotency key, which is what makes a replayed batch a no-op rather than a
+ * duplicate — the guarantee a crash mid-batch is recovered by.
+ */
+export const historyPoints = sqliteTable(
+  'history_points',
+  {
+    category: text('category').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    subjectId: text('subject_id').notNull(),
+    metric: text('metric').notNull(),
+    resolution: text('resolution').notNull(),
+    intervalStart: integer('interval_start').notNull(),
+    /** Null is "not measured" and is stored as such (§2.4). */
+    value: real('value'),
+    samples: integer('samples').notNull(),
+  },
+  (t) => [
+    primaryKey({
+      columns: [t.category, t.connectionId, t.scope, t.subjectId, t.metric, t.resolution, t.intervalStart],
+    }),
+    index('history_points_range').on(t.connectionId, t.scope, t.subjectId, t.metric, t.resolution, t.intervalStart),
+  ],
+);
+
+/**
+ * How far each series is complete. Read separately from the points, because §33.10 requires a read to carry
+ * the watermark even when it returns nothing at all.
+ */
+export const historyWatermarks = sqliteTable(
+  'history_watermarks',
+  {
+    category: text('category').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    subjectId: text('subject_id').notNull(),
+    metric: text('metric').notNull(),
+    resolution: text('resolution').notNull(),
+    completeTo: integer('complete_to').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.category, t.connectionId, t.scope, t.subjectId, t.metric, t.resolution] })],
+);
+
+export type HistoryPointRow = typeof historyPoints.$inferSelect;
+

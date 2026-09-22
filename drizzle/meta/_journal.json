@@ -71,6 +71,13 @@
       "when": 1790072299816,
       "tag": "0009_cute_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790073656992,
+      "tag": "0010_dapper_mordo",
+      "breakpoints": true
     }
   ]
 }
