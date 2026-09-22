@@ -1,6 +1,10 @@
 import 'server-only';
 import { and, asc, desc, eq, gt, gte, inArray, isNull, isNotNull, or, sql } from 'drizzle-orm';
+import type { DetectedProblem } from '../detect/types';
+import type { LiveProblem, Transition } from '../detect/lifecycle';
+import { severityForScore, scoreProblem } from '../detect/score';
 import { randomId } from '../crypto';
+import { appendEvent } from './events';
 import type { Db } from '../db/client';
 import {
   PROBLEM_SEVERITIES,
@@ -230,4 +234,193 @@ export function countProblemsBySeverity(db: Db, filter: ProblemFilter): Record<P
     .all();
   for (const row of rows) counts[row.severity] = Number(row.total);
   return counts;
+}
+
+/**
+ * The projection the pure lifecycle layer works on. `detect` may not import the schema, so the row is
+ * narrowed here to exactly the fields the rules read — which is also a useful discipline: a rule that needs
+ * a new field has to say so.
+ */
+function toLive(row: ProblemRow): LiveProblem {
+  return {
+    id: row.id,
+    key: row.key,
+    status: row.status,
+    firstSeenAt: row.firstSeenAt,
+    lastSeenAt: row.lastSeenAt,
+    lastEvaluatedAt: row.lastEvaluatedAt,
+    clearStreak: row.clearStreak,
+    clearSinceAt: row.clearSinceAt,
+    occurrences: row.occurrences,
+    flapCount: row.flapCount,
+    resolvedAt: row.resolvedAt,
+  };
+}
+
+/** Every problem still open in one environment, with the row kept beside its projection. */
+export function listLiveProblems(db: Db, connectionId: string, scope: string): { row: ProblemRow; live: LiveProblem }[] {
+  return db
+    .select()
+    .from(problems)
+    .where(and(eq(problems.connectionId, connectionId), eq(problems.scope, scope), isNull(problems.resolvedAt)))
+    .orderBy(asc(problems.seq))
+    .all()
+    .map((row) => ({ row, live: toLive(row) }));
+}
+
+/** Rows resolved recently enough that trouble returning should continue them rather than start again. */
+export function listRecentlyResolved(db: Db, connectionId: string, scope: string, notBeforeMs: number): LiveProblem[] {
+  return db
+    .select()
+    .from(problems)
+    .where(
+      and(
+        eq(problems.connectionId, connectionId),
+        eq(problems.scope, scope),
+        isNotNull(problems.resolvedAt),
+        gte(problems.resolvedAt, notBeforeMs),
+      ),
+    )
+    .orderBy(desc(problems.resolvedAt))
+    .all()
+    .map(toLive);
+}
+
+/** What the detector knew about a subject, kept beside the transition so the store can write the row. */
+export type ProblemContext = { connectionId: string; scope: string };
+
+function scoredFields(problem: DetectedProblem, firstSeenAt: number, nowMs: number) {
+  const terms = scoreProblem({
+    level: problem.level,
+    blast: problem.blast,
+    minutesBreaching: problem.minutesBreaching,
+    userFacing: problem.userFacing,
+    robustZ: problem.robustZ,
+    subjectFirstSeenAt: firstSeenAt,
+    nowMs,
+    ...(problem.totalFailure === undefined ? {} : { totalFailure: problem.totalFailure }),
+    ...(problem.floorCritical === undefined ? {} : { floorCritical: problem.floorCritical }),
+  });
+  return { score: terms.score, severity: severityForScore(terms.score), scoreTerms: terms };
+}
+
+/**
+ * Applies one cycle's transitions. Answers how many problems are open afterwards, which is what the collector
+ * records as the job's coverage.
+ *
+ * Each transition is one small transaction rather than one large one: §9.2's rule is that the event loop keeps
+ * serving pages, and a cycle that opened two hundred problems inside a single transaction would not.
+ */
+export function applyTransitions(db: Db, context: ProblemContext, transitions: readonly Transition[]): number {
+  /**
+   * A transition is something that happened, so it goes on the append-only spine (§9.3) as well as changing
+   * the row. This is what lets the Morning brief say what *changed* since someone last looked, without
+   * reading AWS a second time. The dedupe key makes a repeated cycle a no-op rather than a duplicate.
+   */
+  const note = (kind: 'problem_opened' | 'problem_reopened' | 'problem_resolved', id: string, at: number, row: ProblemRow | null) => {
+    appendEvent(db, {
+      at,
+      connectionId: context.connectionId,
+      scope: context.scope,
+      kind,
+      subjectType: row?.subjectType ?? 'service',
+      subjectId: row?.subjectId ?? id,
+      serviceId: row?.serviceId ?? null,
+      severity: row?.severity ?? null,
+      source: 'aws',
+      payload: { problemId: id, ...(row === null ? {} : { titleKey: row.titleKey, score: row.score }) },
+      dedupeKey: `${kind}:${id}:${at}`,
+    });
+  };
+
+  for (const transition of transitions) {
+    switch (transition.type) {
+      case 'open': {
+        const { problem, at } = transition;
+        const opened = insertProblem(db, {
+          key: transition.key,
+          connectionId: context.connectionId,
+          scope: context.scope,
+          kind: problem.kind,
+          subjectType: problem.subject.type,
+          subjectId: problem.subject.id,
+          subjectName: problem.subject.name,
+          serviceId: problem.subject.serviceId,
+          source: 'aws',
+          titleKey: problem.titleKey,
+          values: problem.values,
+          href: problem.href,
+          firstSeenAt: at,
+          lastSeenAt: at,
+          lastEvaluatedAt: at,
+          previousProblemId: transition.previousProblemId,
+          evidence: problem.evidence,
+          ...scoredFields(problem, at, at),
+        });
+        note('problem_opened', opened.id, at, opened);
+        break;
+      }
+      case 'reopen': {
+        const { problem, at, id } = transition;
+        const existing = findProblemById(db, id);
+        const firstSeenAt = existing?.firstSeenAt ?? at;
+        db.transaction(() => {
+          updateProblem(db, id, {
+            status: 'open',
+            resolvedAt: null,
+            lastSeenAt: at,
+            lastEvaluatedAt: at,
+            clearStreak: 0,
+            clearSinceAt: null,
+            occurrences: (existing?.occurrences ?? 0) + 1,
+            // The flap is the point of reopening rather than starting again: it is how a service that comes
+            // and goes is told from one that broke once.
+            flapCount: (existing?.flapCount ?? 0) + 1,
+            ...scoredFields(problem, firstSeenAt, at),
+          });
+          replaceEvidence(db, id, problem.evidence);
+        });
+        note('problem_reopened', id, at, findProblemById(db, id));
+        break;
+      }
+      case 'touch': {
+        const { problem, at, id } = transition;
+        const existing = findProblemById(db, id);
+        const firstSeenAt = existing?.firstSeenAt ?? at;
+        db.transaction(() => {
+          updateProblem(db, id, {
+            lastSeenAt: at,
+            lastEvaluatedAt: at,
+            occurrences: (existing?.occurrences ?? 0) + 1,
+            ...(transition.resetClear ? { clearStreak: 0, clearSinceAt: null } : {}),
+            ...scoredFields(problem, firstSeenAt, at),
+          });
+          // The bundle is the current argument for the problem, so it is restated rather than appended to.
+          replaceEvidence(db, id, problem.evidence);
+        });
+        break;
+      }
+      case 'progress_clear':
+        updateProblem(db, transition.id, {
+          lastEvaluatedAt: transition.at,
+          clearStreak: transition.clearStreak,
+          clearSinceAt: transition.clearSinceAt,
+        });
+        break;
+      case 'resolve': {
+        const resolved = updateProblem(db, transition.id, {
+          status: 'resolved',
+          resolvedAt: transition.at,
+          lastEvaluatedAt: transition.at,
+        });
+        note('problem_resolved', transition.id, transition.at, resolved);
+        break;
+      }
+    }
+  }
+  return db
+    .select({ id: problems.id })
+    .from(problems)
+    .where(and(eq(problems.connectionId, context.connectionId), eq(problems.scope, context.scope), isNull(problems.resolvedAt)))
+    .all().length;
 }

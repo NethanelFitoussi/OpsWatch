@@ -11,10 +11,14 @@ import { FEATURES, type Feature } from '@opswatch/contract';
 /** What this build serves. An endpoint that does not exist yet says so rather than answering 404 to a client. */
 const IMPLEMENTED: Record<Feature, boolean> = {
   environments: true,
-  health: false,
-  brief: false,
-  problems: false,
-  errors: false,
+  // GET /health answers from the snapshots the detect job writes.
+  health: true,
+  // GET /brief reads the events spine the collector writes.
+  brief: true,
+  // GET /problems and /problems/{id} serve real rows the collector wrote.
+  problems: true,
+  // GET /errors and /errors/{id} serve the groups the errors job collects.
+  errors: true,
   services: false,
   infrastructure: false,
   logs: false,

@@ -1175,3 +1175,238 @@ this, the children §33.8 talks about would never exist.
 - [x] **Step 4: Run the test** → PASS.
 - [x] **Step 5: Add `'lib/detect/aws.ts'` to `SERVER_ONLY_MODULES`.**
 - [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(detect): the Stage 2 rules as detectors, with fleets expanded to members`.
+
+---
+
+## Phase 3 — The collector
+
+### Task 9: The collector runtime and its cycle
+
+Implements §9.2 (one runner, the job schedule, bounded jobs, the off switch) and **D4** (what a fresh install
+actually runs).
+
+**Files:**
+- Create: `src/lib/collector/jobs.ts`, `src/lib/collector/runner.ts`
+- Create: `tests/unit/collector-jobs.test.ts`, `tests/unit/collector-runner.test.ts`
+- Modify: `src/lib/env.ts` (`OPSWATCH_COLLECTOR`, `OPSWATCH_ROLE`), `src/instrumentation-node.ts`,
+  `tests/unit/module-boundaries.test.ts`
+
+**The shape.** The decision — *which jobs are due, for which environments, right now* — is a pure function
+over the clock and the last-run times, tested with literals. The runtime around it is a thin loop that claims
+the lock, asks that function, runs what it returns and records each run. Nothing schedules itself with a
+`setTimeout` captured at import time, because that cannot be tested and cannot be stopped.
+
+**Interfaces:**
+- `src/lib/collector/jobs.ts`
+  - `JOB_IDS` / `JobId` — the ten jobs of §9.2's table.
+  - `export type JobSpec = { id; everyMs; cap: number | null; scope: 'environment' | 'instance'; freshInstall: boolean }`
+  - `JOBS: Record<JobId, JobSpec>` — the schedule and the caps, in one place.
+  - `FRESH_INSTALL_JOBS` — **D4**: `inventory` (30 min), `detect` (5 min) and `compact` (24 h), and nothing
+    else. `metrics` waits for the history switch (Task 24); `errors` waits for an enabled `log_source`
+    (Task 20). A fresh install therefore spends **no extra AWS request**: `detect` runs over data the page
+    already fetched, and `inventory` is `Describe*`, which §9.5 records as throttled but not billed.
+- `src/lib/collector/runner.ts`
+  - `COLLECTOR_TICK_MS` 15 s — how often the loop wakes, well inside `LOCK_HEARTBEAT_MS`.
+  - `export function collectorEnabled(source: NodeJS.ProcessEnv): boolean` — false for
+    `OPSWATCH_COLLECTOR=off`. `OPSWATCH_ROLE=collector` is for a second container from the same image that
+    runs the collector alone; `OPSWATCH_ROLE=web` disables it. Neither set means the application process
+    runs it, which is the single-container default.
+  - `export function collectorOwner(): string` — `${process.pid}:${randomId()}`, per §33.4, never derived
+    from anything a user can set.
+  - `export type DueJob = { id: JobId; connectionId: string | null; scope: string | null }`
+  - `export function dueJobs(input: { nowMs; environments; lastRunAt; enabled }): DueJob[]` — **pure**. A job
+    is due when it has never run, or when `nowMs - lastRunAt >= everyMs`. Environment-scoped jobs yield one
+    entry per environment; instance-scoped jobs yield one.
+  - `export function startCollector(deps: CollectorDeps): { stop: () => Promise<void> }` — claims the lock,
+    refreshes it, and on each tick runs what `dueJobs` returns. Every dependency is injected: the clock, the
+    timer, the database, the environment list and the job implementations.
+
+**The rules.**
+
+1. **One runner.** The loop does nothing at all until `claimCollectorLock` returns true, and re-claims on
+   every tick so a stale lock is picked up within one tick of going stale.
+2. **A refresh that changes no row aborts the cycle** (§33.4). The process lost the lock while it was busy;
+   continuing would mean two collectors writing.
+3. **Every run is recorded** through `startRun`/`finishRun`, including a failure, so System status can tell
+   "it failed" from "it never ran". A job that throws is caught, recorded `failed` with its error *code*, and
+   the next job still runs — one broken job must not stop the cycle, the same rule the detector framework has.
+4. **Jobs run one at a time.** better-sqlite3 is synchronous and the point of §9.2's bounded transactions is
+   that the event loop keeps serving pages; running jobs concurrently would defeat it.
+5. **Nothing is logged but one JSON line per failure**, carrying the job and an error code — never a
+   credential, a resource name, a query or a result (§12.6).
+
+- [x] **Step 1: Write the failing tests.** `collector-jobs.test.ts` pins the schedule and the caps against
+  §9.2's table and asserts `FRESH_INSTALL_JOBS` is exactly D4's three. `collector-runner.test.ts` covers:
+  `dueJobs` with never-run and just-run jobs, per-environment fan-out, the off switch and the roles, that the
+  loop runs nothing without the lock, that a failed refresh aborts, that a throwing job is recorded and the
+  next still runs, and that `stop()` ends it.
+- [x] **Step 2: Run them to see them fail.** → FAIL.
+- [x] **Step 3: Write `jobs.ts` and `runner.ts`; add the two environment variables.**
+- [x] **Step 4: Run the tests** → PASS.
+- [x] **Step 5: Start it from `instrumentation-node.ts`**, after the database is opened, and add both files to
+  `SERVER_ONLY_MODULES`.
+- [x] **Step 6: Verify and commit.** Full gate. Commit: `feat(collector): the runtime, its lock loop and the job schedule`.
+
+### Task 10: The `inventory` and `detect` jobs
+
+Implements §9.2's two fresh-install jobs. Split into two checkpoints because they are independent: `detect` is
+what makes a problem exist at all, and `inventory` is what gives a subject a first-seen date.
+
+**10a — the `detect` job.** `src/lib/collector/detect.ts`, plus the store side of applying a cycle
+(`listLiveProblems`, `listRecentlyResolved`, `applyTransitions` in `src/lib/store/problems.ts`).
+
+The job reads the same four families the Insights page reads, through the same cache, so it costs no extra
+AWS request — §9.5's point and the reason D4 leaves it on. It then does what nothing did before: turns the
+rules' output into rows.
+
+The care is all in **§33.5**. A family that fails to load leaves its subjects *not evaluated*, which is not
+the same as clear, so the job reports per live problem whether the family behind it was actually read. A
+connection that cannot be resolved at all throws, and the run is recorded `failed` — never a cycle in which
+everything quietly looked healthy. `covered`/`total` carry how many families were read, so a partial cycle is
+visible rather than hidden.
+
+`resolvedInWindow` is passed **everything still retained**, not only what is still reopenable: the lifecycle
+applies the two-hour window itself, and needs the older rows so a successor can carry `previousProblemId`.
+Found by a test that asserted ancestry and got `null`.
+
+- [x] **Step 1: the store side** — the `LiveProblem` projection, the recently-resolved read, and
+  `applyTransitions`, which scores each problem as it writes it so the row and its arithmetic cannot disagree.
+- [x] **Step 2: the job**, wired into `run-job.ts`.
+- [x] **Step 3: a cycle test** covering open, occurrence counting, resolve-after-three-and-fifteen-minutes,
+  §33.5's regression, reopen inside the window, supersede beyond it, fleet members, and the total-failure floor.
+- [x] **Step 4: verify against a real container.** Against seeded AWS the collector produced three
+  `alarm_firing` problems, one per readable connection, each with its own key, evidence and stored arithmetic —
+  and the score terms show §33.7's rescaling live: `b: null, u: null, availableWeight: 65, rescaled: true`.
+- [x] **Step 5: gate and commit.** Commit: `feat(collector): the detect job, which is what makes a problem exist`.
+
+**10b — the `inventory` job.** `src/lib/store/resources.ts` and `src/lib/collector/inventory.ts`: the
+`Describe*` sweep that records what exists and when it was first and last seen, so a subject's age is known
+(which §33.7's freshness rule needs) and so a resource that disappears can be noticed.
+
+- [ ] **Step 1: the `resources` table and its store**, with first/last seen and an additive migration.
+- [ ] **Step 2: the job**, bounded by §9.2's 60 describe calls, recording `covered N of M`.
+- [ ] **Step 3: events** — `resource_appeared` and `resource_disappeared` on the spine.
+- [ ] **Step 4: gate and commit.**
+
+---
+
+## Phase 4 — The surfaces
+
+### Task 16: Health
+
+Implements the `health` shape of **D1** and §2's promise that an unreadable family and a healthy one never
+look the same.
+
+**What it reads, and what it must not.** Health has to be instant and must cost nothing, so it reads the
+database and never AWS. The detect job already fetches the four families every five minutes and already knows,
+per family, how many resources there are and how many are affected — so it now **writes that down**.
+
+**A table the spec's §9.3 list does not name, added deliberately:** `family_snapshots`, one row per
+`(connectionId, scope, family)`, holding what the last cycle saw — `status`, `total`, `affected`, `readAt`,
+and the failure when it could not be read. Without it Health could only report `null` for every count, which
+the contract permits but which makes the page useless. It is additive, it is written by a job that was already
+fetching the data, and it costs no extra request.
+
+**Lifecycle events.** `applyTransitions` now appends to the §9.3 events spine — `problem_opened`,
+`problem_reopened`, `problem_resolved` — which is what Task 17's brief reads to say what *changed*. The spine
+existed from Task 2 and nothing had ever written to it.
+
+- [x] **Step 1:** `family_snapshots` and its store, with an additive migration.
+- [x] **Step 2:** the detect job writes a snapshot per family, and appends a lifecycle event per transition.
+- [x] **Step 3:** `src/lib/read/health.ts` — the `health` shape, with `unavailable` carrying the sentence
+  twice (`messageKey` + `values` + `message`), as the contract addendum ruled.
+- [x] **Step 4:** `GET /api/v1/health`, the page, EN/FR, and `features.health`.
+- [x] **Step 5:** tests, a real browser check, gate, commit, integrate.
+
+### Task 17: The Morning brief
+
+Implements the `brief` shape of **D1**: health over a period rather than at an instant, which is why it
+carries `period` and `changes`.
+
+`changes` come from the events spine over the period — a problem that opened is a change, one that resolved is
+a change — so the brief answers "what happened since I last looked" from rows rather than from a second read
+of AWS. `mostImportant` is the bounded top-N's first entry.
+
+- [x] **Step 1:** `src/lib/read/brief.ts` over the events spine.
+- [x] **Step 2:** `GET /api/v1/brief`, the page, EN/FR, `features.brief`, and the brief becomes the
+  overview default as D2 intends.
+- [x] **Step 3:** tests, a real browser check, gate, commit, integrate.
+
+---
+
+## Phase 5 — Error intelligence
+
+### Task 18: Fingerprint v1, rebuild-proof
+
+Implements §4.4's deterministic fingerprint and **§33.13** (fingerprints survive a rebuild).
+
+**Files:** `src/lib/detect/fingerprint.ts`, `tests/unit/detect-fingerprint.test.ts`.
+
+Pure, like the rest of `detect`. The whole value is that **the same error keeps one group across deploys**:
+a build hash in a path and a minified function name both change on every release, and a fingerprint that
+noticed either would start a new group every time anyone shipped.
+
+- `FINGERPRINT_VERSION` 1 · `NORMALIZED_MESSAGE_MAX` 300 · `MAX_FRAMES` 5 (**D3**).
+- `normalizeMessage` — §4.4's order exactly: collapse whitespace, then UUID, IP, URL, e-mail, quoted string,
+  hex run of 8+, any remaining digit run, then trim and truncate. The order is load-bearing: a UUID contains
+  hex runs and digits, so replacing digits first would destroy it.
+- `normalizeFrame` — §33.13: a path segment that looks like a build hash is stripped, a function name that
+  matches a minifier pattern (one or two characters, or a bare digit sequence) is replaced by its **position**,
+  and a resolved symbol from a source map is preferred over both.
+- `fingerprint` — drop frames under `node_modules|vendor|site-packages|/usr/lib|<internal>`, keep the top
+  `MAX_FRAMES`, reduce each to `file:function` (**line numbers are dropped**, because they move on a
+  whitespace commit), and hash `type \n message \n frames`. With no stack, hash the type, the message and the
+  log group name instead.
+
+- [x] **Step 1: the tests**, including §33.13's two: two builds of the same code with different content
+  hashes and minified names give **one** fingerprint; two genuinely different errors with the same minified
+  names do **not** collide.
+- [x] **Step 2: the module.**
+- [x] **Step 3: gate and commit.**
+
+### Task 19b: System status
+
+Implements §21's System status and the mission's **Phase T**: OpsWatch must explain when *OpsWatch itself* is
+unhealthy, and "production is healthy" must never be confused with "OpsWatch cannot determine production
+health".
+
+It is admin-only and reads the database alone: `collector_runs` for what each job did, `collector_lock` for
+who is collecting, `family_snapshots` for when each environment was last read, and the migration table for the
+schema version. No AWS call, so the page that tells you monitoring is broken does not itself depend on the
+thing that is broken.
+
+**Files:** `src/lib/read/system.ts`, `GET /api/v1/system/status`, `/settings/status`, and `GET /api/health`
+for a reverse proxy — `{ status, version }` and nothing else, unauthenticated, naming nothing about the
+instance.
+
+- [x] **Step 1:** the read service — per job the last run, its duration, coverage, truncation and next run;
+  the lock holder; per environment when it was last read; database size and the schema version.
+- [x] **Step 2:** `GET /api/v1/system/status` (admin), `GET /api/health` (public), the page, EN/FR.
+- [x] **Step 3:** tests, browser check, gate, commit, integrate.
+
+---
+
+## Phase 6 — Historical storage
+
+### Task 22: `HistoricalStorageProvider` and its conformance suite
+
+Implements **§33.10**: the interface is not a list of method names, it is a set of guarantees, and a provider
+that cannot pass the conformance suite is not shipped.
+
+**Files:** `src/lib/history/provider.ts`, `tests/helpers/history-conformance.ts`.
+
+The five guarantees, each of which the suite checks:
+
+1. **Idempotent writes**, keyed by `(category, subjectId, intervalStart, resolution)`. Writing the same batch
+   twice leaves the same state, so a crash mid-batch is recovered by replaying it rather than by reasoning
+   about what got through.
+2. **All-or-nothing visibility.** A reader never sees half a batch.
+3. **A watermark on every read** — the instant up to which data is complete. A partial interval is never
+   returned without saying so.
+4. **Clock skew is rejected, not stored.** A timestamp outside the stated skew is refused, because a writer
+   whose clock is wrong would otherwise poison a series silently.
+5. **Detectors read at or below the watermark**, so an eventually-consistent backend can never open a problem
+   from half a cycle.
+
+- [x] **Step 1:** the interface, its types and the conformance suite.
+- [x] **Step 2:** gate and commit; Task 23 provides the first implementation and runs the suite against it.

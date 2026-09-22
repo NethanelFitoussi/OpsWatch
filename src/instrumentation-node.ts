@@ -29,5 +29,28 @@ export async function registerNode() {
     }
   }
   const { getDb } = await import('./lib/db/client');
-  getDb();
+  const db = getDb();
+
+  // The collector runs in the application process by default (§9.2). It claims a lock before doing anything,
+  // so Next's double registration in development and a second container are both harmless.
+  const { collectorEnabled, collectorOwner, startCollector } = await import('./lib/collector/runner');
+  if (!collectorEnabled(process.env)) return;
+  const { FRESH_INSTALL_JOBS } = await import('./lib/collector/jobs');
+  const { listConnections } = await import('./lib/connections/repository');
+  const { runJob } = await import('./lib/collector/run-job');
+  startCollector({
+    db,
+    owner: collectorOwner(),
+    now: () => Date.now(),
+    // Re-read each tick, so a connection added while OpsWatch is running is collected without a restart.
+    environments: () =>
+      listConnections(db).flatMap((connection) =>
+        connection.regions.map((scope) => ({ connectionId: connection.id, scope })),
+      ),
+    enabled: () => FRESH_INSTALL_JOBS,
+    run: runJob,
+    setInterval: (fn, ms) => setInterval(fn, ms),
+    clearInterval: (handle) => clearInterval(handle as unknown as NodeJS.Timeout),
+    log: (line) => console.warn(line),
+  });
 }

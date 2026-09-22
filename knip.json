@@ -5,7 +5,8 @@
     "tests/e2e/global-setup.ts",
     "packages/contract/index.ts",
     "tests/persistence/playwright.config.ts",
-    "tests/persistence/*.spec.ts"
+    "tests/persistence/*.spec.ts",
+    "tests/audit/*.spec.ts"
   ],
   "ignore": [
     "src/components/ui/**",

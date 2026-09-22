@@ -5,7 +5,8 @@ import type { MonitoringSection } from './paths';
  * These segments are URL vocabulary and are never translated; `Sections.<section>.<segment>` holds their labels.
  */
 export const SUBSECTIONS = {
-  overview: ['insights', 'audit'],
+  overview: ['brief', 'health', 'problems', 'insights', 'audit'],
+  errors: ['groups', 'sources'],
   containers: ['services', 'report'],
   databases: ['instances', 'queries', 'report'],
   'load-balancers': ['list', 'report'],
@@ -36,6 +37,7 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
  * that builds a page deletes its line here and nothing else. A section's default segment is never in it.
  */
 export const UNBUILT_SUBSECTIONS: readonly string[] = [
+  'errors/sources',
   'overview/audit',
   'containers/report',
   'databases/report',
@@ -54,7 +56,15 @@ export function subsectionLabelKey(section: MonitoringSection, subsection: strin
 }
 
 /** One icon per segment, so the collapsed section panel always has one to show. */
-export const SUBSECTION_ICONS: Record<string, 'list' | 'report' | 'audit' | 'queries' | 'volume' | 'endpoints' | 'search' | 'insights'> = {
+export const SUBSECTION_ICONS: Record<
+  string,
+  'list' | 'report' | 'audit' | 'queries' | 'volume' | 'endpoints' | 'search' | 'insights' | 'problems' | 'health' | 'brief'
+> = {
+  groups: 'list',
+  sources: 'list',
+  problems: 'problems',
+  health: 'health',
+  brief: 'brief',
   insights: 'insights',
   audit: 'audit',
   services: 'list',

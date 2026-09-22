@@ -50,6 +50,41 @@
       "when": 1789886681849,
       "tag": "0006_early_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1790068411570,
+      "tag": "0007_quick_the_anarchist",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790071418434,
+      "tag": "0008_white_wolf_cub",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790072299816,
+      "tag": "0009_cute_wild_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790073656992,
+      "tag": "0010_dapper_mordo",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790073960241,
+      "tag": "0011_eager_spitfire",
+      "breakpoints": true
     }
   ]
 }

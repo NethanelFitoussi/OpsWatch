@@ -13,6 +13,7 @@
       "signOut": "Sign out",
       "mainNavigation": "Main navigation",
       "overview": "Overview",
+      "errors": "Errors",
       "loadBalancers": "Load balancers",
       "alarms": "Alarms"
     },
@@ -1106,6 +1107,173 @@
         "title": "Log groups",
         "billed": "Logs Insights queries are billed by AWS per GB of logs scanned."
       }
+    },
+    "problems": {
+      "title": "Problems",
+      "description": "What OpsWatch believes is wrong right now, worst first.",
+      "empty": "Nothing is wrong in this environment.",
+      "emptyHint": "OpsWatch checks every five minutes. A problem appears here as soon as a detector opens one.",
+      "waiting": "OpsWatch has not finished its first check of this environment.",
+      "waitingHint": "The first cycle runs within five minutes of a connection being added.",
+      "counts": "{critical} critical, {warning} warning, {info} info",
+      "columns": {
+        "problem": "Problem",
+        "severity": "Severity",
+        "score": "Score",
+        "subject": "Subject",
+        "firstSeen": "First seen",
+        "lastSeen": "Last seen",
+        "occurrences": "Seen"
+      },
+      "status": {
+        "new": "New",
+        "active": "Active",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "stale": "Not checked recently",
+      "staleHint": "OpsWatch has not been able to evaluate this subject for over an hour, so it is neither confirmed nor cleared.",
+      "occurrencesValue": "{count, plural, one {# time} other {# times}}",
+      "detail": {
+        "back": "All problems",
+        "evidence": "Evidence",
+        "evidenceDescription": "What the detector actually read. Every item is an observed fact.",
+        "noEvidence": "No evidence was recorded.",
+        "notMeasured": "Not measured",
+        "why": "Why this score",
+        "whyDescription": "The score is {score} out of 100. Each term is multiplied by its weight and the total is rescaled over the weight actually available.",
+        "term": {
+          "s": "Detector level",
+          "b": "Blast radius",
+          "t": "Persistence",
+          "u": "User-facing",
+          "d": "Deviation from baseline"
+        },
+        "unavailable": "Not known yet",
+        "unavailableHint": "This term is left out rather than counted as zero, and the score is rescaled over the rest.",
+        "weight": "Weight",
+        "value": "Value",
+        "contribution": "Contributes",
+        "rescaled": "Rescaled over {available} of 100, because not every term could be measured.",
+        "floored": "Raised to the critical floor: the subject has failed completely.",
+        "notFound": "That problem does not exist in this environment.",
+        "firstSeen": "First seen",
+        "lastSeen": "Last seen",
+        "occurrences": "Occurrences",
+        "flaps": "Times it came back"
+      }
+    },
+    "health": {
+      "title": "Health",
+      "description": "Whether this environment is healthy, and what OpsWatch could not check.",
+      "status": {
+        "healthy": "Healthy",
+        "degraded": "Degraded",
+        "critical": "Critical",
+        "unknown": "Cannot be determined"
+      },
+      "statusHint": {
+        "healthy": "Everything OpsWatch checks is within its thresholds.",
+        "degraded": "Something needs attention, or part of this environment could not be read.",
+        "critical": "Something is seriously wrong.",
+        "unknown": "OpsWatch has not been able to read this environment, so it cannot say whether production is healthy. This is not the same as everything being fine."
+      },
+      "counts": {
+        "critical": "Critical problems",
+        "warning": "Warnings",
+        "services": "Healthy services",
+        "notMeasured": "Not measured"
+      },
+      "families": "What OpsWatch checks",
+      "family": {
+        "ecs": "Containers",
+        "rds": "Databases",
+        "alb": "Load balancers",
+        "alarms": "Alarms"
+      },
+      "familyStatus": {
+        "healthy": "Healthy",
+        "degraded": "Needs attention",
+        "critical": "Critical",
+        "unknown": "Not read"
+      },
+      "affected": "{affected} of {total} affected",
+      "unread": "Not read yet",
+      "unavailable": {
+        "denied": "OpsWatch is not allowed to read {family} in this account.",
+        "throttled": "AWS is rate-limiting requests for {family}; OpsWatch will try again.",
+        "timeout": "Reading {family} took too long.",
+        "unknown": "OpsWatch could not read {family}."
+      },
+      "topProblem": "Worst right now",
+      "noProblems": "No problem is open.",
+      "changes": "Recent changes",
+      "noChanges": "Nothing has changed in the last day.",
+      "change": {
+        "problem_opened": "A problem opened on {subject}.",
+        "problem_reopened": "A problem came back on {subject}.",
+        "problem_resolved": "A problem resolved on {subject}."
+      },
+      "notMeasured": "Not measured",
+      "waiting": "OpsWatch has not finished its first check of this environment.",
+      "waitingHint": "The first cycle runs within five minutes of a connection being added."
+    },
+    "brief": {
+      "title": "Morning brief",
+      "description": "What changed since yesterday, and what deserves attention first.",
+      "period": "Since {from}",
+      "mostImportant": "Start here",
+      "nothingImportant": "Nothing is open. There is nothing to start on.",
+      "changes": "What changed",
+      "noChanges": "Nothing opened or resolved in this period.",
+      "summary": {
+        "healthy": "Production looks healthy.",
+        "degraded": "Production needs attention.",
+        "critical": "Production has a critical problem.",
+        "unknown": "OpsWatch cannot say how production is; it has not been able to read this environment."
+      },
+      "opened": "{count, plural, =0 {nothing opened} one {# problem opened} other {# problems opened}}",
+      "resolved": "{count, plural, =0 {nothing resolved} one {# resolved} other {# resolved}}",
+      "waiting": "OpsWatch has not finished its first check of this environment.",
+      "waitingHint": "The first cycle runs within five minutes of a connection being added."
+    },
+    "errors": {
+      "title": "Errors",
+      "description": "Errors grouped by what they are, not by how often they happened.",
+      "whatsNew": "What's new",
+      "setNew": "New",
+      "setRegressed": "Came back",
+      "setSpiking": "Getting worse",
+      "none": "Nothing in this set.",
+      "status": {
+        "new": "New",
+        "recurring": "Recurring",
+        "regression": "Came back",
+        "resolved": "Resolved"
+      },
+      "statusLabel": "Status",
+      "occurrencesLabel": "Occurrences",
+      "occurrences": "{count, plural, one {# time} other {# times}} in the last day",
+      "occurrencesUnknown": "Not counted",
+      "instances": "{count} instances",
+      "trend": {
+        "rising": "Rising",
+        "falling": "Falling",
+        "stable": "Steady"
+      },
+      "firstSeen": "First seen",
+      "cameBack": "Came back",
+      "lastSeen": "Last seen",
+      "frames": "Where it happens",
+      "noFrames": "This error has no stack trace, so it is grouped by its message and its log group.",
+      "noSources": "OpsWatch is not reading errors from any log group yet.",
+      "noSourcesHint": "Error collection is off until you choose a log group. CloudWatch Logs Insights is billed per gigabyte scanned, so OpsWatch never reads one you have not asked it to.",
+      "noneEnabled": "No log group is switched on for error collection.",
+      "noneEnabledHint": "Switch one on and OpsWatch will start grouping its errors within fifteen minutes.",
+      "empty": "No errors have been collected from the log groups you switched on.",
+      "emptyHint": "OpsWatch reads them every fifteen minutes.",
+      "budgetStopped": "Error collection stopped for today because it reached its scanning budget.",
+      "budgetHint": "It resumes tomorrow. Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY to scan more, knowing that CloudWatch bills per gigabyte."
     }
   },
   "Insights": {
@@ -1141,6 +1309,9 @@
   },
   "Sections": {
     "overview": {
+      "problems": "Problems",
+      "health": "Health",
+      "brief": "Morning brief",
       "insights": "Insights",
       "audit": "Audit"
     },
@@ -1165,6 +1336,10 @@
       "search": "Search",
       "volume": "Volume",
       "endpoints": "Endpoints"
+    },
+    "errors": {
+      "groups": "Error groups",
+      "sources": "Log sources"
     }
   },
   "Settings": {
@@ -1195,6 +1370,112 @@
     "errors": {
       "refresh_invalid": "Choose one of the offered refresh intervals.",
       "range_invalid": "Choose one of the offered time ranges."
+    },
+    "status": {
+      "title": "System status",
+      "description": "What OpsWatch knows about itself. This page reads only its own database, so it still works when monitoring does not.",
+      "collector": "Collector",
+      "collectorAlive": "Running",
+      "collectorStale": "Not running",
+      "collectorNever": "The collector has never run. Every page that reports on your environments is reporting on nothing yet.",
+      "collectorHint": "One process collects at a time. It takes a lock and refreshes it every 30 seconds.",
+      "lastHeartbeat": "Last heartbeat",
+      "jobs": "Jobs",
+      "job": {
+        "name": "Job",
+        "last": "Last run",
+        "status": "Result",
+        "duration": "Took",
+        "covered": "Covered",
+        "next": "Next"
+      },
+      "jobStatus": {
+        "running": "Running",
+        "ok": "OK",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "never": "Never run"
+      },
+      "truncated": "Capped",
+      "coveredOf": "{covered} of {total}",
+      "environments": "Environments",
+      "environment": {
+        "name": "Environment",
+        "lastRead": "Last read",
+        "families": "Read"
+      },
+      "neverRead": "Never read",
+      "database": "Database",
+      "size": "Size",
+      "schema": "Schema version",
+      "version": "OpsWatch version",
+      "notMeasured": "Not measured",
+      "adminOnly": "Only an administrator can see this page."
+    },
+    "history": {
+      "title": "Data & history",
+      "description": "Historical collection adds recurring AWS requests, so OpsWatch shows what it would cost before you turn it on.",
+      "state": {
+        "on": "Collecting history",
+        "off": "Not collecting history"
+      },
+      "enable": "Collect history",
+      "offExplained": "While this is off OpsWatch makes no recurring AWS request for history, and every live page keeps working exactly as it does now.",
+      "limited": "What stays limited without history",
+      "limits": {
+        "baselines": "Baselines",
+        "anomalies": "Anomaly detection",
+        "whatsNew": "\"What’s new\" over time",
+        "slos": "SLOs",
+        "incidentTimelines": "Incident timelines",
+        "reports": "Long-term reports",
+        "correlation": "Cross-provider correlation"
+      },
+      "interval": "How often",
+      "intervalOption": "{minutes, plural, one {every minute} other {every # minutes}}",
+      "intervalConsequence": "{cycles} cycles a month, {metrics} metrics requested",
+      "categories": "What to collect",
+      "preset": {
+        "minimal": "Minimal",
+        "standard": "Standard",
+        "detailed": "Detailed",
+        "custom": "Custom"
+      },
+      "category": {
+        "infrastructure": "Infrastructure metrics",
+        "application": "Application metrics",
+        "database": "Database metrics",
+        "cache": "Cache",
+        "logs": "Log volume",
+        "errors": "Errors",
+        "synthetics": "Synthetic results",
+        "deployments": "Deployments",
+        "problems": "Problems",
+        "incidents": "Incidents",
+        "alerts": "Alert history"
+      },
+      "estimate": "Estimated monthly cost",
+      "estimateCaveat": "An estimate from published prices and your discovered resources. It is not a bill, and OpsWatch cannot see your account’s actual rates.",
+      "lineMetrics": "Metrics: {metrics} requested a month",
+      "lineScanned": "Log scanning: about {gigabytes} GB a month",
+      "volatile": "This half moves with how much your application logs, so it is the one that can surprise.",
+      "total": "Estimated total",
+      "retention": "Keep history for",
+      "retentionDays": "{days} days",
+      "provider": "Stored by",
+      "save": "Save",
+      "saved": "Saved.",
+      "errors": {
+        "invalid_interval": "Choose an interval between 1 and 1440 minutes.",
+        "invalid_retention": "Choose a retention between 1 and 3650 days."
+      }
+    },
+    "more": {
+      "title": "More settings",
+      "history": "Data & history",
+      "historyHint": "Whether OpsWatch collects history, what it would cost, and how long it is kept.",
+      "status": "System status",
+      "statusHint": "Whether the collector is running, when each job last ran, and the state of the database."
     }
   },
   "Api": {

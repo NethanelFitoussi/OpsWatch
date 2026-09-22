@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import type { TokenAudience } from '@opswatch/contract';
 import {
   CONNECTION_METHODS,
@@ -240,3 +240,254 @@ export const incidentTimeline = sqliteTable('incident_timeline', {
 
 export type IncidentRow = typeof incidents.$inferSelect;
 export type IncidentTimelineRow = typeof incidentTimeline.$inferSelect;
+
+export const FAMILY_STATUSES = ['healthy', 'degraded', 'critical', 'unknown'] as const;
+export type FamilyStatus = (typeof FAMILY_STATUSES)[number];
+
+/**
+ * What the last detect cycle saw of one family of one environment.
+ *
+ * Health has to be instant and must cost nothing, so it reads this rather than AWS. The detect job already
+ * fetches all four families every five minutes and already knows how many resources each has and how many are
+ * affected; this is where it writes that down. Without it Health could only report `null` for every count -
+ * permitted by the contract, useless to a reader.
+ *
+ * One row per family per environment, replaced each cycle: it is a snapshot, not a history. History is what
+ * the events spine is for.
+ */
+export const familySnapshots = sqliteTable(
+  'family_snapshots',
+  {
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    family: text('family').notNull(),
+    status: text('status', { enum: FAMILY_STATUSES }).notNull(),
+    /** Null when the family could not be read: "not measured" is never written as 0 (§2.4). */
+    total: integer('total'),
+    affected: integer('affected'),
+    readAt: integer('read_at').notNull(),
+    /** Why it could not be read, for logic. The sentence a reader sees is built from these at read time. */
+    unavailableReason: text('unavailable_reason'),
+    unavailableCode: text('unavailable_code'),
+  },
+  (t) => [primaryKey({ columns: [t.connectionId, t.scope, t.family] })],
+);
+
+export type FamilySnapshotRow = typeof familySnapshots.$inferSelect;
+
+export const ERROR_GROUP_STATUSES = ['new', 'regressed', 'ongoing', 'resolved', 'muted'] as const;
+export type ErrorGroupStatus = (typeof ERROR_GROUP_STATUSES)[number];
+
+/**
+ * An error group (§4.4): a fingerprint, not an occurrence. It is what a screen lists, counts and follows.
+ *
+ * `fingerprintVersion` is stored on every row so that changing the algorithm bumps the version and produces
+ * new groups rather than silently re-merging history — the group page can then say "regrouped in version N"
+ * when both exist.
+ */
+export const errorGroups = sqliteTable(
+  'error_groups',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    fingerprint: text('fingerprint').notNull(),
+    fingerprintVersion: integer('fingerprint_version').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    serviceId: text('service_id'),
+    logSourceId: text('log_source_id').notNull(),
+    exceptionType: text('exception_type'),
+    /** One real message, kept so a reader sees what it actually looked like. */
+    sampleMessage: text('sample_message').notNull(),
+    /** What the fingerprint was computed over. Stored so a regrouping can be explained. */
+    normalizedMessage: text('normalized_message').notNull(),
+    topFrames: text('top_frames', { mode: 'json' }).$type<string[]>().notNull(),
+    firstSeenAt: integer('first_seen_at').notNull(),
+    lastSeenAt: integer('last_seen_at').notNull(),
+    status: text('status', { enum: ERROR_GROUP_STATUSES }).notNull(),
+    /** When it entered its current status. For a regression this is when it came back, not when it began. */
+    statusSince: integer('status_since').notNull(),
+    lastDeploymentId: text('last_deployment_id'),
+    problemId: text('problem_id'),
+    mutedReason: text('muted_reason'),
+  },
+  (t) => [
+    // One group per fingerprint per environment, per algorithm version.
+    uniqueIndex('error_groups_fingerprint').on(t.connectionId, t.scope, t.fingerprint, t.fingerprintVersion),
+    index('error_groups_env_seq').on(t.connectionId, t.scope, t.seq),
+    index('error_groups_last_seen').on(t.connectionId, t.scope, t.lastSeenAt),
+  ],
+);
+
+/**
+ * Occurrences, rolled up by hour. §4.4 counts over a window, and an hourly bucket is what makes "three times
+ * the baseline for this hour of the week" answerable without keeping every line.
+ */
+export const errorOccurrences = sqliteTable(
+  'error_occurrences',
+  {
+    groupId: text('group_id')
+      .notNull()
+      .references(() => errorGroups.id, { onDelete: 'cascade' }),
+    /** The hour this bucket covers, as epoch milliseconds truncated to the hour. */
+    hourAt: integer('hour_at').notNull(),
+    count: integer('count').notNull(),
+    /** How many distinct instances reported it in that hour. Null when the source does not say. */
+    instances: integer('instances'),
+  },
+  (t) => [primaryKey({ columns: [t.groupId, t.hourAt] })],
+);
+
+/**
+ * A log group OpsWatch may read errors from, and how to parse it.
+ *
+ * **Opt-in per source, off by default**, because Logs Insights is billed per gigabyte scanned and is the one
+ * cost that can surprise (§9.5). A disabled source costs nothing at all. The field *mapping* is stored here;
+ * the log content is not.
+ */
+export const logSources = sqliteTable(
+  'log_sources',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    logGroup: text('log_group').notNull(),
+    serviceId: text('service_id'),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+    format: text('format', { enum: ['json', 'regex'] as const }).notNull(),
+    /** Which field holds the level, the type, the message, the stack, the route. Never the content itself. */
+    fieldMap: text('field_map', { mode: 'json' }).$type<Record<string, string>>().notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('log_sources_group').on(t.connectionId, t.scope, t.logGroup)],
+);
+
+/**
+ * Where a reader had got to. "What's new" is measured against the last time *you* looked, not against a
+ * fixed window, which is what makes a morning brief personal rather than generic.
+ */
+export const userMarks = sqliteTable(
+  'user_marks',
+  {
+    adminUserId: integer('admin_user_id')
+      .notNull()
+      .references(() => adminUser.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    seenAt: integer('seen_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.adminUserId, t.kind, t.connectionId, t.scope] })],
+);
+
+export type ErrorGroupRow = typeof errorGroups.$inferSelect;
+export type ErrorOccurrenceRow = typeof errorOccurrences.$inferSelect;
+export type LogSourceRow = typeof logSources.$inferSelect;
+
+/**
+ * How many bytes Logs Insights scanned, per day, for the whole instance.
+ *
+ * §9.5: Logs Insights is billed per gigabyte scanned and is the one cost that can surprise a self-hoster.
+ * `OPSWATCH_LOGS_BUDGET_GB_PER_DAY` is a **hard stop**, not a warning, and this is what it is measured
+ * against. One row per UTC day, so yesterday's spend is still readable tomorrow.
+ */
+export const logsUsage = sqliteTable(
+  'logs_usage',
+  {
+    /** The UTC day, as epoch milliseconds at midnight. */
+    day: integer('day').primaryKey(),
+    bytesScanned: integer('bytes_scanned').notNull(),
+    queries: integer('queries').notNull(),
+    /** Set when the budget stopped the job that day, so the reason is visible rather than inferred. */
+    stoppedAt: integer('stopped_at'),
+  },
+);
+
+export type LogsUsageRow = typeof logsUsage.$inferSelect;
+
+/**
+ * The default historical store (§33.9's first provider): history in the OpsWatch database itself.
+ *
+ * The primary key *is* §33.10's idempotency key, which is what makes a replayed batch a no-op rather than a
+ * duplicate — the guarantee a crash mid-batch is recovered by.
+ */
+export const historyPoints = sqliteTable(
+  'history_points',
+  {
+    category: text('category').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    subjectId: text('subject_id').notNull(),
+    metric: text('metric').notNull(),
+    resolution: text('resolution').notNull(),
+    intervalStart: integer('interval_start').notNull(),
+    /** Null is "not measured" and is stored as such (§2.4). */
+    value: real('value'),
+    samples: integer('samples').notNull(),
+  },
+  (t) => [
+    primaryKey({
+      columns: [t.category, t.connectionId, t.scope, t.subjectId, t.metric, t.resolution, t.intervalStart],
+    }),
+    index('history_points_range').on(t.connectionId, t.scope, t.subjectId, t.metric, t.resolution, t.intervalStart),
+  ],
+);
+
+/**
+ * How far each series is complete. Read separately from the points, because §33.10 requires a read to carry
+ * the watermark even when it returns nothing at all.
+ */
+export const historyWatermarks = sqliteTable(
+  'history_watermarks',
+  {
+    category: text('category').notNull(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    subjectId: text('subject_id').notNull(),
+    metric: text('metric').notNull(),
+    resolution: text('resolution').notNull(),
+    completeTo: integer('complete_to').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.category, t.connectionId, t.scope, t.subjectId, t.metric, t.resolution] })],
+);
+
+export type HistoryPointRow = typeof historyPoints.$inferSelect;
+
+export const HISTORY_CATEGORIES = [
+  'infrastructure',
+  'application',
+  'database',
+  'cache',
+  'logs',
+  'errors',
+  'synthetics',
+  'deployments',
+  'problems',
+  'incidents',
+  'alerts',
+] as const;
+export type HistoryCategoryId = (typeof HISTORY_CATEGORIES)[number];
+
+/**
+ * Historical collection settings (§31.1). One row, id = 1, like the other settings.
+ *
+ * **Disabled by default, and that is the owner's binding ruling**: a fresh installation must never add AWS
+ * polling cost without an explicit action. While it is off there is no recurring polling at all and every
+ * live page keeps working exactly as it does today.
+ */
+export const historySettings = sqliteTable('history_settings', {
+  id: integer('id').primaryKey(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  /** Minutes between cycles when enabled. No hardcoded default beyond the form's initial suggestion. */
+  intervalMinutes: integer('interval_minutes').notNull().default(5),
+  /** Which categories are collected. Granular, because paying for all of them to get one is not a choice. */
+  categories: text('categories', { mode: 'json' }).$type<HistoryCategoryId[]>().notNull(),
+  /** How long history is kept, in days. */
+  retentionDays: integer('retention_days').notNull().default(90),
+  /** Which provider stores it. `opswatch-db` is the default and the only one this phase ships. */
+  providerId: text('provider_id').notNull().default('opswatch-db'),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export type HistorySettingsRow = typeof historySettings.$inferSelect;
+

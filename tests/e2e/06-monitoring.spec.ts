@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { MONITORING_CONNECTION, ensureMonitoringConnection, login, monitoringUrl, rscHeaders } from './helpers';
+import { MONITORING_CONNECTION, MOTO_REGION, ensureMonitoringConnection, login, monitoringUrl, rscHeaders } from './helpers';
 
 let connectionId = '';
 
@@ -10,9 +10,11 @@ test.beforeEach(async ({ page }) => {
 
 test('a monitoring section without a selection opens the first usable connection', async ({ page }) => {
   await page.goto('/en/overview');
-  await expect(page).toHaveURL(/\/en\/c\/[0-9a-f]{12}\/us-east-1\/overview\/insights$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Insights' })).toBeVisible();
-  await expect(page).toHaveTitle('Overview · OpsWatch');
+  // Problems is the overview default now that it exists; the brief takes over when Task 17 builds it.
+  await expect(page).toHaveURL(/\/en\/c\/[0-9a-f]{12}\/us-east-1\/overview\/brief$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Morning brief' })).toBeVisible();
+  // The title names the page, not the section, now that the section has more than one built page.
+  await expect(page).toHaveTitle('Morning brief · OpsWatch');
 });
 
 test('sidebar links keep the connection and region, and auto-refresh can be paused', async ({ page }) => {
@@ -154,3 +156,16 @@ test('a monitoring page fits a 360 px viewport without sideways scrolling', asyn
   const root = page.locator('html');
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });
+
+test('the environment root opens the default section rather than answering 404', async ({ page }) => {
+  // `/c/<id>/<region>` is a real address: it is the pair every API call is scoped to with ?env=, and it is
+  // what a shared link is most likely to be trimmed to. It used to 404.
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}`);
+  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/${MOTO_REGION}/overview/brief$`));
+});
+
+test('the environment root keeps the query string it was given', async ({ page }) => {
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}?range=6h`);
+  await expect(page).toHaveURL(/range=6h/);
+});
+
