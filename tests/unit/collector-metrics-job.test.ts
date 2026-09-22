@@ -11,14 +11,24 @@ import { createTestDb } from '../helpers/db';
 
 const resolveTarget = vi.fn();
 const loadFamily = vi.fn();
+const listLoadBalancers = vi.fn();
+const getMetricSeries = vi.fn();
 
 vi.mock('@/lib/monitoring/target', () => ({ resolveTarget: (...args: unknown[]) => resolveTarget(...args) }));
 vi.mock('@/lib/monitoring/overview', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/monitoring/overview')>()),
   loadFamily: (...args: unknown[]) => loadFamily(...args),
 }));
+vi.mock('@/lib/monitoring/elb', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/monitoring/elb')>()),
+  listLoadBalancers: (...args: unknown[]) => listLoadBalancers(...args),
+}));
+vi.mock('@/lib/monitoring/metrics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/monitoring/metrics')>()),
+  getMetricSeries: (...args: unknown[]) => getMetricSeries(...args),
+}));
 
-const { METRICS_RESOLUTION, runMetricsJob } = await import('@/lib/collector/metrics-job');
+const { METRICS_RESOLUTION, SLO_LOAD_BALANCER_LIMIT, runMetricsJob } = await import('@/lib/collector/metrics-job');
 const { writeHistorySettings } = await import('@/lib/history/settings');
 const { opswatchDbProvider } = await import('@/lib/history/opswatch-db');
 const { RESOLUTION_MS } = await import('@/lib/history/provider');
@@ -50,8 +60,12 @@ async function allPoints(db: Parameters<typeof opswatchDbProvider>[0]) {
 beforeEach(() => {
   resolveTarget.mockReset();
   loadFamily.mockReset();
+  listLoadBalancers.mockReset();
+  getMetricSeries.mockReset();
   resolveTarget.mockResolvedValue({ ok: true, data: { ...env, region: env.scope, credentials: {} } });
   loadFamily.mockResolvedValue({ ok: true, data: { total: 10, affected: 2 } });
+  listLoadBalancers.mockResolvedValue({ ok: true, data: [] });
+  getMetricSeries.mockResolvedValue({ ok: true, data: [] });
 });
 
 describe('§31.1 — history is off until someone turns it on', () => {
@@ -61,6 +75,9 @@ describe('§31.1 — history is off until someone turns it on', () => {
 
     expect(resolveTarget).not.toHaveBeenCalled();
     expect(loadFamily).not.toHaveBeenCalled();
+    // The availability rollups §19 reads are behind the same switch, so this call must not fire either.
+    expect(listLoadBalancers).not.toHaveBeenCalled();
+    expect(getMetricSeries).not.toHaveBeenCalled();
     expect(outcome).toEqual({ covered: 0, total: 0 });
   });
 
@@ -83,6 +100,75 @@ describe('§31.1 — history is off until someone turns it on', () => {
     await runMetricsJob({ db, ...env, nowMs: NOW + RESOLUTION_MS[METRICS_RESOLUTION] });
     expect(resolveTarget).not.toHaveBeenCalled();
     expect(loadFamily).not.toHaveBeenCalled();
+  });
+});
+
+describe('the availability rollups §19 reads back', () => {
+  const balancers = [{ name: 'prod-alb', arn: 'a', dimension: 'app/prod-alb/1', dnsName: null, scheme: null, state: null, vpcId: null, createdAt: null }];
+  const series = (over: Record<string, number[]> = {}) =>
+    Object.entries({ lb0req: [1000], lb0elb5xx: [5], lb0t5xx: [15], ...over }).map(([id, values]) => ({
+      id,
+      label: id,
+      timestamps: values.map((_, index) => NOW - index * 60_000),
+      values,
+    }));
+
+  const readMetric = (db: Parameters<typeof opswatchDbProvider>[0], metric: string) =>
+    opswatchDbProvider(db).read({
+      category: 'metric', subjectId: 'prod-alb', metric, ...env,
+      resolution: METRICS_RESOLUTION,
+      from: NOW - RESOLUTION_MS[METRICS_RESOLUTION] * 4,
+      to: NOW,
+    });
+
+  it('stores requests and both 5xx counts, which is what availability is computed from', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW);
+    listLoadBalancers.mockResolvedValue({ ok: true, data: balancers });
+    getMetricSeries.mockResolvedValue({ ok: true, data: series() });
+
+    await runMetricsJob({ db, ...env, nowMs: NOW });
+
+    expect((await readMetric(db, 'requests')).points[0]?.value).toBe(1000);
+    expect((await readMetric(db, 'elb5xx')).points[0]?.value).toBe(5);
+    expect((await readMetric(db, 'target5xx')).points[0]?.value).toBe(15);
+  });
+
+  it('THE RULING: a metric with no datapoint is stored as null, not as zero traffic', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW);
+    listLoadBalancers.mockResolvedValue({ ok: true, data: balancers });
+    // CloudWatch returned nothing for requests. Zero would say "no traffic", which nobody measured.
+    getMetricSeries.mockResolvedValue({ ok: true, data: series({ lb0req: [] }) });
+
+    await runMetricsJob({ db, ...env, nowMs: NOW });
+    expect((await readMetric(db, 'requests')).points[0]?.value).toBeNull();
+  });
+
+  it('counts the load balancers it covered in the run, alongside the families', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW);
+    listLoadBalancers.mockResolvedValue({ ok: true, data: balancers });
+    getMetricSeries.mockResolvedValue({ ok: true, data: series() });
+
+    const outcome = await runMetricsJob({ db, ...env, nowMs: NOW });
+    expect(outcome).toMatchObject({ covered: 5, total: 5 });
+  });
+
+  it('bounds the fan-out, so a large account cannot turn a five-minute job loose', async () => {
+    expect(SLO_LOAD_BALANCER_LIMIT).toBeGreaterThan(0);
+    expect(SLO_LOAD_BALANCER_LIMIT).toBeLessThanOrEqual(50);
+  });
+
+  it('records the families even when the load balancers cannot be listed', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW);
+    listLoadBalancers.mockResolvedValue({ ok: false, reason: 'error', code: 'AccessDenied', action: 'elasticloadbalancing:DescribeLoadBalancers' });
+
+    const outcome = await runMetricsJob({ db, ...env, nowMs: NOW });
+    // The families still counted; the availability half simply contributed nothing.
+    expect(outcome.covered).toBe(4);
+    expect(outcome.total).toBe(4);
   });
 });
 

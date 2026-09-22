@@ -150,6 +150,7 @@ export const EVENT_KINDS = [
   'problem_grouped', 'problem_ungrouped', 'fleet_opened', 'fleet_resolved',
   'resource_appeared', 'resource_disappeared', 'error_group_appeared', 'error_group_regressed',
   'collector_job_capped', 'collector_job_failed',
+  'deployment_started', 'deployment_completed', 'deployment_failed',
 ] as const;
 
 export type EventKind = (typeof EVENT_KINDS)[number];
@@ -174,6 +175,46 @@ export const events = sqliteTable('events', {
   index('events_subject_at').on(t.subjectId, t.at),
   uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
 ]);
+
+export const DEPLOYMENT_STATUSES = ['in_progress', 'completed', 'failed', 'rolled_back', 'unknown'] as const;
+
+/**
+ * Deployments, as the collector observes them (DEP-1).
+ *
+ * Identified by the provider's own deployment id, so a cycle that sees the same deployment again updates
+ * the row rather than adding a second one — the same reasoning as a problem's dedupe key.
+ */
+export const deployments = sqliteTable(
+  'deployments',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    /** The provider's id for this deployment, unique within an environment. */
+    deploymentId: text('deployment_id').notNull(),
+    serviceId: text('service_id').notNull(),
+    serviceName: text('service_name').notNull(),
+    cluster: text('cluster').notNull(),
+    /** The task definition revision, which is the version a reader recognises. */
+    taskDefinition: text('task_definition').notNull(),
+    status: text('status', { enum: DEPLOYMENT_STATUSES }).notNull(),
+    startedAt: integer('started_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+    desiredCount: integer('desired_count').notNull(),
+    runningCount: integer('running_count').notNull(),
+    failedTasks: integer('failed_tasks').notNull(),
+    firstSeenAt: integer('first_seen_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex('deployments_provider_id').on(t.connectionId, t.scope, t.deploymentId),
+    index('deployments_env_started').on(t.connectionId, t.scope, t.startedAt),
+    index('deployments_service').on(t.serviceId, t.startedAt),
+  ],
+);
+
+export type DeploymentRow = typeof deployments.$inferSelect;
+export type StoredDeploymentStatus = (typeof DEPLOYMENT_STATUSES)[number];
 
 export const COLLECTOR_RUN_STATUSES = ['running', 'ok', 'failed', 'skipped'] as const;
 

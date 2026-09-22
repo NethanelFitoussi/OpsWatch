@@ -231,6 +231,24 @@ the container, recreates it, and rebuilds the image — checking after each that
 that the database is on the volume rather than in the container. It uses its own Compose project and its own
 volume, so it never touches a running installation.
 
+### Checking the roadmap has not drifted
+
+`npm run roadmap:check` compares the repository against
+[`docs/superpowers/audits/full-roadmap-status.md`](docs/superpowers/audits/full-roadmap-status.md), which is
+the durable record of what is built and what is not.
+
+It checks only what has one right answer: a menu segment with no page behind it, a page still marked
+"coming soon", a filter the contract declares that its route ignores, a capability advertised without an
+endpoint, a placeholder marker in shipped source, and documentation sending a reader to a route that no
+longer exists. Contract schemas nothing serves are printed as notes rather than failures, because the
+contract is allowed to run ahead of the server — that is how the mobile app is built before a surface exists.
+
+It reads files only: no network, no Docker, no clock, so it is safe in CI and gives the same answer twice.
+
+**It will never tell you a feature is complete.** Whether a page tells the truth when it has no data, and
+whether an operator can actually finish the journey it exists for, are judgements it prints as questions and
+leaves to a person. A script that scored those would be worse than none, because its green would be believed.
+
 ## Mobile app
 
 An iOS and Android companion to a self-hosted OpsWatch server, in [`apps/mobile`](apps/mobile). It answers, in a few

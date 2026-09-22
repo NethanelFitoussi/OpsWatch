@@ -26,13 +26,16 @@ test('the section menu lists the sub-pages, marks the active one and keeps the r
   await expect(page.getByRole('heading', { level: 1, name: 'Instances' })).toBeVisible();
 });
 
-test('a sub-page no task has built is disabled, and nothing in the menu links to it', async ({ page }) => {
-  // Overview is fully built now, so the treatment is shown where it is still true: Logs.
+test('every sub-page in the menu is a link, because none is unbuilt any more', async ({ page }) => {
   await page.goto(`/en/c/${connectionId}/us-east-1/logs/search`);
   const nav = page.getByRole('navigation', { name: 'Logs pages' });
   await expect(nav.getByRole('link', { name: 'Search' })).toHaveAttribute('aria-current', 'page');
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Volume' })).toContainText('Coming soon');
-  await expect(nav.locator('a[href*="/logs/volume"]')).toHaveCount(0);
+  for (const label of ['Search', 'Volume', 'Endpoints']) {
+    await expect(nav.getByRole('link', { name: label })).toBeVisible();
+  }
+  // The disabled treatment still exists in the component; that it works in both directions is guarded by
+  // the filesystem-backed check in monitoring-sections.test.ts and by `npm run roadmap:check`.
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(0);
 });
 
 test('the breadcrumb names the section, the connection and the sub-page', async ({ page }) => {
@@ -47,9 +50,9 @@ test('the section menu is a scrollable strip at 360 px and nothing overflows', a
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto(`/en/c/${connectionId}/us-east-1/logs/search`);
   const nav = page.getByRole('navigation', { name: 'Logs pages' });
-  // Volume and Endpoints have no page yet, so the strip shows them disabled rather than linking to a 404.
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Volume' })).toBeVisible();
-  await expect(nav.locator('[aria-disabled="true"]').filter({ hasText: 'Endpoints' })).toBeVisible();
+  // All three are built, so all three are links; the strip still has to fit without the page overflowing.
+  await expect(nav.getByRole('link', { name: 'Volume' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Endpoints' })).toBeVisible();
   const root = page.locator('html');
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });

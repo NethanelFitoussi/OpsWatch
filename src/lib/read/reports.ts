@@ -3,9 +3,11 @@ import type { Report, ReportFigure, ReportPeriod, ReportRow, ReportSection, Repo
 import { PROBLEM_SEVERITIES, type ProblemSeverity } from '../db/schema';
 import type { Db } from '../db/client';
 import { kindsOfFamily, type ProblemFamily } from '../detect/family';
+import { albBucket, evaluateSlo, type Bucket } from '../detect/slo';
 import { readHistorySettings } from '../history/settings';
+import { countDeployments, listDeployments } from '../store/deployments';
 import { countOccurrences, enabledLogSources, recentErrorGroups } from '../store/errors';
-import { readHistoryRange } from '../store/history';
+import { listHistorySubjects, readHistoryRange } from '../store/history';
 import { countProblemsInWindow, worstSubjectsInWindow } from '../store/problems';
 
 /**
@@ -31,6 +33,10 @@ export const PERIOD_MS: Record<ReportPeriod, number> = {
 
 /** The resolution the metrics job writes, and therefore the one a report reads back. */
 const HISTORY_RESOLUTION = '5m';
+const HISTORY_RESOLUTION_MS = 5 * 60_000;
+
+/** §19's default availability objective, used where no SLO has been defined for a service yet. */
+export const DEFAULT_AVAILABILITY_OBJECTIVE = 0.999;
 
 /** How many rows a report lists per section. A report is a summary; the section pages are where the rest is. */
 export const REPORT_ROW_LIMIT = 5;
@@ -188,10 +194,116 @@ function availabilitySection(
     return (measured.filter((row) => row.value === 0).length / measured.length) * 100;
   };
 
+  const figures: ReportFigure[] = [
+    figure('healthyShare', share(now), share(before)),
+    figure('intervals', now.length, before.length),
+  ];
+
+  // Real request-level availability, where the metrics job has stored it (§19). This is the number that is
+  // *not* an approximation, so it is offered alongside the bucket share rather than replacing it.
+  const slo = requestAvailability(db, query, windows);
+  const rows: ReportRow[] = [];
+  if (slo !== null) {
+    figures.push(figure('availability', slo.current === null ? null : slo.current * 100, null));
+    figures.push(figure('errorBudget', slo.budgetRemaining === null ? null : slo.budgetRemaining * 100, null));
+    rows.push(...slo.rows);
+  }
+
+  return { id: 'availability', figures, rows, unavailable: null };
+}
+
+/**
+ * Availability per load balancer, computed by §19's arithmetic over the rollups the metrics job stored.
+ *
+ * Null when nothing has been stored for any load balancer, so the section falls back to the bucket share
+ * rather than showing an empty table that looks like "no load balancers".
+ */
+function requestAvailability(
+  db: Db,
+  query: ReportQuery,
+  windows: ReturnType<typeof windowsFor>,
+): { current: number | null; budgetRemaining: number | null; rows: ReportRow[] } | null {
+  const subjects = listHistorySubjects(db, {
+    category: 'metric',
+    connectionId: query.connectionId,
+    scope: query.scope,
+    metric: 'requests',
+    resolution: HISTORY_RESOLUTION,
+    fromMs: windows.period.from,
+    toMs: windows.period.to,
+  });
+  if (subjects.length === 0) return null;
+
+  const expected = Math.max(1, Math.round((windows.period.to - windows.period.from) / HISTORY_RESOLUTION_MS));
+  const rows: ReportRow[] = [];
+  const all: Bucket[] = [];
+
+  for (const subjectId of subjects.slice(0, REPORT_ROW_LIMIT)) {
+    const read = (metric: string) =>
+      new Map(
+        readHistoryRange(
+          db,
+          { category: 'metric', connectionId: query.connectionId, scope: query.scope, subjectId, metric, resolution: HISTORY_RESOLUTION },
+          windows.period.from,
+          windows.period.to,
+        ).map((row) => [row.intervalStart, row.value]),
+      );
+
+    const requests = read('requests');
+    const elb = read('elb5xx');
+    const target = read('target5xx');
+    const buckets = [...requests.keys()].map((at) => albBucket(requests.get(at) ?? null, elb.get(at) ?? null, target.get(at) ?? null));
+    all.push(...buckets);
+
+    const result = evaluateSlo(buckets, DEFAULT_AVAILABILITY_OBJECTIVE, expected);
+    rows.push({
+      id: subjectId,
+      label: subjectId,
+      value: result.current === null ? null : result.current * 100,
+      previous: null,
+      delta: null,
+      // Breached is the one an operator has to act on, so it is the one carrying a severity.
+      ...(result.status === 'breached' ? { severity: 'critical' as const } : {}),
+      ref: { type: 'infrastructure' as const, id: subjectId, label: subjectId },
+    });
+  }
+
+  const overall = evaluateSlo(all, DEFAULT_AVAILABILITY_OBJECTIVE, expected * Math.max(1, subjects.length));
+  return { current: overall.current, budgetRemaining: overall.budgetRemaining, rows };
+}
+
+/**
+ * What shipped in the period, and how much of it failed.
+ *
+ * The collector only remembers deployments from the moment it first ran, so a report over a window that
+ * predates it would show a suspiciously quiet week. `not_collected` covers that: an environment the
+ * deployments job has never recorded anything for is not an environment where nothing shipped.
+ */
+function deploymentsSection(db: Db, query: ReportQuery, windows: ReturnType<typeof windowsFor>): ReportSection {
+  const filter = { connectionId: query.connectionId, scope: query.scope };
+  // Nothing recorded at all means the job has not run here, which is different from a quiet period.
+  if (countDeployments(db, filter).total === 0) return unavailableSection('deployments', 'not_collected');
+
+  const now = countDeployments(db, { ...filter, sinceMs: windows.period.from, untilMs: windows.period.to });
+  const before = countDeployments(db, { ...filter, sinceMs: windows.previous.from, untilMs: windows.previous.to });
+
+  const rows: ReportRow[] = listDeployments(db, { ...filter, sinceMs: windows.period.from, untilMs: windows.period.to }, REPORT_ROW_LIMIT).map(
+    (row) => ({
+      id: row.deploymentId,
+      label: `${row.serviceName} · ${row.taskDefinition}`,
+      // A deployment is one event, so the figure that means something about it is whether it failed.
+      value: row.status === 'failed' ? 1 : 0,
+      previous: null,
+      delta: null,
+      ...(row.status === 'failed' ? { severity: 'critical' as const } : {}),
+      ref: { type: 'deployment' as const, id: row.deploymentId, label: row.serviceName },
+    }),
+  );
+
   return {
-    id: 'availability',
-    figures: [figure('healthyShare', share(now), share(before)), figure('intervals', now.length, before.length)],
-    rows: [],
+    id: 'deployments',
+    figures: [figure('deployments', now.total, before.total), figure('deploymentsFailed', now.failed, before.failed)],
+    rows,
     unavailable: null,
   };
 }
@@ -206,7 +318,8 @@ export function readReport(db: Db, query: ReportQuery, context: ReportContext): 
 
   if (family !== undefined) sections.push(availabilitySection(db, query, family, windows));
   // Nothing in this build measures either, and saying so is the whole point of the distinction.
-  sections.push(unavailableSection('deployments', 'not_measured'));
+  sections.push(deploymentsSection(db, query, windows));
+  // Nothing in this build runs a synthetic check, and saying so is the point of the distinction.
   sections.push(unavailableSection('synthetics', 'not_measured'));
 
   return {

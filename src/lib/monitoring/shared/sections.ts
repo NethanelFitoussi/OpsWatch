@@ -37,9 +37,6 @@ export function isSubsectionOf(section: MonitoringSection, value: string | undef
  * that builds a page deletes its line here and nothing else. A section's default segment is never in it.
  */
 export const UNBUILT_SUBSECTIONS: readonly string[] = [
-  'errors/sources',
-  'logs/volume',
-  'logs/endpoints',
 ];
 
 export function isSubsectionBuilt(section: MonitoringSection, subsection: string): boolean {

@@ -14,6 +14,8 @@ export const CLIENT_NAMESPACES = [
   'ErrorPage',
   'GettingStarted.diagram',
   'Monitoring.client',
+  'Monitoring.sources',
+  'Monitoring.endpoints',
   'Settings',
 ] as const;
 
