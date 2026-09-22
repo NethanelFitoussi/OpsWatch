@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { reportSchema, type Report } from '@opswatch/contract';
 import {
+  DEFAULT_AVAILABILITY_OBJECTIVE,
   PERIOD_MS,
   REPORT_ROW_LIMIT,
   SECTION_FAMILY,
@@ -266,6 +267,81 @@ describe('availability, from stored rollups only', () => {
     expect(section?.figures.find((f) => f.id === 'healthyShare')?.value).toBe(50);
     // And `intervals` still says three, so the reader can see the share was taken over fewer than that.
     expect(section?.figures.find((f) => f.id === 'intervals')?.value).toBe(3);
+  });
+});
+
+describe('§19 — real availability, where the rollups exist', () => {
+  const step = 5 * 60_000;
+  const align = (at: number) => Math.floor(at / step) * step;
+
+  /** One load balancer's worth of stored rollups over `count` consecutive intervals ending now. */
+  const storeAlb = async (db: ReturnType<typeof createTestDb>, name: string, count: number, bad: number) => {
+    const base = align(NOW) - count * step;
+    const points = Array.from({ length: count }, (_, i) => i).flatMap((i) => [
+      { metric: 'requests', value: 1000 },
+      { metric: 'elb5xx', value: i < bad ? 100 : 0 },
+      { metric: 'target5xx', value: 0 },
+    ].map((one) => ({
+      category: 'metric' as const, subjectId: name, metric: one.metric, ...env,
+      intervalStart: base + i * step, resolution: '5m' as const, value: one.value, samples: 1,
+    })));
+    await opswatchDbProvider(db).write(points, NOW);
+  };
+
+  const day = { ...query, period: '24h' as const };
+
+  it('computes availability per load balancer from requests and 5xx', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW - 30 * DAY);
+    // Also needs the family series, or the section stops at "not enough history" before reaching this.
+    await opswatchDbProvider(db).write(
+      [{ category: 'metric', subjectId: 'ecs', metric: 'affected', ...env, intervalStart: align(NOW) - step, resolution: '5m', value: 0, samples: 1 }],
+      NOW,
+    );
+    // A day is 288 five-minute intervals; 100 is over §19's quarter, so a figure may be shown.
+    await storeAlb(db, 'prod-alb', 100, 1);
+
+    const section = sectionOf(readReport(db, day, context), 'availability');
+    expect(section?.unavailable).toBeNull();
+    // 100 intervals of 1000 requests; one had 100 errors. 99,900/100,000 = 99.9 %.
+    expect(section?.figures.find((f) => f.id === 'availability')?.value).toBeCloseTo(99.9, 6);
+    expect(section?.rows.find((row) => row.id === 'prod-alb')?.value).toBeCloseTo(99.9, 6);
+  });
+
+  it('measures against a stated objective rather than an implicit one', () => {
+    // Three nines. It is the default only because no per-service SLO can be defined yet (SLO-1), and the
+    // error-budget figure on the page is meaningless without knowing what it is a budget against.
+    expect(DEFAULT_AVAILABILITY_OBJECTIVE).toBe(0.999);
+  });
+
+  it('THE RULING: too few intervals to stand behind gives no figure, even with rollups present', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW - 30 * DAY);
+    await opswatchDbProvider(db).write(
+      [{ category: 'metric', subjectId: 'ecs', metric: 'affected', ...env, intervalStart: align(NOW) - step, resolution: '5m', value: 0, samples: 1 }],
+      NOW,
+    );
+    // Ten intervals of a 288-interval day is well under a quarter (§19).
+    await storeAlb(db, 'prod-alb', 10, 1);
+
+    const section = sectionOf(readReport(db, day, context), 'availability');
+    expect(section?.figures.find((f) => f.id === 'availability')?.value).toBeNull();
+    expect(section?.rows.find((row) => row.id === 'prod-alb')?.value).toBeNull();
+  });
+
+  it('THE RULING: with no availability rollups it offers no availability figure at all', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW - 30 * DAY);
+    await opswatchDbProvider(db).write(
+      [{ category: 'metric', subjectId: 'ecs', metric: 'affected', ...env, intervalStart: align(NOW) - step, resolution: '5m', value: 0, samples: 1 }],
+      NOW,
+    );
+
+    const section = sectionOf(readReport(db, day, context), 'availability');
+    // The bucket share is still there; the request-level figure is absent rather than zero or 100.
+    expect(section?.figures.find((f) => f.id === 'healthyShare')).toBeDefined();
+    expect(section?.figures.find((f) => f.id === 'availability')).toBeUndefined();
+    expect(section?.rows).toEqual([]);
   });
 });
 

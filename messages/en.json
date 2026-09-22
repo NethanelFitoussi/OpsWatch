@@ -1304,7 +1304,9 @@
         "healthyShare": "Intervals with nothing affected (%)",
         "intervals": "Intervals measured",
         "deployments": "Deployments",
-        "deploymentsFailed": "Deployments that failed"
+        "deploymentsFailed": "Deployments that failed",
+        "availability": "Availability (% of requests without a 5xx)",
+        "errorBudget": "Error budget left (%)"
       },
       "columns": {
         "name": "Name",

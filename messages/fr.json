@@ -1304,7 +1304,9 @@
         "healthyShare": "Intervalles sans ressource affectée (%)",
         "intervals": "Intervalles mesurés",
         "deployments": "Déploiements",
-        "deploymentsFailed": "Déploiements en échec"
+        "deploymentsFailed": "Déploiements en échec",
+        "availability": "Disponibilité (% de requêtes sans 5xx)",
+        "errorBudget": "Budget d’erreur restant (%)"
       },
       "columns": {
         "name": "Nom",

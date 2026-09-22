@@ -25,9 +25,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 41 |
+| `DONE` | 43 |
 | `PARTIAL` | 10 |
-| `FOUNDATION_ONLY` | 12 |
+| `FOUNDATION_ONLY` | 10 |
 | `NOT_STARTED` | 28 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
@@ -124,7 +124,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | REP-1 | Section reports ×4 | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | — |
 | REP-2 | Previous-period comparison | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Half-open windows; mutation-verified |
 | REP-3 | Markdown export | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Escaped; downloads with `nosniff` |
-| REP-4 | Availability / SLO in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Bucket approximation only, and says so. Real SLO arithmetic is SLO-1 |
+| REP-4 | Availability / SLO in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Request-level availability and error budget from stored rollups, alongside the bucket share which still says what it is |
 | REP-5 | Deployments and synthetics in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Deployments are real; synthetics still `not_measured` (SYN-1) |
 | REP-6 | Overview / logs reports | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Only the four section reports exist |
 | REP-7 | Weekly send when a notifier exists | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on ALE-4 |
@@ -189,9 +189,9 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| SLO-1 | Definitions and measurement (§19) | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | Arithmetic built and mutation-tested. Needs ALB request/5xx rollups, which the metrics job does not yet store |
-| SLO-2 | Error budget and burn rate | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | 14.4× / 1 h and 6× / 6 h implemented and tested; no surface yet |
-| SLO-3 | "Not enough history" below a quarter | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | Enforced in `evaluateSlo`, with the share collected always stated |
+| SLO-1 | Definitions and measurement (§19) | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Availability measured from stored ALB rollups and shown in reports. No per-service SLO *definitions* yet, so it measures against a default objective |
+| SLO-2 | Error budget and burn rate | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Budget shown in reports. Burn-rate alerting (14.4×/6×) is implemented but nothing acts on it — needs ALE-1 |
+| SLO-3 | "Not enough history" below a quarter | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Enforced in `evaluateSlo`; a sparse window yields no figure rather than a ratio over the fraction that exists |
 
 ## Cloudflare
 
@@ -268,21 +268,23 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 **Checkpoint A — Logs → Endpoints (LOG-3).** Landed. `UNBUILT_SUBSECTIONS` is now **empty**: nothing anywhere
 in the product says "Coming soon". An E2E walks every section menu and asserts no disabled entry remains.
 
+### DONE
+
+**Checkpoint B — the unimplemented collector jobs (INT-3).** `compact`, `deployments` and the availability
+rollups are **done**, and with them HIS-6, DEP-1, REP-4, SLO-3 and half of REP-5. The `slo` job itself is no
+longer needed for reports — the metrics job stores what §19 reads. Four remain: `inventory`, `queries`,
+`logvolume` and `baselines`, none of which another requirement waits on. **So Checkpoint B is finished for
+now**, and the queue moves to C.
+
 ### NOW
-
-**Checkpoint B — the unimplemented collector jobs (INT-3).** `compact` and `deployments` are **done**, and with
-them HIS-6, DEP-1 and the deployments half of REP-5. Five remain: `inventory`, `queries`, `logvolume` (would
-store what LOG-2 reads live), `baselines` and `slo`. `slo` is the one worth doing next, because it is the only
-one another requirement waits on (SLO-1..3, and REP-4's real numbers). Depends on: nothing new.
-
-### NEXT
 
 **Checkpoint C — Checkup on the API (INT-14).** Add `checkupSchema` to the contract and `GET /api/v1/checkup`,
 so mobile can show what the web already shows. Small, and it closes a Web/API asymmetry that will otherwise
 harden.
 
-**Checkpoint D — SLOs (SLO-1..3).** Now unblocked: §19's arithmetic needs stored rollups, which HIS-1/2 provide.
-Gives REP-4 its real numbers instead of the bucket approximation.
+**Checkpoint D — per-service SLO definitions (SLO-1, SLO-2).** The arithmetic and the rollups exist; what is
+missing is letting an operator *define* an SLO rather than measuring everything against a default 99.9 %, and
+somewhere for a burn-rate alert to go (needs ALE-1).
 
 ### LATER
 
