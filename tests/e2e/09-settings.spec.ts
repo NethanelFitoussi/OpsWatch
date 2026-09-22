@@ -60,3 +60,15 @@ test('the chosen interval and range are saved, survive a reload and reach the mo
   await expect(page.getByText('Auto-refresh off')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pause auto-refresh' })).toHaveCount(0);
 });
+
+test('fits a 360 px viewport with no sideways scroll and every control reachable', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto('/en/settings');
+  // Reachable, not merely visible: both selects and the save button actually work at this width.
+  await page.getByLabel('Refresh interval').selectOption('30000');
+  await page.getByLabel('Default time range').selectOption('12h');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByRole('status')).toContainText('Settings saved.');
+  const root = page.locator('html');
+  expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
+});

@@ -16,7 +16,14 @@ export async function registerNode() {
   }
   const { baseCredentialsWarning } = await import('./lib/aws/base-credentials');
   const { googleSignInWarning } = await import('./lib/auth/google');
-  for (const warning of [baseCredentialsWarning(process.env), googleSignInWarning(env)]) {
+  const { storageWarning } = await import('./lib/db/storage');
+  for (const warning of [
+    baseCredentialsWarning(process.env),
+    googleSignInWarning(env),
+    // Said before the database is opened, so an operator whose data is about to be thrown away hears it
+    // on the startup that would have discarded it rather than on the one that already did.
+    storageWarning(env.OPSWATCH_DATA_DIR),
+  ]) {
     if (warning) {
       console.warn(`[opswatch] ${warning}`);
     }

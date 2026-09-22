@@ -1,0 +1,20 @@
+# The harness for `scripts/verify-persistence.sh`.
+#
+# Unlike docker-compose.test.yml, /data here is a REAL named volume: the whole point is to recreate the
+# container against storage that outlives it. It deliberately does not read `.env`, so the check is
+# independent of whatever an operator has configured locally.
+services:
+  opswatch:
+    build: .
+    image: opswatch:persistence-check
+    ports:
+      - "127.0.0.1:3200:3000"
+    environment:
+      OPSWATCH_SECRET: persistence-check-0123456789abcdef0123456789abcdef
+      OPSWATCH_DATA_DIR: /data
+      OPSWATCH_PUBLIC_URL: http://127.0.0.1:3200
+    volumes:
+      - persistence-data:/data
+
+volumes:
+  persistence-data:

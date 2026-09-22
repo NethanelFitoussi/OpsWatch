@@ -153,13 +153,80 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `OPSWATCH_SECRET` | Yes, 32+ characters | Encrypts stored access keys and signs sessions |
-| `OPSWATCH_DATA_DIR` | No, default `/data` | Location of the SQLite database |
+| `OPSWATCH_DATA_DIR` | No, default `/data` | Where the database lives. **Docker Compose ignores this and always uses `/data`** — see [Your data](#your-data) |
 | `OPSWATCH_PUBLIC_URL` | No | Public URL; enables `Secure` cookies over HTTPS and lets forms post from that host (also read at build time: rebuild after changing it) |
 | `OPSWATCH_TEMPLATE_BUCKET` | No | S3 bucket that enables the experimental "Launch Stack" button |
 | `OPSWATCH_GOOGLE_CLIENT_ID`, `OPSWATCH_GOOGLE_CLIENT_SECRET` | No | Enable [Sign in with Google](#sign-in-with-google) (also needs `OPSWATCH_PUBLIC_URL`) |
 | `OPSWATCH_GOOGLE_ALLOWED_DOMAIN` | No | Google Workspace domain the Google account must belong to |
 | `AWS_*`, `AWS_PROFILE` | For role and ambient methods | OpsWatch's own AWS identity |
 | `OPSWATCH_AWS_ENDPOINT_URL` | Tests only | Sends every AWS call to a moto server |
+
+## Your data
+
+Everything OpsWatch remembers is in **one SQLite database**: the admin account, the encrypted AWS
+credentials, the settings, and the problems and history it collects. There is nothing else to back up.
+
+| | |
+|---|---|
+| Inside the container | `/data/opswatch.sqlite` |
+| On the host (Docker Compose) | the named volume `opswatch_opswatch-data` |
+| Without Docker | `$OPSWATCH_DATA_DIR/opswatch.sqlite` |
+
+`docker compose build` and `docker compose up -d` are safe: the volume outlives the container, and an
+upgrade applies its migrations to the database already there, adding tables and columns without rebuilding
+or replacing anything. **`docker compose down -v` deletes the volume** and with it the account and every
+stored credential — that is the one command to avoid.
+
+Compose pins `OPSWATCH_DATA_DIR=/data` itself and deliberately ignores the value in `.env`, because `.env`
+is also what `npm run dev` reads: a path set for a local run would otherwise send the container's database
+into its own writable layer, where the next rebuild would discard it. If OpsWatch is ever started some other
+way with the data directory on disposable storage, it says so on the first line of its log.
+
+To check an installation at any time:
+
+```bash
+docker compose exec opswatch ls -l /data     # the database should be here
+```
+
+### Backing up
+
+The database is in WAL mode, so copying the file while OpsWatch is running can miss recent writes. Ask
+SQLite for a consistent copy instead:
+
+```bash
+docker compose exec -T opswatch node -e "
+  const Database = require('/app/node_modules/better-sqlite3');
+  new Database('/data/opswatch.sqlite', { readonly: true })
+    .backup('/data/backup.sqlite').then(() => process.exit(0));
+"
+docker compose cp opswatch:/data/backup.sqlite ./opswatch-backup-$(date +%F).sqlite
+docker compose exec -T opswatch rm -f /data/backup.sqlite
+chmod 600 ./opswatch-backup-*.sqlite
+```
+
+The copy contains the encrypted credentials **and nothing that decrypts them**: `OPSWATCH_SECRET` lives only
+in `.env`. Keep both, separately — a backup without the secret cannot be restored, and neither can a secret
+without the backup.
+
+### Restoring
+
+```bash
+docker compose down                                    # stop, but keep the volume
+docker compose cp ./opswatch-backup-2026-09-22.sqlite opswatch:/data/opswatch.sqlite
+docker compose up -d
+```
+
+Restore with the same `OPSWATCH_SECRET` the backup was taken under. With a different one the account and the
+settings come back, but every stored AWS credential fails to decrypt and has to be entered again. Migrations
+run on the next start, so a backup from an older version is restored by restoring it and starting the newer
+one.
+
+### Verifying it yourself
+
+`npm run verify:persistence` builds the image, creates an admin through the real setup form, then restarts
+the container, recreates it, and rebuilds the image — checking after each that the account is still there and
+that the database is on the volume rather than in the container. It uses its own Compose project and its own
+volume, so it never touches a running installation.
 
 ## Development
 

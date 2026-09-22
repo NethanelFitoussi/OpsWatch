@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AUTO_REFRESH_MS, createRefreshTimer, mountRefreshTimer, type VisibilityTarget } from '@/lib/monitoring/shared/refresh-timer';
+import { createRefreshTimer, mountRefreshTimer, type VisibilityTarget } from '@/lib/monitoring/shared/refresh-timer';
+import { DEFAULT_SETTINGS } from '@/lib/settings/shared';
+
+// The interval is a stored setting now, not a hardcoded constant: every test below passes it explicitly,
+// the way `AutoRefresh` receives it as a prop, rather than relying on `createRefreshTimer`'s default.
+const intervalMs = DEFAULT_SETTINGS.refreshIntervalMs;
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -22,27 +27,26 @@ function fakeDocument(): VisibilityTarget & { setVisibility(state: 'visible' | '
 }
 
 describe('refresh timer', () => {
-  it('ticks every 120 seconds while visible and not paused', () => {
-    expect(AUTO_REFRESH_MS).toBe(120_000);
+  it('ticks every configured interval while visible and not paused', () => {
     const onTick = vi.fn();
-    createRefreshTimer({ onTick, visible: true, paused: false });
-    vi.advanceTimersByTime(119_999);
+    createRefreshTimer({ onTick, visible: true, paused: false, intervalMs });
+    vi.advanceTimersByTime(intervalMs - 1);
     expect(onTick).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(onTick).toHaveBeenCalledTimes(1);
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(intervalMs);
     expect(onTick).toHaveBeenCalledTimes(2);
   });
 
   it('stops while the tab is hidden and restarts a full interval when visible again', () => {
     const onTick = vi.fn();
-    const timer = createRefreshTimer({ onTick, visible: true, paused: false });
-    vi.advanceTimersByTime(60_000);
+    const timer = createRefreshTimer({ onTick, visible: true, paused: false, intervalMs });
+    vi.advanceTimersByTime(intervalMs / 2);
     timer.setVisible(false);
-    vi.advanceTimersByTime(300_000);
+    vi.advanceTimersByTime(intervalMs * 2.5);
     expect(onTick).not.toHaveBeenCalled();
     timer.setVisible(true);
-    vi.advanceTimersByTime(119_999);
+    vi.advanceTimersByTime(intervalMs - 1);
     expect(onTick).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(onTick).toHaveBeenCalledTimes(1);
@@ -51,16 +55,16 @@ describe('refresh timer', () => {
   it('mounts against a document, follows its visibility and unsubscribes when disposed', () => {
     const onTick = vi.fn();
     const doc = fakeDocument();
-    const mounted = mountRefreshTimer({ onTick, isPaused: () => false, target: doc });
+    const mounted = mountRefreshTimer({ onTick, isPaused: () => false, target: doc, intervalMs });
     doc.setVisibility('hidden');
-    vi.advanceTimersByTime(600_000);
+    vi.advanceTimersByTime(intervalMs * 5);
     expect(onTick).not.toHaveBeenCalled();
     doc.setVisibility('visible');
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(intervalMs);
     expect(onTick).toHaveBeenCalledTimes(1);
     mounted.dispose();
     expect(doc.listenerCount).toBe(0);
-    vi.advanceTimersByTime(600_000);
+    vi.advanceTimersByTime(intervalMs * 5);
     expect(onTick).toHaveBeenCalledTimes(1);
   });
 
@@ -68,7 +72,7 @@ describe('refresh timer', () => {
     const onTick = vi.fn();
     const doc = fakeDocument();
     let paused = false;
-    const mount = () => mountRefreshTimer({ onTick, isPaused: () => paused, target: doc });
+    const mount = () => mountRefreshTimer({ onTick, isPaused: () => paused, target: doc, intervalMs });
 
     const first = mount();
     paused = true;
@@ -76,26 +80,26 @@ describe('refresh timer', () => {
     first.dispose();
     // The page is still paused: re-running the mount (a re-run effect) must not resume it.
     const second = mount();
-    vi.advanceTimersByTime(600_000);
+    vi.advanceTimersByTime(intervalMs * 5);
     expect(onTick).not.toHaveBeenCalled();
     paused = false;
     second.timer.setPaused(false);
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(intervalMs);
     expect(onTick).toHaveBeenCalledTimes(1);
     second.dispose();
   });
 
   it('pauses, resumes and stops for good when disposed', () => {
     const onTick = vi.fn();
-    const timer = createRefreshTimer({ onTick, visible: true, paused: true });
-    vi.advanceTimersByTime(240_000);
+    const timer = createRefreshTimer({ onTick, visible: true, paused: true, intervalMs });
+    vi.advanceTimersByTime(intervalMs * 2);
     expect(onTick).not.toHaveBeenCalled();
     timer.setPaused(false);
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(intervalMs);
     expect(onTick).toHaveBeenCalledTimes(1);
     timer.dispose();
     timer.setPaused(false);
-    vi.advanceTimersByTime(600_000);
+    vi.advanceTimersByTime(intervalMs * 5);
     expect(onTick).toHaveBeenCalledTimes(1);
   });
 });

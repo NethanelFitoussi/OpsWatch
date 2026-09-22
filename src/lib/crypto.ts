@@ -2,6 +2,7 @@ import 'server-only';
 import {
   createCipheriv,
   createDecipheriv,
+  createHash,
   createHmac,
   hkdfSync,
   randomBytes,
@@ -59,4 +60,13 @@ export function randomToken(bytes = 32): string {
 
 export function randomId(): string {
   return randomBytes(6).toString('hex');
+}
+
+/**
+ * A plain SHA-256, hex. Unkeyed on purpose: this is used for identity, not authentication, and a problem's
+ * dedupe key has to be the same on every instance and across a rotation of `OPSWATCH_SECRET` — a keyed digest
+ * would re-key every open problem in the field. Never use it for anything a secret must protect.
+ */
+export function sha256Hex(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
 }

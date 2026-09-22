@@ -3,6 +3,8 @@ import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 export const SRC = path.join(ROOT, 'src');
+/** The shared contract package. It sits outside `src` because the mobile application reads the same files. */
+export const CONTRACT = path.join(ROOT, 'packages/contract');
 
 function sourceFiles(dir: string = SRC): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -17,6 +19,11 @@ export function sourceFilesUnder(relative: string): string[] {
   return sourceFiles(path.join(SRC, relative)).sort();
 }
 
+/** Every TypeScript file under an absolute directory, for the trees that live outside `src`. */
+export function typescriptFilesIn(directory: string): string[] {
+  return sourceFiles(directory).sort();
+}
+
 export const readSource = (file: string) => fs.readFileSync(file, 'utf8');
 
 const directive = (source: string) => source.match(/^\s*['"]use (client|server)['"]/)?.[1];
@@ -28,6 +35,14 @@ export function valueImports(source: string): string[] {
   for (const match of source.matchAll(pattern)) {
     if (!match[1]) specifiers.push(match[2]);
   }
+  return specifiers;
+}
+
+/** Every specifier a module names, `import type` included: a type-only import still ties two trees together. */
+export function allImports(source: string): string[] {
+  const specifiers: string[] = [];
+  const pattern = /^(?:import|export)\s+(?:type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/gm;
+  for (const match of source.matchAll(pattern)) specifiers.push(match[1]);
   return specifiers;
 }
 

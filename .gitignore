@@ -48,3 +48,6 @@ next-env.d.ts
 *.sqlite
 *.sqlite-*
 .env
+
+# local agent resume pointer, machine-specific, never committed
+.claude-session.local
