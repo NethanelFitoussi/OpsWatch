@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { MONITORING_CONNECTION, ensureMonitoringConnection, login, monitoringUrl, rscHeaders } from './helpers';
+import { MONITORING_CONNECTION, MOTO_REGION, ensureMonitoringConnection, login, monitoringUrl, rscHeaders } from './helpers';
 
 let connectionId = '';
 
@@ -154,3 +154,16 @@ test('a monitoring page fits a 360 px viewport without sideways scrolling', asyn
   const root = page.locator('html');
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });
+
+test('the environment root opens the default section rather than answering 404', async ({ page }) => {
+  // `/c/<id>/<region>` is a real address: it is the pair every API call is scoped to with ?env=, and it is
+  // what a shared link is most likely to be trimmed to. It used to 404.
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}`);
+  await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/${MOTO_REGION}/overview/insights$`));
+});
+
+test('the environment root keeps the query string it was given', async ({ page }) => {
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}?range=6h`);
+  await expect(page).toHaveURL(/range=6h/);
+});
+
