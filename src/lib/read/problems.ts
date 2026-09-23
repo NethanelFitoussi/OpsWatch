@@ -74,7 +74,7 @@ function toEvidence(row: ProblemEvidenceRow, context: ReadContext): Evidence {
   };
 }
 
-function toSummary(row: ProblemRow, evidence: readonly ProblemEvidenceRow[], context: ReadContext): ProblemSummary {
+export function toSummary(row: ProblemRow, evidence: readonly ProblemEvidenceRow[], context: ReadContext): ProblemSummary {
   return {
     id: row.id,
     key: row.key,

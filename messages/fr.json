@@ -1573,6 +1573,22 @@
         "invalid_repository": "Choisissez un dépôt, ou « Non associé » pour effacer.",
         "invalid_service": "Ce groupe d’erreurs n’a pas de service : il ne peut pas être associé."
       }
+    },
+    "incidents": {
+      "title": "Incidents",
+      "description": "Ouverts automatiquement lorsque plusieurs problèmes critiques touchent un service en même temps, ou qu’un problème persiste.",
+      "none": "Aucun incident ouvert.",
+      "noneHint": "C’est un constat mesuré : le collecteur a lu cet environnement et rien n’a atteint le seuil.",
+      "waiting": "OpsWatch n’a pas encore lu cet environnement : il ne peut pas dire s’il y a eu des incidents.",
+      "waitingHint": "Ce n’est pas la même chose qu’une absence d’incident. Le premier cycle du collecteur vous le dira.",
+      "started": "a débuté {when}",
+      "services": "concerne {services}",
+      "status": {
+        "open": "Ouvert",
+        "investigating": "En investigation",
+        "mitigated": "Atténué",
+        "resolved": "Résolu"
+      }
     }
   },
   "Insights": {
@@ -1612,7 +1628,8 @@
       "health": "Santé",
       "brief": "Point du matin",
       "insights": "Analyses",
-      "checkup": "Bilan"
+      "checkup": "Bilan",
+      "incidents": "Incidents"
     },
     "containers": {
       "services": "Services",
@@ -1813,5 +1830,15 @@
   },
   "Api": {
     "environmentName": "{connection} — {region}"
+  },
+  "Incidents": {
+    "title": {
+      "multiple_critical": "{problems} problèmes critiques sur {service}",
+      "sustained_critical": "Un problème critique persistant sur {service}"
+    },
+    "opened": {
+      "multiple_critical": "Ouvert automatiquement : {problems} problèmes critiques sur {service} en moins de quinze minutes.",
+      "sustained_critical": "Ouvert automatiquement : un problème critique sur {service}, que les utilisateurs atteignent, est ouvert depuis plus de quinze minutes."
+    }
   }
 }

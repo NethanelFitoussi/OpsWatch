@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readCodeEvidence, splitFrame } from '@/lib/read/code-evidence';
+import { readCodeEvidence, splitFrame, type FrameEvidence } from '@/lib/read/code-evidence';
 import { recordError, upsertLogSource } from '@/lib/store/errors';
 import { setMapping, upsertRepository } from '@/lib/store/repositories';
 import { createTestDb } from '../helpers/db';
@@ -98,6 +98,21 @@ describe('§J — what the panel can and cannot place', () => {
     expect(evidence.frames[1]?.url).toBeNull();
     // Stated, so a panel showing one link out of two does not look like the whole stack.
     expect(evidence.placed).toBe(1);
+  });
+
+  it('every frame carries the fields the panel needs to render it honestly', () => {
+    const db = createTestDb();
+    const repository = upsertRepository(db, { owner: 'acme', name: 'storefront' }, NOW);
+    const group = seedGroup(db, ['/app/src/pay.ts:charge', '/app/node_modules/pg/client.js:query']);
+    setMapping(db, { ...env, serviceId: 'prod/storefront', repositoryId: repository.id }, NOW);
+
+    const evidence = readCodeEvidence(db, group);
+    if (evidence.state !== 'mapped') throw new Error('expected mapped');
+    for (const frame of evidence.frames satisfies FrameEvidence[]) {
+      // A frame either has a path and a link, or neither — never a link to a path it could not resolve.
+      expect(frame.path === null).toBe(frame.url === null);
+      expect(typeof frame.raw).toBe('string');
+    }
   });
 
   it('THE RULING: with no commit the ref is the branch and is marked as moving', () => {

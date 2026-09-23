@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 50 |
-| `PARTIAL` | 13 |
-| `FOUNDATION_ONLY` | 8 |
-| `NOT_STARTED` | 20 |
+| `DONE` | 51 |
+| `PARTIAL` | 15 |
+| `FOUNDATION_ONLY` | 7 |
+| `NOT_STARTED` | 18 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -174,9 +174,9 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| INC-1 | Incident storage | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | `incidents` + `incident_timeline` tables and a store exist; no job, route or page |
-| INC-2 | Creation, lifecycle, resolution | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
-| INC-3 | Related problems, timeline, evidence | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| INC-1 | Incident storage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Tables, store, producer, `/api/v1/incidents`, and a page in the Overview menu |
+| INC-2 | Creation, lifecycle, resolution | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Creation and dismissal are real; the stored lifecycle maps onto the contract's. Changing status from the UI is not built |
+| INC-3 | Related problems, timeline, evidence | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Served on `/api/v1/incidents/{id}`; the list page shows summaries, and a detail page is not built |
 
 ## Synthetics
 

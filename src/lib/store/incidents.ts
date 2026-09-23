@@ -1,6 +1,7 @@
 import 'server-only';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, isNotNull, isNull } from 'drizzle-orm';
 import { randomId } from '../crypto';
+import { DISMISSAL_SUPPRESSION_MS } from '../detect/incident';
 import type { Db } from '../db/client';
 import {
   incidentTimeline,
@@ -178,4 +179,58 @@ export function listTimeline(db: Db, incidentId: string): IncidentTimelineRow[] 
     .where(eq(incidentTimeline.incidentId, incidentId))
     .orderBy(asc(incidentTimeline.at), asc(incidentTimeline.seq))
     .all();
+}
+
+/** Open incidents in one environment, newest first. `dismissed` ones are not open. */
+export function listOpenIncidents(db: Db, connectionId: string, scope: string): IncidentRow[] {
+  return db
+    .select()
+    .from(incidents)
+    .where(
+      and(
+        eq(incidents.connectionId, connectionId),
+        eq(incidents.scope, scope),
+        isNull(incidents.resolvedAt),
+        isNull(incidents.dismissedAt),
+      ),
+    )
+    .orderBy(desc(incidents.startedAt), desc(incidents.seq))
+    .all();
+}
+
+/** Every incident in one environment, newest first, bounded. */
+export function listIncidents(db: Db, connectionId: string, scope: string, limit: number): IncidentRow[] {
+  return db
+    .select()
+    .from(incidents)
+    .where(and(eq(incidents.connectionId, connectionId), eq(incidents.scope, scope)))
+    .orderBy(desc(incidents.startedAt), desc(incidents.seq))
+    .limit(limit)
+    .all();
+}
+
+/**
+ * When auto-creation is suppressed for each service, from the dismissals that are still in force (§16).
+ *
+ * Read from the rows rather than kept as separate state: a dismissal *is* the suppression, so there is no
+ * second thing to keep in step with it.
+ */
+export function suppressionsByService(db: Db, connectionId: string, scope: string, nowMs: number): Map<string, number> {
+  const rows = db
+    .select()
+    .from(incidents)
+    .where(and(eq(incidents.connectionId, connectionId), eq(incidents.scope, scope), isNotNull(incidents.dismissedAt)))
+    .all();
+
+  const suppressions = new Map<string, number>();
+  for (const row of rows) {
+    if (row.dismissedAt === null) continue;
+    const until = row.dismissedAt + DISMISSAL_SUPPRESSION_MS;
+    if (until <= nowMs) continue;
+    for (const serviceId of row.serviceIds) {
+      // The latest dismissal wins, so dismissing twice extends rather than shortens the quiet.
+      suppressions.set(serviceId, Math.max(suppressions.get(serviceId) ?? 0, until));
+    }
+  }
+  return suppressions;
 }

@@ -1573,6 +1573,22 @@
         "invalid_repository": "Choose a repository, or \"Not mapped\" to clear it.",
         "invalid_service": "This error group has no service, so it cannot be mapped."
       }
+    },
+    "incidents": {
+      "title": "Incidents",
+      "description": "Raised automatically when several critical problems hit one service at once, or when one will not clear.",
+      "none": "No incident has been raised.",
+      "noneHint": "That is a measured statement: the collector has read this environment and nothing met the bar.",
+      "waiting": "OpsWatch has not read this environment yet, so it cannot say whether there have been incidents.",
+      "waitingHint": "That is not the same as there having been none. The first collector cycle will tell you.",
+      "started": "started {when}",
+      "services": "affecting {services}",
+      "status": {
+        "open": "Open",
+        "investigating": "Investigating",
+        "mitigated": "Mitigated",
+        "resolved": "Resolved"
+      }
     }
   },
   "Insights": {
@@ -1612,7 +1628,8 @@
       "health": "Health",
       "brief": "Morning brief",
       "insights": "Insights",
-      "checkup": "Checkup"
+      "checkup": "Checkup",
+      "incidents": "Incidents"
     },
     "containers": {
       "services": "Services",
@@ -1813,5 +1830,15 @@
   },
   "Api": {
     "environmentName": "{connection} — {region}"
+  },
+  "Incidents": {
+    "title": {
+      "multiple_critical": "{problems} critical problems on {service}",
+      "sustained_critical": "A critical problem on {service} that has not cleared"
+    },
+    "opened": {
+      "multiple_critical": "Raised automatically: {problems} critical problems opened on {service} within fifteen minutes.",
+      "sustained_critical": "Raised automatically: a critical problem on {service}, which users reach, has been open for more than fifteen minutes."
+    }
   }
 }
