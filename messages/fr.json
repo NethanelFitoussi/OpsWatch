@@ -1588,8 +1588,12 @@
         "deploymentsDescription": "Déploiements du même service lancés peu avant ce problème. C’est un écart de temps mesuré, pas une cause : un déploiement pendant un incident est souvent sans rapport.",
         "minutesBefore": "{minutes, plural, =0 {au même moment} one {1 minute avant} other {# minutes avant}}",
         "deploymentFailed": "ce déploiement a échoué",
-        "forDuration": "{minutes, plural, one {depuis # minute} other {depuis # minutes}}"
-      }
+        "forDuration": "{minutes, plural, one {depuis # minute} other {depuis # minutes}}",
+        "confirmations": "Relevés qui l’ont confirmé",
+        "overTime": "Dans le temps",
+        "overTimeDescription": "Quand il s'est ouvert, s'il est revenu, et ce qu'a fait le signal mesuré."
+      },
+      "confirmationsValue": "confirmé par {count, plural, one {# relevé} other {# relevés}}"
     },
     "health": {
       "title": "Santé",
@@ -2294,7 +2298,22 @@
         "filesChanged": "{files, plural, one {# fichier modifié} other {# fichiers modifiés}} dans {version}.",
         "errorsNearby": "{count, plural, one {# groupe d'erreurs est apparu} other {# groupes d'erreurs sont apparus}} ou revenu(s) au même moment, dont « {message} ».",
         "elbGenerated": "{count, plural, one {Cette réponse a été renvoyée} other {Ces # réponses ont été renvoyées}} par le répartiteur de charge lui-même : elles n'ont donc jamais atteint de cible, ce qui écarte l'application comme source."
-      }
+      },
+      "mark": {
+        "opened": "Ouvert",
+        "reopened": "Revenu",
+        "resolved": "Arrêté",
+        "deployment": "Un déploiement"
+      },
+      "measuredOverTime": "Le signal mesuré",
+      "series": {
+        "requests": "Requêtes",
+        "elb5xx": "5xx du répartiteur",
+        "target5xx": "5xx des cibles",
+        "p95": "Temps de réponse p95"
+      },
+      "noHistory": "La collecte historique est désactivée : il n'y a pas de série à tracer. L'activer dans Données et historique montrerait ce signal dans le temps — y compris avant l'ouverture du problème.",
+      "noSeriesYet": "La collecte historique est active mais n'a encore rien stocké pour cette ressource. Le prochain cycle le fera."
     }
   },
   "Insights": {

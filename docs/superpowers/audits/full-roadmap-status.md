@@ -50,7 +50,7 @@ for how long, whether users were affected, why OpsWatch called it a Warning, and
 | UX-15 | Impact is established or explicitly not | `DONE` | "User impact not established" is the common answer and is said plainly (§2.6) |
 | UX-16 | The detection rule is legible | `DONE` | Measured, opens at, clears under — quoting the detector's own constants |
 | UX-17 | Recommended investigation, evidence-derived | `DONE` | Ordered by how directly the evidence points; an empty list is an answer |
-| UX-18 | Visual evidence: graphs on a problem | `NOT_STARTED` | The next piece of this phase |
+| UX-18 | Visual evidence: graphs on a problem | `DONE` | A lifecycle timeline from the events spine, always available; the measured signal charted where rollups exist. Two kinds of empty, never rendered the same |
 | CF-2 | Cloudflare dashboard | `NOT_STARTED` | Dependency-ready; the live connection exists |
 | UX-19 | Secondary navigation collapsed by default | `NOT_STARTED` | — |
 | UX-20 | Accounts: one card system, editable | `PARTIAL` | Provider-aware and consistent; per-provider editing is partly there |

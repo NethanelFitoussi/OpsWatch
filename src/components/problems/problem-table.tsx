@@ -92,7 +92,8 @@ export async function ProblemTable({
               <span className="mt-0.5 block text-xs text-muted-foreground">
                 {/* What kind of thing, not the detector id: "ALB" tells a reader where to look. */}
                 {[problem.resource, tFamily(familyOf(problem.category)), scope.region].filter(Boolean).join(' · ')}
-                {problem.occurrences !== null && ` · ${t('occurrencesValue', { count: problem.occurrences })}`}
+                {/* Named for what it is: readings that found it still firing, not separate incidents. */}
+                {problem.occurrences !== null && ` · ${t('confirmationsValue', { count: problem.occurrences })}`}
                 {` · ${t('columns.lastSeen')} ${format.relativeTime(new Date(problem.lastSeenAt), new Date(nowMs))}`}
               </span>
             </Link>
