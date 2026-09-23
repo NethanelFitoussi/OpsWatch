@@ -3,11 +3,14 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { SectionLayout } from '@/components/monitoring/section-layout';
 import { EvidenceList } from '@/components/problems/evidence-list';
+import { InvestigationTimeline } from '@/components/problems/investigation-timeline';
 import { ScoreBreakdown } from '@/components/problems/score-breakdown';
 import { SeverityBadge } from '@/components/problems/severity-badge';
 import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { getDb } from '@/lib/db/client';
+import { readInvestigation } from '@/lib/read/investigation';
+import { investigationLabels } from '@/lib/read/investigation-labels';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
@@ -113,6 +116,9 @@ export default async function ProblemDetailPage({ params }: Props) {
           </ul>
         </MonitoringCard>
       )}
+
+      {/* §7's three bands, kept apart: what happened, what happened near it, and what might explain it. */}
+      <InvestigationTimeline {...readInvestigation(db, row, await investigationLabels(context.locale), nowMs)} locale={context.locale} />
 
       <ScoreBreakdown terms={row.scoreTerms} />
     </SectionLayout>

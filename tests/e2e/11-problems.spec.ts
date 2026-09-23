@@ -141,6 +141,34 @@ test('filters that are honoured actually narrow the list', async ({ page }) => {
   expect(resolved.items.length).toBeLessThanOrEqual(all.items.length);
 });
 
+test('§7 — the three evidence bands are visibly separate, and a guess is never presented as a fact', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  if ((await first.count()) === 0) test.skip(true, 'no problem detected in this environment');
+  await first.click();
+  await expect(page).toHaveURL(/\/overview\/problems\/[^/]+$/);
+
+  const main = await page.locator('main').innerText();
+  // Either the timeline has bands, or it says plainly that nothing else was recorded. Never a blank.
+  const hasBands = main.includes('Observed facts');
+  const saysNothing = main.includes('recorded nothing else around the time this started');
+  expect(hasBands !== saysNothing).toBe(true);
+
+  if (hasBands) {
+    // Three headed groups, in order, so position alone tells a reader which band they are in.
+    for (const band of ['Observed facts', 'Happened near each other', 'Possible explanations']) {
+      await expect(page.getByRole('heading', { name: band })).toBeVisible();
+    }
+    expect(main.indexOf('Observed facts')).toBeLessThan(main.indexOf('Possible explanations'));
+    // The sentence that keeps the middle band honest.
+    expect(main).toContain('This is a measured gap, not a cause');
+    // And the word the whole design forbids.
+    expect(main).not.toMatch(/\bcaused by\b/i);
+  } else {
+    expect(main).toContain('not the same as nothing having happened');
+  }
+});
+
 test('§7 — a problem with no deployment near it shows no correlation card at all', async ({ page }) => {
   await page.goto(problemsUrl());
   const first = page.locator('main a[href*="/overview/problems/"]').first();

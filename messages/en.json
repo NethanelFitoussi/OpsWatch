@@ -1493,6 +1493,57 @@
         "budget_exhausted": "Today’s log scanning budget is used up, so this query was not run.",
         "query_failed": "The query could not be run. Check the connection and its logs permission, then try again."
       }
+    },
+    "investigation": {
+      "title": "What else happened around this",
+      "description": "Assembled from what OpsWatch recorded. The three groups below are deliberately separate: facts, things that happened near each other, and guesses.",
+      "facts": "Observed facts",
+      "factsHint": "Things OpsWatch recorded, with the time it recorded them. Nothing here is inferred.",
+      "noFacts": "Nothing else was recorded in this window.",
+      "correlations": "Happened near each other",
+      "correlationsHint": "Two recorded facts close together in time that share a service or a subject. This is a measured gap, not a cause — things often happen near each other for no related reason.",
+      "noCorrelations": "No two facts here were close enough in time to be worth pairing.",
+      "hypotheses": "Possible explanations",
+      "hypothesesHint": "Guesses from a fixed list, each with what would settle it. OpsWatch does not know which, if any, is right.",
+      "noHypotheses": "Nothing in the list of known patterns matches what was recorded here.",
+      "notEvaluated": "{count, plural, one {One further explanation was} other {# further explanations were}} not checked, because OpsWatch does not collect the data they need.",
+      "nothingRecorded": "OpsWatch recorded nothing else around the time this started.",
+      "nothingRecordedHint": "That is not the same as nothing having happened — it means nothing else reached the parts of your estate OpsWatch is watching.",
+      "confidence": {
+        "high": "Likely",
+        "medium": "Possible",
+        "low": "Unlikely"
+      },
+      "fact": {
+        "problem_opened": "A problem opened",
+        "problem_reopened": "A problem reopened",
+        "problem_resolved": "A problem resolved",
+        "deployment_started": "A deployment started: {taskDefinition}",
+        "deployment_completed": "A deployment completed: {taskDefinition}",
+        "deployment_failed": "A deployment failed: {taskDefinition}",
+        "error_group_appeared": "A new error group appeared",
+        "error_group_regressed": "An error group came back after being quiet",
+        "resource_appeared": "A resource appeared",
+        "resource_disappeared": "A resource disappeared",
+        "fleet_opened": "Several resources started failing together",
+        "fleet_resolved": "A group of failing resources recovered",
+        "unknown": "Something was recorded"
+      },
+      "pair": "{minutes, plural, =0 {At the same time} one {1 minute apart} other {# minutes apart}} — {relation}",
+      "relation": {
+        "same_service": "same service",
+        "same_subject": "same resource"
+      },
+      "hypothesis": {
+        "deploy_regression": "A recent deployment may have introduced this",
+        "capacity_shortfall": "There may not be enough capacity for the current load",
+        "noise": "This problem may be flapping because the detector is too sensitive"
+      },
+      "confirm": {
+        "deploy_regression.confirm": "Compare the deployed revision with the one before it, and check whether rolling back stops the errors.",
+        "capacity_shortfall.confirm": "Check desired against running counts, and whether raising the desired count clears it.",
+        "noise.confirm": "Look at how often this has opened and closed. If nothing else changed, the threshold is probably too tight."
+      }
     }
   },
   "Insights": {
