@@ -1864,7 +1864,9 @@
       "status": "System status",
       "statusHint": "Whether the collector is running, when each job last ran, and the state of the database.",
       "repositories": "Repositories",
-      "repositoriesHint": "Which repositories your services are built from, so a stack frame can link to its source."
+      "repositoriesHint": "Which repositories your services are built from, so a stack frame can link to its source.",
+      "audit": "Audit log",
+      "auditHint": "Who did what, and when. Entries are only ever added."
     },
     "repositories": {
       "title": "Repositories",
@@ -1896,6 +1898,52 @@
         "invalid_name": "A repository name may contain letters, digits, dots, dashes and underscores.",
         "invalid_branch": "That branch name contains characters a branch cannot have.",
         "invalid_token": "That does not look like a GitHub token."
+      }
+    },
+    "audit": {
+      "title": "Audit log",
+      "description": "Who did what, and when. Administrator only.",
+      "appendOnly": "What this log is",
+      "appendOnlyHint": "Entries are only ever added. Nothing in OpsWatch updates or deletes one — not even the retention pass, which records itself rather than quietly removing others.",
+      "privacy": "It records the address a request came from and a hash standing in for the device, never the browser string itself. It never holds a password, a token or the text of a question.",
+      "entries": "{count, plural, =0 {No entries} one {1 entry} other {# entries}}",
+      "empty": "Nothing has been recorded yet.",
+      "truncated": "Showing the most recent {limit}.",
+      "when": "When",
+      "action": {
+        "sign_in": "Signed in",
+        "sign_out": "Signed out",
+        "setup_admin": "Administrator created",
+        "connection_create": "AWS account connected",
+        "connection_update": "AWS account changed",
+        "connection_delete": "AWS account removed",
+        "connection_test": "AWS connection tested",
+        "credential_rotate": "Credential replaced",
+        "token_create": "API token created",
+        "token_revoke": "API token revoked",
+        "settings_update": "Settings changed",
+        "retention_update": "Retention changed",
+        "history_update": "Historical collection changed",
+        "log_source_update": "Log source changed",
+        "repository_update": "Repository changed",
+        "integration_update": "Integration changed",
+        "synthetic_update": "Synthetic check changed",
+        "alert_rule_update": "Alert rule changed",
+        "alert_acknowledge": "Alert acknowledged",
+        "incident_dismiss": "Incident dismissed",
+        "export_download": "Export downloaded",
+        "retention_purge": "Retention pass ran"
+      },
+      "actor": "Who",
+      "result": "Result",
+      "from": "From",
+      "system": "OpsWatch itself",
+      "user": "User {id}",
+      "notRecorded": "not recorded",
+      "results": {
+        "ok": "Succeeded",
+        "denied": "Refused",
+        "failed": "Failed"
       }
     }
   },
