@@ -72,7 +72,8 @@
     "store:capture": "npm run store:export && npm run store:web",
     "store:android": "bash e2e/store/capture-android.sh",
     "store:validate": "tsx e2e/store/validate.ts",
-    "store:capture:fr": "npm run store:export && OPSWATCH_STORE_LOCALE=fr playwright test --config e2e/store/playwright.config.ts"
+    "store:capture:fr": "npm run store:export && OPSWATCH_STORE_LOCALE=fr playwright test --config e2e/store/playwright.config.ts",
+    "a11y:scan": "bash dev/device/a11y-scan.sh"
   },
   "private": true,
   "license": "MIT",

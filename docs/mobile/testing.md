@@ -270,6 +270,8 @@ Recorded so it is clear what is tested and what is not. Dates are when the check
 | **Third adversarial pass** over the surface added since the second | Three findings, all fixed: screenshot mode could reach a production build and freeze a monitoring app's clock; System status rendered unbounded server strings into accessibility labels a screen reader would read out in full; and a check that could not run was described with a sentence whose placeholders nothing filled, so `{version}` reached a device | 2026-09-23 |
 | **Mutation spot-check** on fourteen rules the app's safety rests on | 10 of 14 killed on the first run. Four **survived** and now have tests: the 2 MB cache ceiling, redacting a bearer token, validating a server-supplied `action` before showing it, and showing nothing until the stored notification preferences are known | 2026-09-22 |
 | **Every redaction rule in the logger, mutated one at a time** | 3 of 9 survived: the `Authorization:` rule and the bare-`Bearer` rule only ever covered each other, and `github_pat_` had no case at all. Each rule now has a case only it can catch; **9 of 9** killed | 2026-09-22 |
+| **Accessibility tree on a device** (`npm run a11y:scan`) | 143 tappable elements across 16 screens; **0 announce nothing**. This reads the rendered tree, which is what TalkBack reads — a component can be given a label in the source and still end up silent after everything composes | 2026-09-23 |
+| **Memory across heavy navigation** (`adb shell dumpsys meminfo`) | 138 MB after launch, 203 MB after touring 13 screens, 208 MB after 12 further visits. The first tour is the cost; revisiting plateaus, so nothing leaks per visit. Measured in demo mode, whose dataset is small — see the note below | 2026-09-23 |
 | Minimum touch targets | Every `Pressable` declares a role; rows use `TOUCH_TARGET` (48); the three inline controls that cannot be 48 tall reach it through hit slop, asserted by a test | 2026-09-20 |
 | **Landscape and tablet geometry** on the emulator (2400x1080, and 1600x2560 at 280 dpi) | Content stays inside the readable column instead of stretching, tabs lay out horizontally, nothing clipped, no crash. Found one copy bug: a freshness line read "0 min ago" | 2026-09-20 |
 | **Native Android run** on an Android 15 emulator (Pixel 7, x86_64) | Demo mode, Home, tabs, scrolling, dark mode, the offline banner, `opswatch://` deep links into a problem, into an error and an unknown link falling back to Home, a deep link while signed out (stays on Connect, nothing leaks), tablet geometry and landscape. No crash, no red box, no fatal exception in logcat. Cold start measured at **697–722 ms** | 2026-09-20 |
@@ -283,6 +285,13 @@ services" tile on small phones, a cramped hypothesis title, a demo banner that h
 line that read "0 min ago" for fifteen seconds of every minute, and an empty status-bar-height strip between that banner and every pushed screen's header (see
 [architecture.md](architecture.md#chrome-above-the-navigator) for why the native header could not be told to drop its
 top inset).
+
+**Not measured, and why.** The infinite lists keep every page they load, with no `maxPages`. Against a large estate
+— thousands of problems — a long scroll would accumulate more than the demo can show, and `maxPages` is not a safe
+drop-in because trimming pages needs `getPreviousPageParam` to fetch them back when scrolling up. Measuring it
+properly needs a large dataset served over HTTP, which a release build refuses to reach (plain HTTP is
+development-only, by design). It is recorded here as a known, unmeasured characteristic rather than guessed at or
+quietly "optimised".
 
 Accepted at the largest font scale: the tab bar labels truncate at `font_scale 2.0`. The tabs expose only
 `tabBarAllowFontScaling`, an on/off switch, and turning scaling off would freeze those labels at 11 pt for exactly the
