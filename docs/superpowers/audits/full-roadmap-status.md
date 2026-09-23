@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 51 |
+| `DONE` | 52 |
 | `PARTIAL` | 16 |
 | `FOUNDATION_ONLY` | 6 |
-| `NOT_STARTED` | 17 |
+| `NOT_STARTED` | 16 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -183,7 +183,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | SYN-1 | Checks, status, history, failures | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Checks run from the host through the SSRF guard, with §14's status and latency rules. No `/api/v1` route yet |
-| SYN-2 | Problem integration | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | `synthetic_down` / `synthetic_slow` / `cert_expiring` detectors are not wired to the problem lifecycle |
+| SYN-2 | Problem integration | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The three detectors go through the same lifecycle as every other, so a failing check opens, flaps and resolves like a failing service |
 
 ## SLO
 
