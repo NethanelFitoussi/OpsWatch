@@ -28,7 +28,7 @@ In order. Tick as they land.
 - [x] Cloudflare: a dashboard that shows what connecting it bought
 - [x] Navigation collapsed by default — the main rail, not the inner section menu (corrected mid-flight)
 - [x] Accounts: one card language across providers
-- [ ] Accounts: editable per provider
+- [x] Accounts: editable per provider
 - [ ] Full-site visual QA on the running product, and fixes
 - [ ] Visual polish and text reduction
 - [ ] Resume the remaining roadmap queue

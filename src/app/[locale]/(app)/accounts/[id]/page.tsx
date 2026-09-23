@@ -11,8 +11,11 @@ import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { findConnection, toView } from '@/lib/connections/repository';
+import { untestedRegions } from '@/lib/connections/tested-regions';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
+import { saveConnectionDetailsAction } from '../actions';
+import { ConnectionDetailsForm } from './forms';
 import { AmbientSection } from './sections/ambient-section';
 import { DangerZone } from './sections/danger-zone';
 import { IdentitySkeleton } from './sections/identity-skeleton';
@@ -39,6 +42,8 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
   }
   const view = toView(row, env().OPSWATCH_SECRET);
 
+  const untested = untestedRegions(view.regions, view.lastTest);
+
   const t = await getTranslations('AccountDetail');
   const tAccounts = await getTranslations('Accounts');
   const tChecklist = await getTranslations('Checklist');
@@ -62,6 +67,14 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         actions={<ConnectionStatusBadge status={view.status} />}
       />
 
+      <SectionCard title={t('details.title')} description={t('details.description')}>
+        <ConnectionDetailsForm
+          action={saveConnectionDetailsAction.bind(null, locale, view.id)}
+          name={view.name}
+          regions={view.regions}
+        />
+      </SectionCard>
+
       {view.method === 'role' && (
         <>
           <Suspense fallback={<IdentitySkeleton cards={2} />}>
@@ -80,6 +93,9 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
       )}
 
       <SectionCard id="permissions" className="scroll-mt-20" title={tChecklist('title')} action={view.status !== 'draft' && <TestButton connectionId={view.id} />}>
+        {/* A region added since the last test is a region the test never looked at. The badge cannot say
+            that, so the card does — in words, before the checklist that would otherwise look complete. */}
+        {untested.length > 0 && <p className="mb-3 text-sm text-amber-700 dark:text-amber-400">{t('details.untested', { regions: untested.join(', ') })}</p>}
         <PermissionChecklist result={view.lastTest} account={view.awsAccountId} />
       </SectionCard>
 

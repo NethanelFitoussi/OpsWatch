@@ -8,6 +8,7 @@ export const CLIENT_NAMESPACES = [
   'Shell',
   'Auth',
   'Wizard',
+  'AccountDetail.details',
   'AccountDetail.role',
   'AccountDetail.keys',
   'Checklist',

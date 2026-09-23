@@ -184,8 +184,8 @@
     }
   },
   "AccountDetail": {
-    "metaTitle": "Compte AWS",
-    "back": "Tous les comptes",
+    "metaTitle": "Connexion",
+    "back": "Toutes les connexions",
     "accountLine": "Compte {account} · {regions}",
     "role": {
       "identityTitle": "Identité d'OpsWatch",
@@ -229,6 +229,15 @@
       "title": "Supprimer cette connexion",
       "description": "OpsWatch oublie ce compte. Supprimez la stack CloudFormation dans AWS pour révoquer complètement l'accès.",
       "delete": "Supprimer la connexion"
+    },
+    "details": {
+      "title": "Détails de la connexion",
+      "description": "Le nom de cette connexion et les régions qu'OpsWatch lit. Le compte et la méthode d'identification définissent la connexion et ne se modifient pas ici.",
+      "name": "Nom",
+      "regions": "Régions",
+      "regionsHint": "Retirer une région arrête sa lecture. Rien de ce qui a déjà été collecté n'est supprimé, et tout revient si vous rajoutez la région.",
+      "save": "Enregistrer",
+      "untested": "Le dernier test de permissions ne couvrait pas {regions}. Relancez-le pour savoir ce qu'OpsWatch peut y lire."
     }
   },
   "Checklist": {
