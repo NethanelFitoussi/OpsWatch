@@ -7,8 +7,10 @@ import { albBucket, evaluateSlo, type Bucket } from '../detect/slo';
 import { readHistorySettings } from '../history/settings';
 import { countDeployments, listDeployments } from '../store/deployments';
 import { countOccurrences, enabledLogSources, recentErrorGroups } from '../store/errors';
+import { listChecks, runsBetween } from '../store/synthetics';
 import { listHistorySubjects, readHistoryRange } from '../store/history';
 import { objectiveFor } from '../store/slos';
+import { successShare } from './synthetics';
 import { countProblemsInWindow, worstSubjectsInWindow } from '../store/problems';
 
 /**
@@ -314,6 +316,54 @@ function deploymentsSection(db: Db, query: ReportQuery, windows: ReturnType<type
   };
 }
 
+/**
+ * What OpsWatch's own checks saw over the period (§14, REP-5).
+ *
+ * `not_collected` when no check is configured — "nobody set one up" and "everything passed" are different
+ * answers, and the second is the one a blank section would be read as. Once checks exist the section is
+ * answered even if none of them ran in the window: each says `null`, which the page renders as "not
+ * measured" beside the check's name, rather than the whole section disappearing behind one sentence.
+ */
+function syntheticsSection(db: Db, query: ReportQuery, windows: ReturnType<typeof windowsFor>): ReportSection {
+  const checks = listChecks(db, query.connectionId, query.scope);
+  if (checks.length === 0) return unavailableSection('synthetics', 'not_collected');
+
+  const runsIn = (checkId: string, window: { from: number; to: number }) => runsBetween(db, checkId, window.from, window.to);
+
+  const now = checks.flatMap((check) => runsIn(check.id, windows.period));
+  const before = checks.flatMap((check) => runsIn(check.id, windows.previous));
+  const share = (runs: readonly { ok: boolean }[]) => {
+    const value = successShare(runs);
+    return value === null ? null : value * 100;
+  };
+
+  const rows: ReportRow[] = checks.slice(0, REPORT_ROW_LIMIT).map((check) => {
+    const value = share(runsIn(check.id, windows.period));
+    const previous = share(runsIn(check.id, windows.previous));
+    return {
+      id: check.id,
+      label: check.name,
+      value,
+      previous,
+      delta: value === null || previous === null ? null : value - previous,
+      // A check that failed at all in the period is the one worth looking at first.
+      ...(value !== null && value < 100 ? { severity: 'warning' as const } : {}),
+    };
+  });
+
+  return {
+    id: 'synthetics',
+    figures: [
+      figure('syntheticUptime', share(now), share(before)),
+      // A count rather than a share, because "two failures" is what somebody goes looking for.
+      figure('syntheticFailures', now.filter((run) => !run.ok).length, before.filter((run) => !run.ok).length),
+      figure('syntheticRuns', now.length, before.length),
+    ],
+    rows,
+    unavailable: null,
+  };
+}
+
 export function readReport(db: Db, query: ReportQuery, context: ReportContext): Report {
   const family = SECTION_FAMILY[query.section];
   const windows = windowsFor(query.period, context.nowMs);
@@ -323,10 +373,8 @@ export function readReport(db: Db, query: ReportQuery, context: ReportContext): 
     : [problemsSection(db, query, family, windows), errorsSection(db, query, windows)];
 
   if (family !== undefined) sections.push(availabilitySection(db, query, family, windows));
-  // Nothing in this build measures either, and saying so is the whole point of the distinction.
   sections.push(deploymentsSection(db, query, windows));
-  // Nothing in this build runs a synthetic check, and saying so is the point of the distinction.
-  sections.push(unavailableSection('synthetics', 'not_measured'));
+  sections.push(syntheticsSection(db, query, windows));
 
   return {
     generatedAt: context.nowMs,

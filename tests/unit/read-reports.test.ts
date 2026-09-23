@@ -15,6 +15,7 @@ import { opswatchDbProvider } from '@/lib/history/opswatch-db';
 import { insertProblem, updateProblem } from '@/lib/store/problems';
 import { recordDeployments } from '@/lib/store/deployments';
 import { recordError, upsertLogSource } from '@/lib/store/errors';
+import { recordRun, upsertCheck } from '@/lib/store/synthetics';
 import { upsertSloDefinition } from '@/lib/store/slos';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
@@ -150,8 +151,9 @@ describe('§2.6 — a section that cannot be answered says which and why', () =>
     expect(sectionOf(readReport(db, query, context), 'availability')?.unavailable).toBe('not_enough_history');
   });
 
-  it('synthetics reads `not_measured`, because nothing in this build runs a check', () => {
-    expect(sectionOf(readReport(createTestDb(), query, context), 'synthetics')?.unavailable).toBe('not_measured');
+  it('THE RULING: synthetics reads `not_collected` when nobody configured a check, not `not_measured`', () => {
+    // "Nobody set one up" and "everything passed" are different answers, and a blank section reads as the second.
+    expect(sectionOf(readReport(createTestDb(), query, context), 'synthetics')?.unavailable).toBe('not_collected');
   });
 
   it('THE RULING: deployments read `not_collected` before the job has recorded any, not `not_measured`', () => {
@@ -386,5 +388,58 @@ describe('the report on the wire', () => {
         expect({ id: section.id, figures: section.figures, rows: section.rows }).toEqual({ id: section.id, figures: [], rows: [] });
       }
     }
+  });
+});
+
+
+describe('§14 — what the checks saw, in a report (REP-5)', () => {
+  const day = { ...query, period: '24h' as const };
+
+  const check = (db: ReturnType<typeof createTestDb>, name: string) =>
+    upsertCheck(db, { ...env, name, url: `https://example.com/${name}`, enabled: true, assertions: [] }, NOW);
+
+  const run = (db: ReturnType<typeof createTestDb>, checkId: string, at: number, ok: boolean) =>
+    recordRun(db, { checkId, at, ok, totalMs: 120, assertionResults: [] });
+
+  it('once a check exists the section is answered, even before anything has run', () => {
+    const db = createTestDb();
+    check(db, 'checkout');
+    const section = sectionOf(readReport(db, day, context), 'synthetics');
+    expect(section?.unavailable).toBeNull();
+    // Answered, and honest about having nothing to answer with.
+    expect(section?.figures.find((one) => one.id === 'syntheticUptime')?.value).toBeNull();
+    expect(section?.rows.find((one) => one.label === 'checkout')?.value).toBeNull();
+  });
+
+  it('counts the runs that passed, against the period before', () => {
+    const db = createTestDb();
+    const one = check(db, 'checkout');
+    // This period: three of four passed. The period before: two of two.
+    for (const [offset, ok] of [[1, true], [2, true], [3, false], [4, true]] as const) run(db, one.id, NOW - offset * 60_000, ok);
+    for (const offset of [25, 26]) run(db, one.id, NOW - offset * 60 * 60_000, true);
+
+    const section = sectionOf(readReport(db, day, context), 'synthetics');
+    expect(section?.figures.find((one) => one.id === 'syntheticUptime')).toMatchObject({ value: 75, previous: 100, delta: -25 });
+    expect(section?.figures.find((one) => one.id === 'syntheticFailures')).toMatchObject({ value: 1, previous: 0 });
+    expect(section?.figures.find((one) => one.id === 'syntheticRuns')).toMatchObject({ value: 4, previous: 2 });
+  });
+
+  it('THE RULING: a check that ran only in the earlier period compares against null, not against zero', () => {
+    const db = createTestDb();
+    const one = check(db, 'checkout');
+    run(db, one.id, NOW - 30 * 60 * 60_000, true);
+
+    const row = sectionOf(readReport(db, day, context), 'synthetics')?.rows.find((r) => r.label === 'checkout');
+    // Nothing ran this period. Zero per cent would say every check failed, which nobody observed.
+    expect(row).toMatchObject({ value: null, previous: 100, delta: null });
+  });
+
+  it('marks a check that failed at all, so it is the one read first', () => {
+    const db = createTestDb();
+    const one = check(db, 'checkout');
+    run(db, one.id, NOW - 60_000, false);
+    run(db, one.id, NOW - 120_000, true);
+
+    expect(sectionOf(readReport(db, day, context), 'synthetics')?.rows[0]).toMatchObject({ value: 50, severity: 'warning' });
   });
 });

@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, lt } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, lt } from 'drizzle-orm';
 import { randomId } from '../crypto';
 import type { Db } from '../db/client';
 import { syntheticChecks, syntheticRuns, type SyntheticCheckRow, type SyntheticRunRow } from '../db/schema';
@@ -172,6 +172,21 @@ export function recentRuns(db: Db, checkId: string, limit: number): SyntheticRun
 /** The projection §14's rules read. Narrowed here, so a rule cannot reach for a field it has no business in. */
 export function toOutcome(row: SyntheticRunRow): RunOutcome {
   return { at: row.at, ok: row.ok, totalMs: row.totalMs };
+}
+
+/**
+ * Every run of one check inside a window, oldest first.
+ *
+ * Bounded by the window rather than by a count, because a report asks "what happened in these seven days",
+ * and a limit would silently answer with a different period for a check that runs every minute.
+ */
+export function runsBetween(db: Db, checkId: string, fromMs: number, toMs: number): SyntheticRunRow[] {
+  return db
+    .select()
+    .from(syntheticRuns)
+    .where(and(eq(syntheticRuns.checkId, checkId), gte(syntheticRuns.at, fromMs), lt(syntheticRuns.at, toMs)))
+    .orderBy(asc(syntheticRuns.at), asc(syntheticRuns.seq))
+    .all();
 }
 
 export function deleteRunsBefore(db: Db, beforeMs: number): number {

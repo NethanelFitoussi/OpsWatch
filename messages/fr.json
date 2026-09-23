@@ -1310,7 +1310,10 @@
         "deployments": "Déploiements",
         "deploymentsFailed": "Déploiements en échec",
         "availability": "Disponibilité (% de requêtes sans 5xx)",
-        "errorBudget": "Budget d’erreur restant (%)"
+        "errorBudget": "Budget d’erreur restant (%)",
+        "syntheticUptime": "Vérifications réussies (%)",
+        "syntheticFailures": "Vérifications en échec",
+        "syntheticRuns": "Vérifications exécutées"
       },
       "columns": {
         "name": "Nom",

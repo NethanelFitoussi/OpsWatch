@@ -22,6 +22,7 @@ import {
   serverInfoSchema,
   sessionListSchema,
   sloSummarySchema,
+  syntheticSummarySchema,
   systemStatusSchema,
 } from '@opswatch/contract';
 
@@ -177,6 +178,16 @@ export const API_ROUTES: ApiRouteSpec[] = [
     auth: 'session',
     summary: 'Alerts in one environment, newest first, with how many fires the cooldown suppressed.',
     response: pageSchema(alertSummarySchema),
+    status: 200,
+    errors: ['unauthorized', 'invalid_request', 'not_found'],
+  },
+  {
+    method: 'get',
+    path: '/synthetics',
+    operationId: 'listSynthetics',
+    auth: 'session',
+    summary: 'The synthetic checks of one environment and what they saw. A check that has never run reports unknown rather than up.',
+    response: pageSchema(syntheticSummarySchema),
     status: 200,
     errors: ['unauthorized', 'invalid_request', 'not_found'],
   },

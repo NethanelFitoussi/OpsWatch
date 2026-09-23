@@ -1310,7 +1310,10 @@
         "deployments": "Deployments",
         "deploymentsFailed": "Deployments that failed",
         "availability": "Availability (% of requests without a 5xx)",
-        "errorBudget": "Error budget left (%)"
+        "errorBudget": "Error budget left (%)",
+        "syntheticUptime": "Checks that passed (%)",
+        "syntheticFailures": "Failed checks",
+        "syntheticRuns": "Checks run"
       },
       "columns": {
         "name": "Name",
