@@ -2,8 +2,8 @@ import 'server-only';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { randomId } from '../crypto';
 import type { Db } from '../db/client';
-import { alertRules, alerts, type AlertRow, type AlertRuleRow } from '../db/schema';
-import { DEFAULT_COOLDOWN_SECONDS, INSTALL_RULES, type Rule } from '../detect/alert';
+import { alertRules, alerts, installRuleOffers, type AlertRow, type AlertRuleRow } from '../db/schema';
+import { DEFAULT_COOLDOWN_SECONDS, INSTALL_RULES, type AlertSeverity, type Rule } from '../detect/alert';
 
 /**
  * Alert rules and the alerts they raise (§15).
@@ -35,16 +35,40 @@ export function toRule(row: AlertRuleRow): Rule {
 }
 
 /**
- * Creates §15.1's install rules for an environment that has none.
+ * Creates §15.1's install rules an environment has not been offered yet.
  *
- * Idempotent, and it never revives a rule somebody deleted on purpose: it only acts when the environment
- * has no rules at all. An installation that has been curated stays curated.
+ * Idempotent, and it never revives a rule somebody deleted on purpose — the offer is what remembers that,
+ * rather than the rule's own existence. The older form acted only when the environment had no rules at all,
+ * which kept the promise and meant an installation running for a week could never receive a rule a later
+ * release shipped. Now each name is offered once: an environment that has been curated stays curated, and
+ * a rule nobody has ever seen still arrives.
  */
-export function ensureInstallRules(db: Db, connectionId: string, scope: string, nowMs: number): number {
-  if (listRules(db, connectionId, scope).length > 0) return 0;
+export function ensureInstallRules(
+  db: Db,
+  connectionId: string,
+  scope: string,
+  nowMs: number,
+  /** The set to offer. A parameter so a test can stand in for the set an earlier release shipped. */
+  set: readonly { name: string; condition: Rule['condition']; minSeverity: AlertSeverity; kinds: string[] }[] = INSTALL_RULES,
+): number {
+  const offered = new Set(
+    db
+      .select({ name: installRuleOffers.name })
+      .from(installRuleOffers)
+      .where(and(eq(installRuleOffers.connectionId, connectionId), eq(installRuleOffers.scope, scope)))
+      .all()
+      .map((row) => row.name),
+  );
+  const existing = new Set(listRules(db, connectionId, scope).map((rule) => rule.name));
 
   let created = 0;
-  for (const installed of INSTALL_RULES) {
+  for (const installed of set) {
+    // Recorded whether or not a rule is created, so the next release's set is decided the same way.
+    if (!offered.has(installed.name)) {
+      db.insert(installRuleOffers).values({ connectionId, scope, name: installed.name, offeredAt: nowMs }).run();
+    }
+    if (offered.has(installed.name) || existing.has(installed.name)) continue;
+
     db.insert(alertRules)
       .values({
         id: randomId(),

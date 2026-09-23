@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 59 |
-| `PARTIAL` | 14 |
+| `DONE` | 60 |
+| `PARTIAL` | 13 |
 | `FOUNDATION_ONLY` | 4 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -190,7 +190,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | SLO-1 | Definitions and measurement (§19) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Per-subject objectives are defined on `load-balancers/objectives`, measured from stored rollups, served at `GET /slos`, and used by reports in place of the default |
-| SLO-2 | Error budget and burn rate | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Budget and burn rate are computed per objective and shown. `burnAlert` decides fast from slow, and no rule yet raises an alert from it |
+| SLO-2 | Error budget and burn rate | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Budget and burn rate per objective, and §19's multi-window burn now raises an ordinary §15 alert under the `slo_burn` install rule |
 | SLO-3 | "Not enough history" below a quarter | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Enforced in `evaluateSlo`; a sparse window yields no figure rather than a ratio over the fraction that exists |
 
 ## Cloudflare
@@ -297,8 +297,15 @@ exists in the contract, so the field is additive.
 uses the objective defined for that subject instead of the hard-wired 99.9 %. The metrics job also stores
 p95 now, in a request of its own, so a latency objective has something to measure.
 
-**Checkpoint D2 — burn-rate alerting (SLO-2).** The remaining half: `burnAlert` already tells a fast burn
-from a slow one, and nothing raises an alert from it. ALE-1 now exists, so there is somewhere for one to go.
+**Checkpoint D2 — burn-rate alerting (SLO-2). DONE.** A burning budget is now a candidate like any other:
+it goes through §15's rules, cooldown and acknowledgement rather than being a second alerting system. The
+fast burn wins over the slow one, so an environment burning fast is not also told about the slow burn it
+obviously has. Install rule `slo_burn`, at `warning` so the slow burn — the one that leaves time to act —
+is not dropped by a critical floor.
+
+The install set is versioned now: `install_rule_offers` records which names an environment has been offered,
+so a rule a later release ships reaches an installation that has been running for weeks, and a rule somebody
+deleted still stays deleted.
 
 ### LATER
 

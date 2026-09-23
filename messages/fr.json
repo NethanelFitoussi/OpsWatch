@@ -1677,7 +1677,8 @@
       "rule": {
         "critical_problems": "Tout problème critique",
         "synthetic_down": "Une vérification synthétique tombe",
-        "certificate_expiring": "Un certificat expire"
+        "certificate_expiring": "Un certificat expire",
+        "slo_burn": "Un objectif consomme son budget d'erreur"
       },
       "enabled": "activée",
       "disabled": "désactivée",
@@ -1762,7 +1763,12 @@
       "alb_5xx_rate": "{loadBalancer} répond à {rate} des requêtes par une erreur 5xx ({errors} sur {requests} en 15 minutes).",
       "alb_elb_5xx_count": "{loadBalancer} a lui-même renvoyé {count} erreurs 5xx en 15 minutes.",
       "alb_unhealthy_hosts": "{targetGroup} sur {loadBalancer} a {count, plural, one {# hôte défaillant} other {# hôtes défaillants}}.",
-      "alarm_firing": "L'alarme {alarm} est à l'état ALARM."
+      "alarm_firing": "L'alarme {alarm} est à l'état ALARM.",
+      "synthetic_down": "{name} ne répond pas ({url}).",
+      "synthetic_slow": "{name} répond en {median} ms, au-dessus de son attente de {threshold} ms.",
+      "cert_expiring": "Le certificat de {name} expire dans {days, plural, one {# jour} other {# jours}}.",
+      "slo_burn_fast": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre, mesuré sur {hours, plural, one {la dernière heure} other {les # dernières heures}}.",
+      "slo_burn_slow": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre sur {hours, plural, one {la dernière heure} other {les # dernières heures}}."
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services de {cluster} exécutent moins de tâches que souhaité.",

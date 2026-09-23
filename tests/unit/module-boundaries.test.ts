@@ -97,6 +97,8 @@ const SERVER_ONLY_MODULES = [
   'lib/read/errors.ts',
   'lib/read/health-labels.ts',
   'lib/store/health.ts',
+  'lib/store/slos.ts',
+  'lib/read/slos.ts',
   'lib/read/paging.ts',
   'lib/read/render.ts',
   'lib/api/v1/environment.ts',

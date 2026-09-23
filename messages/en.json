@@ -1677,7 +1677,8 @@
       "rule": {
         "critical_problems": "Any critical problem",
         "synthetic_down": "A synthetic check goes down",
-        "certificate_expiring": "A certificate is expiring"
+        "certificate_expiring": "A certificate is expiring",
+        "slo_burn": "An objective is burning its error budget"
       },
       "enabled": "on",
       "disabled": "off",
@@ -1762,7 +1763,12 @@
       "alb_5xx_rate": "{loadBalancer} answers {rate} of requests with a 5xx error ({errors} of {requests} in 15 minutes).",
       "alb_elb_5xx_count": "{loadBalancer} itself returned {count} 5xx errors in 15 minutes.",
       "alb_unhealthy_hosts": "{targetGroup} on {loadBalancer} has {count, plural, one {# unhealthy host} other {# unhealthy hosts}}.",
-      "alarm_firing": "Alarm {alarm} is in ALARM state."
+      "alarm_firing": "Alarm {alarm} is in ALARM state.",
+      "synthetic_down": "{name} is not answering ({url}).",
+      "synthetic_slow": "{name} responds in {median} ms, above its {threshold} ms expectation.",
+      "cert_expiring": "{name}'s certificate expires in {days, plural, one {# day} other {# days}}.",
+      "slo_burn_fast": "{name} is burning its error budget {rate}× faster than it can afford, measured over the last {hours, plural, one {hour} other {# hours}}.",
+      "slo_burn_slow": "{name} has been burning its error budget {rate}× faster than it can afford over the last {hours, plural, one {hour} other {# hours}}."
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services of {cluster} run fewer tasks than desired.",

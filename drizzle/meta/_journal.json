@@ -134,6 +134,13 @@
       "when": 1790149129294,
       "tag": "0018_amazing_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1790150639862,
+      "tag": "0019_burly_luminals",
+      "breakpoints": true
     }
   ]
 }
