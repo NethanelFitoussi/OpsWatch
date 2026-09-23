@@ -50,6 +50,8 @@ export type NewIntegration = {
   name: string;
   /** Already encrypted by the caller: this file never sees a plaintext token. */
   credentialCiphertext?: string | null;
+  /** The non-secret half — which model, which account. Absent leaves whatever is stored alone. */
+  config?: Record<string, unknown> | null;
 };
 
 export function upsertIntegration(db: Db, input: NewIntegration, nowMs: number): IntegrationView {
@@ -61,13 +63,19 @@ export function upsertIntegration(db: Db, input: NewIntegration, nowMs: number):
 
   if (existing !== undefined) {
     // An absent credential leaves the stored one alone, so saving a form that does not include the token
-    // cannot silently clear it. With nothing to change, nothing is written at all.
-    if (input.credentialCiphertext === undefined) return toView(existing);
+    // cannot silently clear it. With nothing to change at all, nothing is written.
+    if (input.credentialCiphertext === undefined && input.config === undefined) return toView(existing);
 
     const row = db
       .update(integrations)
-      // A replaced credential is untested again: the old result says nothing about the new token.
-      .set({ credentialCiphertext: input.credentialCiphertext, status: 'untested' })
+      .set({
+        ...(input.credentialCiphertext === undefined ? {} : { credentialCiphertext: input.credentialCiphertext }),
+        ...(input.config === undefined ? {} : { config: input.config }),
+        // Changing either half makes the old test result say nothing about the connection as it is now:
+        // a new key, a new endpoint or a new model all need proving again.
+        status: 'untested',
+        lastError: null,
+      })
       .where(eq(integrations.id, existing.id))
       .returning()
       .get();
@@ -81,6 +89,7 @@ export function upsertIntegration(db: Db, input: NewIntegration, nowMs: number):
       kind: input.kind,
       name: input.name,
       credentialCiphertext: input.credentialCiphertext ?? null,
+      config: input.config ?? null,
       status: 'untested',
       createdAt: nowMs,
     })
@@ -99,6 +108,16 @@ export function recordIntegrationTest(db: Db, id: string, result: { ok: boolean;
     })
     .where(eq(integrations.id, id))
     .run();
+}
+
+/**
+ * Removes an integration entirely — the row, the ciphertext and the status together.
+ *
+ * "Disconnect" has to mean the credential is gone, not that a flag was flipped. A row kept with its token
+ * for the sake of the status history would be a secret OpsWatch was asked to forget and did not.
+ */
+export function deleteIntegration(db: Db, id: string): number {
+  return db.delete(integrations).where(eq(integrations.id, id)).run().changes;
 }
 
 export function listRepositories(db: Db): RepositoryRow[] {

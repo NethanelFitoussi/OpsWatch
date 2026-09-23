@@ -25,16 +25,65 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 64 |
+| `DONE` | 67 |
 | `PARTIAL` | 10 |
 | `FOUNDATION_ONLY` | 3 |
-| `NOT_STARTED` | 13 |
+| `NOT_STARTED` | 10 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
 
 Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**obile · **R**eal data · **T**ests ·
 **V**erified in a browser. `·` means not applicable.
+
+
+## Integrations and connections — the product-level view
+
+**Added 2026-09-23, because the requirement counts were hiding a gap.** Sixty-odd small requirements being
+`DONE` made OpsWatch look close to finished while it was still, in practice, an AWS-only product. A product
+area is not `DONE` because its schema, its contract or its settings card exists — it is `DONE` when an
+operator can connect the thing, see that it is healthy, use what it unlocks, and disconnect it again.
+
+Read this table first. The detailed requirement tables below it are the implementation view of the same work.
+
+| Integration | Connect | Credentials | Discovery | What it unlocks | Disconnect | Status |
+|---|---|---|---|---|---|---|
+| **AWS** | ✓ IAM role, ambient, access keys | ✓ encrypted, CloudFormation onboarding | ✓ regions, permission test | Every monitoring surface | ✓ | `DONE` |
+| **GitHub / Repository** | ✓ token in Settings → Repositories | ✓ encrypted, write-only | ✗ no org/installation discovery | Stack frame → file link, service → repository mapping | ✓ | `PARTIAL` |
+| **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Nothing yet — `Ask OpsWatch` is the next piece | ✓ deletes the key | `PARTIAL` |
+| **Cloudflare** | ✗ | ✗ | ✗ | Traffic, cache, security events, Zero Trust | ✗ | `NOT_STARTED` |
+| **Google sign-in** | ✓ environment-configured | · no stored secret: it lives in the environment | · | Sign-in, with an optional allowed domain | · unset the variables | `DONE` |
+
+### What each one still needs
+
+**AWS.** Nothing for V1. The only open item is the CloudFormation template v2 (AWS-5), which is the owner's
+decision to deploy and must never be deployed automatically.
+
+**GitHub / Repository.** The architecture is real and the deterministic half works without a credential:
+repositories are stored, a service maps to one, and a stack frame resolves to a file link. What is missing
+needs a token with `Contents: Read` — commits, changed files, diffs and the lines around a frame — plus
+organisation and installation discovery, which needs a GitHub App. **`BLOCKED_EXTERNAL` for the live half
+only**; everything that does not touch the network is buildable here and is tracked under REPO-*.
+
+**AI provider.** The integration is complete: three providers behind one abstraction, an encrypted key that
+never returns to the browser, a connection test, four honest states, and disconnect that deletes rather than
+flags. `features.ai` stays **false** because `GET /ai/ask` does not exist yet — a capability is what a caller
+can use, not what is stored. Live acceptance against a real provider is `BLOCKED_EXTERNAL`: no key here.
+
+**Cloudflare.** Designed in §20 and not begun. Nothing about it needs a credential to build except the final
+live acceptance, so the architecture, the settings page, the API and the tests are all buildable here.
+
+**Google sign-in.** Complete and in use: `openid-client`, a signed flow cookie with a ten-minute TTL, the
+`hd` hosted-domain claim enforced when configured, three named failure codes on the login page, and password
+sign-in unaffected. Its secrets live in the environment on purpose — a sign-in provider reconfigurable from
+inside the application is a way to take the application over.
+
+### The rule these are judged by
+
+A credential must be encrypted at rest, must never be returned by a read path, must never appear in HTML, in
+a log line, in an error message or in the canonical contract, and must be deletable. `npm run roadmap:check`
+enforces the structural half: every available integration has somewhere to configure it, every unavailable
+one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 
 ---
 
@@ -206,8 +255,8 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | AI-1 | Off by default | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `DONE` | `features.ai` is false; no AI menu entry anywhere |
-| AI-2 | Provider settings, encrypted credentials | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | `encrypt()` already supports a purpose-scoped key |
-| AI-3 | Provider connection test | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | One-token completion stored as a capability check |
+| AI-2 | Provider settings, encrypted credentials | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Three providers behind one abstraction, key encrypted under its own derivation, never returned, deletable. Live acceptance against a real provider is `BLOCKED_EXTERNAL` |
+| AI-3 | Provider connection test | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | One-token call, recorded as connected / invalid / unavailable. A provider's own error text never reaches the database or the page |
 | AI-4 | Structured internal tools | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | §23: ≤6 calls, ≤60 s, ≤32 KB per result, <100 KB context |
 | AI-5 | Ask OpsWatch API + web UI | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | `aiAnswerSchema` exists |
 | AI-6 | No uncontrolled log/database dump | ✓ | · | · | · | · | ✓ | ✓ | · | `DONE` | Vacuously: nothing queries an AI. Must stay true when AI-4 lands |
@@ -238,7 +287,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | UX-6 | Accessibility pass (§V) | · | · | · | ✗ | ✗ | · | ✗ | ✗ | `NOT_STARTED` | Severity is never colour-alone today, but no audit has been run |
 | UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
 | UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | Getting-started and setup exist; not the staged wizard §D describes |
-| UX-9 | Integration centre (§E) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Needs more than one integration to centre |
+| UX-9 | Integration centre (§E) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` lists all five with measured state, what each enables and what access it asks for. An integration this build cannot complete says so and offers no link |
 | UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
 | UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
 | UX-12 | Global search | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | §21's `search_index` |

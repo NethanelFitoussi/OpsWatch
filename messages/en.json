@@ -1977,6 +1977,8 @@
       }
     },
     "more": {
+      "integrations": "Integrations",
+      "integrationsHint": "Everything OpsWatch can connect to — AWS, GitHub, an AI provider, Cloudflare, Google sign-in — and what each one is doing right now.",
       "title": "More settings",
       "history": "Data & history",
       "historyHint": "Whether OpsWatch collects history, what it would cost, and how long it is kept.",
@@ -1984,6 +1986,8 @@
       "statusHint": "Whether the collector is running, when each job last ran, and the state of the database.",
       "repositories": "Repositories",
       "repositoriesHint": "Which repositories your services are built from, so a stack frame can link to its source.",
+      "ai": "AI provider",
+      "aiHint": "Optional. Connect a model so OpsWatch can narrate what it has already measured — it works fully without one.",
       "audit": "Audit log",
       "auditHint": "Who did what, and when. Entries are only ever added."
     },
@@ -2046,6 +2050,8 @@
         "log_source_update": "Log source changed",
         "repository_update": "Repository changed",
         "integration_update": "Integration changed",
+        "ai_update": "AI provider changed",
+        "ai_test": "AI provider tested",
         "synthetic_update": "Synthetic check changed",
         "alert_rule_update": "Alert rule changed",
         "slo_update": "Objective changed",
@@ -2064,6 +2070,110 @@
         "ok": "Succeeded",
         "denied": "Refused",
         "failed": "Failed"
+      }
+    },
+    "ai": {
+      "title": "AI provider",
+      "description": "Optional. OpsWatch is complete without it — every figure, problem and correlation is computed by written formulas, with or without a model.",
+      "boundaries": "What AI does here, and what it does not",
+      "boundariesHint": "§2.2 is the rule this page exists under: grouping, severity, baselines and anomalies are computed and tested. A model ranks and narrates. It never decides.",
+      "boundary": {
+        "evidence": "It is given structured evidence OpsWatch already collected — never a database dump, never raw logs.",
+        "bounded": "Its answers are labelled as hypotheses and kept visibly apart from observed facts and correlations.",
+        "noWrites": "It cannot change your infrastructure or your code. OpsWatch has no write access to either.",
+        "optional": "Turning it off removes the assistant and nothing else."
+      },
+      "statusTitle": "Connection",
+      "none": "No AI provider is configured.",
+      "noneHint": "Nothing is sent anywhere until one is. Every other part of OpsWatch works exactly as it does now.",
+      "status": {
+        "configured": "Connected",
+        "untested": "Saved, not tested",
+        "failed": "Not working"
+      },
+      "untestedHint": "A saved key is not a working key. Test the connection to find out which you have.",
+      "connect": "Connect a provider",
+      "replace": "Change the provider or the key",
+      "optional": "Your key is encrypted before it is stored and is never sent back to this page.",
+      "provider": "Provider",
+      "providers": {
+        "anthropic": "Anthropic",
+        "openai": "OpenAI",
+        "openai-compatible": "OpenAI-compatible endpoint"
+      },
+      "model": "Model",
+      "baseUrl": "Endpoint",
+      "baseUrlHint": "Your own endpoint, over https. OpsWatch refuses an address inside your network or the cloud metadata service, exactly as it does for synthetic checks.",
+      "apiKey": "API key",
+      "apiKeyHint": "Encrypted with a key derived for this purpose alone, so it cannot be read by anything that handles your AWS credentials.",
+      "keyKept": "Stored — leave blank to keep it",
+      "keyKeptHint": "A key is already stored. Leave this blank to keep it, or paste a new one to replace it.",
+      "save": "Save",
+      "saved": "Saved. It has not been tested yet.",
+      "test": "Test connection",
+      "testPassed": "The provider answered. The connection works.",
+      "remove": "Disconnect",
+      "removed": "Disconnected. The key has been deleted.",
+      "errors": {
+        "invalid_provider": "Choose one of the supported providers.",
+        "invalid_model": "Name the model, up to 100 characters.",
+        "invalid_base_url": "The endpoint must be an https address with no query string and no credentials in it.",
+        "invalid_key": "That does not look like an API key.",
+        "not_configured": "No provider is configured yet.",
+        "unauthorized": "The provider refused the key. Check it, or paste a new one.",
+        "rate_limited": "The provider is rate-limiting this key right now. Try again shortly.",
+        "unreachable": "The provider could not be reached.",
+        "refused_endpoint": "OpsWatch refused to call that address: it resolves inside your network.",
+        "bad_response": "The provider answered with something OpsWatch could not read.",
+        "timeout": "The provider did not answer in time."
+      }
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "What OpsWatch can be connected to, what each connection enables, and whether it is working.",
+      "readOnly": "What OpsWatch asks for",
+      "readOnlyHint": "Read access, everywhere it is possible. OpsWatch does not deploy, does not scale, does not roll back and does not write to your code. Every credential is encrypted before it is stored and is never sent back to this browser.",
+      "configure": "Connect",
+      "manage": "Manage",
+      "names": {
+        "aws": "AWS",
+        "github": "GitHub",
+        "ai": "AI provider",
+        "cloudflare": "Cloudflare",
+        "google": "Google sign-in"
+      },
+      "states": {
+        "connected": "Connected",
+        "degraded": "Needs attention",
+        "not_configured": "Not connected",
+        "unavailable": "Not available in this build"
+      },
+      "enables": {
+        "aws": "Every monitoring surface: services, databases, load balancers, alarms, logs, errors, deployments.",
+        "github": "Links a stack frame to the file it came from, and a service to the repository that builds it.",
+        "ai": "Lets a model narrate what OpsWatch has already measured. Nothing depends on it.",
+        "cloudflare": "Traffic, cache and security events at the edge, and Zero Trust sessions.",
+        "google": "Signing in with a Google account instead of a password."
+      },
+      "access": {
+        "aws": "A read-only IAM role, or ambient credentials. The CloudFormation template lists every action it grants.",
+        "github": "Repository contents, read-only. OpsWatch never needs write access to investigate, and never modifies your code.",
+        "ai": "Your API key, used only for questions you ask. OpsWatch sends structured evidence it collected, never a database dump or raw logs.",
+        "cloudflare": "An API token scoped to the zones you choose, read-only.",
+        "google": "Your email address and, if you set one, your organisation's domain. Configured in the environment, not here."
+      },
+      "detail": {
+        "awsConnected": "{accounts, plural, one {# account} other {# accounts}}",
+        "awsFailing": "{failing} of {accounts} cannot be read right now",
+        "githubConnected": "{repositories, plural, =0 {no repositories yet} one {# repository} other {# repositories}}",
+        "githubNoToken": "{repositories, plural, =0 {no repositories yet} one {# repository} other {# repositories}} — no token, so file contents cannot be read",
+        "aiConnected": "{provider} · {model}",
+        "ai_untested": "{provider} · {model} — saved, not tested",
+        "ai_failed": "{provider} · {model} — the last test failed",
+        "cloudflarePlanned": "Designed, not built yet",
+        "googleOn": "Configured in the environment",
+        "googleDomain": "Configured — only {domain} accounts may sign in",
+        "googleOff": "Set the client id, secret and public URL to offer it"
       }
     }
   },

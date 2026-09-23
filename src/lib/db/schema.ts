@@ -363,7 +363,14 @@ export const syntheticRuns = sqliteTable(
 export type SyntheticCheckRow = typeof syntheticChecks.$inferSelect;
 export type SyntheticRunRow = typeof syntheticRuns.$inferSelect;
 
-export const INTEGRATION_KINDS = ['github'] as const;
+/**
+ * The external services OpsWatch can be connected to, besides AWS.
+ *
+ * AWS is not here: it has its own `connections` table because an AWS connection carries a region set, a
+ * role ARN, an external id and a permission report, none of which a generic integration row has room for.
+ * Everything else is one credential and a status, which is exactly what this table holds.
+ */
+export const INTEGRATION_KINDS = ['github', 'ai', 'cloudflare'] as const;
 export const INTEGRATION_STATUSES = ['configured', 'untested', 'failed'] as const;
 
 /**
@@ -382,6 +389,12 @@ export const integrations = sqliteTable(
     name: text('name').notNull(),
     /** Encrypted at rest. Null while an integration is declared but not yet given a credential. */
     credentialCiphertext: text('credential_ciphertext'),
+    /**
+     * Everything about the connection that is **not** a secret: which model, which account, which zones.
+     * Kept out of the ciphertext on purpose — a page has to be able to say what is connected without
+     * decrypting anything, and a value nobody needs to hide should not be behind a key.
+     */
+    config: text('config', { mode: 'json' }).$type<Record<string, unknown>>(),
     status: text('status', { enum: INTEGRATION_STATUSES }).notNull().default('untested'),
     lastTestedAt: integer('last_tested_at'),
     lastError: text('last_error'),

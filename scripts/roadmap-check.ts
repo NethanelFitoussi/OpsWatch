@@ -207,8 +207,63 @@ function checkDocRoutes(): CheckResult {
   return { failures, notes: [] };
 }
 
+/**
+ * Every integration the catalogue offers has somewhere to configure it, and every stored credential is
+ * read behind the store's one named accessor.
+ *
+ * Two structural facts with one right answer each. A card saying "Connect Cloudflare" that links to a page
+ * nobody built is the menu failure again, in the one place where a user is being asked to paste a secret.
+ * And a second path to a ciphertext is how a credential ends up rendered: the store keeps exactly one, and
+ * its name is what makes "who can read a credential" a search for a single identifier.
+ */
+function checkIntegrations(): CheckResult {
+  const failures: Finding[] = [];
+  const notes: Finding[] = [];
+
+  const catalogue = read('src/lib/integrations/catalogue.ts');
+  const block = catalogue.slice(catalogue.indexOf('INTEGRATION_SPECS'), catalogue.length);
+  const specs = [...block.matchAll(/(\w[\w-]*):\s*\{\s*id:\s*'([a-z]+)',\s*href:\s*'([^']+)',\s*credentials:\s*'([a-z-]+)'/g)];
+  if (specs.length === 0) failures.push({ check: 'integrations', detail: 'INTEGRATION_SPECS could not be parsed, so nothing about it was checked' });
+
+  for (const [, , id, href, credentials] of specs) {
+    // `/accounts` and the rest are pages under the app group; a settings page is a directory with a page.
+    const page = join(ROOT, 'src/app/[locale]/(app)', href.replace(/^\//, ''), 'page.tsx');
+    const available = block.slice(block.indexOf(`id: '${id}'`)).match(/available:\s*(true|false)/)?.[1] === 'true';
+
+    // An integration the card offers a link to must have somewhere to land. One declared unavailable must
+    // not — a card that says "not available in this build" and links anyway is the same broken promise.
+    if (available && !existsSync(page)) {
+      failures.push({ check: 'integrations', detail: `${id} is declared available and points at ${href}, which has no page: the card offers a link that answers 404` });
+    }
+    if (!available && existsSync(page)) {
+      failures.push({ check: 'integrations', detail: `${id} is declared unavailable but ${href} exists: the card hides a page an operator could use` });
+    }
+    if (credentials === 'stored') {
+      notes.push({ check: 'integrations', detail: `${id} keeps a credential in the database, so it must be encrypted and removable from ${href}` });
+    }
+  }
+
+  // One accessor for a stored credential, and one for an AWS secret. A second would be a second way to leak.
+  const store = read('src/lib/store/repositories.ts');
+  if (!store.includes('export function credentialFor')) {
+    failures.push({ check: 'integrations', detail: 'the store no longer exposes credentialFor: the single named accessor for an integration credential is gone' });
+  }
+  for (const file of walk(join(ROOT, 'src'))) {
+    const rel = relative(ROOT, file);
+    if (rel.endsWith('store/repositories.ts')) continue;
+    const source = readFileSync(file, 'utf8');
+    // Reading it is what is forbidden. Writing one is how a credential is saved, and the field name appears
+    // in that input literal — so member access is the signal, not the identifier.
+    if (/\.\s*credentialCiphertext/.test(source) && !rel.startsWith('src/lib/db/')) {
+      failures.push({ check: 'integrations', detail: `${rel} reads .credentialCiphertext outside the store, which is a second path to a stored secret` });
+    }
+  }
+
+  return { failures, notes };
+}
+
 export function runChecks(): CheckResult {
-  const results = [checkSections(), checkFilters(), checkCapabilities(), checkMarkers(), checkSchemaProducers(), checkDocRoutes()];
+  const results = [checkSections(), checkFilters(), checkCapabilities(), checkMarkers(), checkSchemaProducers(), checkDocRoutes(), checkIntegrations()];
   return {
     failures: results.flatMap((result) => result.failures),
     notes: results.flatMap((result) => result.notes),
@@ -222,6 +277,8 @@ export const HUMAN_ACCEPTANCE = [
   'Is every figure on screen something OpsWatch actually measured, rather than a plausible default?',
   'Does the French copy say the same thing as the English, including the caveats?',
   'Has the surface been opened in a browser, signed in, since it last changed?',
+  'Does every integration state what access it asks for, before asking for the credential?',
+  'Has each integration been connected against the real provider, or is only its architecture proven?',
 ];
 
 if (process.argv[1] !== undefined && import.meta.url.endsWith(process.argv[1].replace(/^.*?(?=scripts)/, ''))) {

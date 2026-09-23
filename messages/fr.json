@@ -1977,6 +1977,8 @@
       }
     },
     "more": {
+      "integrations": "Intégrations",
+      "integrationsHint": "Tout ce à quoi OpsWatch peut se connecter — AWS, GitHub, un fournisseur d'IA, Cloudflare, la connexion Google — et l'état actuel de chacun.",
       "title": "Autres paramètres",
       "history": "Données et historique",
       "historyHint": "Si OpsWatch collecte l’historique, ce que cela coûterait et combien de temps il est conservé.",
@@ -1984,6 +1986,8 @@
       "statusHint": "Si le collecteur fonctionne, la dernière exécution de chaque tâche et l’état de la base de données.",
       "repositories": "Dépôts",
       "repositoriesHint": "Les dépôts dont vos services sont issus, pour relier une ligne de pile à sa source.",
+      "ai": "Fournisseur d'IA",
+      "aiHint": "Facultatif. Connectez un modèle pour qu'OpsWatch puisse raconter ce qu'il a déjà mesuré — il fonctionne pleinement sans.",
       "audit": "Journal d’audit",
       "auditHint": "Qui a fait quoi, et quand. Les entrées ne font que s’ajouter."
     },
@@ -2046,6 +2050,8 @@
         "log_source_update": "Source de journaux modifiée",
         "repository_update": "Dépôt modifié",
         "integration_update": "Intégration modifiée",
+        "ai_update": "Fournisseur d'IA modifié",
+        "ai_test": "Fournisseur d'IA testé",
         "synthetic_update": "Vérification synthétique modifiée",
         "alert_rule_update": "Règle d’alerte modifiée",
         "slo_update": "Objectif modifié",
@@ -2064,6 +2070,110 @@
         "ok": "Réussi",
         "denied": "Refusé",
         "failed": "Échoué"
+      }
+    },
+    "ai": {
+      "title": "Fournisseur d'IA",
+      "description": "Facultatif. OpsWatch est complet sans lui — chaque chiffre, problème et corrélation est calculé par des formules écrites, avec ou sans modèle.",
+      "boundaries": "Ce que l'IA fait ici, et ce qu'elle ne fait pas",
+      "boundariesHint": "§2.2 est la règle dont dépend cette page : le regroupement, la sévérité, les références et les anomalies sont calculés et testés. Un modèle classe et raconte. Il ne décide jamais.",
+      "boundary": {
+        "evidence": "On lui fournit des preuves structurées déjà collectées par OpsWatch — jamais un extrait de base de données, jamais des journaux bruts.",
+        "bounded": "Ses réponses sont étiquetées comme hypothèses et restent visiblement distinctes des faits observés et des corrélations.",
+        "noWrites": "Elle ne peut modifier ni votre infrastructure ni votre code. OpsWatch n'a d'accès en écriture à aucun des deux.",
+        "optional": "La désactiver retire l'assistant et rien d'autre."
+      },
+      "statusTitle": "Connexion",
+      "none": "Aucun fournisseur d'IA n'est configuré.",
+      "noneHint": "Rien n'est envoyé nulle part tant qu'il n'y en a pas. Tout le reste d'OpsWatch fonctionne exactement comme aujourd'hui.",
+      "status": {
+        "configured": "Connecté",
+        "untested": "Enregistré, non testé",
+        "failed": "Ne fonctionne pas"
+      },
+      "untestedHint": "Une clé enregistrée n'est pas une clé qui fonctionne. Testez la connexion pour savoir laquelle vous avez.",
+      "connect": "Connecter un fournisseur",
+      "replace": "Changer le fournisseur ou la clé",
+      "optional": "Votre clé est chiffrée avant d'être stockée et n'est jamais renvoyée à cette page.",
+      "provider": "Fournisseur",
+      "providers": {
+        "anthropic": "Anthropic",
+        "openai": "OpenAI",
+        "openai-compatible": "Point de terminaison compatible OpenAI"
+      },
+      "model": "Modèle",
+      "baseUrl": "Point de terminaison",
+      "baseUrlHint": "Votre propre point de terminaison, en https. OpsWatch refuse une adresse interne à votre réseau ou le service de métadonnées du cloud, exactement comme pour les vérifications synthétiques.",
+      "apiKey": "Clé d'API",
+      "apiKeyHint": "Chiffrée avec une clé dérivée pour ce seul usage, afin qu'elle ne puisse être lue par rien qui manipule vos identifiants AWS.",
+      "keyKept": "Stockée — laissez vide pour la conserver",
+      "keyKeptHint": "Une clé est déjà stockée. Laissez ce champ vide pour la conserver, ou collez-en une nouvelle pour la remplacer.",
+      "save": "Enregistrer",
+      "saved": "Enregistré. La connexion n'a pas encore été testée.",
+      "test": "Tester la connexion",
+      "testPassed": "Le fournisseur a répondu. La connexion fonctionne.",
+      "remove": "Déconnecter",
+      "removed": "Déconnecté. La clé a été supprimée.",
+      "errors": {
+        "invalid_provider": "Choisissez l'un des fournisseurs pris en charge.",
+        "invalid_model": "Nommez le modèle, 100 caractères au maximum.",
+        "invalid_base_url": "Le point de terminaison doit être une adresse https, sans paramètres de requête ni identifiants.",
+        "invalid_key": "Cela ne ressemble pas à une clé d'API.",
+        "not_configured": "Aucun fournisseur n'est encore configuré.",
+        "unauthorized": "Le fournisseur a refusé la clé. Vérifiez-la, ou collez-en une nouvelle.",
+        "rate_limited": "Le fournisseur limite actuellement cette clé. Réessayez sous peu.",
+        "unreachable": "Le fournisseur n'a pas pu être joint.",
+        "refused_endpoint": "OpsWatch a refusé d'appeler cette adresse : elle résout à l'intérieur de votre réseau.",
+        "bad_response": "Le fournisseur a répondu quelque chose qu'OpsWatch n'a pas su lire.",
+        "timeout": "Le fournisseur n'a pas répondu à temps."
+      }
+    },
+    "integrations": {
+      "title": "Intégrations",
+      "description": "Ce à quoi OpsWatch peut être connecté, ce que chaque connexion permet, et si elle fonctionne.",
+      "readOnly": "Ce qu'OpsWatch demande",
+      "readOnlyHint": "Un accès en lecture, partout où c'est possible. OpsWatch ne déploie pas, ne dimensionne pas, n'annule pas de déploiement et n'écrit pas dans votre code. Chaque identifiant est chiffré avant d'être stocké et n'est jamais renvoyé à ce navigateur.",
+      "configure": "Connecter",
+      "manage": "Gérer",
+      "names": {
+        "aws": "AWS",
+        "github": "GitHub",
+        "ai": "Fournisseur d'IA",
+        "cloudflare": "Cloudflare",
+        "google": "Connexion Google"
+      },
+      "states": {
+        "connected": "Connecté",
+        "degraded": "À vérifier",
+        "not_configured": "Non connecté",
+        "unavailable": "Non disponible dans cette version"
+      },
+      "enables": {
+        "aws": "Toutes les surfaces de surveillance : services, bases de données, répartiteurs de charge, alarmes, journaux, erreurs, déploiements.",
+        "github": "Relie une ligne de pile au fichier dont elle provient, et un service au dépôt qui le construit.",
+        "ai": "Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré. Rien n'en dépend.",
+        "cloudflare": "Trafic, cache et événements de sécurité en périphérie, et sessions Zero Trust.",
+        "google": "Se connecter avec un compte Google plutôt qu'avec un mot de passe."
+      },
+      "access": {
+        "aws": "Un rôle IAM en lecture seule, ou des identifiants ambiants. Le modèle CloudFormation liste chaque action qu'il accorde.",
+        "github": "Le contenu des dépôts, en lecture seule. OpsWatch n'a jamais besoin d'un accès en écriture pour enquêter, et ne modifie jamais votre code.",
+        "ai": "Votre clé d'API, utilisée uniquement pour les questions que vous posez. OpsWatch envoie des preuves structurées qu'il a collectées, jamais un extrait de base de données ni des journaux bruts.",
+        "cloudflare": "Un jeton d'API limité aux zones que vous choisissez, en lecture seule.",
+        "google": "Votre adresse e-mail et, si vous en définissez un, le domaine de votre organisation. Configuré dans l'environnement, pas ici."
+      },
+      "detail": {
+        "awsConnected": "{accounts, plural, one {# compte} other {# comptes}}",
+        "awsFailing": "{failing} sur {accounts} ne peuvent pas être lus actuellement",
+        "githubConnected": "{repositories, plural, =0 {aucun dépôt pour l'instant} one {# dépôt} other {# dépôts}}",
+        "githubNoToken": "{repositories, plural, =0 {aucun dépôt pour l'instant} one {# dépôt} other {# dépôts}} — aucun jeton, le contenu des fichiers ne peut pas être lu",
+        "aiConnected": "{provider} · {model}",
+        "ai_untested": "{provider} · {model} — enregistré, non testé",
+        "ai_failed": "{provider} · {model} — le dernier test a échoué",
+        "cloudflarePlanned": "Conçu, pas encore construit",
+        "googleOn": "Configuré dans l'environnement",
+        "googleDomain": "Configuré — seuls les comptes {domain} peuvent se connecter",
+        "googleOff": "Définissez l'identifiant client, le secret et l'URL publique pour le proposer"
       }
     }
   },

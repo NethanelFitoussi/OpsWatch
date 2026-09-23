@@ -18,6 +18,14 @@ const eslintConfig = defineConfig([
     // The Expo app has its own toolchain (apps/mobile/eslint.config.js).
     "apps/**",
   ]),
+  {
+    rules: {
+      // A Server Action's signature is fixed by `useActionState`, so an action that needs neither the
+      // previous state nor the form data still has to declare both. The leading underscore is how this
+      // codebase already says "declared because the shape demands it", and the rule now reads it.
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" }],
+    },
+  },
 ]);
 
 export default eslintConfig;

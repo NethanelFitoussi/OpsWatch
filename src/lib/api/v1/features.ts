@@ -38,6 +38,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   checkup: true,
   investigations: false,
   repository: false,
+  // The provider integration exists (AI-2, AI-3); `GET /ai/ask` does not yet, so a client has nothing to
+  // call. The flag stays false until it does — a capability is what a caller can use, not what is stored.
   ai: false,
   search: false,
   favorites: false,

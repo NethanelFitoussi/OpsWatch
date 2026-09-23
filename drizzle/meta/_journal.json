@@ -148,6 +148,13 @@
       "when": 1790152979493,
       "tag": "0020_tricky_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1790154673066,
+      "tag": "0021_useful_christian_walker",
+      "breakpoints": true
     }
   ]
 }

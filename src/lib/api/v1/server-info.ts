@@ -1,6 +1,7 @@
 import 'server-only';
 import { API_VERSION, type ServerInfo } from '@opswatch/contract';
 import { version } from '../../../../package.json';
+import { aiIsReady } from '../../ai/connection';
 import { googleSignInConfig } from '../../auth/google';
 import { listConnections } from '../../connections/repository';
 import type { Db } from '../../db/client';
@@ -22,8 +23,10 @@ export function serverInfo(db: Db): ServerInfo {
     auth: { password: true, google: googleSignInConfig(env()) !== null },
     features: featureFlags({
       hasConnection: listConnections(db).length > 0,
-      // Neither exists yet; they become a read of the instance's configuration in the phase that adds them.
-      aiConfigured: false,
+      // Configured **and tested**: a saved key that has never answered is not a capability a client should
+      // be told it has. `IMPLEMENTED.ai` gates it besides, so the flag is true only when both halves are.
+      aiConfigured: aiIsReady(db),
+      // Push needs FCM/APNs credentials and an account nobody has created; it becomes a read when they exist.
       pushConfigured: false,
     }),
   };
