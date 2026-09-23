@@ -30,7 +30,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   synthetics: true,
   // GET /slos measures the objectives an operator defined against stored history (§19).
   slos: true,
-  deployments: false,
+  // GET /deployments and /deployments/{id} serve the rows the deployments job records (DEP-1, DEP-3).
+  deployments: true,
   // GET /reports summarises the rows the collector already wrote, and names the halves it cannot answer.
   reports: true,
   // GET /checkup runs the catalogue over what is already stored, and says what it could not check.

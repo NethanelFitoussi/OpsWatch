@@ -1746,6 +1746,23 @@
         "not_found": "That objective is not in this environment.",
         "forbidden": "Only an administrator can change objectives."
       }
+    },
+    "deployments": {
+      "title": "Deployments",
+      "description": "What shipped, and when. Read from what OpsWatch already recorded — opening this page makes no AWS request.",
+      "since": "OpsWatch remembers deployments from the moment the collector first ran here. Anything earlier is not in this list because it was never recorded, not because it did not happen.",
+      "list": "Recent deployments",
+      "none": "No deployment has been recorded.",
+      "noneHint": "That is a measured statement: the collector has read this environment and nothing has shipped since it started watching.",
+      "waiting": "OpsWatch has not read this environment yet.",
+      "waitingHint": "So it cannot tell you what has shipped. The first collector cycle will.",
+      "status": {
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "failed": "Failed",
+        "rolled_back": "Rolled back",
+        "unknown": "Unknown"
+      }
     }
   },
   "Insights": {
@@ -1802,7 +1819,8 @@
     },
     "containers": {
       "services": "Services",
-      "report": "Report"
+      "report": "Report",
+      "deployments": "Deployments"
     },
     "databases": {
       "instances": "Instances",

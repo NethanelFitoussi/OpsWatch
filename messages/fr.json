@@ -1746,6 +1746,23 @@
         "not_found": "Cet objectif n'appartient pas à cet environnement.",
         "forbidden": "Seul un administrateur peut modifier les objectifs."
       }
+    },
+    "deployments": {
+      "title": "Déploiements",
+      "description": "Ce qui a été livré, et quand. Lu à partir de ce qu'OpsWatch a déjà enregistré — ouvrir cette page ne fait aucune requête AWS.",
+      "since": "OpsWatch se souvient des déploiements à partir du premier passage du collecteur ici. Ce qui est antérieur n'est pas dans cette liste parce que rien ne l'a enregistré, pas parce que cela n'a pas eu lieu.",
+      "list": "Déploiements récents",
+      "none": "Aucun déploiement n'a été enregistré.",
+      "noneHint": "C'est une constatation mesurée : le collecteur a lu cet environnement et rien n'a été livré depuis qu'il observe.",
+      "waiting": "OpsWatch n'a pas encore lu cet environnement.",
+      "waitingHint": "Il ne peut donc pas dire ce qui a été livré. Le premier cycle du collecteur le dira.",
+      "status": {
+        "in_progress": "En cours",
+        "completed": "Terminé",
+        "failed": "Échoué",
+        "rolled_back": "Annulé",
+        "unknown": "Inconnu"
+      }
     }
   },
   "Insights": {
@@ -1802,7 +1819,8 @@
     },
     "containers": {
       "services": "Services",
-      "report": "Rapport"
+      "report": "Rapport",
+      "deployments": "Déploiements"
     },
     "databases": {
       "instances": "Instances",
