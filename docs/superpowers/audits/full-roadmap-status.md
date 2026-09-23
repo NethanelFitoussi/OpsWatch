@@ -26,9 +26,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 | Status | Count |
 |---|---|
 | `DONE` | 51 |
-| `PARTIAL` | 15 |
-| `FOUNDATION_ONLY` | 7 |
-| `NOT_STARTED` | 18 |
+| `PARTIAL` | 16 |
+| `FOUNDATION_ONLY` | 6 |
+| `NOT_STARTED` | 17 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -63,7 +63,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INT-1 | Collector runtime, scheduling | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Visible on System status |
 | INT-2 | Single-writer lock (§33.4) | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Conditional UPDATE; refresh carries `AND owner = ?` |
-| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **10 jobs declared, 5 implemented** (`detect`, `errors`, `metrics`, `compact`, `deployments`). Remaining: `inventory`, `queries`, `logvolume`, `baselines`, `slo` |
+| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **11 jobs declared, 6 implemented** (`detect`, `errors`, `metrics`, `compact`, `deployments`, `synthetics`). Remaining: `inventory`, `queries`, `logvolume`, `baselines`, `slo` |
 | INT-4 | Detector execution, isolation (§33.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Fired / clear / not_evaluated |
 | INT-5 | Problem identity (§33.2) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Length-prefixed key; digest pinned |
 | INT-6 | Lifecycle, reopen, flap | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
@@ -182,8 +182,8 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| SYN-1 | Checks, status, history, failures | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Contract + mobile screens; nothing runs a check. Health reports `synthetics: null` honestly |
-| SYN-2 | Problem integration | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| SYN-1 | Checks, status, history, failures | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Checks run from the host through the SSRF guard, with §14's status and latency rules. No `/api/v1` route yet |
+| SYN-2 | Problem integration | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | `synthetic_down` / `synthetic_slow` / `cert_expiring` detectors are not wired to the problem lifecycle |
 
 ## SLO
 

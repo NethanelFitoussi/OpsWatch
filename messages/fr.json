@@ -1589,6 +1589,42 @@
         "mitigated": "Atténué",
         "resolved": "Résolu"
       }
+    },
+    "synthetics": {
+      "title": "Tests synthétiques",
+      "description": "Des vérifications qu’OpsWatch exécute depuis cet hôte vers vos points d’accès, selon la cadence du collecteur.",
+      "rules": "Une vérification est en échec après deux échecs consécutifs et de nouveau active après un succès : un incident isolé n’est pas une panne. Une vérification jamais exécutée indique « inconnue », pas « active ».",
+      "safety": "OpsWatch ne récupère que http et https sur des ports ordinaires, refuse les adresses internes ou le service de métadonnées du cloud, suit au plus quelques redirections en revérifiant chacune, et ne désactive jamais la vérification des certificats.",
+      "checks": "Vérifications",
+      "none": "Aucune vérification ajoutée.",
+      "noneHint": "Rien n’est récupéré depuis cet hôte tant que vous n’en ajoutez pas une et ne l’activez pas.",
+      "on": "active",
+      "off": "inactive",
+      "median": "médiane {ms} ms",
+      "remove": "Retirer",
+      "add": "Ajouter une vérification",
+      "name": "Nom",
+      "url": "URL",
+      "expectStatus": "Codes de statut attendus (facultatif)",
+      "bodyContains": "Le corps doit contenir (facultatif)",
+      "latency": "Lent au-delà de (millisecondes, facultatif)",
+      "latencyHint": "Comparé à la médiane des cinq dernières exécutions : une réponse lente isolée ne déclenche rien.",
+      "headers": "En-têtes (facultatif)",
+      "headersHint": "Un par ligne, sous la forme « Nom : valeur ». Stockés chiffrés et jamais réaffichés : la clé d’un point de santé a sa place ici plutôt que dans l’URL.",
+      "enable": "Exécuter cette vérification",
+      "save": "Enregistrer",
+      "saved": "Enregistré.",
+      "status": {
+        "up": "Active",
+        "down": "En échec",
+        "unknown": "Jamais exécutée"
+      },
+      "errors": {
+        "invalid_name": "Donnez un nom à la vérification.",
+        "invalid_url": "OpsWatch ne récupérera pas cette URL : utilisez http ou https sur un port standard.",
+        "invalid_threshold": "Un seuil est un nombre entier de millisecondes.",
+        "invalid_headers": "Chaque en-tête sur sa propre ligne, sous la forme « Nom : valeur »."
+      }
     }
   },
   "Insights": {
@@ -1629,7 +1665,8 @@
       "brief": "Point du matin",
       "insights": "Analyses",
       "checkup": "Bilan",
-      "incidents": "Incidents"
+      "incidents": "Incidents",
+      "synthetics": "Tests synthétiques"
     },
     "containers": {
       "services": "Services",

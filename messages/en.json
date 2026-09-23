@@ -1589,6 +1589,42 @@
         "mitigated": "Mitigated",
         "resolved": "Resolved"
       }
+    },
+    "synthetics": {
+      "title": "Synthetics",
+      "description": "Checks OpsWatch runs from this host against your endpoints, on the collector’s schedule.",
+      "rules": "A check is down after two consecutive failures and up again after one success — one blip is not an outage. A check that has never run says \"unknown\", not \"up\".",
+      "safety": "OpsWatch only fetches http and https on ordinary ports, refuses addresses inside your network or the cloud metadata service, follows at most a few redirects and re-checks each one, and never disables certificate verification.",
+      "checks": "Checks",
+      "none": "No check has been added.",
+      "noneHint": "Nothing is being fetched from this host until you add one and switch it on.",
+      "on": "running",
+      "off": "not running",
+      "median": "median {ms} ms",
+      "remove": "Remove",
+      "add": "Add a check",
+      "name": "Name",
+      "url": "URL",
+      "expectStatus": "Expected status codes (optional)",
+      "bodyContains": "Body must contain (optional)",
+      "latency": "Slow above (milliseconds, optional)",
+      "latencyHint": "Compared against the median of the last five runs, so one slow response does not raise it.",
+      "headers": "Headers (optional)",
+      "headersHint": "One per line, as \"Name: value\". Stored encrypted and never shown again — a health endpoint’s API key belongs here rather than in the URL.",
+      "enable": "Run this check",
+      "save": "Save check",
+      "saved": "Saved.",
+      "status": {
+        "up": "Up",
+        "down": "Down",
+        "unknown": "Not yet run"
+      },
+      "errors": {
+        "invalid_name": "Give the check a name.",
+        "invalid_url": "That URL is not one OpsWatch will fetch: use http or https on a standard port.",
+        "invalid_threshold": "A threshold is a whole number of milliseconds.",
+        "invalid_headers": "Each header goes on its own line, as \"Name: value\"."
+      }
     }
   },
   "Insights": {
@@ -1629,7 +1665,8 @@
       "brief": "Morning brief",
       "insights": "Insights",
       "checkup": "Checkup",
-      "incidents": "Incidents"
+      "incidents": "Incidents",
+      "synthetics": "Synthetics"
     },
     "containers": {
       "services": "Services",

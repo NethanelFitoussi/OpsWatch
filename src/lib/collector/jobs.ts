@@ -13,6 +13,7 @@ export const JOB_IDS = [
   'inventory',
   'queries',
   'errors',
+  'synthetics',
   'logvolume',
   'baselines',
   'slo',
@@ -59,6 +60,11 @@ export const JOBS: Record<JobId, JobSpec> = {
    * log group in, collection begins without their having to find a second switch.
    */
   errors: { id: 'errors', everyMs: 15 * MINUTE, cap: 1, scope: 'environment', freshInstall: true },
+  /**
+   * Outbound requests from the operator's own host, so it is off for a fresh install and finds nothing to
+   * do until somebody enables a check.
+   */
+  synthetics: { id: 'synthetics', everyMs: 5 * MINUTE, cap: 25, scope: 'environment', freshInstall: true },
   logvolume: { id: 'logvolume', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },
   baselines: { id: 'baselines', everyMs: HOUR, cap: 500, scope: 'environment', freshInstall: false },
   slo: { id: 'slo', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },

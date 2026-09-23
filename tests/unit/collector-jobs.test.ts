@@ -14,6 +14,7 @@ describe('the job catalogue', () => {
       inventory: 30 * MINUTE,
       queries: 30 * MINUTE,
       errors: 15 * MINUTE,
+      synthetics: 5 * MINUTE,
       logvolume: HOUR,
       baselines: HOUR,
       slo: HOUR,
@@ -33,15 +34,22 @@ describe('the job catalogue', () => {
   it('runs only the jobs that cost a fresh install nothing', () => {
     // The promise a fresh installation makes: no extra AWS request. `detect` reads what the pages already
     // fetched, `inventory` is Describe* (throttled but not billed, §9.5), `compact` touches no provider,
-    // `errors` finds no enabled log source, and `metrics` finds history switched off - so each of the five
-    // is scheduled and none of them spends anything until an operator asks for it.
-    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'errors', 'inventory', 'metrics']);
+    // `errors` finds no enabled log source, `metrics` finds history switched off, and `synthetics` finds no
+    // enabled check - so each is scheduled and none of them spends anything until an operator asks for it.
+    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'errors', 'inventory', 'metrics', 'synthetics']);
   });
 
   it('leaves every job that would spend money on a fresh install switched off', () => {
     for (const id of ['deployments', 'queries', 'logvolume', 'baselines', 'slo'] as const) {
       expect(JOBS[id].freshInstall, id).toBe(false);
     }
+  });
+
+  it('schedules `synthetics` but gates it on a check being enabled, for the same reason as `metrics`', () => {
+    // A synthetic check sends requests from the operator's own host to a third party, which is not free and
+    // not always welcome — so nothing runs until somebody enables one, and enabling needs no restart.
+    expect(JOBS.synthetics.freshInstall).toBe(true);
+    expect(JOBS.synthetics.cap).toBe(25);
   });
 
   it('schedules `metrics` but gates it on the history switch, not on the schedule', () => {
