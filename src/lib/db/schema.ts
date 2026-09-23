@@ -622,6 +622,17 @@ export const errorGroups = sqliteTable(
     /** What the fingerprint was computed over. Stored so a regrouping can be explained. */
     normalizedMessage: text('normalized_message').notNull(),
     topFrames: text('top_frames', { mode: 'json' }).$type<string[]>().notNull(),
+    /**
+     * Where the **most recent sighting** was, with line numbers (REPO-5).
+     *
+     * A sample, not an identity. `topFrames` is normalised and is what the group is about; this is the raw
+     * location of one occurrence, overwritten each time the group is seen. The distinction is the whole
+     * point: §4.4 groups on the file and the function so that adding a blank line does not split a group
+     * in two, and a reader still wants to know which line to open. Two questions, two columns.
+     *
+     * Null for a group last seen before this column existed, or one whose stack carried no line.
+     */
+    sampleFrames: text('sample_frames', { mode: 'json' }).$type<{ file: string; function: string | null; line: number | null; column: number | null }[]>(),
     firstSeenAt: integer('first_seen_at').notNull(),
     lastSeenAt: integer('last_seen_at').notNull(),
     status: text('status', { enum: ERROR_GROUP_STATUSES }).notNull(),

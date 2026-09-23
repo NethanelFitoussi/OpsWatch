@@ -1,5 +1,5 @@
 import 'server-only';
-import { fingerprint, significantFrames, normalizeMessage, FINGERPRINT_VERSION } from '../detect/fingerprint';
+import { fingerprint, sampleFrames, significantFrames, normalizeMessage, FINGERPRINT_VERSION } from '../detect/fingerprint';
 import { parseLine, parseStack, type FieldMap } from '../detect/log-parse';
 import type { Db } from '../db/client';
 import type { LogSourceRow } from '../db/schema';
@@ -162,6 +162,9 @@ export function ingest(
         sampleMessage: message.slice(0, 1000),
         normalizedMessage: normalizeMessage(message),
         topFrames: significantFrames(frames),
+        // The same frames, unnormalised, so a reader can be sent to a line. `significantFrames` above is
+        // what grouping uses and carries no line at all — the two are computed from one parse and kept apart.
+        sampleFrames: sampleFrames(frames),
         at,
         count: 1,
         instances: null,

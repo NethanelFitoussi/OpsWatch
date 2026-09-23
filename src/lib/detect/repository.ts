@@ -136,6 +136,10 @@ export function locateFrame(
 }
 
 /** The link a reader follows. Built from stored fields, so it works without a credential. */
-export function fileUrl(repository: Pick<RepositoryRef, 'owner' | 'name'>, location: FrameLocation): string {
-  return `https://github.com/${repository.owner}/${repository.name}/blob/${encodeURIComponent(location.ref)}/${location.path}`;
+export function fileUrl(repository: Pick<RepositoryRef, 'owner' | 'name'>, location: FrameLocation, line?: number | null): string {
+  const base = `https://github.com/${repository.owner}/${repository.name}/blob/${encodeURIComponent(location.ref)}/${location.path}`;
+  // The line comes from a *sighting*, never from the fingerprint — which is why it is an argument here
+  // rather than a field of `FrameLocation`: a location is where the code is, a line is where it went wrong.
+  // Omitted rather than guessed when the stack carried none: `#L0` would point at nothing.
+  return line === undefined || line === null || line <= 0 ? base : `${base}#L${line}`;
 }

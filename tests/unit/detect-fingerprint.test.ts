@@ -6,6 +6,7 @@ import {
   fingerprint,
   normalizeFrame,
   normalizeMessage,
+  sampleFrames,
   significantFrames,
   type StackFrame,
 } from '@/lib/detect/fingerprint';
@@ -158,5 +159,45 @@ describe('the fingerprint itself', () => {
 
   it('declares its version, so changing the algorithm never silently re-merges history', () => {
     expect(FINGERPRINT_VERSION).toBe(1);
+  });
+});
+
+
+describe('REPO-5 — the sighting’s own frames, beside the group’s', () => {
+  const frames: StackFrame[] = [
+    { file: '/app/node_modules/pg/lib/client.js', function: 'query', line: 5 },
+    { file: '/app/src/payment/charge.ts', function: 'chargeCard', line: 184, column: 7 },
+    { file: '/app/src/payment/api.ts', function: 'handler', line: 42 },
+  ];
+
+  it('THE RULING: it keeps the line and the column that the fingerprint throws away', () => {
+    expect(sampleFrames(frames)).toEqual([
+      { file: '/app/src/payment/charge.ts', function: 'chargeCard', line: 184, column: 7 },
+      { file: '/app/src/payment/api.ts', function: 'handler', line: 42, column: null },
+    ]);
+    // The same input through the grouping path carries no line at all, which is the whole split.
+    expect(significantFrames(frames).join()).not.toMatch(/184|:7\b/);
+  });
+
+  it('drops the same vendor frames, so the two lists line up by position', () => {
+    expect(sampleFrames(frames)).toHaveLength(significantFrames(frames).length);
+  });
+
+  it('keeps at most the same top five', () => {
+    const deep = Array.from({ length: 12 }, (_, i) => ({ file: `/app/src/f${i}.ts`, function: `fn${i}`, line: i + 1 }));
+    expect(sampleFrames(deep)).toHaveLength(MAX_FRAMES);
+  });
+
+  it('prefers a resolved symbol, exactly as the grouping path does', () => {
+    expect(sampleFrames([{ file: 'a.js', function: 'e', symbol: 'chargeCard', line: 3 }])[0].function).toBe('chargeCard');
+  });
+
+  it('says null where the stack said nothing, rather than inventing a line', () => {
+    expect(sampleFrames([{ file: '/app/src/a.ts', function: 'fn' }])[0]).toEqual({
+      file: '/app/src/a.ts',
+      function: 'fn',
+      line: null,
+      column: null,
+    });
   });
 });

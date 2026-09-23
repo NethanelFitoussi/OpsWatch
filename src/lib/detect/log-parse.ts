@@ -90,10 +90,10 @@ export function parseLine(raw: string, format: 'json' | 'regex', map: FieldMap):
  * is a syntax error. A pattern an operator supplies at run time may still use them, because that one is built
  * with `new RegExp` and never sees the compiler.
  */
-// 1: function (optional) · 2: file
-const NODE_FRAME = /^\s*at\s+(?:([^\s(]+)\s+\()?([^\s()]+?)(?::\d+)?(?::\d+)?\)?\s*$/;
-// 1: file · 2: function
-const PY_FRAME = /^\s*File\s+"([^"]+)",\s+line\s+\d+,\s+in\s+(\S+)/;
+// 1: function (optional) · 2: file · 3: line · 4: column
+const NODE_FRAME = /^\s*at\s+(?:([^\s(]+)\s+\()?([^\s()]+?)(?::(\d+))?(?::(\d+))?\)?\s*$/;
+// 1: file · 2: line · 3: function
+const PY_FRAME = /^\s*File\s+"([^"]+)",\s+line\s+(\d+),\s+in\s+(\S+)/;
 
 export function parseStack(stack: string | null): StackFrame[] {
   if (stack === null) return [];
@@ -101,13 +101,18 @@ export function parseStack(stack: string | null): StackFrame[] {
   for (const raw of stack.split('\n')) {
     const python = raw.match(PY_FRAME);
     if (python) {
-      frames.push({ file: python[1], function: python[2] });
+      frames.push({ file: python[1], function: python[3], line: Number(python[2]) });
       continue;
     }
     const node = raw.match(NODE_FRAME);
     if (!node || node[2] === undefined) continue;
+    // The line and column are kept here and dropped by `normalizeFrame`, which is what the fingerprint
+    // reads. A frame therefore carries where it happened *and* groups on where it is — two questions with
+    // two answers, rather than one answer that is wrong for one of them.
     const frame: StackFrame = { file: node[2] };
     if (node[1] !== undefined) frame.function = node[1];
+    if (node[3] !== undefined) frame.line = Number(node[3]);
+    if (node[4] !== undefined) frame.column = Number(node[4]);
     frames.push(frame);
   }
   return frames;

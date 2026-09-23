@@ -262,3 +262,92 @@ describe('§13 — the reference a link points at', () => {
     expect(evidence.frames[0].refIsMoving).toBe(true);
   });
 });
+
+describe('REPO-5 — a line, without line numbers entering identity', () => {
+  const AT = Date.UTC(2026, 8, 23, 11, 55, 0);
+
+  /** The same group, recorded with the raw sample a sighting carries. */
+  const withSample = (db: ReturnType<typeof createTestDb>, line: number | null) => {
+    const repository = upsertRepository(db, { owner: 'acme', name: 'web', defaultBranch: 'main' }, AT);
+    setMapping(db, { ...env, serviceId: 'prod/web', repositoryId: repository.id, source: 'declared' }, AT);
+    upsertLogSource(db, { ...env, logGroup: '/aws/ecs/web', serviceId: 'prod/web', enabled: true, format: 'json', fieldMap: {} });
+    return recordError(db, {
+      ...env,
+      logSourceId: 's1',
+      serviceId: 'prod/web',
+      fingerprint: 'b'.repeat(32),
+      fingerprintVersion: 1,
+      exceptionType: 'TypeError',
+      sampleMessage: 'boom',
+      normalizedMessage: 'boom',
+      topFrames: ['/app/src/pay.ts:charge'],
+      sampleFrames: [{ file: '/app/src/pay.ts', function: 'charge', line, column: 7 }],
+      at: AT,
+      count: 1,
+      instances: 1,
+    });
+  };
+
+  const onlyFrame = (db: ReturnType<typeof createTestDb>) => {
+    const evidence = readCodeEvidence(db, pageErrorGroups(db, env, null, 5).items[0]);
+    if (evidence.state !== 'mapped') throw new Error('expected mapped');
+    return evidence.frames[0];
+  };
+
+  it('THE RULING: the link points at the line the last sighting reported', () => {
+    const db = createTestDb();
+    withSample(db, 184);
+    const frame = onlyFrame(db);
+    expect(frame.line).toBe(184);
+    expect(frame.url).toContain('#L184');
+  });
+
+  it('THE RULING: two sightings on different lines stay one group', () => {
+    const db = createTestDb();
+    withSample(db, 184);
+    withSample(db, 203);
+    // §4.4's promise: adding a blank line to a file must not split an error group in two.
+    expect(pageErrorGroups(db, env, null, 5).items).toHaveLength(1);
+    // And the sample moves with the error, so the link opens the line it is on now.
+    expect(onlyFrame(db).line).toBe(203);
+  });
+
+  it('opens the file rather than guessing a line, when the stack carried none', () => {
+    const db = createTestDb();
+    withSample(db, null);
+    const frame = onlyFrame(db);
+    expect(frame.line).toBeNull();
+    // `#L0` would point at nothing, which is worse than pointing at the file.
+    expect(frame.url).not.toContain('#L');
+  });
+
+  it('THE RULING: a sample for a different file never lends its line to another frame', () => {
+    const db = createTestDb();
+    const repository = upsertRepository(db, { owner: 'acme', name: 'web', defaultBranch: 'main' }, AT);
+    setMapping(db, { ...env, serviceId: 'prod/web', repositoryId: repository.id, source: 'declared' }, AT);
+    upsertLogSource(db, { ...env, logGroup: '/aws/ecs/web', serviceId: 'prod/web', enabled: true, format: 'json', fieldMap: {} });
+    recordError(db, {
+      ...env,
+      logSourceId: 's1',
+      serviceId: 'prod/web',
+      fingerprint: 'c'.repeat(32),
+      fingerprintVersion: 1,
+      exceptionType: 'TypeError',
+      sampleMessage: 'boom',
+      normalizedMessage: 'boom',
+      topFrames: ['/app/src/pay.ts:charge'],
+      // Misaligned on purpose: a line from the wrong frame is worse than no line at all.
+      sampleFrames: [{ file: '/app/src/other.ts', function: 'other', line: 99, column: 1 }],
+      at: AT,
+      count: 1,
+      instances: 1,
+    });
+    expect(onlyFrame(db).line).toBeNull();
+  });
+
+  it('a group recorded before the column existed still renders, without a line', () => {
+    const db = createTestDb();
+    mappedGroup(db, { firstSeenAt: AT });
+    expect(onlyFrame(db).line).toBeNull();
+  });
+});
