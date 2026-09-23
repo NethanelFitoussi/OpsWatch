@@ -17,6 +17,7 @@ import { investigations } from './investigations';
 import { ai } from './ai';
 import { search } from './search';
 import { system } from './system';
+import { checkup } from './checkup';
 
 export const en = {
   ...common,
@@ -37,6 +38,7 @@ export const en = {
   ...ai,
   ...search,
   ...system,
+  ...checkup,
 } as const;
 
 export type MessageKey = keyof typeof en;

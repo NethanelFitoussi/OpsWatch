@@ -15,7 +15,7 @@ import { Text } from '@/ui/text';
 import { spacing, toneColors } from '@/ui/theme';
 import { useTheme } from '@/ui/theme-provider';
 import { useNow, useRelativeTime, useScheduledTime } from '@/ui/states';
-import { collectorVerdict, environmentCoverage, isPartial, jobMeta, sortJobs } from './helpers';
+import { collectorVerdict, environmentCoverage, isPartial, jobMeta, label, sortJobs } from './helpers';
 
 /** The headline: one sentence of state, one sentence of consequence. */
 export function CollectorVerdict({ status }: { status: SystemStatus }) {
@@ -42,7 +42,7 @@ export function CollectorVerdict({ status }: { status: SystemStatus }) {
           label={t('system.heartbeat')}
           value={status.collector.heartbeatAt === null ? t('system.heartbeat.never') : relative(status.collector.heartbeatAt, now)}
         />
-        {status.collector.owner === null ? null : <KeyValue label={t('system.owner')} value={status.collector.owner} mono />}
+        {status.collector.owner === null ? null : <KeyValue label={t('system.owner')} value={label(status.collector.owner)} mono />}
       </View>
     </Card>
   );
@@ -85,23 +85,23 @@ export const JobRow = memo(function JobRow({ job }: { job: JobStatus }) {
           .join(' · ');
 
   return (
-    <View style={styles.job} testID={`system-job-${job.job}`}>
+    <View style={styles.job} testID={`system-job-${label(job.job)}`}>
       <View style={styles.jobHead}>
-        <Text variant="body" weight="600" style={styles.jobName}>
-          {job.job}
+        <Text variant="body" weight="600" style={styles.jobName} numberOfLines={1}>
+          {label(job.job)}
         </Text>
-        <Badge tone={meta.tone} icon={meta.icon} label={t(meta.label)} testID={`system-job-state-${job.job}`} />
+        <Badge tone={meta.tone} icon={meta.icon} label={t(meta.label)} testID={`system-job-state-${label(job.job)}`} />
       </View>
       <Text variant="small" tone="muted">
         {when}
       </Text>
       {job.errorCode === null ? null : (
-        <Text variant="small" tone="critical" testID={`system-job-error-${job.job}`}>
-          {t('system.job.errorCode', { code: job.errorCode })}
+        <Text variant="small" tone="critical" testID={`system-job-error-${label(job.job)}`}>
+          {t('system.job.errorCode', { code: label(job.errorCode) })}
         </Text>
       )}
       {partial ? (
-        <Text variant="small" tone="warning" testID={`system-job-partial-${job.job}`}>
+        <Text variant="small" tone="warning" testID={`system-job-partial-${label(job.job)}`}>
           {job.truncated
             ? t('system.job.truncated')
             : t('system.job.partial', { covered: String(job.covered), total: String(job.total) })}
@@ -141,9 +141,9 @@ export function Environments({ environments }: { environments: EnvironmentStatus
           environments.map((environment) => {
             const coverage = environmentCoverage(environment.familiesRead, environment.familiesTotal);
             return (
-              <View key={`${environment.connectionId}:${environment.scope}`} style={styles.job} testID={`system-env-${environment.scope}`}>
-                <Text variant="body" weight="600">
-                  {environment.scope}
+              <View key={`${environment.connectionId}:${environment.scope}`} style={styles.job} testID={`system-env-${label(environment.scope)}`}>
+                <Text variant="body" weight="600" numberOfLines={1}>
+                  {label(environment.scope)}
                 </Text>
                 <Text variant="small" tone={coverage.complete ? 'muted' : 'warning'}>
                   {coverage.complete && coverage.fraction !== null

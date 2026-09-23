@@ -104,3 +104,18 @@ export function environmentCoverage(read: number, total: number): { complete: bo
 export function isPartial(job: JobStatus): boolean {
   return job.truncated || (job.covered !== null && job.total !== null && job.total > 0 && job.covered < job.total);
 }
+
+/**
+ * A ceiling on any free-text string this screen takes from the server and renders as-is.
+ *
+ * `job`, `errorCode` and `collector.owner` are not enumerations — the contract types them as plain strings, so what
+ * arrives is whatever the server sends. A very long one is not a security hole by itself, but it pushes the rest of
+ * the screen off and, on the one page whose job is to say whether OpsWatch is healthy, an unreadable screen is a
+ * failure of the same kind. The HTTP layer already bounds error messages this way; this is the same rule one level
+ * up. Truncation is visible (an ellipsis) rather than silent.
+ */
+export const MAX_SERVER_LABEL = 120;
+
+export function label(value: string): string {
+  return value.length > MAX_SERVER_LABEL ? `${value.slice(0, MAX_SERVER_LABEL)}…` : value;
+}

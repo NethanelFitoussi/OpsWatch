@@ -27,6 +27,7 @@ const poll = (ms: number): number | false => (isScreenshotMode ? false : ms);
 export const keys = {
   environments: () => ['environments', 'list'] as const,
   systemStatus: () => ['system', 'detail'] as const,
+  checkup: (s: Scope) => ['checkup', 'detail', s.env ?? null] as const,
   health: (s: Scope) => ['health', 'list', s.env ?? null] as const,
   brief: (s: Scope) => ['brief', 'list', s.env ?? null] as const,
   problems: (s: Scope, f: ProblemFilters) => ['problems', 'list', s.env ?? null, f] as const,
@@ -80,6 +81,13 @@ export function useSystemStatus() {
     enabled: useSignedIn(),
     refetchInterval: poll(30_000),
   });
+}
+
+/** Configuration findings for the selected environment. Gated on `features.checkup`. */
+export function useCheckup() {
+  const { client } = useSession();
+  const scope = useScope();
+  return useQuery({ queryKey: keys.checkup(scope), queryFn: () => client.checkup(scope), enabled: useSignedIn() });
 }
 
 export function useHealth() {

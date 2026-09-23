@@ -18,6 +18,7 @@ import { investigations } from './investigations';
 import { ai } from './ai';
 import { search } from './search';
 import { system } from './system';
+import { checkup } from './checkup';
 
 export const fr: Record<MessageKey, string> = {
   ...common,
@@ -38,4 +39,5 @@ export const fr: Record<MessageKey, string> = {
   ...ai,
   ...search,
   ...system,
+  ...checkup,
 };

@@ -16,6 +16,7 @@ import type {
   SearchResult,
   ServiceSummary,
   Severity,
+  Checkup,
 } from '@/api/contract';
 import type { AlertFilters, ErrorFilters, LogQuery, ProblemFilters } from '@/api/client';
 import { calmHealth, errorSummaryOf, type DemoDataset } from './fixtures';
@@ -64,6 +65,12 @@ export function listErrors(data: DemoDataset, env: string | undefined, f: ErrorF
     .sort((a, b) => b.lastSeenAt - a.lastSeenAt)
     .map(errorSummaryOf);
   return paginate(items, cursor, DEMO_PAGE_SIZE);
+}
+
+/** Environment-scoped, like every other read. A non-production demo environment has nothing set up to inspect. */
+export function checkupFor(data: DemoDataset, env: string | undefined): Checkup {
+  if (!isProductionEnv(data, env)) return { generatedAt: data.checkup.generatedAt, findings: [], coverage: { ran: 0, notRun: 0, total: 0 }, notRun: [] };
+  return data.checkup;
 }
 
 export function listServices(data: DemoDataset, env: string | undefined): ServiceSummary[] {

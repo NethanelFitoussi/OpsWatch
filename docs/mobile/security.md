@@ -221,6 +221,21 @@ Not review findings; changes made while going over the same paths. All are in th
 | The offline cache is bounded in number as well as age (24 list queries, 24 h) | `src/api/query-provider.tsx` |
 | The offline cache is out of device backups on both platforms: it moved to the OS cache directory | `src/state/cache-storage.ts` |
 
+### Review 3 — the surface added after review 2 (2026-09-23)
+
+Screenshot mode, System status, Checkup and the list filters. Three findings, all fixed.
+
+| Finding | Severity | Status |
+|---|---|---|
+| **Screenshot mode could reach a production build.** `EXPO_PUBLIC_SCREENSHOT_AT` freezes the app's clock. In a build people use, every age would stop moving and a monitoring app would go on reporting hours-old data as "updated just now" — the one thing it exists not to do. An environment variable can be left behind in a shell, a CI job or an EAS project | **High** | **Fixed.** `app.config.ts` refuses to build the `production` profile while it is set, the way it already refuses a placeholder identifier |
+| **System status rendered unbounded server strings.** The job name, its error code and the collector's host are free text the contract does not constrain. A long one pushed the screen apart — and reached the *accessibility label*, which a screen reader would have read out in full | Medium | **Fixed.** Bounded at 120 characters with a visible ellipsis, in the text, the testID and the accessibility label alike |
+| **Checkup leaked unfilled placeholders.** A check that could not run carries no values, so the sentence a *finding* uses left `{version}` on screen. More generally, nothing guarantees a server sends the values a given sentence needs | Medium | **Fixed.** A not-run check shows the check's **name**; and any sentence that still contains an unfilled placeholder after substitution falls back to that name, so the class is closed rather than the instance |
+
+Checked and found sound: the filters (a service id from a deep link is refused by `isSafeId` before it can become a
+query parameter, and nothing undeclared is sent); System status is a *detail* query and so never reaches the offline
+cache, which matters because it names an instance's hosts and jobs; and screenshot mode exposes no setter, so it
+cannot be switched on by a server response, a deep link or a stored preference.
+
 ### Residual, accepted
 
 - **The clipboard is not marked sensitive.** Copying a stack trace, a log line or a diff is always an explicit user

@@ -14,6 +14,7 @@ const INVESTIGATE: Entry[] = [
   { href: '/infrastructure', label: 'nav.infrastructure', icon: 'server-outline', feature: 'infrastructure' },
   { href: '/deployments', label: 'nav.deployments', icon: 'rocket-outline', feature: 'deployments' },
   { href: '/ask', label: 'nav.ask', icon: 'sparkles-outline', feature: 'ai' },
+  { href: '/checkup', label: 'nav.checkup', icon: 'medkit-outline', feature: 'checkup' },
   { href: '/search', label: 'nav.search', icon: 'search-outline' },
 ];
 const OPERATE: Entry[] = [

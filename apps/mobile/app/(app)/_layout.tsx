@@ -56,6 +56,7 @@ export default function AppLayout() {
           <Stack.Screen name="brief" options={{ title: t('nav.brief') }} />
           <Stack.Screen name="ask" options={{ title: t('nav.ask') }} />
           <Stack.Screen name="search" options={{ title: t('nav.search') }} />
+          <Stack.Screen name="checkup" options={{ title: t('nav.checkup') }} />
           <Stack.Screen name="system" options={{ title: t('nav.system') }} />
           <Stack.Screen name="settings/index" options={{ title: t('nav.settings') }} />
           <Stack.Screen name="settings/notifications" options={{ title: t('notifications.title') }} />

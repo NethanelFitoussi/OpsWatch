@@ -144,6 +144,8 @@ export function createMockServer(options: MockServerOptions = {}): { server: Ser
           if (id !== 'status') break;
           if (forbidSystem) return fail(res, 403, 'forbidden', 'Only an administrator can see system status.');
           return send(res, 200, { ...d.systemStatus, generatedAt: now });
+        case 'GET checkup':
+          return send(res, 200, engine.checkupFor(d, env));
         case 'GET health':
           return send(res, 200, engine.healthFor(d, env, now));
         case 'GET brief':
