@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { localizedTitle } from '@/i18n/metadata';
 import { requireAdmin } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
-import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { listAudit, type AuditAction } from '@/lib/store/audit';
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ action?: string }> };
@@ -26,7 +25,6 @@ export default async function AuditPage({ params, searchParams }: Props) {
   await requireAdmin(locale);
   const t = await getTranslations('Settings.audit');
   const format = await getFormatter();
-  const nowMs = pageNow();
 
   const asked = (await searchParams).action;
   const rows = listAudit(getDb(), asked === undefined ? {} : { action: asked as AuditAction }, LIMIT);
