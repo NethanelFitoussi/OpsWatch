@@ -1745,7 +1745,41 @@
       "history": "Data & history",
       "historyHint": "Whether OpsWatch collects history, what it would cost, and how long it is kept.",
       "status": "System status",
-      "statusHint": "Whether the collector is running, when each job last ran, and the state of the database."
+      "statusHint": "Whether the collector is running, when each job last ran, and the state of the database.",
+      "repositories": "Repositories",
+      "repositoriesHint": "Which repositories your services are built from, so a stack frame can link to its source."
+    },
+    "repositories": {
+      "title": "Repositories",
+      "description": "The repositories your services are built from. OpsWatch uses these to turn a stack frame into a link to the file it came from.",
+      "safety": "What OpsWatch will and will not do",
+      "readOnly": "OpsWatch only ever reads. It creates no branch, no issue, no comment and no commit, the token is asked for with read-only scopes, and the client that uses it has no way to write.",
+      "known": "Known repositories",
+      "noneYet": "No repository has been added yet, so a stack frame cannot be linked to its source.",
+      "branch": "default branch: {branch}",
+      "remove": "Remove",
+      "add": "Add a repository",
+      "owner": "Owner",
+      "name": "Repository",
+      "defaultBranch": "Default branch",
+      "addHint": "No token is needed for this. Recording the repository is enough to build a link to a file; reading the file’s contents is what needs one.",
+      "addAction": "Add",
+      "saved": "Saved.",
+      "token": "GitHub token (optional)",
+      "tokenPresent": "A token is stored. Status: {status}.",
+      "tokenAbsent": "No token is stored. Links to files still work; showing the code around a stack frame does not.",
+      "tokenError": "The last check failed: {error}",
+      "tokenHint": "Without a token OpsWatch can link to a file. With one it can also show the lines around a stack frame, which is what makes the code evidence useful during an incident.",
+      "tokenLabel": "Fine-grained personal access token",
+      "tokenKeep": "Leave blank to keep the stored token",
+      "tokenScopes": "Needs Contents: Read and Metadata: Read. Nothing else, ever. Stored encrypted and never shown again.",
+      "tokenSave": "Save token",
+      "errors": {
+        "invalid_owner": "An owner may contain letters, digits, dots, dashes and underscores.",
+        "invalid_name": "A repository name may contain letters, digits, dots, dashes and underscores.",
+        "invalid_branch": "That branch name contains characters a branch cannot have.",
+        "invalid_token": "That does not look like a GitHub token."
+      }
     }
   },
   "Api": {
