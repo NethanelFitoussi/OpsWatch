@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { causesFor } from '@/lib/detect/explain';
+import { HEADLINE_KINDS } from '@/lib/monitoring/shared/duration';
 import { sourceFilesUnder } from '../helpers/source-graph';
 import en from '../../messages/en.json';
 import fr from '../../messages/fr.json';
@@ -79,6 +81,40 @@ describe('message catalogues', () => {
         expect(keys[key], key).toContain('{taskMinutes}');
         expect(keys[key], key).not.toMatch(/\b(10|15)\b/);
       }
+    }
+  });
+});
+
+/** Every kind a page can headline, which is exactly the set whose causes a reader can reach. */
+const HEADLINE_KINDS_FOR_CAUSES = [...HEADLINE_KINDS];
+
+describe('the causes a problem page offers', () => {
+  const enFlat = flatten(en as Tree);
+  const frFlat = flatten(fr as Tree);
+
+  it('THE RULING: every cause id a detector family names has a sentence in both locales', () => {
+    // A missing one renders its own id at a reader — the failure `synthetic_down` already taught us —
+    // and the ids live in a pure module, so nothing else would notice.
+    const ids = new Set(HEADLINE_KINDS_FOR_CAUSES.flatMap((kind) => [...causesFor(kind)]));
+    expect(ids.size).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(enFlat[`Monitoring.diagnosis.causeList.${id}`], id).toBeTypeOf('string');
+      expect(frFlat[`Monitoring.diagnosis.causeList.${id}`], id).toBeTypeOf('string');
+    }
+  });
+
+  it('carries no sentence nobody asks for, so the catalogue cannot quietly grow a dead entry', () => {
+    const used = new Set(HEADLINE_KINDS_FOR_CAUSES.flatMap((kind) => [...causesFor(kind)]));
+    const listed = Object.keys(enFlat)
+      .filter((key) => key.startsWith('Monitoring.diagnosis.causeList.'))
+      .map((key) => key.slice('Monitoring.diagnosis.causeList.'.length));
+    expect(listed.filter((id) => !used.has(id))).toEqual([]);
+  });
+
+  it('gives every unit the rule panel can render a way to say itself', () => {
+    for (const unit of ['percent', 'ms', 'days', 'rate']) {
+      expect(enFlat[`Monitoring.diagnosis.${unit}`], unit).toBeTypeOf('string');
+      expect(frFlat[`Monitoring.diagnosis.${unit}`], unit).toBeTypeOf('string');
     }
   });
 });
