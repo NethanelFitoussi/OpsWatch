@@ -17,6 +17,7 @@ export const generateMetadata = localizedTitle('Settings.title');
 /** The settings that live on their own page, listed here because the rail has one Settings entry, not three. */
 const MORE_SETTINGS = [
   { key: 'history', href: '/settings/history' },
+  { key: 'repositories', href: '/settings/repositories' },
   { key: 'status', href: '/settings/status' },
 ] as const;
 

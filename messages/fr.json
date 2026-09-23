@@ -1745,7 +1745,41 @@
       "history": "Données et historique",
       "historyHint": "Si OpsWatch collecte l’historique, ce que cela coûterait et combien de temps il est conservé.",
       "status": "État du système",
-      "statusHint": "Si le collecteur fonctionne, la dernière exécution de chaque tâche et l’état de la base de données."
+      "statusHint": "Si le collecteur fonctionne, la dernière exécution de chaque tâche et l’état de la base de données.",
+      "repositories": "Dépôts",
+      "repositoriesHint": "Les dépôts dont vos services sont issus, pour relier une ligne de pile à sa source."
+    },
+    "repositories": {
+      "title": "Dépôts",
+      "description": "Les dépôts dont vos services sont issus. OpsWatch s’en sert pour transformer une ligne de pile en lien vers le fichier d’origine.",
+      "safety": "Ce qu’OpsWatch fera et ne fera pas",
+      "readOnly": "OpsWatch ne fait que lire. Il ne crée ni branche, ni ticket, ni commentaire, ni commit ; le jeton est demandé en lecture seule, et le client qui l’utilise n’a aucun moyen d’écrire.",
+      "known": "Dépôts connus",
+      "noneYet": "Aucun dépôt n’a encore été ajouté : une ligne de pile ne peut pas être reliée à sa source.",
+      "branch": "branche par défaut : {branch}",
+      "remove": "Retirer",
+      "add": "Ajouter un dépôt",
+      "owner": "Propriétaire",
+      "name": "Dépôt",
+      "defaultBranch": "Branche par défaut",
+      "addHint": "Aucun jeton n’est nécessaire ici. Enregistrer le dépôt suffit à construire un lien vers un fichier ; c’est lire son contenu qui en demande un.",
+      "addAction": "Ajouter",
+      "saved": "Enregistré.",
+      "token": "Jeton GitHub (facultatif)",
+      "tokenPresent": "Un jeton est enregistré. État : {status}.",
+      "tokenAbsent": "Aucun jeton enregistré. Les liens vers les fichiers fonctionnent ; afficher le code autour d’une ligne de pile non.",
+      "tokenError": "La dernière vérification a échoué : {error}",
+      "tokenHint": "Sans jeton, OpsWatch peut créer un lien vers un fichier. Avec, il peut aussi montrer les lignes autour de la pile, ce qui rend la preuve de code utile pendant un incident.",
+      "tokenLabel": "Jeton d’accès personnel à portée fine",
+      "tokenKeep": "Laissez vide pour conserver le jeton enregistré",
+      "tokenScopes": "Nécessite Contents : lecture et Metadata : lecture. Rien d’autre, jamais. Stocké chiffré et jamais réaffiché.",
+      "tokenSave": "Enregistrer le jeton",
+      "errors": {
+        "invalid_owner": "Un propriétaire peut contenir lettres, chiffres, points, tirets et tirets bas.",
+        "invalid_name": "Un nom de dépôt peut contenir lettres, chiffres, points, tirets et tirets bas.",
+        "invalid_branch": "Ce nom de branche contient des caractères interdits.",
+        "invalid_token": "Cela ne ressemble pas à un jeton GitHub."
+      }
     }
   },
   "Api": {

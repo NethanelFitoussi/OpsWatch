@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 47 |
-| `PARTIAL` | 15 |
+| `DONE` | 48 |
+| `PARTIAL` | 14 |
 | `FOUNDATION_ONLY` | 9 |
 | `NOT_STARTED` | 20 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -151,8 +151,8 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| REPO-1 | GitHub connection | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `integrations` table with a write-only encrypted credential. No settings UI yet, and live calls need a token (external) |
-| REPO-2 | Repository storage | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `repositories` table and store. No UI yet |
+| REPO-1 | GitHub connection | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Settings → Repositories stores a write-only encrypted token. Live calls need a real token, which is the external blocker |
+| REPO-2 | Repository storage | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | An operator can add, list and remove a repository with no credential at all |
 | REPO-3 | Service → repository mapping | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `service_repositories` with a suggestion engine that never applies itself. No UI yet |
 | REPO-4 | Commits, metadata, diffs, files | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `commitSchema` exists |
 | REPO-5 | Line-level code evidence | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `repositoryEvidenceSchema` exists |
