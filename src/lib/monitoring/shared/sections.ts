@@ -47,28 +47,51 @@ export function subsectionLabelKey(section: MonitoringSection, subsection: strin
   return `Sections.${section}.${subsection}`;
 }
 
-/** One icon per segment, so the collapsed section panel always has one to show. */
+/**
+ * One icon per segment, so the collapsed section panel always has one to show.
+ *
+ * Two segments of the same section must never share one: collapsed, the icon *is* the entry, and a menu
+ * where Problems, Alerts and Incidents are the same triangle tells an operator nothing. Segments in
+ * different sections may share freely — they are never on screen together. `monitoring-sections.test.ts`
+ * holds both halves of that rule.
+ */
 export const SUBSECTION_ICONS: Record<
   string,
-  'list' | 'report' | 'audit' | 'queries' | 'volume' | 'endpoints' | 'search' | 'insights' | 'problems' | 'health' | 'brief'
+  | 'list'
+  | 'report'
+  | 'audit'
+  | 'queries'
+  | 'volume'
+  | 'endpoints'
+  | 'search'
+  | 'insights'
+  | 'problems'
+  | 'health'
+  | 'brief'
+  | 'alerts'
+  | 'incidents'
+  | 'synthetics'
+  | 'ask'
+  | 'deployments'
+  | 'sources'
 > = {
   groups: 'list',
-  sources: 'list',
+  sources: 'sources',
   problems: 'problems',
   health: 'health',
   brief: 'brief',
   insights: 'insights',
   checkup: 'audit',
-  incidents: 'problems',
-  synthetics: 'health',
-  alerts: 'problems',
+  incidents: 'incidents',
+  synthetics: 'synthetics',
+  alerts: 'alerts',
   services: 'list',
   instances: 'list',
   list: 'list',
   report: 'report',
   objectives: 'health',
-  deployments: 'report',
-  ask: 'insights',
+  deployments: 'deployments',
+  ask: 'ask',
   queries: 'queries',
   search: 'search',
   volume: 'volume',

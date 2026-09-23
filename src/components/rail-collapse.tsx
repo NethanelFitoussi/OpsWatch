@@ -6,9 +6,17 @@ import { useRememberedFlag } from './use-remembered-flag';
 
 const RAIL_STORAGE_KEY = 'opswatch.rail.collapsed';
 
-/** Whether the main rail is collapsed to icons, remembered per browser. */
+/**
+ * Whether the main rail is collapsed to icons, remembered per browser.
+ *
+ * It starts collapsed. The sections are a short, fixed set an operator learns on the first day, and 288 px
+ * of them beside every page is width taken from the thing they opened OpsWatch to read. Collapsed is not
+ * hidden: every entry keeps its icon, its tooltip and its accessible name, and one control at the foot
+ * opens it for good — `true` here is the default, not a stored value, so an operator who opens it is
+ * remembered.
+ */
 export function useRailCollapsed(): { collapsed: boolean; toggle: () => void } {
-  const { value, toggle } = useRememberedFlag(RAIL_STORAGE_KEY);
+  const { value, toggle } = useRememberedFlag(RAIL_STORAGE_KEY, true);
   return { collapsed: value, toggle };
 }
 

@@ -52,6 +52,18 @@ describe('the sub-section catalogue', () => {
       for (const sub of subsectionsOf(section)) expect(SUBSECTION_ICONS[sub]).toBeDefined();
     }
   });
+
+  it('THE RULING: no two sub-pages of one section share an icon, because collapsed the icon is the entry', () => {
+    for (const section of MONITORING_SECTIONS) {
+      const icons = subsectionsOf(section).map((sub) => SUBSECTION_ICONS[sub]);
+      expect(new Set(icons).size, `${section}: ${icons.join()}`).toBe(icons.length);
+    }
+  });
+
+  it('lets two sections reuse one icon, because they are never on screen together', () => {
+    // Both are a plain list; one is a set of ECS services and the other a set of RDS instances.
+    expect(SUBSECTION_ICONS.services).toBe(SUBSECTION_ICONS.instances);
+  });
 });
 
 /** Where a section's sub-pages live. One `page.tsx` under here is what makes a segment real. */

@@ -170,39 +170,54 @@ test('the environment root keeps the query string it was given', async ({ page }
 });
 
 
-test('the section menu starts collapsed, still navigates, and remembers being opened', async ({ page }) => {
+test('the main rail starts collapsed, still navigates, and remembers being opened', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
-  const menu = page.getByRole('navigation', { name: 'Overview pages' });
-  const open = menu.getByRole('button', { name: 'Show the page names' });
+  const rail = page.getByRole('navigation', { name: 'Main navigation' });
+  const open = page.getByRole('button', { name: 'Expand the menu' });
 
-  // Collapsed on a first visit: the names are announced and on hover, not spent on screen width.
+  // Collapsed on a first visit: the sections are icons, and the width is the page's.
   await expect(open).toHaveAttribute('aria-pressed', 'true');
-  const health = menu.getByRole('link', { name: 'Health' });
-  await expect(health).toHaveAttribute('title', 'Health');
-  // Collapsed is not hidden — the link works.
-  await health.click();
-  await expect(page).toHaveURL(new RegExp(`/overview/health$`));
-  await expect(menu.getByRole('button', { name: 'Show the page names' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('aside')).toHaveClass(/w-16/);
+  // Collapsed is not hidden — the name is still the link's, and the link still works.
+  await rail.getByRole('link', { name: 'Containers' }).click();
+  await expect(page).toHaveURL(/\/containers\/services$/);
+  await expect(page.getByRole('button', { name: 'Expand the menu' })).toHaveAttribute('aria-pressed', 'true');
 
-  // Opening it is remembered, including across a navigation to another section.
-  await menu.getByRole('button', { name: 'Show the page names' }).click();
-  await expect(menu.getByRole('button', { name: 'Hide the page names' })).toBeVisible();
-  await page.goto(monitoringUrl(connectionId, 'logs', 'search'));
-  const logs = page.getByRole('navigation', { name: 'Logs pages' });
-  await expect(logs.getByRole('button', { name: 'Hide the page names' })).toHaveAttribute('aria-pressed', 'false');
-  await expect(logs.getByRole('link', { name: 'Volume' })).toBeVisible();
+  // Opening it is remembered across a reload, and the words come back.
+  await page.getByRole('button', { name: 'Expand the menu' }).click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Collapse the menu' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('aside')).toHaveClass(/w-72/);
+  await expect(rail.getByRole('link', { name: 'Overview' })).toBeVisible();
 });
 
-test('the section menu fits a 360 px phone in both states', async ({ page }) => {
+test('the section menu reads as words beside the collapsed rail, and folds away on its own control', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
+  const menu = page.getByRole('navigation', { name: 'Overview pages' });
+
+  // The inner menu is not collapsed too: a screen of nothing but glyphs reads as nothing.
+  await expect(menu.getByRole('button', { name: 'Hide the page names' })).toHaveAttribute('aria-pressed', 'false');
+  await menu.getByRole('button', { name: 'Hide the page names' }).click();
+  const health = menu.getByRole('link', { name: 'Health' });
+  await expect(health).toHaveAttribute('title', 'Health');
+  await health.click();
+  await expect(page).toHaveURL(/\/overview\/health$/);
+  // Collapsed, and remembered as such.
+  await expect(menu.getByRole('button', { name: 'Show the page names' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('on a 360 px phone the section menu keeps its words and offers no collapse', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 720 });
   await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
   const menu = page.getByRole('navigation', { name: 'Overview pages' });
-  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
-  await expect(menu.getByRole('button', { name: 'Show the page names' })).toBeVisible();
-  expect(await overflow()).toBeLessThanOrEqual(0);
-  await menu.getByRole('button', { name: 'Show the page names' }).click();
-  // The strip scrolls sideways on its own; the page itself must not.
-  expect(await overflow()).toBeLessThanOrEqual(0);
+  // The rail is not on a phone at all, and the section menu is the strip above the content: words there
+  // cost no width worth saving, so the control that would take a third of the strip is not offered.
+  await expect(page.locator('aside')).toBeHidden();
   await expect(menu.getByRole('link', { name: 'Health' })).toBeVisible();
+  await expect(menu.getByRole('button', { name: 'Hide the page names' })).toBeHidden();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
 });
