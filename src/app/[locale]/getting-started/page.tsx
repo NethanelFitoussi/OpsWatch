@@ -68,8 +68,10 @@ export default async function GettingStartedPage({ params }: Props) {
                       <CardDescription>{t(`hub.unlocks.${id}`)}</CardDescription>
                     </CardHeader>
                     <CardContent className="mt-auto space-y-3">
-                      {/* What needs attention, where something does. A badge alone tells nobody what to do. */}
-                      {state === 'degraded' && status?.detailKey !== null && status !== undefined && (
+                      {/* The measured detail, in every state rather than only when something is wrong: a
+                          badge alone tells nobody what is connected, and "Connected · 1 zone" is the
+                          sentence that makes the badge checkable. */}
+                      {status?.detailKey != null && (
                         <p className="text-sm text-muted-foreground">{t(`hub.detail.${status.detailKey}`, status.values)}</p>
                       )}
                       <div className="flex flex-wrap gap-2">
