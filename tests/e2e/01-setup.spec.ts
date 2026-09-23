@@ -6,8 +6,12 @@ test('protected pages redirect to setup before an admin exists', async ({ page }
   await expect(page).toHaveURL(/\/en\/setup$/);
 });
 
-test('the getting started guide is public', async ({ page }) => {
+test('the getting started hub is public, and so is each guide behind it', async ({ page }) => {
   await page.goto('/en/getting-started');
+  await expect(page.getByRole('heading', { level: 1, name: 'Connect the systems you use' })).toBeVisible();
+
+  // Somebody deciding whether to install OpsWatch can read what it would ask for, before signing in.
+  await page.goto('/en/getting-started/aws');
   await expect(page.getByRole('heading', { level: 1, name: 'Connect your AWS account' })).toBeVisible();
 });
 

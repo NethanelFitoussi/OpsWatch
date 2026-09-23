@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 72 |
-| `PARTIAL` | 9 |
+| `DONE` | 73 |
+| `PARTIAL` | 8 |
 | `FOUNDATION_ONLY` | 3 |
 | `NOT_STARTED` | 7 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -324,7 +324,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | UX-5 | Loading and stale states | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Suspense cards; problems mark staleness |
 | UX-6 | Accessibility pass (§V) | · | · | · | ✗ | ✗ | · | ✗ | ✗ | `NOT_STARTED` | Severity is never colour-alone today, but no audit has been run |
 | UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
-| UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | Getting-started and setup exist; not the staged wizard §D describes |
+| UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Get started is a hub that asks what to connect, with a full guide per integration — what it unlocks, what it needs, what OpsWatch may do, steps, verification, failures, disconnect. Three entry points, one measured state, enforced by a `data-state` invariant |
 | UX-9 | Integration centre (§E) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` manages them, `/accounts/new` chooses one to add, `GET /repository` tells a client what is connected. All three read the same measured state |
 | UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
 | UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
