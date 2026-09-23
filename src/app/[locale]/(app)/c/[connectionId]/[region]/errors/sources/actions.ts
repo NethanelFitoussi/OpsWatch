@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { resolveLocale } from '@/i18n/routing';
+import { auditedAdmin } from '@/lib/auth/audited';
 import { requireAdmin } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
 import { LOG_FORMATS, MAPPABLE_FIELDS, isUsableMap, presetById, type FieldMapValues, type LogFormat } from '@/lib/errors/source-presets';
@@ -53,8 +54,7 @@ export async function saveSourceAction(
   _prev: SourceState,
   formData: FormData,
 ): Promise<SourceState> {
-  await requireAdmin(resolveLocale(locale));
-
+  return auditedAdmin(resolveLocale(locale), 'log_source_update', 'log_source', async (): Promise<SourceState> => {
   const logGroup = formString(formData, 'logGroup').trim();
   if (logGroup === '' || logGroup.length > 512) return { error: 'invalid_group' };
 
@@ -91,4 +91,5 @@ export async function saveSourceAction(
 
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/errors/sources`);
   return { saved: true };
+  });
 }

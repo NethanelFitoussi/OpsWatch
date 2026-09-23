@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { resolveLocale } from '@/i18n/routing';
-import { requireAdmin } from '@/lib/auth/current';
+import { auditedAdmin } from '@/lib/auth/audited';
 import { encrypt } from '@/lib/crypto';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -21,8 +21,7 @@ export async function saveCheckAction(
   _prev: CheckState,
   formData: FormData,
 ): Promise<CheckState> {
-  await requireAdmin(resolveLocale(locale));
-
+  return auditedAdmin(resolveLocale(locale), 'synthetic_update', 'synthetic', async (): Promise<CheckState> => {
   const name = formString(formData, 'name').trim();
   if (name === '' || name.length > 100) return { error: 'invalid_name' };
   const url = formString(formData, 'url').trim();
@@ -76,6 +75,7 @@ export async function saveCheckAction(
 
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/synthetics`);
   return { saved: true };
+  });
 }
 
 export async function deleteCheckAction(
@@ -85,11 +85,12 @@ export async function deleteCheckAction(
   _prev: CheckState,
   formData: FormData,
 ): Promise<CheckState> {
-  await requireAdmin(resolveLocale(locale));
+  return auditedAdmin(resolveLocale(locale), 'synthetic_update', 'synthetic', async (): Promise<CheckState> => {
   const id = formString(formData, 'checkId').trim();
   if (id === '') return { error: 'invalid_name' };
 
   deleteCheck(getDb(), id);
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/synthetics`);
   return { saved: true };
+  });
 }

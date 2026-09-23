@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 54 |
-| `PARTIAL` | 19 |
+| `DONE` | 55 |
+| `PARTIAL` | 18 |
 | `FOUNDATION_ONLY` | 4 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -242,7 +242,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
 | UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
 | UX-12 | Global search | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | §21's `search_index` |
-| UX-13 | Audit log (§21) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Append-only table, admin page, sign-ins recorded including failures. The other §21 actions are not yet wired to their write paths |
+| UX-13 | Audit log (§21) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Append-only, admin-only, with sign-ins and every administrator write path recorded through one helper — including refusals and crashes |
 
 ## Mobile dependencies on this server
 

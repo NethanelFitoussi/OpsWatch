@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { resolveLocale } from '@/i18n/routing';
-import { requireAdmin } from '@/lib/auth/current';
+import { auditedAdmin } from '@/lib/auth/audited';
 import { getDb } from '@/lib/db/client';
 import type { ActionState } from '@/lib/forms/action-state';
 import { formString } from '@/lib/forms/form-data';
@@ -24,8 +24,7 @@ export async function acceptMappingAction(
   _prev: MappingState,
   formData: FormData,
 ): Promise<MappingState> {
-  await requireAdmin(resolveLocale(locale));
-
+  return auditedAdmin(resolveLocale(locale), 'repository_update', 'service_repository', async (): Promise<MappingState> => {
   const serviceId = formString(formData, 'serviceId').trim();
   if (serviceId === '') return { error: 'invalid_service' };
   const repositoryId = formString(formData, 'repositoryId').trim();
@@ -45,4 +44,5 @@ export async function acceptMappingAction(
 
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/errors/groups`);
   return { saved: true };
+  });
 }

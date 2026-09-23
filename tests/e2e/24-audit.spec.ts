@@ -66,3 +66,32 @@ test('the audit log renders at 360px without horizontal page overflow', async ({
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('§21 — an administrator action records itself, and a refusal is distinguishable', async ({ page }) => {
+  await login(page);
+
+  // A refusal: an invalid repository owner.
+  await page.goto('/en/settings/repositories');
+  await page.getByLabel('Owner').fill('not a valid owner!!');
+  await page.getByLabel('Repository', { exact: true }).fill('x');
+  await page.getByRole('button', { name: 'Add' }).click();
+  await expect(page.getByText('An owner may contain letters', { exact: false })).toBeVisible();
+
+  // A success: a valid one.
+  await page.getByLabel('Owner').fill('acme');
+  await page.getByLabel('Repository', { exact: true }).fill('audited');
+  await page.getByRole('button', { name: 'Add' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  await page.goto('/en/settings/audit');
+  const main = await page.locator('body').innerText();
+  expect(main).toContain('Repository changed');
+  // Both outcomes, so a reviewer can tell an attempt that was turned away from one that worked.
+  expect(main).toContain('Refused');
+  expect(main).toContain('Succeeded');
+
+  // Left as found.
+  await page.goto('/en/settings/repositories');
+  await page.getByRole('button', { name: 'Remove' }).first().click();
+  await expect(page.getByText('No repository has been added yet')).toBeVisible();
+});

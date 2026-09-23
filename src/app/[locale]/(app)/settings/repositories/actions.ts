@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { resolveLocale } from '@/i18n/routing';
-import { requireAdmin } from '@/lib/auth/current';
+import { auditedAdmin } from '@/lib/auth/audited';
 import { encrypt } from '@/lib/crypto';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -19,8 +19,7 @@ const NAME = /^[A-Za-z0-9._-]{1,100}$/;
 const BRANCH = /^[A-Za-z0-9._\-/]{1,200}$/;
 
 export async function saveRepositoryAction(locale: string, _prev: RepositoryState, formData: FormData): Promise<RepositoryState> {
-  await requireAdmin(resolveLocale(locale));
-
+  return auditedAdmin(resolveLocale(locale), 'repository_update', 'repository', async (): Promise<RepositoryState> => {
   const owner = formString(formData, 'owner').trim();
   if (!NAME.test(owner)) return { error: 'invalid_owner' };
   const name = formString(formData, 'name').trim();
@@ -31,10 +30,11 @@ export async function saveRepositoryAction(locale: string, _prev: RepositoryStat
   upsertRepository(getDb(), { owner, name, defaultBranch: branch }, Date.now());
   revalidatePath(`/${resolveLocale(locale)}/settings/repositories`);
   return { saved: true };
+  });
 }
 
 export async function deleteRepositoryAction(locale: string, _prev: RepositoryState, formData: FormData): Promise<RepositoryState> {
-  await requireAdmin(resolveLocale(locale));
+  return auditedAdmin(resolveLocale(locale), 'repository_update', 'repository', async (): Promise<RepositoryState> => {
   const id = formString(formData, 'repositoryId').trim();
   if (id === '') return { error: 'invalid_name' };
 
@@ -42,6 +42,7 @@ export async function deleteRepositoryAction(locale: string, _prev: RepositorySt
   deleteRepository(getDb(), id);
   revalidatePath(`/${resolveLocale(locale)}/settings/repositories`);
   return { saved: true };
+  });
 }
 
 /**
@@ -52,8 +53,7 @@ export async function deleteRepositoryAction(locale: string, _prev: RepositorySt
  * token being read-only is belt as well as braces.
  */
 export async function saveTokenAction(locale: string, _prev: TokenState, formData: FormData): Promise<TokenState> {
-  await requireAdmin(resolveLocale(locale));
-
+  return auditedAdmin(resolveLocale(locale), 'integration_update', 'integration', async (): Promise<TokenState> => {
   const token = formString(formData, 'token').trim();
   // A blank submission means "leave it alone", which is how a form can be saved without retyping a secret.
   if (token === '') return { saved: true };
@@ -66,4 +66,5 @@ export async function saveTokenAction(locale: string, _prev: TokenState, formDat
   );
   revalidatePath(`/${resolveLocale(locale)}/settings/repositories`);
   return { saved: true };
+  });
 }
