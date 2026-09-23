@@ -38,9 +38,9 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   checkup: true,
   investigations: false,
   repository: false,
-  // The provider integration exists (AI-2, AI-3); `GET /ai/ask` does not yet, so a client has nothing to
-  // call. The flag stays false until it does — a capability is what a caller can use, not what is stored.
-  ai: false,
+  // `POST /ai/ask` answers from the evidence the deterministic engine already computed (AI-4, AI-5).
+  // Still gated by `aiConfigured`, which is a tested connection rather than a stored key.
+  ai: true,
   search: false,
   favorites: false,
   // Push needs FCM/APNs credentials and an account the owner has not created. Declared false for this mission.

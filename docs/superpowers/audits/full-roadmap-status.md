@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 67 |
+| `DONE` | 69 |
 | `PARTIAL` | 10 |
 | `FOUNDATION_ONLY` | 3 |
-| `NOT_STARTED` | 10 |
+| `NOT_STARTED` | 8 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -50,7 +50,7 @@ Read this table first. The detailed requirement tables below it are the implemen
 |---|---|---|---|---|---|---|
 | **AWS** | ✓ IAM role, ambient, access keys | ✓ encrypted, CloudFormation onboarding | ✓ regions, permission test | Every monitoring surface | ✓ | `DONE` |
 | **GitHub / Repository** | ✓ token in Settings → Repositories | ✓ encrypted, write-only | ✗ no org/installation discovery | Stack frame → file link, service → repository mapping | ✓ | `PARTIAL` |
-| **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Nothing yet — `Ask OpsWatch` is the next piece | ✓ deletes the key | `PARTIAL` |
+| **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Ask OpsWatch: `POST /ai/ask` and `overview/ask`, answered from bounded evidence | ✓ deletes the key | `DONE` (live provider acceptance `BLOCKED_EXTERNAL`) |
 | **Cloudflare** | ✗ | ✗ | ✗ | Traffic, cache, security events, Zero Trust | ✗ | `NOT_STARTED` |
 | **Google sign-in** | ✓ environment-configured | · no stored secret: it lives in the environment | · | Sign-in, with an optional allowed domain | · unset the variables | `DONE` |
 
@@ -65,10 +65,13 @@ needs a token with `Contents: Read` — commits, changed files, diffs and the li
 organisation and installation discovery, which needs a GitHub App. **`BLOCKED_EXTERNAL` for the live half
 only**; everything that does not touch the network is buildable here and is tracked under REPO-*.
 
-**AI provider.** The integration is complete: three providers behind one abstraction, an encrypted key that
-never returns to the browser, a connection test, four honest states, and disconnect that deletes rather than
-flags. `features.ai` stays **false** because `GET /ai/ask` does not exist yet — a capability is what a caller
-can use, not what is stored. Live acceptance against a real provider is `BLOCKED_EXTERNAL`: no key here.
+**AI provider.** Complete. Three providers behind one abstraction, an encrypted key that never returns to
+the browser, a connection test, four honest states, and disconnect that deletes rather than flags. Ask
+OpsWatch answers from a pack bounded by construction — eight worst problems, five deployments, five error
+groups, a day, 32 KB — and an environment nobody has read is **refused** rather than answered. `features.ai`
+is implemented and gated on `aiConfigured`, which is a *tested* connection rather than a stored key.
+**`BLOCKED_EXTERNAL`: live acceptance against a real provider.** There is no API key here, so every test
+runs against an injected transport. What that leaves unproven is one round trip, not the architecture.
 
 **Cloudflare.** Designed in §20 and not begun. Nothing about it needs a credential to build except the final
 live acceptance, so the architecture, the settings page, the API and the tests are all buildable here.
@@ -257,8 +260,8 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | AI-1 | Off by default | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `DONE` | `features.ai` is false; no AI menu entry anywhere |
 | AI-2 | Provider settings, encrypted credentials | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Three providers behind one abstraction, key encrypted under its own derivation, never returned, deletable. Live acceptance against a real provider is `BLOCKED_EXTERNAL` |
 | AI-3 | Provider connection test | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | One-token call, recorded as connected / invalid / unavailable. A provider's own error text never reaches the database or the page |
-| AI-4 | Structured internal tools | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | §23: ≤6 calls, ≤60 s, ≤32 KB per result, <100 KB context |
-| AI-5 | Ask OpsWatch API + web UI | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | `aiAnswerSchema` exists |
+| AI-4 | Structured internal tools | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | The evidence pack is bounded by construction: eight worst problems, five deployments, five error groups, 24 hours, 32 KB. No SQL, no log lines, no credentials |
+| AI-5 | Ask OpsWatch API + web UI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | `POST /ai/ask` and `overview/ask`. The answer is rendered as a hypothesis beside its citations, and an environment nobody has read is refused rather than answered |
 | AI-6 | No uncontrolled log/database dump | ✓ | · | · | · | · | ✓ | ✓ | · | `DONE` | Vacuously: nothing queries an AI. Must stay true when AI-4 lands |
 | AI-7 | No automatic infrastructure/repo modification | ✓ | · | · | · | · | ✓ | ✓ | ✓ | `DONE` | No write path to AWS or a repository exists at all |
 

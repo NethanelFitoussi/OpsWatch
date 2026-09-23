@@ -1,6 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import {
+  aiAnswerSchema,
   type ApiErrorCode,
   authSessionSchema,
   environmentListSchema,
@@ -182,6 +183,17 @@ export const API_ROUTES: ApiRouteSpec[] = [
     response: pageSchema(alertSummarySchema),
     status: 200,
     errors: ['unauthorized', 'invalid_request', 'not_found'],
+  },
+  {
+    method: 'post',
+    path: '/ai/ask',
+    operationId: 'askOpsWatch',
+    auth: 'session',
+    summary: 'Asks the configured assistant a question about one environment. The answer is a hypothesis built from evidence OpsWatch already measured, and carries the citations it was built from. `not_found` when no provider is configured.',
+    request: z.object({ question: z.string().min(1).max(500) }),
+    response: aiAnswerSchema,
+    status: 200,
+    errors: ['unauthorized', 'invalid_request', 'not_found', 'unavailable'],
   },
   {
     method: 'get',

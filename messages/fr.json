@@ -1765,6 +1765,47 @@
         "rolled_back": "Annulé",
         "unknown": "Inconnu"
       }
+    },
+    "ask": {
+      "title": "Demander à OpsWatch",
+      "description": "Une question sur cet environnement, répondue à partir de ce qu'OpsWatch a déjà mesuré.",
+      "bands": "La réponse est une hypothèse. Elle est construite à partir des preuves collectées par OpsWatch — problèmes, déploiements, groupes d'erreurs, santé des familles — et elle est présentée à côté de ces preuves pour que vous puissiez la vérifier plutôt que la croire.",
+      "notConfigured": "Aucun fournisseur d'IA n'est configuré, il n'y a donc rien à demander.",
+      "configure": "En configurer un",
+      "question": "Votre question",
+      "label": "Question",
+      "placeholder": "Pourquoi le paiement a-t-il commencé à échouer cet après-midi ?",
+      "scope": "Uniquement cet environnement, et uniquement les 24 dernières heures de ce qu'OpsWatch a enregistré. Votre question et ces preuves sont envoyées au fournisseur que vous avez configuré ; rien d'autre.",
+      "ask": "Demander",
+      "disabled": "Connectez un fournisseur d'IA dans les Réglages pour poser une question. Toutes les autres pages fonctionnent sans.",
+      "hypothesis": "Hypothèse",
+      "hypothesisHint": "Une supposition d'un modèle, pas une mesure. OpsWatch ne sait pas si elle est juste.",
+      "builtFrom": "Construite à partir de",
+      "refs": {
+        "problem": "Problème",
+        "deployment": "Déploiement",
+        "error": "Groupe d'erreurs",
+        "service": "Service",
+        "incident": "Incident",
+        "infrastructure": "Ressource",
+        "alert": "Alerte",
+        "synthetic": "Vérification",
+        "log": "Journal",
+        "slo": "Objectif",
+        "repository": "Dépôt"
+      },
+      "by": "Répondu par {model}",
+      "errors": {
+        "invalid_question": "Posez une question d'au plus 500 caractères.",
+        "no_evidence": "OpsWatch n'a pas encore lu cet environnement : il n'y a rien à partir de quoi répondre. Le premier cycle du collecteur y remédiera.",
+        "not_configured": "Aucun fournisseur d'IA n'est configuré.",
+        "unauthorized": "Le fournisseur a refusé la clé enregistrée. Vérifiez-la dans les Réglages.",
+        "rate_limited": "Le fournisseur limite actuellement cette clé. Réessayez sous peu.",
+        "unreachable": "Le fournisseur n'a pas pu être joint.",
+        "refused_endpoint": "OpsWatch a refusé d'appeler l'adresse configurée : elle résout à l'intérieur de votre réseau.",
+        "bad_response": "Le fournisseur a répondu quelque chose qu'OpsWatch n'a pas su lire.",
+        "timeout": "Le fournisseur n'a pas répondu à temps."
+      }
     }
   },
   "Insights": {
@@ -1817,7 +1858,8 @@
       "checkup": "Bilan",
       "incidents": "Incidents",
       "synthetics": "Tests synthétiques",
-      "alerts": "Alertes"
+      "alerts": "Alertes",
+      "ask": "Demander à OpsWatch"
     },
     "containers": {
       "services": "Services",
