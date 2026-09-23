@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 45 |
-| `PARTIAL` | 10 |
-| `FOUNDATION_ONLY` | 10 |
-| `NOT_STARTED` | 26 |
+| `DONE` | 47 |
+| `PARTIAL` | 11 |
+| `FOUNDATION_ONLY` | 9 |
+| `NOT_STARTED` | 24 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -133,10 +133,10 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| INV-1 | Investigation timeline | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `investigationSchema` exists; nothing produces one |
-| INV-2 | Cross-signal correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Deployment↔problem only. §7's other pairs (errors, alarms, target health) are not correlated yet |
-| INV-3 | Observed fact vs correlation vs hypothesis | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §N's three bands; the distinction the whole feature rests on |
-| INV-4 | Probable-cause evidence chain | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on INV-2, DEP-2, REPO-* |
+| INV-1 | Investigation timeline | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Rendered on Problem detail. No standalone investigation object or `/api/v1` route yet |
+| INV-2 | Cross-signal correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Any two facts in the events spine sharing a subject or service, within §7's window, with the measured Δt |
+| INV-3 | Observed fact vs correlation vs hypothesis | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Three headed groups, not badges on one list. Only a hypothesis carries a confidence, and five catalogue entries are declared unevaluated |
+| INV-4 | Probable-cause evidence chain | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Three of §5's eight hypotheses evaluated; the other five need baselines, PI digests, Cloudflare or synthetics |
 | INV-5 | Investigation workspace (§R) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
 
 ## Deployments

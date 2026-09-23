@@ -1493,6 +1493,57 @@
         "budget_exhausted": "Le budget de scan du jour est épuisé : cette requête n’a pas été lancée.",
         "query_failed": "La requête n’a pas pu être lancée. Vérifiez la connexion et sa permission logs, puis réessayez."
       }
+    },
+    "investigation": {
+      "title": "Ce qui s’est passé autour",
+      "description": "Assemblé à partir de ce qu’OpsWatch a enregistré. Les trois groupes ci-dessous sont délibérément séparés : des faits, des choses survenues à peu près en même temps, et des hypothèses.",
+      "facts": "Faits observés",
+      "factsHint": "Ce qu’OpsWatch a enregistré, avec l’heure. Rien ici n’est déduit.",
+      "noFacts": "Rien d’autre n’a été enregistré sur cette période.",
+      "correlations": "Survenus à peu près en même temps",
+      "correlationsHint": "Deux faits enregistrés proches dans le temps, partageant un service ou une ressource. C’est un écart mesuré, pas une cause : des choses surviennent souvent ensemble sans lien.",
+      "noCorrelations": "Aucun fait n’était assez proche dans le temps pour être rapproché d’un autre.",
+      "hypotheses": "Explications possibles",
+      "hypothesesHint": "Des hypothèses issues d’une liste fixe, chacune avec ce qui permettrait de trancher. OpsWatch ne sait pas laquelle est juste, ni s’il y en a une.",
+      "noHypotheses": "Aucun schéma connu ne correspond à ce qui a été enregistré ici.",
+      "notEvaluated": "{count, plural, one {Une autre explication n’a pas été vérifiée} other {# autres explications n’ont pas été vérifiées}}, faute des données nécessaires.",
+      "nothingRecorded": "OpsWatch n’a rien enregistré d’autre au moment où cela a commencé.",
+      "nothingRecordedHint": "Ce n’est pas la même chose que « rien ne s’est passé » : rien d’autre n’a atteint les parties de votre infrastructure qu’OpsWatch surveille.",
+      "confidence": {
+        "high": "Probable",
+        "medium": "Possible",
+        "low": "Peu probable"
+      },
+      "fact": {
+        "problem_opened": "Un problème s’est ouvert",
+        "problem_reopened": "Un problème s’est rouvert",
+        "problem_resolved": "Un problème s’est résolu",
+        "deployment_started": "Un déploiement a démarré : {taskDefinition}",
+        "deployment_completed": "Un déploiement s’est terminé : {taskDefinition}",
+        "deployment_failed": "Un déploiement a échoué : {taskDefinition}",
+        "error_group_appeared": "Un nouveau groupe d’erreurs est apparu",
+        "error_group_regressed": "Un groupe d’erreurs est revenu après une accalmie",
+        "resource_appeared": "Une ressource est apparue",
+        "resource_disappeared": "Une ressource a disparu",
+        "fleet_opened": "Plusieurs ressources ont commencé à défaillir ensemble",
+        "fleet_resolved": "Un groupe de ressources défaillantes est revenu à la normale",
+        "unknown": "Quelque chose a été enregistré"
+      },
+      "pair": "{minutes, plural, =0 {Au même moment} one {1 minute d’écart} other {# minutes d’écart}} — {relation}",
+      "relation": {
+        "same_service": "même service",
+        "same_subject": "même ressource"
+      },
+      "hypothesis": {
+        "deploy_regression": "Un déploiement récent a pu introduire ceci",
+        "capacity_shortfall": "La capacité est peut-être insuffisante pour la charge actuelle",
+        "noise": "Ce problème oscille peut-être parce que le détecteur est trop sensible"
+      },
+      "confirm": {
+        "deploy_regression.confirm": "Comparez la révision déployée avec la précédente, et voyez si revenir en arrière arrête les erreurs.",
+        "capacity_shortfall.confirm": "Comparez le nombre souhaité au nombre en cours, et voyez si augmenter le premier suffit.",
+        "noise.confirm": "Regardez la fréquence des ouvertures et fermetures. Si rien d’autre n’a changé, le seuil est probablement trop serré."
+      }
     }
   },
   "Insights": {
