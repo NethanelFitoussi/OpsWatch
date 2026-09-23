@@ -176,6 +176,26 @@ export const events = sqliteTable('events', {
   uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
 ]);
 
+/**
+ * What a user chose for themselves (§12's `userPreferences`).
+ *
+ * One row per administrator, keyed by the user rather than by the instance, because these belong to the
+ * person: a viewer changing what they want to be told about must not change anything anybody else sees.
+ */
+export const userPreferences = sqliteTable('user_preferences', {
+  adminUserId: integer('admin_user_id')
+    .primaryKey()
+    .references(() => adminUser.id, { onDelete: 'cascade' }),
+  locale: text('locale'),
+  defaultEnvironmentId: text('default_environment_id'),
+  /** `critical` | `warning` | `info`: the floor, not a list. */
+  minSeverity: text('min_severity', { enum: PROBLEM_SEVERITIES }).notNull().default('critical'),
+  categories: text('categories', { mode: 'json' }).$type<string[]>().notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export type UserPreferencesRow = typeof userPreferences.$inferSelect;
+
 export const ALERT_CONDITIONS = ['problem', 'synthetic'] as const;
 export const ALERT_CHANNELS = ['in_app'] as const;
 
