@@ -35,11 +35,6 @@ export function listIntegrations(db: Db, kind?: IntegrationRow['kind']): Integra
   return rows.map(toView);
 }
 
-export function findIntegration(db: Db, id: string): IntegrationView | null {
-  const row = db.select().from(integrations).where(eq(integrations.id, id)).get();
-  return row === undefined ? null : toView(row);
-}
-
 /**
  * The stored ciphertext for one integration.
  *
