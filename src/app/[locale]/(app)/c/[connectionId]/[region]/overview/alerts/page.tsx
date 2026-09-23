@@ -10,6 +10,8 @@ import { alertLabels } from '@/lib/read/alert-labels';
 import { listAlertSummaries } from '@/lib/read/alerts';
 import { hasBeenRead } from '@/lib/read/health';
 import { listRules } from '@/lib/store/alerts';
+import { acknowledgeAlertAction, toggleRuleAction } from './actions';
+import { AlertControls } from './alert-controls';
 
 type Props = { params: Promise<MonitoringParams> };
 
@@ -71,17 +73,23 @@ export default async function AlertsPage({ params }: Props) {
         )}
       </MonitoringCard>
 
-      <MonitoringCard title={t('rules')} description={t('rulesDescription')}>
-        <ul className="divide-y">
-          {rules.map((rule) => (
-            <li key={rule.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-sm">
-              <span>{t(`rule.${rule.name}`)}</span>
-              <span className="text-xs text-muted-foreground">
-                {rule.enabled ? t('enabled') : t('disabled')} · {t('cooldown', { minutes: Math.round(rule.cooldownSeconds / 60) })}
-              </span>
-            </li>
-          ))}
-        </ul>
+      <MonitoringCard title={t('manage')}>
+        <AlertControls
+          acknowledge={acknowledgeAlertAction.bind(null, context.locale, query.connectionId, query.scope)}
+          toggle={toggleRuleAction.bind(null, context.locale, query.connectionId, query.scope)}
+          alerts={alerts.map((alert) => ({
+            id: alert.id,
+            name: alert.name,
+            // Only a firing, unacknowledged alert can be acknowledged; the rest have nothing to silence.
+            canAcknowledge: alert.status === 'firing',
+          }))}
+          rules={rules.map((rule) => ({
+            id: rule.id,
+            name: rule.name,
+            enabled: rule.enabled,
+            cooldownMinutes: Math.round(rule.cooldownSeconds / 60),
+          }))}
+        />
       </MonitoringCard>
     </SectionLayout>
   );

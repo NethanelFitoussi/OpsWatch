@@ -1681,7 +1681,18 @@
       },
       "enabled": "activée",
       "disabled": "désactivée",
-      "cooldown": "délai de garde {minutes} min"
+      "cooldown": "délai de garde {minutes} min",
+      "manage": "Acquitter et ajuster",
+      "acknowledgeTitle": "Alertes que vous pouvez acquitter",
+      "acknowledgeHint": "Acquitter empêche une alerte de se signaler jusqu’à ce qu’elle se résolve puis se redéclenche. Cela ne la résout pas : le problème est toujours là.",
+      "acknowledge": "Acquitter",
+      "turnOn": "Activer",
+      "turnOff": "Désactiver",
+      "saved": "Enregistré.",
+      "errors": {
+        "not_found": "Cet élément n’est pas dans cet environnement.",
+        "already_acknowledged": "Cette alerte était déjà acquittée."
+      }
     }
   },
   "Insights": {
