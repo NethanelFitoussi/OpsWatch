@@ -17,7 +17,8 @@ test.beforeEach(async ({ page }) => {
 
 test('Settings links to it, and it says what access it asks for before asking', async ({ page }) => {
   await page.goto('/en/settings');
-  await page.getByRole('link', { name: 'Cloudflare' }).click();
+  // Scoped to the page body: the navigation rail now has a Cloudflare entry of its own.
+  await page.locator('main').getByRole('link', { name: 'Cloudflare' }).click();
   await expect(page).toHaveURL(/\/settings\/cloudflare$/);
 
   const main = await page.locator('main').innerText();

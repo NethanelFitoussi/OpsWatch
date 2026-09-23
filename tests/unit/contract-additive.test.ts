@@ -24,7 +24,7 @@ const PROMISED_VALUES = [
   'SEVERITIES', 'SLO_STATUSES', 'SYNTHETIC_STATUSES', 'TOKEN_AUDIENCES', 'TRENDS', 'aiAnswerSchema',
   'alertDetailSchema', 'alertSummarySchema', 'allowedActionsSchema', 'apiErrorBodySchema', 'authSessionSchema',
   'briefSchema', 'can', 'changeSchema', 'checkFindingSchema', 'checkNotRunReasonSchema',
-  'checkNotRunSchema', 'checkupSchema', 'checkValuesSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
+  'checkNotRunSchema', 'checkupSchema', 'checkValuesSchema', 'CLOUDFLARE_STATES', 'cloudflareDaySchema', 'cloudflareOverviewSchema', 'cloudflareZoneSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
   'deploymentSummarySchema', 'deviceRegistrationSchema', 'encodeCursor', 'environmentId',
   'environmentListSchema', 'environmentSchema', 'environmentStatusSchema', 'epochSchema', 'errorDetailSchema',
   'errorSummarySchema', 'evidenceSchema', 'familySchema', 'favoriteSchema', 'filtersFor', 'favoritesSchema',

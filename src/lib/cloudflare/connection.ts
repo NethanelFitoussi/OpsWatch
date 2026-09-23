@@ -90,6 +90,17 @@ export function removeCloudflareConnection(db: Db): boolean {
 
 type Held = { ok: true; token: string } | { ok: false; error: CloudflareFailure };
 
+/**
+ * The decrypted token, for a caller inside this package that needs to make a request with it.
+ *
+ * Exported deliberately narrowly: the collector job lives outside this file and has to send a request, and
+ * a second decryption path would be a second place to audit. Named so that "who can read the token" is a
+ * search for one identifier.
+ */
+export function withCloudflareToken(db: Db): Held {
+  return heldToken(db);
+}
+
 /** The decrypted token, alive only inside one caller's frame. Nothing returns it further up. */
 function heldToken(db: Db): Held {
   const found = row(db);

@@ -2,6 +2,7 @@ import 'server-only';
 import { API_VERSION, type ServerInfo } from '@opswatch/contract';
 import { version } from '../../../../package.json';
 import { aiIsReady } from '../../ai/connection';
+import { cloudflareIsReady } from '../../cloudflare/connection';
 import { githubIsReady } from '../../github/connection';
 import { googleSignInConfig } from '../../auth/google';
 import { listConnections } from '../../connections/repository';
@@ -30,6 +31,8 @@ export function serverInfo(db: Db): ServerInfo {
       aiConfigured: aiIsReady(db),
       // Push needs FCM/APNs credentials and an account nobody has created; it becomes a read when they exist.
       pushConfigured: false,
+      // Verified, and with a zone to read. Either half alone reads nothing.
+      cloudflareReady: cloudflareIsReady(db),
       // Verified, and with somewhere to look. Either half alone reads nothing.
       repositoryConnected: githubIsReady(db) && listRepositories(db).length > 0,
     }),

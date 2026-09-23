@@ -36,6 +36,7 @@ export * from './services';
 export * from './alerts';
 export * from './incidents';
 export * from './synthetics';
+export * from './cloudflare';
 export * from './slos';
 export * from './reports';
 export * from './checkup';

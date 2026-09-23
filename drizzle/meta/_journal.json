@@ -169,6 +169,13 @@
       "when": 1790168286936,
       "tag": "0023_complex_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1790172048476,
+      "tag": "0024_stormy_maria_hill",
+      "breakpoints": true
     }
   ]
 }

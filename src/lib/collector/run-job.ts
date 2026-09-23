@@ -2,6 +2,7 @@ import 'server-only';
 import { getDb } from '../db/client';
 import { env } from '../env';
 import { runBaselinesJob } from './baselines-job';
+import { runCloudflareJob } from './cloudflare-job';
 import { runCompactJob } from './compact-job';
 import { runDeploymentsJob } from './deployments-job';
 import { runDetectJob } from './detect';
@@ -23,6 +24,8 @@ export const runJob: JobRun = async (job, nowMs) => {
   // An instance-scoped job has no connection by definition, so it is dispatched before the check below.
   // Treating "no connection" as "nothing to do" is what made `compact` a setting that never took effect.
   if (job.id === 'compact') return runCompactJob({ db, nowMs });
+  // Also instance-scoped: a zone belongs to the installation, not to an AWS account and region.
+  if (job.id === 'cloudflare') return runCloudflareJob({ db, nowMs });
 
   if (job.connectionId === null || job.scope === null) return { covered: 0, total: 0 };
   const scoped = { db, connectionId: job.connectionId, scope: job.scope, nowMs };

@@ -51,7 +51,8 @@ test('GitHub, Cloudflare and AI lead to the pages that configure them', async ({
     ['AI provider', /\/settings\/ai$/],
   ] as const) {
     await page.goto('/en/accounts/new');
-    const card = page.locator('li').filter({ hasText: name }).first();
+    // Scoped to the page body: the navigation rail is a list of `li` too.
+    const card = page.locator('main li').filter({ hasText: name }).first();
     await card.getByRole('link').first().click();
     // One source of truth: the chooser reuses the existing flow rather than duplicating it.
     await expect(page, name).toHaveURL(url);
@@ -84,12 +85,12 @@ test('THE RULING: every state is measured, so a settings form never makes someth
   // Accounts exist by this point, so AWS is connected or needs attention — never "available", which is
   // what a card would say if it were reading the catalogue rather than the instance. Which of the two it
   // is depends on how many of those accounts can currently be read, and the card says that too.
-  const aws = page.locator('li').filter({ hasText: 'AWS' }).first();
+  const aws = page.locator('main li').filter({ hasText: 'AWS' }).first();
   await expect(aws).toContainText(/Connected|Needs attention/);
   await expect(aws).toContainText(/account(s)? connected|cannot be read right now/);
 
   // Cloudflare has a complete settings page and no credential, and says so: available, not connected.
-  const cloudflare = page.locator('li').filter({ hasText: 'Cloudflare' }).first();
+  const cloudflare = page.locator('main li').filter({ hasText: 'Cloudflare' }).first();
   await expect(cloudflare).toContainText('Available');
   await expect(cloudflare).not.toContainText('Connected');
 });

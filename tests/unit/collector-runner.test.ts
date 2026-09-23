@@ -91,8 +91,13 @@ describe('deciding what is due', () => {
     expect(due({ enabled: [] })).toEqual([]);
   });
 
-  it('runs nothing for an instance with no environments, except the instance-wide job', () => {
-    expect(due({ environments: [] })).toEqual([{ id: 'compact', connectionId: null, scope: null }]);
+  it('runs nothing for an instance with no environments, except the instance-wide jobs', () => {
+    // Both touch no environment: `compact` forgets, `cloudflare` reads zones that belong to the
+    // installation. Each finds nothing to do on a fresh instance and says it covered nothing.
+    expect(due({ environments: [] })).toEqual([
+      { id: 'cloudflare', connectionId: null, scope: null },
+      { id: 'compact', connectionId: null, scope: null },
+    ]);
   });
 
   it('is pure: the same input twice decides the same thing', () => {

@@ -21,6 +21,7 @@ export const CLIENT_NAMESPACES = [
   'Monitoring.objectives',
   'Monitoring.ask',
   'Monitoring.diagnosis',
+  'Monitoring.cloudflare',
   'Monitoring.incidents',
   'Monitoring.alerts',
   'Settings',
