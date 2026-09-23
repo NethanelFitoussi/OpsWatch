@@ -1544,6 +1544,35 @@
         "capacity_shortfall.confirm": "Check desired against running counts, and whether raising the desired count clears it.",
         "noise.confirm": "Look at how often this has opened and closed. If nothing else changed, the threshold is probably too tight."
       }
+    },
+    "code": {
+      "title": "Where this code lives",
+      "mapped": "This service is mapped to {repository}.",
+      "placed": "{placed} of {total, plural, one {one frame} other {# frames}} could be placed in the repository. The rest are in dependencies or in paths OpsWatch cannot recognise.",
+      "notPlaced": "not in your repository",
+      "movingRef": "Shown from {ref}, which may have moved since this error. Line numbers may not match.",
+      "suggested": "This might be {repository}.",
+      "suggestedHint": "OpsWatch is guessing, from {because}. It will not map it for you — a wrong mapping sends you to the wrong code during an incident.",
+      "because": {
+        "image_matches": "the container image name",
+        "exact_name": "an exact name match",
+        "service_contains_repo": "the service name containing the repository name",
+        "repo_contains_service": "the repository name containing the service name"
+      },
+      "noMatch": "None of your repositories looks like a match for this service.",
+      "noMatchHint": "Choose one below if you know which it is.",
+      "noRepositories": "No repository has been added yet, so a stack frame cannot be linked to its source.",
+      "noRepositoriesHint": "Add one in Settings, Repositories. No token is needed to link to a file.",
+      "choose": "Repository for this service",
+      "none": "Not mapped",
+      "prefix": "Path inside the repository (optional)",
+      "prefixHint": "For a monorepo, where this service’s code sits. Leave blank if it is at the root.",
+      "save": "Save mapping",
+      "saved": "Saved.",
+      "errors": {
+        "invalid_repository": "Choose a repository, or \"Not mapped\" to clear it.",
+        "invalid_service": "This error group has no service, so it cannot be mapped."
+      }
     }
   },
   "Insights": {

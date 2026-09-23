@@ -1544,6 +1544,35 @@
         "capacity_shortfall.confirm": "Comparez le nombre souhaité au nombre en cours, et voyez si augmenter le premier suffit.",
         "noise.confirm": "Regardez la fréquence des ouvertures et fermetures. Si rien d’autre n’a changé, le seuil est probablement trop serré."
       }
+    },
+    "code": {
+      "title": "Où se trouve ce code",
+      "mapped": "Ce service est associé à {repository}.",
+      "placed": "{placed} ligne(s) de pile sur {total} ont pu être situées dans le dépôt. Les autres sont dans des dépendances ou dans des chemins qu’OpsWatch ne reconnaît pas.",
+      "notPlaced": "hors de votre dépôt",
+      "movingRef": "Affiché depuis {ref}, qui a pu bouger depuis cette erreur. Les numéros de ligne peuvent ne plus correspondre.",
+      "suggested": "Il s’agit peut-être de {repository}.",
+      "suggestedHint": "OpsWatch fait une supposition, à partir de {because}. Il ne l’appliquera pas à votre place : une association erronée vous enverrait vers le mauvais code pendant un incident.",
+      "because": {
+        "image_matches": "le nom de l’image du conteneur",
+        "exact_name": "un nom identique",
+        "service_contains_repo": "le nom du service contenant celui du dépôt",
+        "repo_contains_service": "le nom du dépôt contenant celui du service"
+      },
+      "noMatch": "Aucun de vos dépôts ne semble correspondre à ce service.",
+      "noMatchHint": "Choisissez-en un ci-dessous si vous savez lequel.",
+      "noRepositories": "Aucun dépôt n’a encore été ajouté : une ligne de pile ne peut pas être reliée à sa source.",
+      "noRepositoriesHint": "Ajoutez-en un dans Paramètres, Dépôts. Aucun jeton n’est nécessaire pour créer un lien.",
+      "choose": "Dépôt de ce service",
+      "none": "Non associé",
+      "prefix": "Chemin dans le dépôt (facultatif)",
+      "prefixHint": "Pour un monorepo, où se trouve le code de ce service. Laissez vide s’il est à la racine.",
+      "save": "Enregistrer",
+      "saved": "Enregistré.",
+      "errors": {
+        "invalid_repository": "Choisissez un dépôt, ou « Non associé » pour effacer.",
+        "invalid_service": "Ce groupe d’erreurs n’a pas de service : il ne peut pas être associé."
+      }
     }
   },
   "Insights": {

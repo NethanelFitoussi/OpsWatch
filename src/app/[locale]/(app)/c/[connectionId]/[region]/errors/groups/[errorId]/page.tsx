@@ -9,6 +9,11 @@ import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/rou
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { getError } from '@/lib/read/errors';
+import { readCodeEvidence } from '@/lib/read/code-evidence';
+import { findErrorGroup } from '@/lib/store/errors';
+import { listRepositories } from '@/lib/store/repositories';
+import { acceptMappingAction } from './actions';
+import { CodeEvidencePanel } from './code-evidence-panel';
 
 type Props = { params: Promise<MonitoringParams & { errorId: string }> };
 
@@ -22,12 +27,16 @@ export default async function ErrorDetailPage({ params }: Props) {
   const t = await getTranslations('Monitoring.errors');
   const format = await getFormatter();
 
+  const db = getDb();
   const detail = getError(
-    getDb(),
+    db,
     { connectionId: context.scope.connectionId, scope: context.scope.region, id: resolved.errorId },
     { nowMs },
   );
   if (detail === null) notFound();
+
+  // The row itself, for the frames the fingerprint recorded: the wire shape drops the path form they need.
+  const group = findErrorGroup(db, resolved.errorId);
 
   return (
     <SectionLayout context={context} section="errors" subsection="groups">
@@ -78,6 +87,20 @@ export default async function ErrorDetailPage({ params }: Props) {
           </ol>
         )}
       </MonitoringCard>
+
+      {/* §K: where this code lives, with the mapping control beside it — the moment the question arises. */}
+      {group !== null && (
+        <CodeEvidencePanel
+          evidence={readCodeEvidence(db, group)}
+          serviceId={group.serviceId}
+          repositories={listRepositories(db).map((repository) => ({
+            id: repository.id,
+            owner: repository.owner,
+            name: repository.name,
+          }))}
+          action={acceptMappingAction.bind(null, context.locale, context.scope.connectionId, context.scope.region)}
+        />
+      )}
     </SectionLayout>
   );
 }
