@@ -1588,8 +1588,12 @@
         "deploymentsDescription": "Deployments of the same service that started shortly before this problem did. This is a measured gap in time, not a cause — a deployment during an incident is often unrelated.",
         "minutesBefore": "{minutes, plural, =0 {at the same time} one {1 minute before} other {# minutes before}}",
         "deploymentFailed": "this deployment failed",
-        "forDuration": "{minutes, plural, one {for # minute} other {for # minutes}}"
-      }
+        "forDuration": "{minutes, plural, one {for # minute} other {for # minutes}}",
+        "confirmations": "Readings that confirmed it",
+        "overTime": "Over time",
+        "overTimeDescription": "When it opened, whether it came back, and what the measured signal did."
+      },
+      "confirmationsValue": "confirmed by {count, plural, one {# reading} other {# readings}}"
     },
     "health": {
       "title": "Health",
@@ -2294,7 +2298,22 @@
         "filesChanged": "{files, plural, one {# file} other {# files}} changed in {version}.",
         "errorsNearby": "{count, plural, one {# error group} other {# error groups}} appeared or came back around the same time, including “{message}”.",
         "elbGenerated": "{count, plural, one {This response was} other {These # responses were}} returned by the load balancer itself, so they never reached a target — which rules out the application as the source."
-      }
+      },
+      "mark": {
+        "opened": "Opened",
+        "reopened": "Came back",
+        "resolved": "Stopped",
+        "deployment": "A deployment"
+      },
+      "measuredOverTime": "The measured signal",
+      "series": {
+        "requests": "Requests",
+        "elb5xx": "5xx from the load balancer",
+        "target5xx": "5xx from targets",
+        "p95": "p95 response time"
+      },
+      "noHistory": "Historical collection is off, so there is no series to draw. Turning it on in Data & history would show this signal over time — including what it looked like before the problem opened.",
+      "noSeriesYet": "Historical collection is on but has not stored anything for this resource yet. The next cycle will."
     }
   },
   "Insights": {

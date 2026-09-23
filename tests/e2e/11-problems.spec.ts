@@ -224,4 +224,12 @@ test('THE RULING: a problem detail says why OpsWatch opened it, and refuses to i
 
   // Nothing anywhere claims a cause.
   expect(body).not.toMatch(/root cause|caused by/i);
+
+  // The shape of it over time, and an honest word about the chart rather than an empty one.
+  expect(body).toContain('Over time');
+  expect(body).toMatch(/Opened|Came back|Stopped/);
+  expect(body).toMatch(/Historical collection is off|has not stored anything for this resource|The measured signal/);
+
+  // And the counter that used to read "115 times" now says what it counts.
+  expect(body).toContain('Readings that confirmed it');
 });
