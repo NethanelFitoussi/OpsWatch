@@ -231,7 +231,7 @@ export const auditLog = sqliteTable(
 
 export type AuditLogRow = typeof auditLog.$inferSelect;
 
-export const ALERT_CONDITIONS = ['problem', 'synthetic'] as const;
+export const ALERT_CONDITIONS = ['problem', 'synthetic', 'slo'] as const;
 export const ALERT_CHANNELS = ['in_app'] as const;
 
 /**
@@ -838,3 +838,23 @@ export const sloDefinitions = sqliteTable(
 );
 
 export type SloDefinitionRow = typeof sloDefinitions.$inferSelect;
+
+/**
+ * Which install rules an environment has already been offered (§15.1).
+ *
+ * `ensureInstallRules` never revives a rule somebody deleted on purpose, and until this existed the only
+ * way to keep that promise was to act once, when the environment had no rules at all — which meant an
+ * installation that had been running for a week could never receive a rule a later release shipped. The
+ * offer is what separates the two cases: a name that has been offered is never created again, and a name
+ * that has not is created once. Deleting a rule still keeps it deleted.
+ */
+export const installRuleOffers = sqliteTable(
+  'install_rule_offers',
+  {
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    name: text('name').notNull(),
+    offeredAt: integer('offered_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.connectionId, t.scope, t.name] })],
+);

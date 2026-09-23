@@ -1,6 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { runAlertCycle, toCandidate } from '@/lib/collector/alerts';
-import { acknowledgeAlert, listAlerts, listRules, setRuleEnabled } from '@/lib/store/alerts';
+import { acknowledgeAlert, ensureInstallRules, listAlerts, listRules, setRuleEnabled } from '@/lib/store/alerts';
+import { INSTALL_RULES } from '@/lib/detect/alert';
+import { alertRules } from '@/lib/db/schema';
 import { insertProblem } from '@/lib/store/problems';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
@@ -17,7 +20,7 @@ describe('§15.1 — the rules an installation starts with', () => {
     const db = createTestDb();
     runAlertCycle(db, env, [], NOW);
     const rules = listRules(db, env.connectionId, env.scope);
-    expect(rules.map((rule) => rule.name)).toEqual(['certificate_expiring', 'critical_problems', 'synthetic_down']);
+    expect(rules.map((rule) => rule.name)).toEqual(['certificate_expiring', 'critical_problems', 'slo_burn', 'synthetic_down']);
     // §15: nothing leaves the instance, so there is no other channel to choose.
     for (const rule of rules) expect(rule.channels).toEqual(['in_app']);
   });
@@ -31,8 +34,31 @@ describe('§15.1 — the rules an installation starts with', () => {
     // A later cycle must not revive a rule somebody switched off, nor add the set again.
     runAlertCycle(db, env, [], NOW + MINUTE);
     const rules = listRules(db, env.connectionId, env.scope);
-    expect(rules).toHaveLength(3);
+    expect(rules).toHaveLength(INSTALL_RULES.length);
     expect(rules.find((rule) => rule.id === first.id)?.enabled).toBe(false);
+  });
+
+  it('THE RULING: a rule deleted on purpose stays deleted, however many cycles run', () => {
+    const db = createTestDb();
+    runAlertCycle(db, env, [], NOW);
+    const [first] = listRules(db, env.connectionId, env.scope);
+    // Deleted the way an operator would, straight out of the table: the offer is what remembers it.
+    db.delete(alertRules).where(eq(alertRules.id, first.id)).run();
+
+    runAlertCycle(db, env, [], NOW + MINUTE);
+    expect(listRules(db, env.connectionId, env.scope).map((rule) => rule.name)).not.toContain(first.name);
+  });
+
+  it('THE RULING: an installation already running receives a rule a later release ships', () => {
+    const db = createTestDb();
+    // The environment as an earlier release left it: offered only the rules that existed then.
+    ensureInstallRules(db, env.connectionId, env.scope, NOW - 7 * 24 * 60 * 60_000, INSTALL_RULES.slice(0, 1));
+    expect(listRules(db, env.connectionId, env.scope)).toHaveLength(1);
+
+    // The upgrade runs a cycle. The rules it has never been offered arrive; the one it has does not double.
+    runAlertCycle(db, env, [], NOW);
+    const names = listRules(db, env.connectionId, env.scope).map((rule) => rule.name);
+    expect(names).toEqual([...INSTALL_RULES.map((installed) => installed.name)].sort());
   });
 });
 

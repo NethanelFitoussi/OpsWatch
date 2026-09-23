@@ -33,7 +33,7 @@ test('§15 — the page says nothing leaves this instance', async ({ page }) => 
 test('§15.1 — the install rules are visible, not hidden', async ({ page }) => {
   await page.goto(url());
   const main = await page.locator('main').innerText();
-  for (const rule of ['Any critical problem', 'A synthetic check goes down', 'A certificate is expiring']) {
+  for (const rule of ['Any critical problem', 'A synthetic check goes down', 'A certificate is expiring', 'An objective is burning its error budget']) {
     expect(main, rule).toContain(rule);
   }
   // And each says its cooldown, so the quiet is a stated number rather than a surprise.

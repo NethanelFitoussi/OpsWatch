@@ -12,6 +12,7 @@ import {
   suppressAlert,
   toRule,
 } from '../store/alerts';
+import { sloBurnCandidates } from './slo-burn';
 
 /**
  * Turning live problems into alerts, once per detect cycle (§15).
@@ -42,15 +43,18 @@ export function runAlertCycle(
   live: readonly ProblemRow[],
   nowMs: number,
 ): AlertCycleResult {
-  // An environment with no rules gets §15.1's install set: visible, editable, and never hidden.
+  // An environment gets §15.1's install rules it has not been offered yet: visible, editable, never hidden.
   ensureInstallRules(db, context.connectionId, context.scope, nowMs);
 
   const rules = listRules(db, context.connectionId, context.scope).map(toRule);
   const result: AlertCycleResult = { opened: 0, refired: 0, suppressed: 0, resolved: 0 };
   const stillFiring = new Set<string>();
 
-  for (const problem of live) {
-    const candidate = toCandidate(problem);
+  // §19's burn alerts are candidates like any other: they go through the same rules, the same cooldown and
+  // the same acknowledgement, rather than being a second alerting system beside the first.
+  const candidates = [...live.map(toCandidate), ...sloBurnCandidates(db, context, nowMs)];
+
+  for (const candidate of candidates) {
     for (const rule of rules) {
       if (!ruleMatches(rule, candidate)) continue;
 

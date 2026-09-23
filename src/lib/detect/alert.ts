@@ -23,7 +23,7 @@ export function meetsSeverity(severity: AlertSeverity, minimum: AlertSeverity): 
 export type Rule = {
   id: string;
   enabled: boolean;
-  condition: 'problem' | 'synthetic';
+  condition: 'problem' | 'synthetic' | 'slo';
   minSeverity: AlertSeverity;
   /** Empty means every kind this condition covers. */
   kinds: readonly string[];
@@ -48,15 +48,23 @@ export function dedupeKeyFor(ruleId: string, subjectKey: string): string {
 /** The synthetic detector kinds, so a `synthetic` rule knows what it covers without listing them everywhere. */
 export const SYNTHETIC_KINDS = ['synthetic_down', 'synthetic_slow', 'cert_expiring'] as const;
 
+/** §19's two burn rates, as alert kinds. A `slo` rule covers these and nothing else. */
+const SLO_BURN_KINDS = ['slo_burn_fast', 'slo_burn_slow'] as const;
+
+/** Which condition a kind belongs to. Every kind belongs to exactly one, which is what stops overlap. */
+function conditionOf(kind: string): Rule['condition'] {
+  if ((SYNTHETIC_KINDS as readonly string[]).includes(kind)) return 'synthetic';
+  if ((SLO_BURN_KINDS as readonly string[]).includes(kind)) return 'slo';
+  return 'problem';
+}
+
 export function ruleMatches(rule: Rule, candidate: Candidate): boolean {
   if (!rule.enabled) return false;
   if (!meetsSeverity(candidate.severity, rule.minSeverity)) return false;
 
-  const isSynthetic = (SYNTHETIC_KINDS as readonly string[]).includes(candidate.kind);
-  // A `problem` rule covers everything that is not a synthetic detector, and vice versa — so the two
-  // conditions partition the space rather than overlapping, and one problem cannot match both by accident.
-  if (rule.condition === 'synthetic' && !isSynthetic) return false;
-  if (rule.condition === 'problem' && isSynthetic) return false;
+  // The conditions partition the space rather than overlapping, so one candidate cannot match two of them
+  // by accident and be announced twice under different names.
+  if (rule.condition !== conditionOf(candidate.kind)) return false;
 
   // An empty list means every kind this condition covers, which is what makes the install rules useful
   // without an operator having to enumerate detectors they have never heard of.
@@ -101,4 +109,7 @@ export const INSTALL_RULES: readonly { name: string; condition: Rule['condition'
   { name: 'critical_problems', condition: 'problem', minSeverity: 'critical', kinds: [] },
   { name: 'synthetic_down', condition: 'synthetic', minSeverity: 'critical', kinds: ['synthetic_down'] },
   { name: 'certificate_expiring', condition: 'synthetic', minSeverity: 'warning', kinds: ['cert_expiring'] },
+  // §19's multi-window burn. `warning` rather than `critical`, because the slow burn is the one that gives
+  // anybody time to act and a critical floor would drop exactly half of what §19 asks for.
+  { name: 'slo_burn', condition: 'slo', minSeverity: 'warning', kinds: [] },
 ];
