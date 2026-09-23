@@ -2054,7 +2054,6 @@
       "token": "Jeton GitHub (facultatif)",
       "tokenPresent": "Un jeton est enregistré. État : {status}.",
       "tokenAbsent": "Aucun jeton enregistré. Les liens vers les fichiers fonctionnent ; afficher le code autour d’une ligne de pile non.",
-      "tokenError": "La dernière vérification a échoué : {error}",
       "tokenHint": "Sans jeton, OpsWatch peut créer un lien vers un fichier. Avec, il peut aussi montrer les lignes autour de la pile, ce qui rend la preuve de code utile pendant un incident.",
       "tokenLabel": "Jeton d’accès personnel à portée fine",
       "tokenKeep": "Laissez vide pour conserver le jeton enregistré",
@@ -2064,8 +2063,33 @@
         "invalid_owner": "Un propriétaire peut contenir lettres, chiffres, points, tirets et tirets bas.",
         "invalid_name": "Un nom de dépôt peut contenir lettres, chiffres, points, tirets et tirets bas.",
         "invalid_branch": "Ce nom de branche contient des caractères interdits.",
-        "invalid_token": "Cela ne ressemble pas à un jeton GitHub."
-      }
+        "invalid_token": "Cela ne ressemble pas à un jeton GitHub.",
+        "not_configured": "Aucun jeton n'est encore stocké.",
+        "unauthorized": "GitHub a refusé le jeton. Vérifiez-le, ou créez-en un nouveau.",
+        "forbidden": "Le jeton est valide mais n'a pas la permission requise. Ajoutez Contents: Read et Metadata: Read.",
+        "rate_limited": "GitHub limite actuellement ce jeton. Réessayez sous peu.",
+        "not_found": "GitHub n'a pas trouvé cela. Vérifiez le propriétaire et le nom.",
+        "unreachable": "GitHub n'a pas pu être joint.",
+        "bad_response": "GitHub a répondu quelque chose qu'OpsWatch n'a pas su lire.",
+        "timeout": "GitHub n'a pas répondu à temps."
+      },
+      "connection": "Connexion GitHub",
+      "tokenState": {
+        "configured": "Connecté",
+        "untested": "Enregistré, non vérifié",
+        "failed": "Ne fonctionne pas"
+      },
+      "untestedHint": "Un jeton enregistré n'est pas un jeton qui fonctionne. Vérifiez-le pour savoir lequel vous avez.",
+      "testToken": "Vérifier le jeton",
+      "testPassed": "GitHub a accepté le jeton. Il appartient à {account}.",
+      "discover": "Rechercher les dépôts",
+      "disconnect": "Déconnecter",
+      "disconnected": "Déconnecté. Le jeton a été supprimé. Vos dépôts sont conservés, car les liens et la correspondance fonctionnent sans.",
+      "chooseRepositories": "Choisir les dépôts",
+      "chooseRepositoriesHint": "Seuls ceux que vous cochez sont enregistrés, avec la branche par défaut indiquée par GitHub plutôt qu'une que vous auriez saisie.",
+      "importAction": "Enregistrer ceux-ci",
+      "imported": "Enregistré.",
+      "private": "privé"
     },
     "audit": {
       "title": "Journal d’audit",

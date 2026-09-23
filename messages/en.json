@@ -2054,7 +2054,6 @@
       "token": "GitHub token (optional)",
       "tokenPresent": "A token is stored. Status: {status}.",
       "tokenAbsent": "No token is stored. Links to files still work; showing the code around a stack frame does not.",
-      "tokenError": "The last check failed: {error}",
       "tokenHint": "Without a token OpsWatch can link to a file. With one it can also show the lines around a stack frame, which is what makes the code evidence useful during an incident.",
       "tokenLabel": "Fine-grained personal access token",
       "tokenKeep": "Leave blank to keep the stored token",
@@ -2064,8 +2063,33 @@
         "invalid_owner": "An owner may contain letters, digits, dots, dashes and underscores.",
         "invalid_name": "A repository name may contain letters, digits, dots, dashes and underscores.",
         "invalid_branch": "That branch name contains characters a branch cannot have.",
-        "invalid_token": "That does not look like a GitHub token."
-      }
+        "invalid_token": "That does not look like a GitHub token.",
+        "not_configured": "No token is stored yet.",
+        "unauthorized": "GitHub refused the token. Check it, or create a new one.",
+        "forbidden": "The token is valid but lacks the permission this needs. Add Contents: Read and Metadata: Read.",
+        "rate_limited": "GitHub is rate-limiting this token right now. Try again shortly.",
+        "not_found": "GitHub could not find that. Check the owner and the name.",
+        "unreachable": "GitHub could not be reached.",
+        "bad_response": "GitHub answered with something OpsWatch could not read.",
+        "timeout": "GitHub did not answer in time."
+      },
+      "connection": "GitHub connection",
+      "tokenState": {
+        "configured": "Connected",
+        "untested": "Saved, not verified",
+        "failed": "Not working"
+      },
+      "untestedHint": "A saved token is not a working token. Verify it to find out which you have.",
+      "testToken": "Verify token",
+      "testPassed": "GitHub accepted the token. It belongs to {account}.",
+      "discover": "Find repositories",
+      "disconnect": "Disconnect",
+      "disconnected": "Disconnected. The token has been deleted. Your repositories are kept, because links and mapping work without one.",
+      "chooseRepositories": "Choose repositories",
+      "chooseRepositoriesHint": "Only the ones you tick are recorded, with the default branch GitHub reports rather than one you typed.",
+      "importAction": "Record these",
+      "imported": "Recorded.",
+      "private": "private"
     },
     "audit": {
       "title": "Audit log",

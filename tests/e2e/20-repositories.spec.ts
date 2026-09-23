@@ -76,3 +76,45 @@ test('Repositories renders at 360px without horizontal overflow', async ({ page 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('§13 — a stored token is reported as unverified, and can be verified, found and disconnected', async ({ page }) => {
+  await login(page);
+  await page.goto('/en/settings/repositories');
+  await page.getByLabel('Fine-grained personal access token').fill('ghp_e2e_token_value_0123456789abcdefgh');
+  await page.getByRole('button', { name: 'Save token' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  await page.reload();
+  const main = await page.locator('main').innerText();
+  // A saved token is not a working token, and the page says which of the two it has.
+  expect(main).toMatch(/saved, not verified/i);
+  expect(main).toContain('A saved token is not a working token');
+
+  // There is no GitHub in the test stack, so verification fails — as a code, in OpsWatch's own words.
+  await page.getByRole('button', { name: 'Verify token' }).click();
+  await expect(page.locator('main')).toContainText(/GitHub (could not be reached|refused|did not answer|answered)/i);
+
+  await page.getByRole('button', { name: 'Disconnect' }).click();
+  await expect(page.locator('main')).toContainText('Your repositories are kept');
+});
+
+test('THE RULING: the stored token is never in the page, before or after verifying', async ({ page }) => {
+  const token = 'ghp_leak_check_0123456789abcdefghij';
+  await login(page);
+  await page.goto('/en/settings/repositories');
+  await page.getByLabel('Fine-grained personal access token').fill(token);
+  await page.getByRole('button', { name: 'Save token' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  await page.reload();
+  expect(await page.content()).not.toContain(token);
+  await page.getByRole('button', { name: 'Verify token' }).click();
+  expect(await page.content()).not.toContain(token);
+
+  await page.goto('/en/settings/integrations');
+  expect(await page.content()).not.toContain(token);
+
+  await page.goto('/en/settings/repositories');
+  await page.getByRole('button', { name: 'Disconnect' }).click();
+  await expect(page.locator('main')).toContainText('Your repositories are kept');
+});

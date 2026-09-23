@@ -3,8 +3,17 @@ import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { requireAdmin } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
-import { listIntegrations, listRepositories } from '@/lib/store/repositories';
-import { deleteRepositoryAction, saveRepositoryAction, saveTokenAction } from './actions';
+import { readGithubConnection } from '@/lib/github/connection';
+import { listRepositories } from '@/lib/store/repositories';
+import {
+  deleteRepositoryAction,
+  disconnectGithubAction,
+  discoverRepositoriesAction,
+  importRepositoriesAction,
+  saveRepositoryAction,
+  saveTokenAction,
+  testTokenAction,
+} from './actions';
 import { RepositoriesForm } from './repositories-form';
 
 type Props = { params: Promise<{ locale: string }> };
@@ -26,7 +35,7 @@ export default async function RepositoriesSettingsPage({ params }: Props) {
   const db = getDb();
   const t = await getTranslations('Settings.repositories');
 
-  const github = listIntegrations(db, 'github')[0] ?? null;
+  const github = readGithubConnection(db);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6">
@@ -44,6 +53,10 @@ export default async function RepositoriesSettingsPage({ params }: Props) {
         save={saveRepositoryAction.bind(null, locale)}
         remove={deleteRepositoryAction.bind(null, locale)}
         saveToken={saveTokenAction.bind(null, locale)}
+        testToken={testTokenAction.bind(null, locale)}
+        discover={discoverRepositoriesAction.bind(null, locale)}
+        importRepositories={importRepositoriesAction.bind(null, locale)}
+        disconnect={disconnectGithubAction.bind(null, locale)}
         repositories={listRepositories(db).map((repository) => ({
           id: repository.id,
           owner: repository.owner,
@@ -53,6 +66,7 @@ export default async function RepositoriesSettingsPage({ params }: Props) {
         hasToken={github?.hasCredential ?? false}
         tokenStatus={github?.status ?? 'untested'}
         tokenError={github?.lastError ?? null}
+        account={github?.account ?? null}
       />
     </div>
   );
