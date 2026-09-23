@@ -2030,6 +2030,8 @@
       "repositoriesHint": "Les dépôts dont vos services sont issus, pour relier une ligne de pile à sa source.",
       "ai": "Fournisseur d'IA",
       "aiHint": "Facultatif. Connectez un modèle pour qu'OpsWatch puisse raconter ce qu'il a déjà mesuré — il fonctionne pleinement sans.",
+      "cloudflare": "Cloudflare",
+      "cloudflareHint": "Lire le trafic, le cache et les événements de sécurité en périphérie pour les zones que vous choisissez.",
       "audit": "Journal d’audit",
       "auditHint": "Qui a fait quoi, et quand. Les entrées ne font que s’ajouter."
     },
@@ -2094,6 +2096,8 @@
         "integration_update": "Intégration modifiée",
         "ai_update": "Fournisseur d'IA modifié",
         "ai_test": "Fournisseur d'IA testé",
+        "cloudflare_update": "Connexion Cloudflare modifiée",
+        "cloudflare_test": "Connexion Cloudflare testée",
         "synthetic_update": "Vérification synthétique modifiée",
         "alert_rule_update": "Règle d’alerte modifiée",
         "slo_update": "Objectif modifié",
@@ -2212,10 +2216,63 @@
         "aiConnected": "{provider} · {model}",
         "ai_untested": "{provider} · {model} — enregistré, non testé",
         "ai_failed": "{provider} · {model} — le dernier test a échoué",
-        "cloudflarePlanned": "Conçu, pas encore construit",
         "googleOn": "Configuré dans l'environnement",
         "googleDomain": "Configuré — seuls les comptes {domain} peuvent se connecter",
-        "googleOff": "Définissez l'identifiant client, le secret et l'URL publique pour le proposer"
+        "googleOff": "Définissez l'identifiant client, le secret et l'URL publique pour le proposer",
+        "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
+        "cloudflareNoZones": "vérifié, aucune zone choisie pour l'instant",
+        "cloudflare_untested": "enregistré, non vérifié",
+        "cloudflare_failed": "la dernière vérification a échoué"
+      }
+    },
+    "cloudflare": {
+      "title": "Cloudflare",
+      "description": "Lire ce qui se passe en périphérie : trafic, cache et événements de sécurité pour les zones que vous choisissez.",
+      "access": "Ce qu'OpsWatch demande",
+      "accessHint": "Créez un jeton d'API dans Cloudflare avec des permissions en lecture seule. OpsWatch ne modifie jamais un réglage, ne purge jamais un cache et ne modifie jamais une règle.",
+      "scope": {
+        "read": "Zone → Analytics → Read, et Zone → Zone → Read, suffisent à tout ce qui est ici.",
+        "zones": "Limitez le jeton aux zones que vous voulez surveiller. OpsWatch ne lira ensuite que celles que vous cochez ci-dessous.",
+        "noWrites": "Aucune permission d'écriture n'est nécessaire, et aucune n'est utilisée. Si le jeton en a une, OpsWatch ne s'en servira pas pour autant."
+      },
+      "statusTitle": "Connexion",
+      "none": "Cloudflare n'est pas connecté.",
+      "noneHint": "Rien n'est lu depuis Cloudflare tant qu'un jeton n'est pas stocké et qu'une zone n'est pas choisie.",
+      "status": {
+        "configured": "Connecté",
+        "untested": "Enregistré, non vérifié",
+        "failed": "Ne fonctionne pas"
+      },
+      "untestedHint": "Un jeton enregistré n'est pas un jeton qui fonctionne. Vérifiez-le pour savoir lequel vous avez.",
+      "noZones": "aucune zone choisie pour l'instant",
+      "watching": "surveille {zones}",
+      "connect": "Connecter Cloudflare",
+      "replace": "Remplacer le jeton",
+      "scopes": "Votre jeton est chiffré avant d'être stocké et n'est jamais renvoyé à cette page.",
+      "token": "Jeton d'API",
+      "tokenHint": "Créé dans Cloudflare sous My Profile → API Tokens. Chiffré avec une clé dérivée pour ce seul usage.",
+      "tokenKept": "Stocké — collez-en un nouveau pour le remplacer",
+      "save": "Enregistrer le jeton",
+      "saved": "Enregistré. Il n'a pas encore été vérifié.",
+      "test": "Vérifier le jeton",
+      "testPassed": "Cloudflare a accepté le jeton.",
+      "discover": "Rechercher les zones",
+      "chooseZones": "Choisir les zones",
+      "chooseZonesHint": "Seules les zones que vous cochez sont lues. Qu'un jeton puisse en voir davantage ne signifie pas qu'OpsWatch en regardera davantage.",
+      "saveZones": "Enregistrer la sélection",
+      "zonesSaved": "Enregistré.",
+      "remove": "Déconnecter",
+      "removed": "Déconnecté. Le jeton a été supprimé.",
+      "errors": {
+        "invalid_token": "Cela ne ressemble pas à un jeton d'API Cloudflare.",
+        "no_zones": "Le jeton ne voit aucune zone. Vérifiez sa portée dans Cloudflare.",
+        "not_configured": "Aucun jeton n'est encore stocké.",
+        "unauthorized": "Cloudflare a refusé le jeton. Vérifiez-le, ou créez-en un nouveau.",
+        "forbidden": "Le jeton est valide mais n'a pas la permission requise. Ajoutez Zone → Analytics → Read.",
+        "rate_limited": "Cloudflare limite actuellement ce jeton. Réessayez sous peu.",
+        "unreachable": "Cloudflare n'a pas pu être joint.",
+        "bad_response": "Cloudflare a répondu quelque chose qu'OpsWatch n'a pas su lire.",
+        "timeout": "Cloudflare n'a pas répondu à temps."
       }
     }
   },

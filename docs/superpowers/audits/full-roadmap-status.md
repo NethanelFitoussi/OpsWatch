@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 69 |
+| `DONE` | 70 |
 | `PARTIAL` | 10 |
 | `FOUNDATION_ONLY` | 3 |
-| `NOT_STARTED` | 8 |
+| `NOT_STARTED` | 7 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -51,7 +51,7 @@ Read this table first. The detailed requirement tables below it are the implemen
 | **AWS** | ✓ IAM role, ambient, access keys | ✓ encrypted, CloudFormation onboarding | ✓ regions, permission test | Every monitoring surface | ✓ | `DONE` |
 | **GitHub / Repository** | ✓ token in Settings → Repositories | ✓ encrypted, write-only | ✗ no org/installation discovery | Stack frame → file link, service → repository mapping | ✓ | `PARTIAL` |
 | **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Ask OpsWatch: `POST /ai/ask` and `overview/ask`, answered from bounded evidence | ✓ deletes the key | `DONE` (live provider acceptance `BLOCKED_EXTERNAL`) |
-| **Cloudflare** | ✗ | ✗ | ✗ | Traffic, cache, security events, Zero Trust | ✗ | `NOT_STARTED` |
+| **Cloudflare** | ✓ Settings → Cloudflare | ✓ encrypted, own derivation, never returned | ✓ zones discovered and chosen | Nothing yet — the analytics reads are CF-2 | ✓ deletes the token | `PARTIAL` |
 | **Google sign-in** | ✓ environment-configured | · no stored secret: it lives in the environment | · | Sign-in, with an optional allowed domain | · unset the variables | `DONE` |
 
 ### What each one still needs
@@ -73,8 +73,16 @@ is implemented and gated on `aiConfigured`, which is a *tested* connection rathe
 **`BLOCKED_EXTERNAL`: live acceptance against a real provider.** There is no API key here, so every test
 runs against an injected transport. What that leaves unproven is one round trip, not the architecture.
 
-**Cloudflare.** Designed in §20 and not begun. Nothing about it needs a credential to build except the final
-live acceptance, so the architecture, the settings page, the API and the tests are all buildable here.
+**Cloudflare.** The connection is real: a token stored encrypted under its own derivation, verified through
+`/user/tokens/verify`, zones **discovered and then chosen**. That last step is the one that matters — a token
+can usually see every zone in an account, and reading all of them by default would put somebody else's
+traffic on a page nobody asked for it on. A verified token watching no zone is `degraded`, not connected,
+because it reads nothing.
+
+What remains is CF-2: traffic, cache and security events, which is the GraphQL analytics API. **Only the
+live acceptance is `BLOCKED_EXTERNAL`** — there is no Cloudflare account here, so every test runs against an
+injected transport, which leaves one round trip unproven rather than the architecture. CF-3, Zero Trust,
+additionally needs an account with Zero Trust enabled.
 
 **Google sign-in.** Complete and in use: `openid-client`, a signed flow cookie with a ten-minute TTL, the
 `hd` hosted-domain claim enforced when configured, three named failure codes on the login page, and password
@@ -249,8 +257,8 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| CF-1 | Account / zone integration | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §20 designed; `provider_connections` was to become `integrations` |
-| CF-2 | Traffic, cache, security events | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Every adaptive-dataset tile must carry the "estimated" marker |
+| CF-1 | Account / zone integration | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Token stored encrypted, verified through `/user/tokens/verify`, zones discovered and **chosen**. Live acceptance against a real account is `BLOCKED_EXTERNAL` |
+| CF-2 | Traffic, cache, security events | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The connection and the zone selection exist (CF-1); the analytics reads do not. Every adaptive-dataset tile must carry the "estimated" marker when they land |
 | CF-3 | Zero Trust sessions / identities | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs a Cloudflare account with Zero Trust |
 
 ## AI / Ask OpsWatch

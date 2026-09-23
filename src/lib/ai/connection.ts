@@ -85,6 +85,8 @@ export function saveAiConnection(db: Db, input: SaveAiInput, nowMs: number): AiC
       kind: 'ai',
       name: NAME,
       config: config as unknown as Record<string, unknown>,
+      // A different model or endpoint is a different connection: the old test result says nothing about it.
+      resetStatus: true,
       ...(input.apiKey === undefined ? {} : { credentialCiphertext: encrypt(input.apiKey, env().OPSWATCH_SECRET, PURPOSE) }),
     },
     nowMs,

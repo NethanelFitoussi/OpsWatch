@@ -155,8 +155,11 @@ test('§E — the Integrations page says what each connection enables and what a
   expect(main).toContain('OpsWatch does not deploy, does not scale, does not roll back');
   expect(main).toContain('never needs write access to investigate');
   expect(main).toContain('never a database dump or raw logs');
-  // And the one this build cannot complete says so rather than offering a link that answers 404.
-  expect(main).toMatch(/not available in this build/i);
+  // Every one here is connectable, so every card offers a way in. The pairing — available means there is
+  // somewhere to land, unavailable means no link at all — is enforced by roadmap:check and a unit test,
+  // which is where it belongs: this page would otherwise need a build with an unavailable integration.
+  expect(main).not.toMatch(/not available in this build/i);
+  expect(main).toMatch(/not connected/i);
 });
 
 test('THE RULING: a saved AI key shows as needing attention on the Integrations page, never as connected', async ({ page }) => {
