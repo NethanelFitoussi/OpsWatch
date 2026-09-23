@@ -81,7 +81,9 @@ export async function SectionLayout({
       </div>
       {/* Second in the document below 1024 px — a strip between the header and the filters — and the
           far-left column from there up: flush against the rail, with no gutter of its own, spanning the
-          header and the content down to the bottom of the page and separated from it by one hairline. */}
+          header and the content down to the bottom of the page and separated from it by one hairline.
+          Its width is the menu's own, which is why the column is `auto`: collapsing the menu gives the
+          page the difference without the content moving in any other way. */}
       <div className="min-w-0 border-b border-border/60 px-4 py-2 md:px-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:border-r lg:border-b-0 lg:px-0 lg:py-6">
         <SectionPanel sectionLabel={nav(SECTION_NAV_KEY[section])} subsection={subsection} links={links} />
       </div>

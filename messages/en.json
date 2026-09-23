@@ -1162,7 +1162,9 @@
       },
       "sectionNav": {
         "label": "{section} pages",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "expand": "Show the page names",
+        "collapse": "Hide the page names"
       }
     },
     "common": {

@@ -57,13 +57,23 @@ test('the section menu is a scrollable strip at 360 px and nothing overflows', a
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });
 
-test('the section menu sits at the far left of the content and has no collapse of its own', async ({ page }) => {
+test('the section menu sits at the far left of the content, and collapsing it only widens the page', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/en/c/${connectionId}/us-east-1/alarms/list`);
   const nav = page.getByRole('navigation', { name: 'Alarms pages' });
-  // The rail is what collapses, with one control at its foot; the section menu never does.
-  await expect(page.getByRole('button', { name: 'Collapse the section menu' })).toHaveCount(0);
   await expect(nav.getByRole('link', { name: 'Alarms' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/alarms/list`);
+
+  // It arrives collapsed, and opening it takes width from the content rather than moving it anywhere else.
+  const contentLeft = () => page.locator('main h1').first().evaluate((el) => el.getBoundingClientRect().left);
+  const collapsedLeft = await contentLeft();
+  await nav.getByRole('button', { name: 'Show the page names' }).click();
+  await expect(nav.getByRole('button', { name: 'Hide the page names' })).toBeVisible();
+  const expandedLeft = await contentLeft();
+  expect(expandedLeft).toBeGreaterThan(collapsedLeft);
+  // The heading stays on the same line: the menu widens, the page does not reflow around it.
+  await expect(page.locator('main h1').first()).toBeVisible();
+  await nav.getByRole('button', { name: 'Hide the page names' }).click();
+  expect(Math.abs((await contentLeft()) - collapsedLeft)).toBeLessThanOrEqual(1);
 
   // Flush against the rail: the menu's column starts exactly where the rail ends, with no gap.
   const railRight = await page.locator('aside').evaluate((el) => el.getBoundingClientRect().right);
