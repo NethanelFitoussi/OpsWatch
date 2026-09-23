@@ -26,7 +26,7 @@ In order. Tick as they land.
 - [x] Problem visual evidence: lifecycle timeline, metric chart where history exists, unambiguous counters
 - [ ] Recommended investigation per detector family
 - [x] Cloudflare: a dashboard that shows what connecting it bought
-- [ ] Secondary navigation collapsed by default
+- [x] Secondary navigation collapsed by default
 - [ ] Accounts: one card language across providers
 - [ ] Accounts: editable per provider
 - [ ] Full-site visual QA on the running product, and fixes

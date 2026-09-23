@@ -169,3 +169,40 @@ test('the environment root keeps the query string it was given', async ({ page }
   await expect(page).toHaveURL(/range=6h/);
 });
 
+
+test('the section menu starts collapsed, still navigates, and remembers being opened', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
+  const menu = page.getByRole('navigation', { name: 'Overview pages' });
+  const open = menu.getByRole('button', { name: 'Show the page names' });
+
+  // Collapsed on a first visit: the names are announced and on hover, not spent on screen width.
+  await expect(open).toHaveAttribute('aria-pressed', 'true');
+  const health = menu.getByRole('link', { name: 'Health' });
+  await expect(health).toHaveAttribute('title', 'Health');
+  // Collapsed is not hidden — the link works.
+  await health.click();
+  await expect(page).toHaveURL(new RegExp(`/overview/health$`));
+  await expect(menu.getByRole('button', { name: 'Show the page names' })).toHaveAttribute('aria-pressed', 'true');
+
+  // Opening it is remembered, including across a navigation to another section.
+  await menu.getByRole('button', { name: 'Show the page names' }).click();
+  await expect(menu.getByRole('button', { name: 'Hide the page names' })).toBeVisible();
+  await page.goto(monitoringUrl(connectionId, 'logs', 'search'));
+  const logs = page.getByRole('navigation', { name: 'Logs pages' });
+  await expect(logs.getByRole('button', { name: 'Hide the page names' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(logs.getByRole('link', { name: 'Volume' })).toBeVisible();
+});
+
+test('the section menu fits a 360 px phone in both states', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 720 });
+  await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
+  const menu = page.getByRole('navigation', { name: 'Overview pages' });
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
+  await expect(menu.getByRole('button', { name: 'Show the page names' })).toBeVisible();
+  expect(await overflow()).toBeLessThanOrEqual(0);
+  await menu.getByRole('button', { name: 'Show the page names' }).click();
+  // The strip scrolls sideways on its own; the page itself must not.
+  expect(await overflow()).toBeLessThanOrEqual(0);
+  await expect(menu.getByRole('link', { name: 'Health' })).toBeVisible();
+});
