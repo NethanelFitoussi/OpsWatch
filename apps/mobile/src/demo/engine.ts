@@ -127,7 +127,12 @@ export function briefFor(data: DemoDataset, env: string | undefined, now: number
 
 export function searchLogs(data: DemoDataset, env: string | undefined, q: LogQuery, cursor?: string | null): LogSearch {
   const text = q.text?.trim().toLowerCase();
-  const matched: LogEntry[] = (isProductionEnv(data, env) ? data.logs : []).filter(
+  // What was actually searched, which is what `recordsScanned` must report. Reporting the whole dataset while
+  // searching none of it says "240 scanned, 0 matched" for an environment that holds no logs at all — a confident
+  // statement that a thorough search found nothing, when no search happened. That is the exact shape of lie the
+  // rest of the app spends its time avoiding, and it cost an afternoon of chasing a bug that was not there.
+  const searchable: LogEntry[] = isProductionEnv(data, env) ? data.logs : [];
+  const matched: LogEntry[] = searchable.filter(
     (l) =>
       l.timestamp >= q.from &&
       l.timestamp <= q.to &&
@@ -142,7 +147,7 @@ export function searchLogs(data: DemoDataset, env: string | undefined, q: LogQue
     status: 'complete',
     items: page.items,
     nextCursor: page.nextCursor,
-    statistics: { recordsMatched: matched.length, recordsScanned: data.logs.length },
+    statistics: { recordsMatched: matched.length, recordsScanned: searchable.length },
   };
 }
 

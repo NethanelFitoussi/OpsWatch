@@ -20,6 +20,7 @@ import {
   sloDetailSchema,
   syntheticDetailSchema,
 } from '@/api/contract';
+import * as engine from '../engine';
 import { buildDemoDataset, calmHealth } from '../fixtures';
 
 const data = buildDemoDataset(1_750_000_000_000);
@@ -72,4 +73,25 @@ it('references only objects that exist', () => {
     return value;
   });
   expect(refs.filter((id) => !ids.has(id))).toEqual([]);
+});
+
+/**
+ * A search reports what it searched.
+ *
+ * The demo used to answer "0 matched, 240 scanned" for an environment holding no logs — a confident claim that a
+ * thorough search found nothing, when nothing was searched. The mock server serves this engine, so the lie reached
+ * anyone developing against it, and it is the precise shape of dishonest statistic the app exists to avoid.
+ */
+it('never claims to have scanned records it did not search', () => {
+  const now = 1_750_000_000_000;
+  const dataset = buildDemoDataset(now);
+  const window = { from: now - 24 * 3_600_000, to: now };
+
+  const staging = engine.searchLogs(dataset, 'staging-eu-west-1', { ...window, levels: [] }).statistics;
+  expect(staging?.recordsMatched).toBe(0);
+  expect(staging?.recordsScanned).toBe(0);
+
+  const production = engine.searchLogs(dataset, 'prod-eu-west-1', { ...window, levels: [] }).statistics;
+  expect(production?.recordsScanned).toBeGreaterThan(0);
+  expect(production?.recordsMatched).toBeLessThanOrEqual(production!.recordsScanned!);
 });

@@ -298,7 +298,7 @@ Accepted at the largest font scale: the tab bar labels truncate at `font_scale 2
 people who set the scale to 200 %. No information is lost — each tab keeps its icon and its selected state, and a
 screen reader is given the untruncated name — so the labels are left to scale and clip like the platform's own.
 
-Two things about how this QA is run, both of which had already produced a wrong conclusion once:
+Three things about how this QA is run, each of which had already produced a wrong conclusion once:
 
 - The scripts tap **by label**, not by coordinate (`dev/device/tap.sh`). A coordinate goes stale the moment a screen
   gains a paragraph, and the run then continues against the wrong screen.
