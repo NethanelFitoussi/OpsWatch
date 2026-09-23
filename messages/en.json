@@ -1587,7 +1587,8 @@
         "deployments": "Deployments just before this started",
         "deploymentsDescription": "Deployments of the same service that started shortly before this problem did. This is a measured gap in time, not a cause — a deployment during an incident is often unrelated.",
         "minutesBefore": "{minutes, plural, =0 {at the same time} one {1 minute before} other {# minutes before}}",
-        "deploymentFailed": "this deployment failed"
+        "deploymentFailed": "this deployment failed",
+        "forDuration": "{minutes, plural, one {for # minute} other {for # minutes}}"
       }
     },
     "health": {
@@ -2250,6 +2251,50 @@
       "relatedHint": "Problems on the same service that opened within half an hour after this deployment started. That is a measured gap, not a cause — things often follow each other for no related reason.",
       "noRelated": "No problem opened on this service in the half hour after it.",
       "after": "{minutes} min after"
+    },
+    "diagnosis": {
+      "why": "Why OpsWatch opened this",
+      "observed": "Measured",
+      "threshold": "Opens at",
+      "clearsUnder": "Clears under",
+      "fixedRule": "A fixed rule, not a baseline: this number is written into the detector and is the same on every installation.",
+      "presenceRule": "A presence rule: any at all is worth saying. There is no threshold to quote.",
+      "stateRule": "Reported by AWS rather than measured here. OpsWatch read the state and recorded it.",
+      "lifecycle": "It closes after three consecutive readings that are clear, over at least fifteen minutes — so one quiet minute does not resolve it.",
+      "impact": "What this affected",
+      "failedRequests": "Failed requests",
+      "requests": "Requests",
+      "errorShare": "Error share",
+      "blast": "Of the group",
+      "userImpactMeasured": "Measured against real traffic: the share above is requests that failed, out of requests that arrived.",
+      "userImpactUnknown": "User impact not established.",
+      "userImpactHint": "OpsWatch measured the resource, not the people using it. How many saw an error is not something it reads.",
+      "whatToCheck": "What to check",
+      "noChecks": "OpsWatch has nothing specific to suggest.",
+      "noChecksHint": "No deployment, error group or unhealthy target was recorded near this. That is a measured absence, not a list it declined to build.",
+      "percent": "{value}%",
+      "ms": "{value} ms",
+      "action": {
+        "targets": "Check target health",
+        "deployment": "Look at what shipped",
+        "changes": "Review the code that changed",
+        "errors": "Read the errors around it",
+        "loadBalancer": "Look at the load balancer itself"
+      },
+      "cta": {
+        "targets": "View targets",
+        "deployment": "View deployment",
+        "changes": "View changes",
+        "errors": "View errors",
+        "loadBalancer": "View load balancer"
+      },
+      "reason": {
+        "targetsUnhealthy": "{count, plural, one {# target was} other {# targets were}} unhealthy in the same window.",
+        "deploymentBefore": "{version} started {minutes} minutes before this opened. That is a measured gap, not a cause.",
+        "filesChanged": "{files, plural, one {# file} other {# files}} changed in {version}.",
+        "errorsNearby": "{count, plural, one {# error group} other {# error groups}} appeared or came back around the same time, including “{message}”.",
+        "elbGenerated": "{count, plural, one {This response was} other {These # responses were}} returned by the load balancer itself, so they never reached a target — which rules out the application as the source."
+      }
     }
   },
   "Insights": {
@@ -2291,6 +2336,43 @@
       "syntheticStatus": "Check result for {name}",
       "syntheticLatency": "Median response time for {name}",
       "certificateExpiry": "Certificate expiry for {name}"
+    },
+    "headline": {
+      "ecs_tasks_below_desired": "Fewer tasks than asked for",
+      "ecs_cpu_high": "High CPU",
+      "ecs_memory_high": "High memory",
+      "ecs_rollout_failed": "Deployment failed",
+      "ecs_rollout_stuck": "Deployment not finishing",
+      "rds_cpu_high": "High database CPU",
+      "rds_freeable_memory_low": "Low database memory",
+      "aurora_replica_lag": "Replicas falling behind",
+      "alb_5xx_rate": "Elevated 5xx rate",
+      "alb_elb_5xx_count": "Load balancer returning 5xx",
+      "alb_unhealthy_hosts": "Unhealthy targets",
+      "alarm_firing": "CloudWatch alarm firing",
+      "synthetic_down": "Check failing",
+      "synthetic_slow": "Check responding slowly",
+      "cert_expiring": "Certificate expiring",
+      "slo_burn_fast": "Error budget burning fast",
+      "slo_burn_slow": "Error budget burning",
+      "error_group_new": "New error",
+      "error_group_spike": "Errors spiking",
+      "unknown": "Something to look at"
+    },
+    "duration": {
+      "minutes": "for {value, plural, one {# minute} other {# minutes}}",
+      "hours": "for {value, plural, one {# hour} other {# hours}}",
+      "days": "for {value, plural, one {# day} other {# days}}"
+    },
+    "family": {
+      "alb": "Load balancer",
+      "ecs": "Container service",
+      "rds": "Database",
+      "alarm": "CloudWatch alarm",
+      "synthetic": "Synthetic check",
+      "error": "Error group",
+      "slo": "Objective",
+      "other": "Resource"
     }
   },
   "Sections": {

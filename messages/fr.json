@@ -1587,7 +1587,8 @@
         "deployments": "Déploiements juste avant le début",
         "deploymentsDescription": "Déploiements du même service lancés peu avant ce problème. C’est un écart de temps mesuré, pas une cause : un déploiement pendant un incident est souvent sans rapport.",
         "minutesBefore": "{minutes, plural, =0 {au même moment} one {1 minute avant} other {# minutes avant}}",
-        "deploymentFailed": "ce déploiement a échoué"
+        "deploymentFailed": "ce déploiement a échoué",
+        "forDuration": "{minutes, plural, one {depuis # minute} other {depuis # minutes}}"
       }
     },
     "health": {
@@ -2250,6 +2251,50 @@
       "relatedHint": "Problèmes du même service ouverts dans la demi-heure suivant le début de ce déploiement. C'est un écart mesuré, pas une cause — les choses se suivent souvent sans lien.",
       "noRelated": "Aucun problème n'a été ouvert sur ce service dans la demi-heure qui a suivi.",
       "after": "{minutes} min après"
+    },
+    "diagnosis": {
+      "why": "Pourquoi OpsWatch a ouvert ceci",
+      "observed": "Mesuré",
+      "threshold": "S'ouvre à",
+      "clearsUnder": "Se referme sous",
+      "fixedRule": "Une règle fixe, pas une référence : ce nombre est inscrit dans le détecteur et identique sur toutes les installations.",
+      "presenceRule": "Une règle de présence : le moindre cas mérite d'être signalé. Il n'y a pas de seuil à citer.",
+      "stateRule": "Signalé par AWS plutôt que mesuré ici. OpsWatch a lu l'état et l'a enregistré.",
+      "lifecycle": "Il se referme après trois relevés consécutifs sans incident, sur au moins quinze minutes — une minute de calme ne le résout donc pas.",
+      "impact": "Ce que cela a touché",
+      "failedRequests": "Requêtes en échec",
+      "requests": "Requêtes",
+      "errorShare": "Part d'erreurs",
+      "blast": "Du groupe",
+      "userImpactMeasured": "Mesuré sur du trafic réel : la part ci-dessus correspond aux requêtes ayant échoué, sur les requêtes arrivées.",
+      "userImpactUnknown": "Impact utilisateur non établi.",
+      "userImpactHint": "OpsWatch a mesuré la ressource, pas les personnes qui l'utilisent. Combien ont vu une erreur n'est pas une chose qu'il lit.",
+      "whatToCheck": "Que vérifier",
+      "noChecks": "OpsWatch n'a rien de précis à suggérer.",
+      "noChecksHint": "Aucun déploiement, groupe d'erreurs ni cible en mauvaise santé n'a été enregistré à proximité. C'est une absence mesurée, pas une liste qu'il a renoncé à établir.",
+      "percent": "{value} %",
+      "ms": "{value} ms",
+      "action": {
+        "targets": "Vérifier la santé des cibles",
+        "deployment": "Regarder ce qui a été livré",
+        "changes": "Examiner le code modifié",
+        "errors": "Lire les erreurs alentour",
+        "loadBalancer": "Regarder le répartiteur de charge lui-même"
+      },
+      "cta": {
+        "targets": "Voir les cibles",
+        "deployment": "Voir le déploiement",
+        "changes": "Voir les modifications",
+        "errors": "Voir les erreurs",
+        "loadBalancer": "Voir le répartiteur"
+      },
+      "reason": {
+        "targetsUnhealthy": "{count, plural, one {# cible était} other {# cibles étaient}} en mauvaise santé sur la même fenêtre.",
+        "deploymentBefore": "{version} a démarré {minutes} minutes avant l'ouverture. C'est un écart mesuré, pas une cause.",
+        "filesChanged": "{files, plural, one {# fichier modifié} other {# fichiers modifiés}} dans {version}.",
+        "errorsNearby": "{count, plural, one {# groupe d'erreurs est apparu} other {# groupes d'erreurs sont apparus}} ou revenu(s) au même moment, dont « {message} ».",
+        "elbGenerated": "{count, plural, one {Cette réponse a été renvoyée} other {Ces # réponses ont été renvoyées}} par le répartiteur de charge lui-même : elles n'ont donc jamais atteint de cible, ce qui écarte l'application comme source."
+      }
     }
   },
   "Insights": {
@@ -2291,6 +2336,43 @@
       "syntheticStatus": "Résultat de la vérification {name}",
       "syntheticLatency": "Temps de réponse médian de {name}",
       "certificateExpiry": "Expiration du certificat de {name}"
+    },
+    "headline": {
+      "ecs_tasks_below_desired": "Moins de tâches que demandé",
+      "ecs_cpu_high": "Processeur élevé",
+      "ecs_memory_high": "Mémoire élevée",
+      "ecs_rollout_failed": "Déploiement en échec",
+      "ecs_rollout_stuck": "Déploiement qui ne se termine pas",
+      "rds_cpu_high": "Processeur de base de données élevé",
+      "rds_freeable_memory_low": "Mémoire de base de données faible",
+      "aurora_replica_lag": "Réplicas en retard",
+      "alb_5xx_rate": "Taux de 5xx élevé",
+      "alb_elb_5xx_count": "Répartiteur renvoyant des 5xx",
+      "alb_unhealthy_hosts": "Cibles en mauvaise santé",
+      "alarm_firing": "Alarme CloudWatch active",
+      "synthetic_down": "Vérification en échec",
+      "synthetic_slow": "Vérification lente",
+      "cert_expiring": "Certificat qui expire",
+      "slo_burn_fast": "Budget d'erreur consommé rapidement",
+      "slo_burn_slow": "Budget d'erreur en consommation",
+      "error_group_new": "Nouvelle erreur",
+      "error_group_spike": "Pic d'erreurs",
+      "unknown": "Quelque chose à regarder"
+    },
+    "duration": {
+      "minutes": "depuis {value, plural, one {# minute} other {# minutes}}",
+      "hours": "depuis {value, plural, one {# heure} other {# heures}}",
+      "days": "depuis {value, plural, one {# jour} other {# jours}}"
+    },
+    "family": {
+      "alb": "Répartiteur de charge",
+      "ecs": "Service de conteneurs",
+      "rds": "Base de données",
+      "alarm": "Alarme CloudWatch",
+      "synthetic": "Vérification synthétique",
+      "error": "Groupe d'erreurs",
+      "slo": "Objectif",
+      "other": "Ressource"
     }
   },
   "Sections": {

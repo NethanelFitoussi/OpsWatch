@@ -37,6 +37,26 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 **V**erified in a browser. `·` means not applicable.
 
 
+## Product comprehension (added 2026-09-23)
+
+The backend outgrew the product. A real problem read `Warning · alb-gigs-prod itself returned 23 5xx errors
+in 15 minutes`, which is a true sentence and not an answer: it left an operator to work out how serious,
+for how long, whether users were affected, why OpsWatch called it a Warning, and what to look at.
+
+| ID | Requirement | Status | Notes |
+|---|---|---|---|
+| UX-13 | A problem is scannable in a list | `DONE` | Headline, severity, state, duration, the measured fact, then resource · kind · region |
+| UX-14 | A problem detail answers the first-viewport questions | `DONE` | What happened, what it affected, why OpsWatch opened it, what to check — before the raw evidence |
+| UX-15 | Impact is established or explicitly not | `DONE` | "User impact not established" is the common answer and is said plainly (§2.6) |
+| UX-16 | The detection rule is legible | `DONE` | Measured, opens at, clears under — quoting the detector's own constants |
+| UX-17 | Recommended investigation, evidence-derived | `DONE` | Ordered by how directly the evidence points; an empty list is an answer |
+| UX-18 | Visual evidence: graphs on a problem | `NOT_STARTED` | The next piece of this phase |
+| CF-2 | Cloudflare dashboard | `NOT_STARTED` | Dependency-ready; the live connection exists |
+| UX-19 | Secondary navigation collapsed by default | `NOT_STARTED` | — |
+| UX-20 | Accounts: one card system, editable | `PARTIAL` | Provider-aware and consistent; per-provider editing is partly there |
+
+---
+
 ## Integrations and connections — the product-level view
 
 **Added 2026-09-23, because the requirement counts were hiding a gap.** Sixty-odd small requirements being

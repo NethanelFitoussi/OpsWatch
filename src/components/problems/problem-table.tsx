@@ -5,6 +5,7 @@ import { SeverityBadge } from '@/components/problems/severity-badge';
 import { Link } from '@/i18n/navigation';
 import type { ScopeRef } from '@/lib/monitoring/shared/paths';
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
+import { durationSince, familyOf, headlineKey } from '@/lib/monitoring/shared/duration';
 
 export type ProblemTableLabels = {
   title: string;
@@ -43,6 +44,13 @@ export async function ProblemTable({
 }) {
   const t = await getTranslations('Monitoring.problems');
   const tSeverity = await getTranslations('Insights.severity');
+  const tHeadline = await getTranslations('Insights.headline');
+  const tFamily = await getTranslations('Insights.family');
+  const tDuration = await getTranslations('Insights.duration');
+  const duration = (fromMs: number) => {
+    const { unit, value } = durationSince(fromMs, nowMs);
+    return tDuration(unit, { value });
+  };
   const format = await getFormatter();
   const ranked = [...problems].sort(
     (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || (b.score ?? 0) - (a.score ?? 0) || b.lastSeenAt - a.lastSeenAt,
@@ -66,18 +74,26 @@ export async function ProblemTable({
           <li key={problem.id} className="py-3">
             <Link
               href={subsectionPath(scope, 'overview', 'problems', problem.id)}
-              className="group flex flex-col gap-1 focus-visible:outline-2 focus-visible:outline-ring sm:flex-row sm:items-baseline sm:gap-4"
+              className="group block focus-visible:outline-2 focus-visible:outline-ring"
             >
-              <span className="sm:w-28 sm:shrink-0">
-                <SeverityBadge severity={problem.severity} label={tSeverity(problem.severity)} />
-              </span>
-              <span className="min-w-0 flex-1 text-sm group-hover:underline">{problem.title}</span>
-              <span className="flex shrink-0 items-baseline gap-3 text-xs text-muted-foreground">
-                <span>{t(`status.${problem.status}`)}</span>
-                <span>
-                  {t('columns.lastSeen')} {format.relativeTime(new Date(problem.lastSeenAt), new Date(nowMs))}
+              {/* Scannable in this order: what kind of thing, how serious and for how long, the measured
+                  fact, then where. A reader deciding which of six problems to open reads the first line. */}
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-sm font-semibold group-hover:underline">
+                  {tHeadline(headlineKey(problem.category))}
                 </span>
-                {problem.occurrences !== null && <span>{t('occurrencesValue', { count: problem.occurrences })}</span>}
+                <SeverityBadge severity={problem.severity} label={tSeverity(problem.severity)} />
+                <span className="text-xs text-muted-foreground">
+                  {t(`status.${problem.status}`)} · {duration(problem.firstSeenAt)}
+                </span>
+              </span>
+              {/* The detector's own sentence: the number that made it fire, in words. */}
+              <span className="mt-1 block text-sm text-foreground/90">{problem.title}</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {/* What kind of thing, not the detector id: "ALB" tells a reader where to look. */}
+                {[problem.resource, tFamily(familyOf(problem.category)), scope.region].filter(Boolean).join(' · ')}
+                {problem.occurrences !== null && ` · ${t('occurrencesValue', { count: problem.occurrences })}`}
+                {` · ${t('columns.lastSeen')} ${format.relativeTime(new Date(problem.lastSeenAt), new Date(nowMs))}`}
               </span>
             </Link>
           </li>
