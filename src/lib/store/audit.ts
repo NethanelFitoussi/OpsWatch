@@ -33,6 +33,8 @@ export const AUDIT_ACTIONS = [
   'log_source_update',
   'repository_update',
   'integration_update',
+  'ai_update',
+  'ai_test',
   'synthetic_update',
   'alert_rule_update',
   'slo_update',
