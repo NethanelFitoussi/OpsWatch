@@ -29,21 +29,24 @@ test('Volume opens by clicking and lists the log groups with their retention', a
   await page.getByRole('navigation', { name: 'Logs pages' }).getByRole('link', { name: 'Volume' }).click();
   await expect(page).toHaveURL(/\/logs\/volume(\?|$)/);
 
-  await expect(page.getByRole('heading', { name: 'Log volume and retention' })).toBeVisible();
+  // Wait for the table, not the card title: the title is rendered by the Suspense fallback as well, so
+  // asserting on it races the AWS read that fills the card.
+  await expect(page.getByRole('columnheader', { name: 'Retention' })).toBeVisible();
   const main = await page.locator('main').innerText();
-  // The seeded moto groups, and the columns that make the page worth opening.
   expect(main).toContain('/ecs/opswatch-web');
   for (const column of ['Ingested', 'Share', 'Stored', 'Retention']) expect(main).toContain(column);
 });
 
 test('§18 — the page says it costs nothing, because that is why volume lives here', async ({ page }) => {
   await page.goto(volumeUrl());
+  await expect(page.getByRole('columnheader', { name: 'Retention' })).toBeVisible();
   const main = await page.locator('main').innerText();
   expect(main).toContain('costs nothing against the daily log scanning budget');
 });
 
 test('§2.4 — a group kept forever says so, and an unmeasured figure is not a zero', async ({ page }) => {
   await page.goto(volumeUrl());
+  await expect(page.getByRole('columnheader', { name: 'Retention' })).toBeVisible();
   const main = await page.locator('main').innerText();
   // moto reports no retention on the seeded groups, so "forever" must be shown as words.
   expect(main).toContain('Forever');
