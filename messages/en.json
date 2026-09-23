@@ -1656,6 +1656,11 @@
     },
     "members": {
       "aurora_replica_lag": "{instance} lags {value} on average."
+    },
+    "evidence": {
+      "syntheticStatus": "Check result for {name}",
+      "syntheticLatency": "Median response time for {name}",
+      "certificateExpiry": "Certificate expiry for {name}"
     }
   },
   "Sections": {

@@ -1,7 +1,11 @@
 import 'server-only';
 import { decrypt } from '../crypto';
 import type { Db } from '../db/client';
-import { statusFrom, type Assertion } from '../detect/synthetic';
+import { type Assertion } from '../detect/synthetic';
+import { syntheticOutcomes } from '../detect/synthetic-detectors';
+import { applyCycle } from '../detect/lifecycle';
+import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
+import { RESOLVED_RETENTION_MS } from '../store/retention';
 import { enabledChecks, recentRuns, recordRun, secretHeadersFor, toOutcome } from '../store/synthetics';
 import { runCheck } from '../synthetics/run';
 import type { JobOutcome } from './runner';
@@ -65,14 +69,39 @@ export async function runSyntheticsJob(input: SyntheticsJobInput): Promise<JobOu
     }
   }
 
+  // The outcomes go through the same lifecycle as every other detector, so a failing check opens, reopens,
+  // flaps and resolves exactly like a failing service. A synthetic failure is not a second kind of alert
+  // living beside problems — it is a problem.
+  const outcomes = enabledChecks(input.db, input.connectionId, input.scope).flatMap((check) => {
+    const runs = recentRuns(input.db, check.id, HISTORY);
+    return syntheticOutcomes(
+      {
+        id: check.id,
+        name: check.name,
+        url: check.url,
+        latencyThresholdMs: check.latencyThresholdMs,
+        runs: runs.map(toOutcome),
+        certificateExpiresAt: runs.find((run) => run.certificateExpiresAt !== null)?.certificateExpiresAt ?? null,
+      },
+      input.nowMs,
+    );
+  });
+
+  const live = listLiveProblems(input.db, input.connectionId, input.scope);
+  const transitions = applyCycle({
+    connectionId: input.connectionId,
+    scope: input.scope,
+    // Only the synthetic problems: this cycle has nothing to say about an ECS service, and handing the
+    // lifecycle problems it did not evaluate would resolve them on silence.
+    live: live.filter(({ row }) => row.subjectType === 'synthetic').map(({ live: projection }) => projection),
+    // Everything still retained, as the detect cycle does: the lifecycle applies the reopen window itself
+    // and needs the older rows so a successor can carry `previousProblemId`.
+    resolvedInWindow: listRecentlyResolved(input.db, input.connectionId, input.scope, input.nowMs - RESOLVED_RETENTION_MS),
+    cycle: { at: input.nowMs, outcomes, failed: [] },
+    nowMs: input.nowMs,
+  });
+  applyTransitions(input.db, { connectionId: input.connectionId, scope: input.scope }, transitions);
+
   return { covered: ran, total: checks.length, truncated: ran < checks.length };
 }
 
-/** The current status of every enabled check, from its run history (§14). */
-export function checkStatuses(db: Db, connectionId: string, scope: string): { id: string; name: string; status: ReturnType<typeof statusFrom> }[] {
-  return enabledChecks(db, connectionId, scope).map((check) => ({
-    id: check.id,
-    name: check.name,
-    status: statusFrom(recentRuns(db, check.id, HISTORY).map(toOutcome)),
-  }));
-}
