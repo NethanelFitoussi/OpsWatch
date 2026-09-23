@@ -8,6 +8,7 @@ import type { AwsTarget } from '../monitoring/call';
 import { resolveTarget } from '../monitoring/target';
 import { enabledLogSources, recordError } from '../store/errors';
 import { budgetState, recordBudgetStop, recordScan } from '../store/logs-budget';
+import { runErrorDetectCycle } from './errors-detect';
 import type { JobOutcome } from './runner';
 
 /**
@@ -80,6 +81,11 @@ export async function runErrorsJob(input: ErrorsJobInput): Promise<JobOutcome> {
     const scanned = await collectOne(input, target.data, source);
     if (scanned) covered += 1;
   }
+
+  // §4.4 on the rows this cycle just wrote. Judging them here rather than in a job of its own is what makes
+  // an error problem open in the same pass that collected the errors, instead of up to fifteen minutes later.
+  runErrorDetectCycle(input.db, { connectionId: input.connectionId, scope: input.scope }, input.nowMs);
+
   return { covered, total: sources.length, truncated: covered < sources.length };
 }
 

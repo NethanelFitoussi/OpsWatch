@@ -25,9 +25,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 63 |
+| `DONE` | 64 |
 | `PARTIAL` | 10 |
-| `FOUNDATION_ONLY` | 4 |
+| `FOUNDATION_ONLY` | 3 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
@@ -89,7 +89,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ERR-6 | Errors list | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 | ERR-7 | Error detail, stack, trend | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 | ERR-8 | new / regressed / resolved | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
-| ERR-9 | Problem ↔ error correlation | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `errorDetail` has the field; nothing links a group to a problem |
+| ERR-9 | Problem ↔ error correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | §4.4's detectors run in the errors cycle, on the same lifecycle as every other detector, and the group carries the id of the worse problem opened for it |
 | ERR-10 | Pattern discovery (`pattern` command) | ✗ | ✗ | · | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | §18/§29: availability unverified; must fall back to own fingerprinting |
 
 ## Logs

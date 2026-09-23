@@ -91,8 +91,9 @@ export async function runSyntheticsJob(input: SyntheticsJobInput): Promise<JobOu
   const transitions = applyCycle({
     connectionId: input.connectionId,
     scope: input.scope,
-    // Only the synthetic problems: this cycle has nothing to say about an ECS service, and handing the
-    // lifecycle problems it did not evaluate would resolve them on silence.
+    // Only the synthetic problems: this cycle has nothing to say about an ECS service. The lifecycle walks
+    // outcomes rather than live rows, so an unjudged problem produces no transition either way — this
+    // narrows what it looks up rather than preventing a resolution that could not have happened.
     live: live.filter(({ row }) => row.subjectType === 'synthetic').map(({ live: projection }) => projection),
     // Everything still retained, as the detect cycle does: the lifecycle applies the reopen window itself
     // and needs the older rows so a successor can carry `previousProblemId`.
