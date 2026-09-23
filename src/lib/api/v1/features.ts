@@ -23,7 +23,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   infrastructure: false,
   logs: false,
   alerts: false,
-  incidents: false,
+  // GET /incidents and /incidents/{id} serve the rows the detect cycle opens (§16).
+  incidents: true,
   synthetics: false,
   slos: false,
   deployments: false,

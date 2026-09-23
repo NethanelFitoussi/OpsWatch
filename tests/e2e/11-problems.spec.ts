@@ -89,9 +89,10 @@ test('the server reports problems as a capability it actually serves', async ({ 
   expect(info.features.health).toBe(true);
   expect(info.features.brief).toBe(true);
   expect(info.features.errors).toBe(true);
+  expect(info.features.incidents).toBe(true);
   // And still reports the ones it does not, so a client gates on the flag rather than on a field existing.
   expect(info.features.ai).toBe(false);
-  expect(info.features.incidents).toBe(false);
+  expect(info.features.synthetics).toBe(false);
 });
 
 test('a problem id from another environment reads as absent', async ({ page }) => {
