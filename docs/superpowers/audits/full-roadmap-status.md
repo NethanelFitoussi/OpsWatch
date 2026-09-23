@@ -25,9 +25,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 48 |
-| `PARTIAL` | 14 |
-| `FOUNDATION_ONLY` | 9 |
+| `DONE` | 50 |
+| `PARTIAL` | 13 |
+| `FOUNDATION_ONLY` | 8 |
 | `NOT_STARTED` | 20 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
@@ -153,10 +153,10 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | REPO-1 | GitHub connection | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Settings → Repositories stores a write-only encrypted token. Live calls need a real token, which is the external blocker |
 | REPO-2 | Repository storage | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | An operator can add, list and remove a repository with no credential at all |
-| REPO-3 | Service → repository mapping | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `service_repositories` with a suggestion engine that never applies itself. No UI yet |
+| REPO-3 | Service → repository mapping | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Offered on Error detail where the question arises, with the suggestion stated as a guess and never applied |
 | REPO-4 | Commits, metadata, diffs, files | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `commitSchema` exists |
-| REPO-5 | Line-level code evidence | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `repositoryEvidenceSchema` exists |
-| REPO-6 | Deterministic code correlation (§J) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | Stack frame → repository path → link, declining what it cannot place. Not yet surfaced on a problem |
+| REPO-5 | Line-level code evidence | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Frame → file link on Error detail. The lines *around* a frame need a GitHub token (external) |
+| REPO-6 | Deterministic code correlation (§J) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Frame → repository path → link on Error detail, declining dependencies and unknown roots, and saying how many it placed |
 | REPO-7 | Proposed fix + patch preview (§L, §O) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Read-only against the customer repository |
 
 ## Alerts / Notifications
@@ -321,6 +321,7 @@ documentation. Genuinely last: they audit surfaces that must exist first.
 | CF-3 Cloudflare Zero Trust | A Cloudflare account with Zero Trust |
 | Mobile store release | macOS, Apple and Google developer accounts |
 | AWS-5 stack v2 deployment | The owner's decision. May be prepared and tested here, **never deployed automatically** |
+| REPO-4/REPO-5 file contents, commits and diffs | A GitHub fine-grained token with Contents: Read. The storage, the mapping and the links are built and work without one |
 
 ---
 

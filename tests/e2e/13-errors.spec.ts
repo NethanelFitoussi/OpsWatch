@@ -67,3 +67,38 @@ test('the errors list refuses a filter it does not honour', async ({ page }) => 
   expect((await page.request.get(`${base}&status=nonsense`)).status()).toBe(400);
   expect((await page.request.get(`${base}&status=recurring`)).status()).toBe(200);
 });
+
+test('§K — an error group says where its code lives, and asks rather than assuming', async ({ page }) => {
+  // A repository exists, so the panel has something to suggest.
+  await page.goto('/en/settings/repositories');
+  await page.getByLabel('Owner').fill('acme');
+  await page.getByLabel('Repository', { exact: true }).fill('opswatch-web');
+  await page.getByRole('button', { name: 'Add' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/errors/groups`);
+  const first = page.locator('main a[href*="/errors/groups/"]').first();
+  if ((await first.count()) === 0) {
+    // Leave the estate as it was found: 20-repositories asserts an empty list, and the suite runs in order.
+    await page.goto('/en/settings/repositories');
+    await page.getByRole('button', { name: 'Remove' }).first().click();
+    test.skip(true, 'no error group collected in this environment');
+  }
+
+  await first.click();
+  await expect(page.getByRole('heading', { name: 'Where this code lives' })).toBeVisible();
+
+  const main = await page.locator('main').innerText();
+  // Whichever state it is in, it must never have silently mapped anything (§13).
+  const mapped = main.includes('This service is mapped to');
+  expect(mapped).toBe(false);
+  expect(main).toMatch(/might be|looks like a match|No repository has been added/);
+  if (main.includes('might be')) {
+    expect(main).toContain('It will not map it for you');
+  }
+
+  // Left as found, so the later specs see the estate they expect.
+  await page.goto('/en/settings/repositories');
+  await page.getByRole('button', { name: 'Remove' }).first().click();
+  await expect(page.getByText('No repository has been added yet')).toBeVisible();
+});
