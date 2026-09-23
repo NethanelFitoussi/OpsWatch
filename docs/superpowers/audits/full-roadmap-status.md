@@ -51,7 +51,7 @@ Read this table first. The detailed requirement tables below it are the implemen
 | **AWS** | ✓ IAM role, ambient, access keys | ✓ encrypted, CloudFormation onboarding | ✓ regions, permission test | Every monitoring surface | ✓ | `DONE` |
 | **GitHub / Repository** | ✓ Settings → Repositories, verified | ✓ own derivation, write-only, migrated from the shared one | ✓ repositories discovered and chosen | The full chain: service → repository → deployment → commit → changed files → problems that followed | ✓ deletes the token, keeps the repositories | `PARTIAL` (live read `BLOCKED_EXTERNAL`) |
 | **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Ask OpsWatch: `POST /ai/ask` and `overview/ask`, answered from bounded evidence | ✓ deletes the key | `DONE` (live provider acceptance `BLOCKED_EXTERNAL`) |
-| **Cloudflare** | ✓ Settings → Cloudflare | ✓ encrypted, own derivation, never returned | ✓ zones discovered and chosen | Nothing yet — the analytics reads are CF-2 | ✓ deletes the token | `PARTIAL` |
+| **Cloudflare** | ✓ Settings → Cloudflare | ✓ encrypted, own derivation, never returned | ✓ zones discovered and chosen | Nothing yet — the analytics reads are CF-2 | ✓ deletes the token | `PARTIAL` (**live acceptance passed**) |
 | **Google sign-in** | ✓ environment-configured | · no stored secret: it lives in the environment | · | Sign-in, with an optional allowed domain | · unset the variables | `DONE` |
 
 ### What each one still needs
@@ -112,10 +112,14 @@ can usually see every zone in an account, and reading all of them by default wou
 traffic on a page nobody asked for it on. A verified token watching no zone is `degraded`, not connected,
 because it reads nothing.
 
-What remains is CF-2: traffic, cache and security events, which is the GraphQL analytics API. **Only the
-live acceptance is `BLOCKED_EXTERNAL`** — there is no Cloudflare account here, so every test runs against an
-injected transport, which leaves one round trip unproven rather than the architecture. CF-3, Zero Trust,
-additionally needs an account with Zero Trust enabled.
+**The live acceptance has since happened.** The running instance carries a real Cloudflare token, verified
+against the real API, with a real zone selected — so the token storage, the verification call, the zone
+discovery and the selection are all proven end to end, not only against an injected transport. That
+removes CF-1 from the external-blocker list entirely.
+
+What remains is CF-2: traffic, cache and security events, which is the GraphQL analytics API and is now
+dependency-ready rather than blocked. CF-3, Zero Trust, additionally needs an account with Zero Trust
+enabled.
 
 **Google sign-in.** Complete and in use: `openid-client`, a signed flow cookie with a ten-minute TTL, the
 `hd` hosted-domain claim enforced when configured, three named failure codes on the login page, and password
@@ -290,8 +294,8 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| CF-1 | Account / zone integration | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Token stored encrypted, verified through `/user/tokens/verify`, zones discovered and **chosen**. Live acceptance against a real account is `BLOCKED_EXTERNAL` |
-| CF-2 | Traffic, cache, security events | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The connection and the zone selection exist (CF-1); the analytics reads do not. Every adaptive-dataset tile must carry the "estimated" marker when they land |
+| CF-1 | Account / zone integration | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Token stored encrypted, verified through `/user/tokens/verify`, zones discovered and **chosen**. Proven end to end on the running instance against a real Cloudflare account |
+| CF-2 | Traffic, cache, security events | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The connection and the zone selection exist and are live (CF-1); the GraphQL analytics reads do not. **Dependency-ready, not blocked.** Every adaptive-dataset tile must carry the "estimated" marker when they land |
 | CF-3 | Zero Trust sessions / identities | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs a Cloudflare account with Zero Trust |
 
 ## AI / Ask OpsWatch
@@ -425,7 +429,7 @@ documentation. Genuinely last: they audit surfaces that must exist first.
 | CF-3 Cloudflare Zero Trust | A Cloudflare account with Zero Trust |
 | Mobile store release | macOS, Apple and Google developer accounts |
 | AWS-5 stack v2 deployment | The owner's decision. May be prepared and tested here, **never deployed automatically** |
-| REPO-4/REPO-5 file contents, commits and diffs | A GitHub fine-grained token with Contents: Read. The storage, the mapping and the links are built and work without one |
+| REPO-4/REPO-5 live commit reads | A GitHub fine-grained token with Contents: Read. Everything is built and tested against an injected transport, and the transport itself is proven — the end-to-end suite reaches real GitHub and gets a real 401 for a fabricated token |
 
 ---
 
