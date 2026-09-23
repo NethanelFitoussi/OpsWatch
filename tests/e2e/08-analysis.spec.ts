@@ -63,17 +63,15 @@ test('the section menu sits at the far left of the content, and collapsing it on
   const nav = page.getByRole('navigation', { name: 'Alarms pages' });
   await expect(nav.getByRole('link', { name: 'Alarms' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/alarms/list`);
 
-  // It arrives collapsed, and opening it takes width from the content rather than moving it anywhere else.
+  // Collapsing it gives the width to the page and moves nothing else.
   const contentLeft = () => page.locator('main h1').first().evaluate((el) => el.getBoundingClientRect().left);
-  const collapsedLeft = await contentLeft();
-  await nav.getByRole('button', { name: 'Show the page names' }).click();
-  await expect(nav.getByRole('button', { name: 'Hide the page names' })).toBeVisible();
   const expandedLeft = await contentLeft();
-  expect(expandedLeft).toBeGreaterThan(collapsedLeft);
-  // The heading stays on the same line: the menu widens, the page does not reflow around it.
-  await expect(page.locator('main h1').first()).toBeVisible();
   await nav.getByRole('button', { name: 'Hide the page names' }).click();
-  expect(Math.abs((await contentLeft()) - collapsedLeft)).toBeLessThanOrEqual(1);
+  await expect(nav.getByRole('button', { name: 'Show the page names' })).toBeVisible();
+  expect(await contentLeft()).toBeLessThan(expandedLeft);
+  await expect(page.locator('main h1').first()).toBeVisible();
+  await nav.getByRole('button', { name: 'Show the page names' }).click();
+  expect(Math.abs((await contentLeft()) - expandedLeft)).toBeLessThanOrEqual(1);
 
   // Flush against the rail: the menu's column starts exactly where the rail ends, with no gap.
   const railRight = await page.locator('aside').evaluate((el) => el.getBoundingClientRect().right);
@@ -93,14 +91,16 @@ test('a page fills the width of the screen, with no centred column and no horizo
   expect(await root.evaluate((el) => el.scrollWidth)).toBeLessThanOrEqual(await root.evaluate((el) => el.clientWidth));
 });
 
-test('the main rail collapses to icons and is remembered', async ({ page }) => {
+test('the main rail is icons until it is opened, and the choice is remembered', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/en/c/${connectionId}/us-east-1/overview/insights`);
-  await page.getByRole('button', { name: 'Collapse the menu' }).click();
-  await page.reload();
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(nav.getByRole('link', { name: 'Containers' })).toBeVisible(); // the sr-only label keeps the name
   await expect(page.getByRole('button', { name: 'Expand the menu' })).toHaveAttribute('aria-pressed', 'true');
+
+  await page.getByRole('button', { name: 'Expand the menu' }).click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Collapse the menu' })).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('switching region keeps the sub-page', async ({ page }) => {
