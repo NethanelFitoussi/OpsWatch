@@ -18,6 +18,9 @@ function Measure({ value, unit }: { value: number; unit: Unit }) {
   const t = useTranslations('Monitoring.diagnosis');
   if (unit === 'percent') return <>{t('percent', { value: Number(value.toFixed(2)) })}</>;
   if (unit === 'ms') return <>{t('ms', { value: Math.round(value) })}</>;
+  if (unit === 'days') return <>{t('days', { value: Math.round(value) })}</>;
+  // A burn rate is the one figure here that is meaningless rounded to a whole number.
+  if (unit === 'rate') return <>{t('rate', { value: Number(value.toFixed(1)) })}</>;
   return <>{format.number(Math.round(value))}</>;
 }
 
@@ -160,6 +163,34 @@ export function ChecksPanel({ checks }: { checks: Check[] }) {
           ))}
         </ol>
       )}
+    </MonitoringCard>
+  );
+}
+
+/**
+ * What commonly makes this rule fire.
+ *
+ * Its own card, under its own heading, in its own voice — because it is the only thing on this page that
+ * OpsWatch did not measure. Mixing it into the evidence would make every other card on the page cheaper:
+ * a reader who finds one guess among the facts stops trusting the facts.
+ *
+ * Nothing at all is a real answer. A CloudWatch alarm is somebody else's rule, and inventing causes for a
+ * threshold OpsWatch did not choose would be exactly the invention this card exists to avoid.
+ */
+export function CausesPanel({ causes }: { causes: readonly string[] }) {
+  const t = useTranslations('Monitoring.diagnosis');
+  if (causes.length === 0) return null;
+
+  return (
+    <MonitoringCard title={t('causes')} description={t('causesHint')}>
+      <ul className="space-y-2">
+        {causes.map((cause) => (
+          <li key={cause} className="flex gap-2 text-sm">
+            <span className="mt-2 size-1.5 shrink-0 rounded-full bg-muted-foreground" aria-hidden />
+            <span>{t(`causeList.${cause}`)}</span>
+          </li>
+        ))}
+      </ul>
     </MonitoringCard>
   );
 }

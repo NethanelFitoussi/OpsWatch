@@ -10,6 +10,8 @@
  */
 
 import { ALB_5XX_RATE_LEVELS, ALB_ELB_5XX_COUNT, ECS_UTILIZATION_LEVELS, FREEABLE_MEMORY_LEVELS, REPLICA_LAG_LEVELS, RDS_CPU_LEVELS } from '../monitoring/insights';
+import { SPIKE_MIN_OCCURRENCES, SPIKE_MULTIPLE } from './errors';
+import { CERT_CRITICAL_DAYS, CERT_WARNING_DAYS } from './synthetic';
 
 export type Severity = 'critical' | 'warning' | 'info';
 
@@ -17,7 +19,8 @@ export type Severity = 'critical' | 'warning' | 'info';
  * What made the detector fire.
  *
  * `threshold` is a fixed number written in the rules; `presence` is "any at all", which has no threshold to
- * quote; `state` is a fact reported by AWS rather than a measurement OpsWatch took. A reader should never
+ * quote; `state` is a fact somebody else reported — an alarm's own state, a rollout's own outcome, a check
+ * that came back failing — rather than a measurement OpsWatch compared with a number. A reader should never
  * have to reverse-engineer which of the three they are looking at.
  */
 export type DetectionRule =
@@ -25,7 +28,7 @@ export type DetectionRule =
   | { kind: 'presence'; observed: number; unit: Unit }
   | { kind: 'state'; unit: Unit };
 
-export type Unit = 'count' | 'percent' | 'ms' | 'requests';
+export type Unit = 'count' | 'percent' | 'ms' | 'requests' | 'days' | 'rate';
 
 const NUMBER = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
@@ -92,10 +95,58 @@ export function ruleFor(kind: string, values: Record<string, unknown>, severity:
       // The rule is "fewer than asked for", and the number that matters is how many are missing.
       return { kind: 'threshold', observed: running, threshold: desired, clearAt: null, unit: 'count' };
     }
-    // Reported by AWS rather than measured here: an alarm's own state, a rollout's own outcome.
+    case 'synthetic_slow': {
+      const observed = NUMBER(values.median);
+      const threshold = NUMBER(values.threshold);
+      // The threshold is the check's own, not a constant here: two checks may disagree about slow.
+      if (observed === null || threshold === null) return null;
+      return { kind: 'threshold', observed, threshold, clearAt: null, unit: 'ms' };
+    }
+    case 'cert_expiring': {
+      const observed = NUMBER(values.days);
+      if (observed === null) return null;
+      // Days *remaining*, so the rule fires below the threshold rather than above it — the panel reads it
+      // from the unit, and the two constants are §5's own.
+      return {
+        kind: 'threshold',
+        observed,
+        threshold: severity === 'critical' ? CERT_CRITICAL_DAYS : CERT_WARNING_DAYS,
+        clearAt: null,
+        unit: 'days',
+      };
+    }
+    case 'slo_burn_fast':
+    case 'slo_burn_slow': {
+      const observed = NUMBER(values.rate);
+      if (observed === null) return null;
+      // 1× is the whole rule: burning error budget exactly as fast as the objective allows spends it
+      // precisely at the end of the period, and anything above that runs out early.
+      return { kind: 'threshold', observed, threshold: 1, clearAt: null, unit: 'rate' };
+    }
+    case 'error_group_new': {
+      const observed = NUMBER(values.count);
+      // "This has not been seen before" has no threshold: the count says how loudly, not whether.
+      return observed === null ? null : { kind: 'presence', observed, unit: 'count' };
+    }
+    case 'error_group_spike': {
+      const observed = NUMBER(values.count);
+      const baseline = NUMBER(values.baseline);
+      if (observed === null || baseline === null) return null;
+      // The bar the detector actually used, rather than either half of it on its own.
+      return {
+        kind: 'threshold',
+        observed,
+        threshold: Math.max(SPIKE_MIN_OCCURRENCES, SPIKE_MULTIPLE * baseline),
+        clearAt: null,
+        unit: 'count',
+      };
+    }
+    // Reported by somebody else rather than measured here: an alarm's own state, a rollout's own outcome,
+    // a synthetic check that came back failing twice in a row.
     case 'alarm_firing':
     case 'ecs_rollout_failed':
     case 'ecs_rollout_stuck':
+    case 'synthetic_down':
       return { kind: 'state', unit: 'count' };
     default:
       return null;
@@ -143,6 +194,43 @@ export function impactFor(
     // a count with no denominator, a CPU figure, an unhealthy host — is a fact about the estate.
     established: requests !== null && requests > 0 && errors !== null,
   };
+}
+
+/**
+ * What commonly makes this rule fire — possibilities, never a claim about *this* problem.
+ *
+ * This is the one part of the diagnosis that is not measured, and it is kept in its own function for
+ * exactly that reason: the page prints it under its own heading, in its own voice, so a reader can never
+ * mistake "this often happens because" for "this happened because". Nothing here looks at the values.
+ *
+ * An empty list is a real answer. A CloudWatch alarm is somebody else's rule with somebody else's
+ * intention behind it, and guessing at causes for it would be OpsWatch inventing a story about a
+ * threshold it did not choose.
+ */
+const CAUSES: Record<string, readonly string[]> = {
+  alb_5xx_rate: ['deployment', 'dependency', 'capacity', 'timeout'],
+  alb_elb_5xx_count: ['noHealthyTarget', 'timeout', 'capacity'],
+  alb_unhealthy_hosts: ['healthCheckPath', 'slowStart', 'crashLoop', 'capacity'],
+  ecs_cpu_high: ['traffic', 'hotLoop', 'undersized', 'deployment'],
+  ecs_memory_high: ['leak', 'undersized', 'traffic', 'deployment'],
+  ecs_tasks_below_desired: ['crashLoop', 'capacity', 'image', 'healthCheckPath'],
+  ecs_rollout_failed: ['healthCheckPath', 'image', 'config', 'capacity'],
+  ecs_rollout_stuck: ['capacity', 'healthCheckPath', 'slowStart'],
+  rds_cpu_high: ['query', 'missingIndex', 'traffic', 'undersized'],
+  rds_freeable_memory_low: ['workingSet', 'connections', 'query', 'undersized'],
+  aurora_replica_lag: ['writeVolume', 'longQuery', 'undersized'],
+  synthetic_down: ['dns', 'certificate', 'deployment', 'dependency'],
+  synthetic_slow: ['dependency', 'capacity', 'deployment'],
+  cert_expiring: ['renewalFailed', 'manualRenewal'],
+  slo_burn_fast: ['errorsBurning', 'latencyBurning', 'deployment'],
+  slo_burn_slow: ['errorsBurning', 'latencyBurning', 'traffic'],
+  error_group_new: ['deployment', 'input', 'dependency'],
+  error_group_spike: ['deployment', 'dependency', 'traffic'],
+};
+
+/** The possible causes of a kind, in the order worth considering them. Empty where OpsWatch cannot say. */
+export function causesFor(kind: string): readonly string[] {
+  return CAUSES[kind] ?? [];
 }
 
 /** One thing to look at, and the evidence that put it on the list. */

@@ -24,7 +24,7 @@ In order. Tick as they land.
 
 - [x] Problem comprehension: headline, severity, duration, impact, detection rule, what to check
 - [x] Problem visual evidence: lifecycle timeline, metric chart where history exists, unambiguous counters
-- [ ] Recommended investigation per detector family
+- [x] Recommended investigation per detector family — every headline kind now has a rule, and possible causes are their own card
 - [x] Cloudflare: a dashboard that shows what connecting it bought
 - [x] Navigation collapsed by default — the main rail, not the inner section menu (corrected mid-flight)
 - [x] Accounts: one card language across providers

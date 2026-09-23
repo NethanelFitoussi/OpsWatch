@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALB_5XX_RATE_LEVELS, ALB_ELB_5XX_COUNT } from '@/lib/monitoring/insights';
-import { checksFor, impactFor, recoveryFor, ruleFor } from '@/lib/detect/explain';
+import { causesFor, checksFor, impactFor, recoveryFor, ruleFor } from '@/lib/detect/explain';
+import { HEADLINE_KINDS } from '@/lib/monitoring/shared/duration';
 
 /**
  * Why OpsWatch opened a problem, and what it will and will not claim about it.
@@ -122,5 +123,95 @@ describe('what to check', () => {
       deployments: [{ id: 'd1', label: 'web:42', minutesBefore: 8, href: '/d1', filesChanged: 3, changesHref: '/d1' }],
     });
     expect(JSON.stringify(checks)).not.toMatch(/caused|because|root cause/i);
+  });
+});
+
+describe('every family can say why it fired (UX-17)', () => {
+  it('THE RULING: each detector kind with a headline has a rule, so no family is left mute', () => {
+    // A synthetic failure, an expiring certificate and a burning objective are problems like any other.
+    // Leaving them without a rule left their pages saying only "a problem is open", which is the sentence
+    // this whole file exists to replace.
+    const VALUES: Record<string, Record<string, unknown>> = {
+      alb_5xx_rate: { rate: 6 },
+      alb_elb_5xx_count: { count: 23 },
+      alb_unhealthy_hosts: { count: 2 },
+      ecs_cpu_high: { value: 91 },
+      ecs_memory_high: { value: 91 },
+      ecs_tasks_below_desired: { running: 1, desired: 3 },
+      ecs_rollout_failed: {},
+      ecs_rollout_stuck: {},
+      rds_cpu_high: { value: 95 },
+      rds_freeable_memory_low: { value: 4 },
+      aurora_replica_lag: { lagging: 4000 },
+      alarm_firing: {},
+      synthetic_down: {},
+      synthetic_slow: { median: 2400, threshold: 1500 },
+      cert_expiring: { days: 5 },
+      slo_burn_fast: { rate: 14.2, hours: 1 },
+      slo_burn_slow: { rate: 2.1, hours: 24 },
+      error_group_new: { count: 12 },
+      error_group_spike: { count: 90, baseline: 4 },
+    };
+    for (const [kind, values] of Object.entries(VALUES)) {
+      expect(ruleFor(kind, values, 'warning'), kind).not.toBeNull();
+    }
+  });
+
+  it('reads a synthetic check against its own threshold, not a constant of ours', () => {
+    expect(ruleFor('synthetic_slow', { median: 2400, threshold: 1500 }, 'warning')).toEqual({
+      kind: 'threshold',
+      observed: 2400,
+      threshold: 1500,
+      clearAt: null,
+      unit: 'ms',
+    });
+  });
+
+  it('quotes the spike bar the detector used, rather than either half of it', () => {
+    // max(10, 3 × baseline): with a baseline of 4 the bar is 12, and with a baseline of 1 it is 10.
+    expect(ruleFor('error_group_spike', { count: 90, baseline: 4 }, 'critical')).toMatchObject({ threshold: 12 });
+    expect(ruleFor('error_group_spike', { count: 90, baseline: 1 }, 'critical')).toMatchObject({ threshold: 10 });
+  });
+
+  it('calls a brand-new error a presence, because "never seen before" has no threshold', () => {
+    expect(ruleFor('error_group_new', { count: 12 }, 'warning')).toEqual({ kind: 'presence', observed: 12, unit: 'count' });
+  });
+
+  it('calls a failing check a state: nobody measured it against a number', () => {
+    expect(ruleFor('synthetic_down', {}, 'critical')).toEqual({ kind: 'state', unit: 'count' });
+  });
+
+  it('says nothing rather than guessing when the value it needs is missing', () => {
+    expect(ruleFor('cert_expiring', {}, 'warning')).toBeNull();
+    expect(ruleFor('synthetic_slow', { median: 2400 }, 'warning')).toBeNull();
+    expect(ruleFor('error_group_spike', { count: 90 }, 'critical')).toBeNull();
+    expect(ruleFor('slo_burn_fast', {}, 'critical')).toBeNull();
+  });
+});
+
+describe('possible causes are possibilities (UX-17)', () => {
+  it('THE RULING: they never look at the values, so they cannot become a claim about this problem', () => {
+    // Identical for a 91% and a 99% CPU problem: nothing here is derived from what was measured.
+    expect(causesFor('ecs_cpu_high')).toEqual(causesFor('ecs_cpu_high'));
+    expect(causesFor('ecs_cpu_high').length).toBeGreaterThan(0);
+  });
+
+  it('THE RULING: a CloudWatch alarm gets none, because the rule is not ours to explain', () => {
+    expect(causesFor('alarm_firing')).toEqual([]);
+  });
+
+  it('THE RULING: every other family a page can headline has some, so none is left with only a number', () => {
+    for (const kind of HEADLINE_KINDS) {
+      if (kind === 'alarm_firing') continue;
+      expect(causesFor(kind).length, kind).toBeGreaterThan(0);
+    }
+  });
+
+  it('gives a different list to a different family, rather than one list for everything', () => {
+    expect(causesFor('rds_freeable_memory_low')).not.toEqual(causesFor('alb_5xx_rate'));
+  });
+
+  it('says nothing for a kind it does not know', () => {
+    expect(causesFor('something_new')).toEqual([]);
   });
 });

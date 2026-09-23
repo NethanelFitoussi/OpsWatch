@@ -2,7 +2,7 @@ import 'server-only';
 import type { Db } from '../db/client';
 import type { ProblemRow } from '../db/schema';
 import { DEPLOYMENT_WINDOW_MS, correlateDeployments } from '../detect/correlate';
-import { checksFor, impactFor, recoveryFor, ruleFor, type Check, type DetectionRule, type Impact, type Recovery } from '../detect/explain';
+import { causesFor, checksFor, impactFor, recoveryFor, ruleFor, type Check, type DetectionRule, type Impact, type Recovery } from '../detect/explain';
 import { listDeploymentCommits } from '../store/deployment-commits';
 import { listDeployments } from '../store/deployments';
 import { recentErrorGroups } from '../store/errors';
@@ -44,6 +44,11 @@ export type Diagnosis = {
   impact: Impact;
   recovery: Recovery;
   checks: Check[];
+  /**
+   * What commonly makes this rule fire — possibilities, kept apart from everything else here because
+   * everything else here was measured and these were not.
+   */
+  causes: readonly string[];
   /** Open, reopen, resolve and the deployments near them, oldest first. */
   timeline: LifecycleMark[];
   /** The stored rollups for this subject, or an empty list when there are none to draw. */
@@ -153,6 +158,7 @@ export function readDiagnosis(db: Db, row: ProblemRow): Diagnosis {
     // "not known" apart from `0` for "known to be none" — so the impact inherits that honesty for free.
     impact: impactFor(row.kind, row.values, row.scoreTerms),
     recovery: recoveryFor(rule),
+    causes: causesFor(row.kind),
     checks: checksFor({
       kind: row.kind,
       values: row.values,

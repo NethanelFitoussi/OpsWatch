@@ -233,3 +233,23 @@ test('THE RULING: a problem detail says why OpsWatch opened it, and refuses to i
   // And the counter that used to read "115 times" now says what it counts.
   expect(body).toContain('Readings that confirmed it');
 });
+
+test('THE RULING: possible causes are offered as possibilities, or not at all', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  test.skip((await first.count()) === 0, 'no problem in this environment to read');
+
+  await first.click();
+  const body = await page.locator('main').innerText();
+
+  if (body.includes('Possible causes')) {
+    // Never presented as a finding: the card says in its own words that nothing here was checked.
+    expect(body).toContain('OpsWatch has not checked any of them against this problem');
+    // And it comes after the measured cards, so it reads as a list of maybes rather than a conclusion.
+    expect(body.indexOf('Possible causes')).toBeGreaterThan(body.indexOf('Why OpsWatch opened this'));
+  } else {
+    // The alarm case: somebody else's rule, with somebody else's intention. OpsWatch offers no story.
+    expect(body).toMatch(/alarm/i);
+  }
+  expect(body).not.toMatch(/root cause|caused by/i);
+});

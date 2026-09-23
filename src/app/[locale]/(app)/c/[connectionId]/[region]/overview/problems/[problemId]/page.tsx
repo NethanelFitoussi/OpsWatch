@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { SectionLayout } from '@/components/monitoring/section-layout';
-import { ChecksPanel, ImpactPanel, WhyPanel } from '@/components/problems/diagnosis-panel';
+import { CausesPanel, ChecksPanel, ImpactPanel, WhyPanel } from '@/components/problems/diagnosis-panel';
 import { EvidenceList } from '@/components/problems/evidence-list';
 import { ProblemChart, ProblemTimeline } from '@/components/problems/problem-evidence';
 import { InvestigationTimeline } from '@/components/problems/investigation-timeline';
@@ -119,6 +119,9 @@ export default async function ProblemDetailPage({ params }: Props) {
       <ImpactPanel impact={diagnosis.impact} />
       <WhyPanel rule={diagnosis.rule} recovery={diagnosis.recovery} />
       <ChecksPanel checks={diagnosis.checks} />
+      {/* Last of the four, and after the measured ones on purpose: possibilities read as possibilities
+          when they follow the evidence, and as conclusions when they precede it. */}
+      <CausesPanel causes={diagnosis.causes} />
 
       <MonitoringCard title={t('detail.overTime')} description={t('detail.overTimeDescription')}>
         {/* The shape of it: when it opened, whether it came back, whether it stopped — always available,
