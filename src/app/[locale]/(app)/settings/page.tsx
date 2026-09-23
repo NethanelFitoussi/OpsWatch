@@ -20,6 +20,7 @@ const MORE_SETTINGS = [
   { key: 'history', href: '/settings/history' },
   { key: 'repositories', href: '/settings/repositories' },
   { key: 'ai', href: '/settings/ai' },
+  { key: 'cloudflare', href: '/settings/cloudflare' },
   { key: 'audit', href: '/settings/audit' },
   { key: 'status', href: '/settings/status' },
 ] as const;

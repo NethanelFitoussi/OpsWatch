@@ -4,6 +4,7 @@ import { googleSignInConfig } from '../auth/google';
 import { listConnections } from '../connections/repository';
 import type { Db } from '../db/client';
 import { env } from '../env';
+import { readCloudflareConnection } from '../cloudflare/connection';
 import { listIntegrations, listRepositories } from '../store/repositories';
 import { INTEGRATIONS, INTEGRATION_SPECS, type IntegrationId, type IntegrationState } from './catalogue';
 
@@ -72,10 +73,23 @@ function aiStatus(db: Db): IntegrationStatus {
   };
 }
 
-function cloudflareStatus(): IntegrationStatus {
-  // Declared in the catalogue and not connectable in this build. Said on the card rather than discovered
-  // by clicking a button that cannot work.
-  return { id: 'cloudflare', state: 'unavailable', detailKey: 'cloudflarePlanned', values: {}, href: null };
+function cloudflareStatus(db: Db): IntegrationStatus {
+  const connection = readCloudflareConnection(db);
+  const href = INTEGRATION_SPECS.cloudflare.href;
+  if (connection === null) return { id: 'cloudflare', state: 'not_configured', detailKey: null, values: {}, href };
+
+  // A verified token watching nothing reads nothing. Saying "connected" would promise a page of data that
+  // does not exist, so choosing a zone is part of being connected rather than a step after it.
+  if (connection.status !== 'configured' || connection.zones.length === 0) {
+    return {
+      id: 'cloudflare',
+      state: 'degraded',
+      detailKey: connection.status === 'configured' ? 'cloudflareNoZones' : `cloudflare_${connection.status}`,
+      values: {},
+      href,
+    };
+  }
+  return { id: 'cloudflare', state: 'connected', detailKey: 'cloudflareConnected', values: { zones: connection.zones.length }, href };
 }
 
 function googleStatus(): IntegrationStatus {
@@ -95,7 +109,7 @@ export function integrationStatuses(db: Db): IntegrationStatus[] {
     aws: awsStatus(db),
     github: githubStatus(db),
     ai: aiStatus(db),
-    cloudflare: cloudflareStatus(),
+    cloudflare: cloudflareStatus(db),
     google: googleStatus(),
   };
   return INTEGRATIONS.map((id) => byId[id]);

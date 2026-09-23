@@ -2030,6 +2030,8 @@
       "repositoriesHint": "Which repositories your services are built from, so a stack frame can link to its source.",
       "ai": "AI provider",
       "aiHint": "Optional. Connect a model so OpsWatch can narrate what it has already measured — it works fully without one.",
+      "cloudflare": "Cloudflare",
+      "cloudflareHint": "Read traffic, cache and security events at the edge for the zones you choose.",
       "audit": "Audit log",
       "auditHint": "Who did what, and when. Entries are only ever added."
     },
@@ -2094,6 +2096,8 @@
         "integration_update": "Integration changed",
         "ai_update": "AI provider changed",
         "ai_test": "AI provider tested",
+        "cloudflare_update": "Cloudflare connection changed",
+        "cloudflare_test": "Cloudflare connection tested",
         "synthetic_update": "Synthetic check changed",
         "alert_rule_update": "Alert rule changed",
         "slo_update": "Objective changed",
@@ -2212,10 +2216,63 @@
         "aiConnected": "{provider} · {model}",
         "ai_untested": "{provider} · {model} — saved, not tested",
         "ai_failed": "{provider} · {model} — the last test failed",
-        "cloudflarePlanned": "Designed, not built yet",
         "googleOn": "Configured in the environment",
         "googleDomain": "Configured — only {domain} accounts may sign in",
-        "googleOff": "Set the client id, secret and public URL to offer it"
+        "googleOff": "Set the client id, secret and public URL to offer it",
+        "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
+        "cloudflareNoZones": "verified, no zone chosen yet",
+        "cloudflare_untested": "saved, not verified",
+        "cloudflare_failed": "the last verification failed"
+      }
+    },
+    "cloudflare": {
+      "title": "Cloudflare",
+      "description": "Read what happens at the edge: traffic, cache and security events for the zones you choose.",
+      "access": "What OpsWatch asks for",
+      "accessHint": "Create an API token in Cloudflare with read permissions only. OpsWatch never changes a setting, never purges a cache and never edits a rule.",
+      "scope": {
+        "read": "Zone → Analytics → Read, and Zone → Zone → Read, is enough for everything here.",
+        "zones": "Scope the token to the zones you want watched. OpsWatch then reads only the ones you pick below.",
+        "noWrites": "No write permission is needed, and none is used. If the token has one, OpsWatch still will not use it."
+      },
+      "statusTitle": "Connection",
+      "none": "Cloudflare is not connected.",
+      "noneHint": "Nothing is read from Cloudflare until a token is stored and a zone is chosen.",
+      "status": {
+        "configured": "Connected",
+        "untested": "Saved, not verified",
+        "failed": "Not working"
+      },
+      "untestedHint": "A saved token is not a working token. Verify it to find out which you have.",
+      "noZones": "no zone chosen yet",
+      "watching": "watching {zones}",
+      "connect": "Connect Cloudflare",
+      "replace": "Replace the token",
+      "scopes": "Your token is encrypted before it is stored and is never sent back to this page.",
+      "token": "API token",
+      "tokenHint": "Created in Cloudflare under My Profile → API Tokens. Encrypted with a key derived for this purpose alone.",
+      "tokenKept": "Stored — paste a new one to replace it",
+      "save": "Save token",
+      "saved": "Saved. It has not been verified yet.",
+      "test": "Verify token",
+      "testPassed": "Cloudflare accepted the token.",
+      "discover": "Find zones",
+      "chooseZones": "Choose zones",
+      "chooseZonesHint": "Only the zones you tick are read. A token that can see more does not mean OpsWatch will look at more.",
+      "saveZones": "Save selection",
+      "zonesSaved": "Saved.",
+      "remove": "Disconnect",
+      "removed": "Disconnected. The token has been deleted.",
+      "errors": {
+        "invalid_token": "That does not look like a Cloudflare API token.",
+        "no_zones": "The token cannot see any zone. Check its scope in Cloudflare.",
+        "not_configured": "No token is stored yet.",
+        "unauthorized": "Cloudflare refused the token. Check it, or create a new one.",
+        "forbidden": "The token is valid but lacks the permission this needs. Add Zone → Analytics → Read.",
+        "rate_limited": "Cloudflare is rate-limiting this token right now. Try again shortly.",
+        "unreachable": "Cloudflare could not be reached.",
+        "bad_response": "Cloudflare answered with something OpsWatch could not read.",
+        "timeout": "Cloudflare did not answer in time."
       }
     }
   },

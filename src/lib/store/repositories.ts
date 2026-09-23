@@ -52,6 +52,14 @@ export type NewIntegration = {
   credentialCiphertext?: string | null;
   /** The non-secret half — which model, which account. Absent leaves whatever is stored alone. */
   config?: Record<string, unknown> | null;
+  /**
+   * Whether this change makes the last test result meaningless.
+   *
+   * A new credential always does, and is assumed to. A config change depends on what changed: a different
+   * model or endpoint is a different connection and must be proved again; choosing which zones to read is a
+   * scope decision that says nothing about whether the token works. The caller knows which it made.
+   */
+  resetStatus?: boolean;
 };
 
 export function upsertIntegration(db: Db, input: NewIntegration, nowMs: number): IntegrationView {
@@ -66,15 +74,13 @@ export function upsertIntegration(db: Db, input: NewIntegration, nowMs: number):
     // cannot silently clear it. With nothing to change at all, nothing is written.
     if (input.credentialCiphertext === undefined && input.config === undefined) return toView(existing);
 
+    const reset = input.resetStatus ?? input.credentialCiphertext !== undefined;
     const row = db
       .update(integrations)
       .set({
         ...(input.credentialCiphertext === undefined ? {} : { credentialCiphertext: input.credentialCiphertext }),
         ...(input.config === undefined ? {} : { config: input.config }),
-        // Changing either half makes the old test result say nothing about the connection as it is now:
-        // a new key, a new endpoint or a new model all need proving again.
-        status: 'untested',
-        lastError: null,
+        ...(reset ? { status: 'untested' as const, lastError: null } : {}),
       })
       .where(eq(integrations.id, existing.id))
       .returning()

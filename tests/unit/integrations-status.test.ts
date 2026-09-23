@@ -28,13 +28,15 @@ describe('the catalogue', () => {
     for (const id of INTEGRATIONS) expect(INTEGRATION_SPECS[id].id).toBe(id);
   });
 
-  it('THE RULING: an integration this build cannot complete says so instead of offering a link', () => {
+  it('THE RULING: an integration is only linked when this build can actually complete it', () => {
     const db = createTestDb();
-    const cloudflare = stateOf(db, 'cloudflare');
-    expect(INTEGRATION_SPECS.cloudflare.available).toBe(false);
-    expect(cloudflare?.state).toBe('unavailable');
-    // No href, so there is no button that cannot work.
-    expect(cloudflare?.href).toBeNull();
+    // Both directions: available means there is somewhere to land, unavailable means there is no link.
+    for (const id of INTEGRATIONS) {
+      const status = stateOf(db, id);
+      if (!INTEGRATION_SPECS[id].available) expect(status?.href, id).toBeNull();
+    }
+    expect(INTEGRATION_SPECS.cloudflare.available).toBe(true);
+    expect(stateOf(db, 'cloudflare')?.state).toBe('not_configured');
   });
 
   it('says where each credential lives, because disconnecting means two different things', () => {
@@ -75,6 +77,42 @@ describe('GitHub', () => {
     upsertRepository(db, { owner: 'acme', name: 'web', defaultBranch: 'main' }, NOW);
     upsertIntegration(db, { kind: 'github', name: 'github', credentialCiphertext: 'sealed' }, NOW);
     expect(stateOf(db, 'github')?.state).toBe('connected');
+  });
+});
+
+describe('Cloudflare', () => {
+  it('THE RULING: a verified token watching no zone is not connected', async () => {
+    const db = createTestDb();
+    const { saveCloudflareToken, testCloudflareConnection } = await import('@/lib/cloudflare/connection');
+    saveCloudflareToken(db, 'cf-token-0123456789abcdefghijklmnop', NOW);
+    const ok = (async () =>
+      new Response(JSON.stringify({ success: true, result: { status: 'active' } }), { status: 200 })) as unknown as typeof fetch;
+    await testCloudflareConnection(db, NOW, { fetch: ok });
+
+    // It reads nothing, so it is not connected. Saying otherwise would promise a page of data.
+    expect(stateOf(db, 'cloudflare')?.state).toBe('degraded');
+    expect(stateOf(db, 'cloudflare')?.detailKey).toBe('cloudflareNoZones');
+  });
+
+  it('is connected once a verified token has a zone to read', async () => {
+    const db = createTestDb();
+    const { saveCloudflareToken, saveCloudflareZones, testCloudflareConnection } = await import('@/lib/cloudflare/connection');
+    saveCloudflareToken(db, 'cf-token-0123456789abcdefghijklmnop', NOW);
+    const ok = (async () =>
+      new Response(JSON.stringify({ success: true, result: { status: 'active' } }), { status: 200 })) as unknown as typeof fetch;
+    await testCloudflareConnection(db, NOW, { fetch: ok });
+    saveCloudflareZones(db, [{ id: 'z1', name: 'example.com' }], NOW);
+
+    expect(stateOf(db, 'cloudflare')?.state).toBe('connected');
+    expect(stateOf(db, 'cloudflare')?.values.zones).toBe(1);
+  });
+
+  it('THE RULING: choosing zones never disturbs the stored token', async () => {
+    const db = createTestDb();
+    const { saveCloudflareToken, saveCloudflareZones, readCloudflareConnection } = await import('@/lib/cloudflare/connection');
+    saveCloudflareToken(db, 'cf-token-0123456789abcdefghijklmnop', NOW);
+    saveCloudflareZones(db, [{ id: 'z1', name: 'example.com' }], NOW);
+    expect(readCloudflareConnection(db)?.hasCredential).toBe(true);
   });
 });
 

@@ -39,9 +39,7 @@ export const INTEGRATION_SPECS: Record<IntegrationId, IntegrationSpec> = {
   aws: { id: 'aws', href: '/accounts', credentials: 'aws-connection', available: true },
   github: { id: 'github', href: '/settings/repositories', credentials: 'stored', available: true },
   ai: { id: 'ai', href: '/settings/ai', credentials: 'stored', available: true },
-  // Planned, and not connectable in this build: the card says so rather than offering a link that
-  // answers 404. `available` flips in the same change that adds the page, and the check enforces the pair.
-  cloudflare: { id: 'cloudflare', href: '/settings/cloudflare', credentials: 'stored', available: false },
+  cloudflare: { id: 'cloudflare', href: '/settings/cloudflare', credentials: 'stored', available: true },
   // Sign-in configuration belongs in the environment, not in a page: a login provider that could be
   // reconfigured from inside the application is a way to take the application over.
   google: { id: 'google', href: '/settings/status', credentials: 'env', available: true },
