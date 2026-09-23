@@ -76,8 +76,18 @@ problems that opened on the same service within half an hour, labelled as a **co
 gap**. `features.repository` flips only when a token has been verified *and* a repository is recorded:
 either alone reads nothing.
 
-What remains is the lines around a stack frame (REPO-5) and organisation or installation discovery, which
-needs a GitHub App. **`BLOCKED_EXTERNAL`: a token with `Contents: Read`.**
+A file link is now **pinned to the commit the error followed**, where one can be found: same service,
+before the error, inside §7's window, commits already fetched. A branch link points at whatever that branch
+says today, which for an error first seen three weeks ago is very likely not the code that produced it.
+Where no deployment is behind it the link stays on the branch and `refIsMoving` says so.
+
+What remains of REPO-5 is the lines *around* a frame, and that is blocked by a design decision rather than
+by a credential: §4.4's fingerprint deliberately discards stack line numbers, because a blank line added to
+a file would otherwise split an error group in two. Showing surrounding lines needs a number the fingerprint
+throws away on purpose. Recorded here rather than worked around.
+
+Organisation and installation discovery needs a GitHub App. **`BLOCKED_EXTERNAL`: a token with
+`Contents: Read`.**
 The transport itself is proven — the end-to-end suite reaches real GitHub and gets a real 401 for a
 fabricated token, so the request shape, the headers and the failure mapping are verified. What is unproven
 is what a *valid* token returns.
@@ -232,7 +242,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | REPO-2 | Repository storage | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | An operator can add, list and remove a repository with no credential at all |
 | REPO-3 | Service → repository mapping | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Offered on Error detail where the question arises, with the suggestion stated as a guess and never applied |
 | REPO-4 | Commits, metadata, diffs, files | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The deployments job enriches each rollout with the commits between it and the one before, and the files they changed. Surfaced on the deployment detail, served on `GET /deployments/{id}`. Live read needs a token (`BLOCKED_EXTERNAL`) |
-| REPO-5 | Line-level code evidence | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Frame → file link on Error detail. The lines *around* a frame need a GitHub token (external) |
+| REPO-5 | Line-level code evidence | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Frame → file link, **pinned to the commit the error followed** rather than to a moving branch. The lines *around* a frame need a stack line number, which §4.4's fingerprint deliberately discards — a design tension recorded here rather than worked around |
 | REPO-6 | Deterministic code correlation (§J) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Frame → repository path → link on Error detail, declining dependencies and unknown roots, and saying how many it placed |
 | REPO-7 | Proposed fix + patch preview (§L, §O) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Read-only against the customer repository |
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readCodeEvidence, splitFrame, type FrameEvidence } from '@/lib/read/code-evidence';
-import { recordError, upsertLogSource } from '@/lib/store/errors';
+import { recordDeploymentCommits } from '@/lib/store/deployment-commits';
+import { listDeployments, recordDeployments } from '@/lib/store/deployments';
+import { pageErrorGroups, recordError, upsertLogSource } from '@/lib/store/errors';
 import { setMapping, upsertRepository } from '@/lib/store/repositories';
 import { createTestDb } from '../helpers/db';
 
@@ -136,5 +138,127 @@ describe('§J — what the panel can and cannot place', () => {
     const evidence = readCodeEvidence(db, group);
     if (evidence.state !== 'mapped') throw new Error('expected mapped');
     expect(evidence.frames[0]?.path).toBe('services/pay/src/pay.ts');
+  });
+});
+
+/** A group on a mapped service, with one placeable frame. */
+const mappedGroup = (db: ReturnType<typeof createTestDb>, over: { firstSeenAt: number }) => {
+  const repository = upsertRepository(db, { owner: 'acme', name: 'web', defaultBranch: 'main' }, over.firstSeenAt);
+  setMapping(db, { ...env, serviceId: 'prod/web', repositoryId: repository.id, source: 'declared' }, over.firstSeenAt);
+  upsertLogSource(db, { ...env, logGroup: '/aws/ecs/web', serviceId: 'prod/web', enabled: true, format: 'json', fieldMap: {} });
+  return recordError(db, {
+    ...env,
+    logSourceId: 's1',
+    serviceId: 'prod/web',
+    fingerprint: 'a'.repeat(32),
+    fingerprintVersion: 1,
+    exceptionType: 'TypeError',
+    sampleMessage: 'boom',
+    normalizedMessage: 'boom',
+    topFrames: ['/app/src/pay.ts:charge'],
+    at: over.firstSeenAt,
+    count: 1,
+    instances: 1,
+  });
+};
+
+const group = (db: ReturnType<typeof createTestDb>) => pageErrorGroups(db, env, null, 5).items[0];
+
+describe('§13 — the reference a link points at', () => {
+  const DEPLOY = Date.UTC(2026, 8, 23, 11, 40, 0);
+  const FIRST_SEEN = DEPLOY + 12 * 60_000;
+
+  const shipped = (db: ReturnType<typeof createTestDb>, over: { serviceId?: string; startedAt?: number } = {}) => {
+    recordDeployments(
+      db,
+      { connectionId: 'c1', scope: 'us-east-1' },
+      [
+        {
+          deploymentId: 'ecs-svc/1',
+          serviceId: over.serviceId ?? 'prod/web',
+          serviceName: 'web',
+          cluster: 'prod',
+          taskDefinition: 'web:42',
+          status: 'completed',
+          startedAt: over.startedAt ?? DEPLOY,
+          updatedAt: (over.startedAt ?? DEPLOY) + 60_000,
+          desiredCount: 1,
+          runningCount: 1,
+          failedTasks: 0,
+        },
+      ],
+      FIRST_SEEN,
+    );
+    const stored = listDeployments(db, { connectionId: 'c1', scope: 'us-east-1' }, 5)[0];
+    recordDeploymentCommits(
+      db,
+      [{ deploymentId: stored.id, sha: 'cafe1234', repository: 'acme/web', message: 'Change', author: 'Ada', at: DEPLOY, files: [] }],
+      FIRST_SEEN,
+    );
+  };
+
+  it('THE RULING: an error that followed a deployment is pinned to that deployment’s commit', () => {
+    const db = createTestDb();
+    mappedGroup(db, { firstSeenAt: FIRST_SEEN });
+    shipped(db);
+
+    const evidence = readCodeEvidence(db, group(db));
+    expect(evidence.state).toBe('mapped');
+    if (evidence.state !== 'mapped') return;
+    // Immutable: the code that actually ran, rather than whatever the branch says today.
+    expect(evidence.frames[0].ref).toBe('cafe1234');
+    expect(evidence.frames[0].refIsMoving).toBe(false);
+    expect(evidence.frames[0].url).toContain('cafe1234');
+  });
+
+  it('THE RULING: with no deployment behind it the link is a branch, and says it may have moved', () => {
+    const db = createTestDb();
+    mappedGroup(db, { firstSeenAt: FIRST_SEEN });
+
+    const evidence = readCodeEvidence(db, group(db));
+    if (evidence.state !== 'mapped') throw new Error('expected mapped');
+    expect(evidence.frames[0].refIsMoving).toBe(true);
+    expect(evidence.frames[0].ref).toBe('main');
+  });
+
+  it('a deployment of another service is not this code, however close in time', () => {
+    const db = createTestDb();
+    mappedGroup(db, { firstSeenAt: FIRST_SEEN });
+    shipped(db, { serviceId: 'prod/worker' });
+
+    const evidence = readCodeEvidence(db, group(db));
+    if (evidence.state !== 'mapped') throw new Error('expected mapped');
+    expect(evidence.frames[0].refIsMoving).toBe(true);
+  });
+
+  it('a deployment that started after the error cannot have shipped it', () => {
+    const db = createTestDb();
+    mappedGroup(db, { firstSeenAt: FIRST_SEEN });
+    shipped(db, { startedAt: FIRST_SEEN + 60_000 });
+
+    const evidence = readCodeEvidence(db, group(db));
+    if (evidence.state !== 'mapped') throw new Error('expected mapped');
+    expect(evidence.frames[0].refIsMoving).toBe(true);
+  });
+
+  it('a deployment whose commits were never fetched leaves the link on the branch', () => {
+    const db = createTestDb();
+    mappedGroup(db, { firstSeenAt: FIRST_SEEN });
+    recordDeployments(
+      db,
+      { connectionId: 'c1', scope: 'us-east-1' },
+      [
+        {
+          deploymentId: 'ecs-svc/2', serviceId: 'prod/web', serviceName: 'web', cluster: 'prod',
+          taskDefinition: 'web:43', status: 'completed', startedAt: DEPLOY, updatedAt: DEPLOY,
+          desiredCount: 1, runningCount: 1, failedTasks: 0,
+        },
+      ],
+      FIRST_SEEN,
+    );
+    // Knowing a deployment happened is not knowing which commit it carried.
+    const evidence = readCodeEvidence(db, group(db));
+    if (evidence.state !== 'mapped') throw new Error('expected mapped');
+    expect(evidence.frames[0].refIsMoving).toBe(true);
   });
 });
