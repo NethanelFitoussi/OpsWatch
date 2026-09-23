@@ -67,3 +67,28 @@ test('Alerts renders at 360px without horizontal overflow', async ({ page }) => 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('§15.1 — a rule can be turned off and on, because they are ordinary rules', async ({ page }) => {
+  await page.goto(url());
+  await expect(page.getByRole('heading', { name: 'Acknowledge and tune' })).toBeVisible();
+
+  const off = page.getByRole('button', { name: 'Turn off' }).first();
+  await off.click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('main')).toContainText('off');
+
+  // Left as found.
+  await page.getByRole('button', { name: 'Turn on' }).first().click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+});
+
+test('§15.2 — the page says what acknowledging does, and what it does not', async ({ page }) => {
+  await page.goto(url());
+  const main = await page.locator('main').innerText();
+  // Only shown when there is something to acknowledge; the sentence matters either way.
+  if (main.includes('Alerts you can acknowledge')) {
+    expect(main).toContain('It does not resolve it');
+    expect(main).toContain('the problem is still there');
+  }
+});

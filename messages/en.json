@@ -1681,7 +1681,18 @@
       },
       "enabled": "on",
       "disabled": "off",
-      "cooldown": "{minutes} min cooldown"
+      "cooldown": "{minutes} min cooldown",
+      "manage": "Acknowledge and tune",
+      "acknowledgeTitle": "Alerts you can acknowledge",
+      "acknowledgeHint": "Acknowledging stops an alert announcing itself until it resolves and fires again. It does not resolve it — the problem is still there.",
+      "acknowledge": "Acknowledge",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "saved": "Saved.",
+      "errors": {
+        "not_found": "That is not in this environment.",
+        "already_acknowledged": "That alert was already acknowledged."
+      }
     }
   },
   "Insights": {
