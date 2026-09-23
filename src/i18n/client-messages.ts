@@ -20,6 +20,7 @@ export const CLIENT_NAMESPACES = [
   'Monitoring.synthetics',
   'Monitoring.objectives',
   'Monitoring.ask',
+  'Monitoring.diagnosis',
   'Monitoring.incidents',
   'Monitoring.alerts',
   'Settings',

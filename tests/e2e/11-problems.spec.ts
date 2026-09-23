@@ -185,3 +185,43 @@ test('§7 — a problem with no deployment near it shows no correlation card at 
   // would read as "nothing was deployed".
   expect(main).not.toContain('Deployments just before this started');
 });
+
+test('THE RULING: a problem answers what, how serious, for how long and where — in its first line', async ({ page }) => {
+  await page.goto(problemsUrl());
+  // The list itself, not every `li` on the page — the breadcrumb is one too.
+  const rows = page.locator('main a[href*="/overview/problems/"]');
+  // The moto estate may be healthy; when it is, the empty-state test above is the one that applies.
+  test.skip((await rows.count()) === 0, 'no problem in this environment to read');
+
+  const first = await rows.first().innerText();
+  // A short name for the kind, not the detector id and not the full sentence.
+  expect(first).not.toMatch(/^[a-z_]+$/);
+  // Severity, state and duration on the same line as the headline.
+  expect(first).toMatch(/Critical|Warning|Info/i);
+  expect(first).toMatch(/minute/i);
+});
+
+test('THE RULING: a problem detail says why OpsWatch opened it, and refuses to invent user impact', async ({ page }) => {
+  await page.goto(problemsUrl());
+  // The same selector the correlation test uses: a link into a problem, wherever the card puts it.
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  test.skip((await first.count()) === 0, 'no problem in this environment to read');
+
+  await first.click();
+  await expect(page).toHaveURL(/\/overview\/problems\/[0-9a-f]+$/);
+  const body = await page.locator('main').innerText();
+
+  // The three questions the page exists to answer, in the order it answers them.
+  expect(body).toContain('What this affected');
+  expect(body).toContain('Why OpsWatch opened this');
+  expect(body).toContain('What to check');
+
+  // Impact is established or explicitly not. Never implied.
+  expect(body).toMatch(/User impact not established|Measured against real traffic/);
+
+  // And the lifecycle that closes it, so "is it over?" has an answer.
+  expect(body).toContain('three consecutive readings that are clear');
+
+  // Nothing anywhere claims a cause.
+  expect(body).not.toMatch(/root cause|caused by/i);
+});

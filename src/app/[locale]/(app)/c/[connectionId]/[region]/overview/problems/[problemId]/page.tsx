@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { SectionLayout } from '@/components/monitoring/section-layout';
+import { ChecksPanel, ImpactPanel, WhyPanel } from '@/components/problems/diagnosis-panel';
 import { EvidenceList } from '@/components/problems/evidence-list';
 import { InvestigationTimeline } from '@/components/problems/investigation-timeline';
 import { ScoreBreakdown } from '@/components/problems/score-breakdown';
@@ -13,7 +14,9 @@ import { readInvestigation } from '@/lib/read/investigation';
 import { investigationLabels } from '@/lib/read/investigation-labels';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
+import { durationSince, familyOf, headlineKey } from '@/lib/monitoring/shared/duration';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
+import { readDiagnosis } from '@/lib/read/diagnosis';
 import { getProblem, problemIsStale } from '@/lib/read/problems';
 import { insightRenderer } from '@/lib/read/render';
 
@@ -21,11 +24,17 @@ type Props = { params: Promise<MonitoringParams & { problemId: string }> };
 
 export const generateMetadata = localizedTitle('Monitoring.problems.title');
 
+
 /**
  * One problem, and the argument for it.
  *
- * Everything here comes from the row the detector wrote: the evidence it read, and the arithmetic behind the
- * score. Nothing is recomputed, so the page cannot disagree with the engine.
+ * Ordered by the questions an operator actually asks, in the order they ask them: **what happened**, then
+ * **how bad**, then **why OpsWatch decided that**, then **what to look at**, and only then the evidence and
+ * the arithmetic for anybody who wants to check the working.
+ *
+ * Everything comes from rows the collector wrote. Nothing is recomputed, so the page cannot disagree with
+ * the engine — and nothing here says more than those rows support: the impact card's most common answer is
+ * that user impact was not established, which is true far more often than it is comfortable.
  */
 export default async function ProblemDetailPage({ params }: Props) {
   const resolved = await params;
@@ -44,7 +53,12 @@ export default async function ProblemDetailPage({ params }: Props) {
   if (found === null) notFound();
 
   const { detail, row } = found;
+  const diagnosis = readDiagnosis(db, row);
   const tSeverity = await getTranslations('Insights.severity');
+  const tHeadline = await getTranslations('Insights.headline');
+  const tFamily = await getTranslations('Insights.family');
+  const tDuration = await getTranslations('Insights.duration');
+  const duration = durationSince(detail.firstSeenAt, nowMs);
   const stale = problemIsStale(row, nowMs);
   const when = (at: number) => format.relativeTime(new Date(at), new Date(nowMs));
 
@@ -59,13 +73,18 @@ export default async function ProblemDetailPage({ params }: Props) {
         </Link>
       </p>
 
-      <MonitoringCard title={detail.title}>
-        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm">
+      <MonitoringCard title={tHeadline(headlineKey(detail.category))}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <SeverityBadge severity={detail.severity} label={tSeverity(detail.severity)} />
-          <span>{t(`status.${detail.status}`)}</span>
-          <span className="text-muted-foreground">{detail.category}</span>
-          {detail.resource && <span className="text-muted-foreground">{detail.resource}</span>}
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{t(`status.${detail.status}`)}</span>
+          <span className="text-muted-foreground">{tDuration(duration.unit, { value: duration.value })}</span>
         </div>
+        {/* The detector's own sentence, under the headline rather than as it. */}
+        <p className="mt-2 text-sm">{detail.title}</p>
+        {/* Where, in one line: the resource, what kind of thing it is, and which region. */}
+        <p className="mt-2 text-sm text-muted-foreground">
+          {[detail.resource, tFamily(familyOf(detail.category)), context.scope.region].filter(Boolean).join(' · ')}
+        </p>
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
           <div>
             <dt className="text-muted-foreground">{t('detail.firstSeen')}</dt>
@@ -91,6 +110,11 @@ export default async function ProblemDetailPage({ params }: Props) {
           </p>
         )}
       </MonitoringCard>
+
+      {/* How bad, why, and what to do — before the raw evidence, because that is the order of the questions. */}
+      <ImpactPanel impact={diagnosis.impact} />
+      <WhyPanel rule={diagnosis.rule} recovery={diagnosis.recovery} />
+      <ChecksPanel checks={diagnosis.checks} />
 
       <MonitoringCard title={t('detail.evidence')} description={t('detail.evidenceDescription')}>
         <EvidenceList evidence={detail.evidence} />
