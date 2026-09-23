@@ -15,6 +15,7 @@ import {
   findConnection,
   regenerateExternalId,
   setAccessKeys,
+  setNameAndRegions,
   setRoleArn,
   type ConnectionInputErrorCode,
 } from '@/lib/connections/repository';
@@ -89,6 +90,20 @@ export async function createConnectionAction(locale: string, _prev: FormState, f
           regions: values.regions,
         }),
     };
+  });
+}
+
+/**
+ * Renames a connection and changes the regions it reads.
+ *
+ * An edit, not a delete and a re-create: the connection keeps its id, so every problem, metric and log
+ * already filed under it stays where it is. What cannot be edited — the AWS account and the credential
+ * method — is not in the form, because changing either would keep that history while changing whose it is.
+ */
+export async function saveConnectionDetailsAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return mutateConnection(locale, () => {
+    const values = { name: formString(formData, 'name'), regions: formStrings(formData, 'regions') };
+    return { values, mutate: (db) => setNameAndRegions(db, id, values) };
   });
 }
 

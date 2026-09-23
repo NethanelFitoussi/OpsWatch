@@ -119,6 +119,33 @@ function update(db: Db, id: string, values: Partial<ConnectionRow>, now: Date): 
   return row;
 }
 
+/**
+ * Renames a connection and changes which regions it reads (UX-20).
+ *
+ * What an operator may change about a live connection, and what they may not. The name is a label, and
+ * the regions are a reading list — both are corrections a running installation needs, and neither changes
+ * what the connection *is*. The AWS account and the credential method are not here on purpose: every
+ * problem, metric and log already collected is filed under this connection, and re-pointing it at another
+ * account would keep that history while silently changing whose history it is. That one is a new
+ * connection, not an edit.
+ *
+ * Dropping a region stops OpsWatch reading it. Nothing collected is deleted, and adding the region back
+ * brings it into view again — which is why this writes no cascade.
+ */
+export function setNameAndRegions(
+  db: Db,
+  id: string,
+  input: { name: string; regions: string[] },
+  now: Date = new Date(),
+): ConnectionRow {
+  const name = parseOrThrow(nameSchema, input.name, 'name_invalid');
+  const regions = parseOrThrow(regionsSchema, input.regions, 'regions_invalid');
+  // No lookup first: `update` already answers `ConnectionNotFoundError` when there is no row, and a
+  // second read only widened the window in which the row could vanish between the two.
+  // The stored test result keeps the regions it covered; nothing here claims a region has been tested.
+  return update(db, id, { name, regions }, now);
+}
+
 export function setRoleArn(db: Db, id: string, roleArn: string, now: Date = new Date()): ConnectionRow {
   const row = getConnection(db, id);
   if (row.method !== 'role') {

@@ -94,7 +94,7 @@ test('ambient connection: detected identity and a passing test', async ({ page, 
 
 test('the connection headings are read without their step numbers', async ({ page }) => {
   await page.getByRole('link', { name: /Moto role/ }).first().click();
-  await expect(page).toHaveTitle('AWS account · OpsWatch');
+  await expect(page).toHaveTitle('Connection · OpsWatch');
   await expect(page.getByRole('heading', { level: 2, name: "OpsWatch's identity", exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Paste the role ARN', exact: true })).toBeVisible();
 });
@@ -127,4 +127,38 @@ test('the test API rejects foreign origins and missing sessions', async ({ playw
   const noSession = await anonymous.post('/api/connections/abc123def456/test', { headers: { origin: baseURL as string } });
   expect(noSession.status()).toBe(401);
   await anonymous.dispose();
+});
+
+test('THE RULING: a connection is edited, not deleted and re-made', async ({ page }) => {
+  const id = await createConnection(page, 'role', 'Before the rename');
+  await page.getByLabel('Role ARN').fill(`arn:aws:iam::${MOTO_ACCOUNT}:role/OpsWatchReadOnly-${id}`);
+  await page.getByRole('button', { name: 'Save role ARN' }).click();
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  // Rename it and give it a second region.
+  await page.getByLabel('Name').fill('After the rename');
+  await page.getByRole('checkbox', { name: 'eu-west-3' }).check();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  // Same connection: the URL never changed, so nothing filed under it was orphaned.
+  await expect(page).toHaveURL(new RegExp(`/accounts/${id}$`));
+  await expect(page.getByRole('heading', { level: 1, name: 'After the rename' })).toBeVisible();
+  // The passing test is still there — an edit is not a reset.
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible();
+  // …but it never looked at the new region, and the page says so rather than letting the badge imply it.
+  await expect(page.getByText('did not cover eu-west-3')).toBeVisible();
+
+  await page.goto('/en/accounts');
+  await expect(page.getByRole('listitem').filter({ hasText: 'After the rename' })).toContainText('us-east-1, eu-west-3');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Before the rename' })).toHaveCount(0);
+});
+
+test('the account and the credential method are not editable, because they are what the connection is', async ({ page }) => {
+  const id = await createConnection(page, 'role', 'Fixed identity');
+  await page.goto(`/en/accounts/${id}`);
+  const details = page.getByRole('listitem').filter({ hasText: 'Connection details' });
+  await expect(page.getByLabel('Name')).toBeVisible();
+  await expect(details.getByLabel('AWS account')).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: /account/i })).toHaveCount(0);
 });

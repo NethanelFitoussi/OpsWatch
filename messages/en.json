@@ -184,8 +184,8 @@
     }
   },
   "AccountDetail": {
-    "metaTitle": "AWS account",
-    "back": "All accounts",
+    "metaTitle": "Connection",
+    "back": "All connections",
     "accountLine": "Account {account} · {regions}",
     "role": {
       "identityTitle": "OpsWatch's identity",
@@ -229,6 +229,15 @@
       "title": "Remove this connection",
       "description": "OpsWatch forgets this account. Delete the CloudFormation stack in AWS to revoke access completely.",
       "delete": "Remove connection"
+    },
+    "details": {
+      "title": "Connection details",
+      "description": "What this connection is called, and which regions OpsWatch reads. The account and the credential method are what it is, and cannot be changed here.",
+      "name": "Name",
+      "regions": "Regions",
+      "regionsHint": "Removing a region stops OpsWatch reading it. Nothing already collected is deleted, and it comes back if you add the region again.",
+      "save": "Save changes",
+      "untested": "The last permission test did not cover {regions}. Run it again to find out what OpsWatch can read there."
     }
   },
   "Checklist": {
