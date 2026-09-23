@@ -209,6 +209,17 @@ export function occurrenceSeries(db: Db, groupId: string, sinceMs: number): { at
     .all();
 }
 
+/**
+ * Links a group to the problem opened for it, or clears the link when that problem is gone (ERR-9).
+ *
+ * Stored on the group rather than derived on read, so a client that lists errors can offer the way through
+ * to the problem without a second query per row — and so the link survives the problem resolving, which is
+ * exactly when somebody goes looking for what happened.
+ */
+export function setErrorProblem(db: Db, id: string, problemId: string | null): void {
+  db.update(errorGroups).set({ problemId }).where(eq(errorGroups.id, id)).run();
+}
+
 export function setErrorStatus(db: Db, id: string, status: ErrorGroupStatus, at: number, reason?: string): ErrorGroupRow {
   return db
     .update(errorGroups)

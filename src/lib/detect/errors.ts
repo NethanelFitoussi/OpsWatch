@@ -1,5 +1,5 @@
 import 'server-only';
-import type { DetectedProblem, SubjectRef } from './types';
+import type { DetectedProblem, SubjectOutcome, SubjectRef } from './types';
 
 /**
  * The error detectors of §4.4: the two cases where an error group is worth opening a *problem* for.
@@ -121,6 +121,27 @@ export function errorGroupSpike(facts: ErrorGroupFacts, nowMs: number): Detected
     // The deviation is expressed as a multiple of the baseline, which is what the score's D term reads.
     robustZ: baseline > 0 ? Math.min(6, facts.occurrences / baseline) : null,
   };
+}
+
+/** The kinds these detectors decide, so a caller never has to spell them out and drift from this file. */
+export const ERROR_KINDS = ['error_group_spike', 'error_group_new'] as const;
+
+/**
+ * §33.5's three outcomes for one group, which is what lets an error problem resolve rather than linger.
+ *
+ * A **muted** group is `not_evaluated`, not `clear`. Muting is "stop telling me about this", and reporting
+ * it as clear would state that the errors stopped — which nobody observed and which is very likely false.
+ * The problem stays exactly as it was until somebody unmutes it or the group genuinely resolves.
+ */
+export function errorOutcomes(facts: ErrorGroupFacts, nowMs: number): SubjectOutcome[] {
+  const subject = subjectOf(facts);
+  if (facts.status === 'muted') return ERROR_KINDS.map((kind) => ({ state: 'not_evaluated' as const, kind, subject }));
+
+  const fired = new Map(errorDetectors(facts, nowMs).map((problem) => [problem.kind, problem]));
+  return ERROR_KINDS.map((kind) => {
+    const problem = fired.get(kind);
+    return problem === undefined ? { state: 'clear' as const, kind, subject } : { state: 'fired' as const, kind, subject, problem };
+  });
 }
 
 /** Both detectors over one group, worst first. A group can be both new and spiking; both are worth saying. */
