@@ -26,9 +26,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 | Status | Count |
 |---|---|
 | `DONE` | 47 |
-| `PARTIAL` | 11 |
+| `PARTIAL` | 15 |
 | `FOUNDATION_ONLY` | 9 |
-| `NOT_STARTED` | 24 |
+| `NOT_STARTED` | 20 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -151,12 +151,12 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| REPO-1 | GitHub connection | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | No integrations table, no OAuth or PAT flow |
-| REPO-2 | Repository storage | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
-| REPO-3 | Service → repository mapping | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §I: explicit and correctable, not guesswork alone. No `services` table yet either |
+| REPO-1 | GitHub connection | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `integrations` table with a write-only encrypted credential. No settings UI yet, and live calls need a token (external) |
+| REPO-2 | Repository storage | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `repositories` table and store. No UI yet |
+| REPO-3 | Service → repository mapping | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `service_repositories` with a suggestion engine that never applies itself. No UI yet |
 | REPO-4 | Commits, metadata, diffs, files | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `commitSchema` exists |
 | REPO-5 | Line-level code evidence | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `repositoryEvidenceSchema` exists |
-| REPO-6 | Deterministic code correlation (§J) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Deterministic pipeline **before** any AI |
+| REPO-6 | Deterministic code correlation (§J) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | Stack frame → repository path → link, declining what it cannot place. Not yet surfaced on a problem |
 | REPO-7 | Proposed fix + patch preview (§L, §O) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Read-only against the customer repository |
 
 ## Alerts / Notifications
