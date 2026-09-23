@@ -1625,6 +1625,34 @@
         "invalid_threshold": "A threshold is a whole number of milliseconds.",
         "invalid_headers": "Each header goes on its own line, as \"Name: value\"."
       }
+    },
+    "alerts": {
+      "title": "Alerts",
+      "description": "Raised from the problems OpsWatch finds, by rules you can see and change.",
+      "inAppOnly": "Alerts stay inside this instance. OpsWatch sends no email, no Slack message and no webhook — installing it never surprises anybody’s inbox.",
+      "active": "Alerts",
+      "none": "No alert has been raised.",
+      "noneHint": "That is a measured statement: the collector has read this environment and nothing matched a rule.",
+      "waiting": "OpsWatch has not read this environment yet, so it cannot say whether anything would alert.",
+      "waitingHint": "That is not the same as nothing being wrong. The first collector cycle will tell you.",
+      "since": "since {when}",
+      "suppressed": "{count, plural, one {1 further fire suppressed by the cooldown} other {# further fires suppressed by the cooldown}}",
+      "status": {
+        "firing": "Firing",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved",
+        "insufficient_data": "No data"
+      },
+      "rules": "Rules",
+      "rulesDescription": "Created when OpsWatch first read this environment. They are ordinary rules — nothing is hidden.",
+      "rule": {
+        "critical_problems": "Any critical problem",
+        "synthetic_down": "A synthetic check goes down",
+        "certificate_expiring": "A certificate is expiring"
+      },
+      "enabled": "on",
+      "disabled": "off",
+      "cooldown": "{minutes} min cooldown"
     }
   },
   "Insights": {
@@ -1671,7 +1699,8 @@
       "insights": "Insights",
       "checkup": "Checkup",
       "incidents": "Incidents",
-      "synthetics": "Synthetics"
+      "synthetics": "Synthetics",
+      "alerts": "Alerts"
     },
     "containers": {
       "services": "Services",

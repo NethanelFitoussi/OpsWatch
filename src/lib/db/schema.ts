@@ -176,6 +176,78 @@ export const events = sqliteTable('events', {
   uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
 ]);
 
+export const ALERT_CONDITIONS = ['problem', 'synthetic'] as const;
+export const ALERT_CHANNELS = ['in_app'] as const;
+
+/**
+ * An alert rule (§15.1).
+ *
+ * `channels` is `in_app` and nothing else in this build. §15 is explicit that nothing leaves the instance
+ * until a notifier exists, so installing OpsWatch never surprises anybody's inbox — and the way to keep
+ * that promise is for there to be no other channel to choose.
+ */
+export const alertRules = sqliteTable(
+  'alert_rules',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    name: text('name').notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    condition: text('condition', { enum: ALERT_CONDITIONS }).notNull(),
+    minSeverity: text('min_severity', { enum: PROBLEM_SEVERITIES }).notNull().default('critical'),
+    /** Detector kinds this rule cares about; empty means every kind of the condition. */
+    kinds: text('kinds', { mode: 'json' }).$type<string[]>().notNull(),
+    channels: text('channels', { mode: 'json' }).$type<string[]>().notNull(),
+    cooldownSeconds: integer('cooldown_seconds').notNull().default(1800),
+    /** `auto` rules are created at install, visible and editable — never hidden (§15.1). */
+    origin: text('origin', { enum: ['auto', 'user'] as const }).notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('alert_rules_name').on(t.connectionId, t.scope, t.name)],
+);
+
+export const ALERT_STATUSES = ['firing', 'acknowledged', 'resolved'] as const;
+
+/**
+ * One alert (§15.2).
+ *
+ * `dedupeKey` is `ruleId | subject`, and one open alert exists per key — a second fire updates
+ * `lastFiredAt` rather than adding a row, which is what stops one flapping problem becoming forty alerts.
+ * `suppressedCount` records the fires that happened inside the cooldown, so the silence is **visible**
+ * rather than merely quiet.
+ */
+export const alerts = sqliteTable(
+  'alerts',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    ruleId: text('rule_id').notNull().references(() => alertRules.id, { onDelete: 'cascade' }),
+    dedupeKey: text('dedupe_key').notNull(),
+    problemId: text('problem_id'),
+    titleKey: text('title_key').notNull(),
+    values: text('values', { mode: 'json' }).$type<Record<string, string | number>>().notNull(),
+    severity: text('severity', { enum: PROBLEM_SEVERITIES }).notNull(),
+    status: text('status', { enum: ALERT_STATUSES }).notNull(),
+    firstFiredAt: integer('first_fired_at').notNull(),
+    lastFiredAt: integer('last_fired_at').notNull(),
+    /** Fires that happened inside the cooldown and sent nothing. Shown, so the quiet is accounted for. */
+    suppressedCount: integer('suppressed_count').notNull().default(0),
+    acknowledgedAt: integer('acknowledged_at'),
+    acknowledgedBy: text('acknowledged_by'),
+    resolvedAt: integer('resolved_at'),
+  },
+  (t) => [
+    uniqueIndex('alerts_open_dedupe').on(t.dedupeKey).where(sql`resolved_at is null`),
+    index('alerts_env_seq').on(t.connectionId, t.scope, t.seq),
+  ],
+);
+
+export type AlertRuleRow = typeof alertRules.$inferSelect;
+export type AlertRow = typeof alerts.$inferSelect;
+
 export const SYNTHETIC_METHODS = ['GET', 'HEAD', 'POST'] as const;
 
 /**

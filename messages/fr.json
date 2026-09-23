@@ -1625,6 +1625,34 @@
         "invalid_threshold": "Un seuil est un nombre entier de millisecondes.",
         "invalid_headers": "Chaque en-tête sur sa propre ligne, sous la forme « Nom : valeur »."
       }
+    },
+    "alerts": {
+      "title": "Alertes",
+      "description": "Déclenchées à partir des problèmes détectés, selon des règles visibles et modifiables.",
+      "inAppOnly": "Les alertes restent dans cette instance. OpsWatch n’envoie ni e-mail, ni message Slack, ni webhook : l’installer ne surprend la boîte de personne.",
+      "active": "Alertes",
+      "none": "Aucune alerte déclenchée.",
+      "noneHint": "C’est un constat mesuré : le collecteur a lu cet environnement et rien ne correspond à une règle.",
+      "waiting": "OpsWatch n’a pas encore lu cet environnement : il ne peut pas dire si quelque chose déclencherait une alerte.",
+      "waitingHint": "Ce n’est pas la même chose que l’absence de problème. Le premier cycle du collecteur vous le dira.",
+      "since": "depuis {when}",
+      "suppressed": "{count, plural, one {1 déclenchement supplémentaire supprimé par le délai de garde} other {# déclenchements supplémentaires supprimés par le délai de garde}}",
+      "status": {
+        "firing": "Active",
+        "acknowledged": "Acquittée",
+        "resolved": "Résolue",
+        "insufficient_data": "Sans données"
+      },
+      "rules": "Règles",
+      "rulesDescription": "Créées lors de la première lecture de cet environnement. Ce sont des règles ordinaires : rien n’est caché.",
+      "rule": {
+        "critical_problems": "Tout problème critique",
+        "synthetic_down": "Une vérification synthétique tombe",
+        "certificate_expiring": "Un certificat expire"
+      },
+      "enabled": "activée",
+      "disabled": "désactivée",
+      "cooldown": "délai de garde {minutes} min"
     }
   },
   "Insights": {
@@ -1671,7 +1699,8 @@
       "insights": "Analyses",
       "checkup": "Bilan",
       "incidents": "Incidents",
-      "synthetics": "Tests synthétiques"
+      "synthetics": "Tests synthétiques",
+      "alerts": "Alertes"
     },
     "containers": {
       "services": "Services",

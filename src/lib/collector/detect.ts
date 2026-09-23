@@ -9,6 +9,7 @@ import { INSIGHT_FAMILIES, loadFamily } from '../monitoring/overview';
 import { resolveTarget } from '../monitoring/target';
 import { recordFamilySnapshot } from '../store/health';
 import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
+import { runAlertCycle } from './alerts';
 import { runIncidentCycle } from './incidents';
 import { RESOLVED_RETENTION_MS } from '../store/retention';
 import type { JobOutcome } from './runner';
@@ -115,14 +116,15 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
 
   applyTransitions(input.db, { connectionId: input.connectionId, scope: input.scope }, transitions);
 
+  const liveNow = listLiveProblems(input.db, input.connectionId, input.scope).map(({ row }) => row);
+
+  // §15, on the same rows: an alert is a statement about what is live now, so it is decided here rather
+  // than by a job that would see a different set five minutes later.
+  runAlertCycle(input.db, { connectionId: input.connectionId, scope: input.scope }, liveNow, input.nowMs);
+
   // §16, on the rows this cycle just wrote. Evaluating it as a job of its own five minutes later would open
   // incidents for trouble that had already passed.
-  runIncidentCycle(
-    input.db,
-    { connectionId: input.connectionId, scope: input.scope },
-    listLiveProblems(input.db, input.connectionId, input.scope).map(({ row }) => row),
-    input.nowMs,
-  );
+  runIncidentCycle(input.db, { connectionId: input.connectionId, scope: input.scope }, liveNow, input.nowMs);
 
   return {
     // How much of the environment this cycle actually saw. A family that failed to load means it saw less
