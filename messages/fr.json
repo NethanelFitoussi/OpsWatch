@@ -1588,6 +1588,35 @@
         "investigating": "En investigation",
         "mitigated": "Atténué",
         "resolved": "Résolu"
+      },
+      "back": "Retour aux incidents",
+      "problems": "Problèmes de cet incident",
+      "noProblems": "Aucun problème rattaché à cet incident.",
+      "timeline": "Chronologie",
+      "timelineDescription": "Ce qu’OpsWatch a enregistré, dans l’ordre où cela s’est produit.",
+      "noTimeline": "Rien n’a encore été enregistré.",
+      "notes": "Notes",
+      "notesDescription": "Ce que les personnes ont écrit. Séparé de la chronologie : une note est la parole de quelqu’un, pas une observation d’OpsWatch.",
+      "noNotes": "Personne n’a ajouté de note.",
+      "byUser": "par l’utilisateur {id}",
+      "update": "Mettre à jour cet incident",
+      "setStatus": "Statut",
+      "addNote": "Ajouter une note",
+      "notePlaceholder": "Ce que vous avez trouvé, ou fait",
+      "add": "Ajouter",
+      "dismiss": "Écarter cet incident",
+      "dismissHint": "OpsWatch a ouvert celui-ci. L’écarter empêche aussi sa réouverture pour ce service pendant deux heures.",
+      "saved": "Enregistré.",
+      "stored": {
+        "investigating": "En investigation",
+        "identified": "Cause identifiée",
+        "monitoring": "Surveillance après correctif",
+        "resolved": "Résolu"
+      },
+      "errors": {
+        "not_found": "Cet incident n’est pas dans cet environnement.",
+        "invalid_status": "Choisissez un statut.",
+        "empty_note": "Une note a besoin de mots."
       }
     },
     "synthetics": {
