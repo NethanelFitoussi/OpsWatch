@@ -2,9 +2,11 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { SectionLayout } from '@/components/monitoring/section-layout';
 import { SeverityBadge } from '@/components/problems/severity-badge';
+import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { getDb } from '@/lib/db/client';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { incidentLabels } from '@/lib/read/incident-labels';
 import { listIncidentSummaries } from '@/lib/read/incidents';
@@ -48,7 +50,12 @@ export default async function IncidentsPage({ params }: Props) {
               <li key={incident.id} className="py-3">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <SeverityBadge severity={incident.severity} label={tSeverity(incident.severity)} />
-                  <span className="text-sm font-medium">{incident.title}</span>
+                  <Link
+                    href={subsectionPath(context.scope, 'overview', 'incidents', incident.id)}
+                    className="text-sm font-medium underline-offset-4 hover:underline"
+                  >
+                    {incident.title}
+                  </Link>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tracking-wide uppercase">
                     {t(`status.${incident.status}`)}
                   </span>

@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 55 |
-| `PARTIAL` | 18 |
+| `DONE` | 57 |
+| `PARTIAL` | 16 |
 | `FOUNDATION_ONLY` | 4 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -175,8 +175,8 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INC-1 | Incident storage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Tables, store, producer, `/api/v1/incidents`, and a page in the Overview menu |
-| INC-2 | Creation, lifecycle, resolution | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Creation and dismissal are real; the stored lifecycle maps onto the contract's. Changing status from the UI is not built |
-| INC-3 | Related problems, timeline, evidence | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Served on `/api/v1/incidents/{id}`; the list page shows summaries, and a detail page is not built |
+| INC-2 | Creation, lifecycle, resolution | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Raised automatically, moved along and dismissed from the detail page, every change audited |
+| INC-3 | Related problems, timeline, evidence | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Detail page with the problems it links, the timeline, and notes kept as a separate list |
 
 ## Synthetics
 

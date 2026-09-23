@@ -18,6 +18,7 @@ export const CLIENT_NAMESPACES = [
   'Monitoring.endpoints',
   'Monitoring.code',
   'Monitoring.synthetics',
+  'Monitoring.incidents',
   'Settings',
 ] as const;
 

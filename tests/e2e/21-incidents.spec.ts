@@ -62,3 +62,33 @@ test('Incidents renders at 360px without horizontal overflow', async ({ page }) 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('§16 — an incident can be opened, annotated and moved along', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'overview', 'incidents'));
+  const first = page.locator('main a[href*="/overview/incidents/"]').first();
+  if ((await first.count()) === 0) test.skip(true, 'no incident raised in this environment');
+
+  await first.click();
+  await expect(page).toHaveURL(/\/overview\/incidents\/[^/]+$/);
+
+  const main = await page.locator('main').innerText();
+  // Notes and the timeline are two lists, because a note is somebody's words and not an observation.
+  expect(main).toContain('Timeline');
+  expect(main).toContain('Notes');
+  expect(main).toContain('not something OpsWatch observed');
+
+  await page.getByLabel('Add a note').fill('Rolled back the deploy');
+  await page.getByRole('button', { name: 'Add' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+  await expect(page.locator('main')).toContainText('Rolled back the deploy');
+
+  await page.selectOption('#intent', 'monitoring');
+  await page.getByRole('button', { name: 'Update' }).first().click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+  await expect(page.locator('main')).toContainText('Mitigated');
+});
+
+test('an incident id from another environment is not found', async ({ page }) => {
+  const response = await page.goto(`${monitoringUrl(connectionId, 'overview', 'incidents')}/no-such-incident`);
+  expect(response?.status()).toBe(404);
+});

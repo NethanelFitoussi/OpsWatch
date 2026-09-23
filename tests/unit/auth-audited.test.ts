@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestDb } from '../helpers/db';
 
-const NOW = Date.UTC(2026, 8, 23, 12, 0, 0);
 
 let db: ReturnType<typeof createTestDb>;
 const requireAdmin = vi.fn(async () => 7);

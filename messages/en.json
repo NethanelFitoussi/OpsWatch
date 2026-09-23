@@ -1588,6 +1588,35 @@
         "investigating": "Investigating",
         "mitigated": "Mitigated",
         "resolved": "Resolved"
+      },
+      "back": "Back to incidents",
+      "problems": "Problems in this incident",
+      "noProblems": "No problem is attached to this incident.",
+      "timeline": "Timeline",
+      "timelineDescription": "What OpsWatch recorded, in the order it happened.",
+      "noTimeline": "Nothing has been recorded yet.",
+      "notes": "Notes",
+      "notesDescription": "What people wrote. Kept apart from the timeline, because a note is somebody’s words and not something OpsWatch observed.",
+      "noNotes": "Nobody has added a note.",
+      "byUser": "by user {id}",
+      "update": "Update this incident",
+      "setStatus": "Status",
+      "addNote": "Add a note",
+      "notePlaceholder": "What you found, or what you did",
+      "add": "Add",
+      "dismiss": "Dismiss this incident",
+      "dismissHint": "OpsWatch raised this one. Dismissing it also stops it being raised again for this service for two hours.",
+      "saved": "Saved.",
+      "stored": {
+        "investigating": "Investigating",
+        "identified": "Cause identified",
+        "monitoring": "Watching after a fix",
+        "resolved": "Resolved"
+      },
+      "errors": {
+        "not_found": "That incident is not in this environment.",
+        "invalid_status": "Choose a status.",
+        "empty_note": "A note needs some words."
       }
     },
     "synthetics": {
