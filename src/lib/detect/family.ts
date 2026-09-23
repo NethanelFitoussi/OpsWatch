@@ -35,3 +35,20 @@ export function familyOfKind(kind: string): ProblemFamily | null {
 export function kindsOfFamily(family: ProblemFamily): string[] {
   return Object.keys(FAMILY_OF).filter((kind) => FAMILY_OF[kind] === family);
 }
+
+/**
+ * How a family reads on Health: as bad as the worst **problem** it produced, or healthy with none.
+ *
+ * The problems rather than the raw insights that made them, because a problem's severity is the product's
+ * considered answer — the detector's level passed through §33.7's score — and the raw insight's is not.
+ * Reading the insight put "Critical · Something is seriously wrong" at the top of Health above a count
+ * that said "Critical problems: 0", for one warning-level alarm: two ladders, one fact, and a reader left
+ * to work out which of the two the product meant.
+ *
+ * `null` means nothing is wrong. The caller decides what that means, because "nothing wrong in a family
+ * that was read" and "nothing wrong in a family nobody could read" are different answers (§2.6).
+ */
+export function familyStatusOf(problems: readonly { severity: string }[]): 'critical' | 'degraded' | null {
+  if (problems.some((problem) => problem.severity === 'critical')) return 'critical';
+  return problems.length > 0 ? 'degraded' : null;
+}

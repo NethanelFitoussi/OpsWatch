@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { familyOfKind } from '@/lib/collector/detect';
+import { familyStatusOf } from '@/lib/detect/family';
 import { INSIGHT_FAMILIES, type InsightFamily } from '@/lib/monitoring/overview';
 import { applyTransitions, listLiveProblems, listRecentlyResolved, pageProblems, updateProblem } from '@/lib/store/problems';
 import { applyCycle, REOPEN_WINDOW_MS, CLEAR_EVALUATIONS, CLEAR_MIN_MS } from '@/lib/detect/lifecycle';
@@ -187,5 +188,20 @@ describe('which family answers for a detector', () => {
   it('answers null for a kind no family reads, so it is treated as not evaluated', () => {
     // A detector from a later phase whose family does not exist yet must never be counted as clear.
     expect(familyOfKind('synthetic_down')).toBeNull();
+  });
+});
+
+describe('how a family reads on Health (§2.6)', () => {
+  it('THE RULING: a warning-level problem never makes its family critical', () => {
+    // The bug this replaced: the alarms family read the raw insight, which is `critical` for any alarm in
+    // ALARM state, while the problem it produced scored `warning`. Health said "Critical · Something is
+    // seriously wrong" directly above "Critical problems: 0".
+    expect(familyStatusOf([{ severity: 'warning' }])).toBe('degraded');
+    expect(familyStatusOf([{ severity: 'info' }])).toBe('degraded');
+    expect(familyStatusOf([{ severity: 'warning' }, { severity: 'critical' }])).toBe('critical');
+  });
+
+  it('says nothing rather than "healthy", so the caller can tell a read family from an unread one', () => {
+    expect(familyStatusOf([])).toBeNull();
   });
 });
