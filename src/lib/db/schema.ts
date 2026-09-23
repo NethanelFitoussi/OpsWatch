@@ -176,6 +176,66 @@ export const events = sqliteTable('events', {
   uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
 ]);
 
+export const SYNTHETIC_METHODS = ['GET', 'HEAD', 'POST'] as const;
+
+/**
+ * A synthetic check an operator declared (§14).
+ *
+ * `secretHeaders` is encrypted, because a health endpoint's API key is exactly the sort of thing that ends
+ * up here. It is never returned by a read path and never rendered — the same treatment as an integration
+ * credential, for the same reason.
+ */
+export const syntheticChecks = sqliteTable(
+  'synthetic_checks',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    name: text('name').notNull(),
+    url: text('url').notNull(),
+    method: text('method', { enum: SYNTHETIC_METHODS }).notNull().default('GET'),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+    /** Assertions as declared, which `lib/detect/synthetic.ts` evaluates. */
+    assertions: text('assertions', { mode: 'json' }).$type<unknown[]>().notNull(),
+    /** Encrypted. A read path returns whether there are any, never what they are. */
+    secretHeadersCiphertext: text('secret_headers_ciphertext'),
+    /** Milliseconds; null means nobody set a latency expectation, so the check is never "slow". */
+    latencyThresholdMs: integer('latency_threshold_ms'),
+    intervalMinutes: integer('interval_minutes').notNull().default(5),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('synthetic_checks_name').on(t.connectionId, t.scope, t.name)],
+);
+
+/** One run of one check. Kept so §14's rules can read a history rather than a last value. */
+export const syntheticRuns = sqliteTable(
+  'synthetic_runs',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    checkId: text('check_id')
+      .notNull()
+      .references(() => syntheticChecks.id, { onDelete: 'cascade' }),
+    at: integer('at').notNull(),
+    ok: integer('ok', { mode: 'boolean' }).notNull(),
+    status: integer('status'),
+    /** Null when the run never got far enough to measure one, which is not the same as instant. */
+    totalMs: integer('total_ms'),
+    dnsMs: integer('dns_ms'),
+    tlsMs: integer('tls_ms'),
+    ttfbMs: integer('ttfb_ms'),
+    bodyBytes: integer('body_bytes'),
+    certificateExpiresAt: integer('certificate_expires_at'),
+    /** Why it failed, as a key rather than a sentence. Never the response body. */
+    failureReason: text('failure_reason'),
+    assertionResults: text('assertion_results', { mode: 'json' }).$type<unknown[]>().notNull(),
+  },
+  (t) => [index('synthetic_runs_check_at').on(t.checkId, t.at)],
+);
+
+export type SyntheticCheckRow = typeof syntheticChecks.$inferSelect;
+export type SyntheticRunRow = typeof syntheticRuns.$inferSelect;
+
 export const INTEGRATION_KINDS = ['github'] as const;
 export const INTEGRATION_STATUSES = ['configured', 'untested', 'failed'] as const;
 

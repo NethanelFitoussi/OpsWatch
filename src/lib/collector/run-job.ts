@@ -6,6 +6,7 @@ import { runDeploymentsJob } from './deployments-job';
 import { runDetectJob } from './detect';
 import { runErrorsJob } from './errors-job';
 import { runMetricsJob } from './metrics-job';
+import { runSyntheticsJob } from './synthetics-job';
 import type { JobRun } from './runner';
 
 /**
@@ -32,6 +33,9 @@ export const runJob: JobRun = async (job, nowMs) => {
       return runDeploymentsJob(scoped);
     case 'errors':
       return runErrorsJob({ ...scoped, budgetGbPerDay: env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY });
+    case 'synthetics':
+      // Nothing runs until an operator enables a check: the job finds none and reports it did nothing.
+      return runSyntheticsJob({ ...scoped, secret: env().OPSWATCH_SECRET });
     case 'metrics':
       // It checks the history switch itself and does nothing while history is off (§31.1).
       return runMetricsJob(scoped);
