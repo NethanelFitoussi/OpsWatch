@@ -9,6 +9,7 @@ import { INSIGHT_FAMILIES, loadFamily } from '../monitoring/overview';
 import { resolveTarget } from '../monitoring/target';
 import { recordFamilySnapshot } from '../store/health';
 import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
+import { runIncidentCycle } from './incidents';
 import { RESOLVED_RETENTION_MS } from '../store/retention';
 import type { JobOutcome } from './runner';
 
@@ -113,6 +114,16 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
   });
 
   applyTransitions(input.db, { connectionId: input.connectionId, scope: input.scope }, transitions);
+
+  // §16, on the rows this cycle just wrote. Evaluating it as a job of its own five minutes later would open
+  // incidents for trouble that had already passed.
+  runIncidentCycle(
+    input.db,
+    { connectionId: input.connectionId, scope: input.scope },
+    listLiveProblems(input.db, input.connectionId, input.scope).map(({ row }) => row),
+    input.nowMs,
+  );
+
   return {
     // How much of the environment this cycle actually saw. A family that failed to load means it saw less
     // than all of it, which System status shows rather than hides.

@@ -26,9 +26,9 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 | Status | Count |
 |---|---|
 | `DONE` | 50 |
-| `PARTIAL` | 13 |
-| `FOUNDATION_ONLY` | 8 |
-| `NOT_STARTED` | 20 |
+| `PARTIAL` | 16 |
+| `FOUNDATION_ONLY` | 7 |
+| `NOT_STARTED` | 18 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -174,9 +174,9 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| INC-1 | Incident storage | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ | `FOUNDATION_ONLY` | `incidents` + `incident_timeline` tables and a store exist; no job, route or page |
-| INC-2 | Creation, lifecycle, resolution | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
-| INC-3 | Related problems, timeline, evidence | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| INC-1 | Incident storage | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | `PARTIAL` | Tables, store and a producer. No route or page yet, so nothing is readable by a user |
+| INC-2 | Creation, lifecycle, resolution | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | `PARTIAL` | §16's two triggers, with dismissal suppressing for two hours. Status changes and resolution need a UI |
+| INC-3 | Related problems, timeline, evidence | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | `PARTIAL` | Problems attached and the timeline written, dated so it reads in the order things happened. Not yet surfaced |
 
 ## Synthetics
 

@@ -1813,5 +1813,15 @@
   },
   "Api": {
     "environmentName": "{connection} — {region}"
+  },
+  "Incidents": {
+    "title": {
+      "multiple_critical": "{problems} problèmes critiques sur {service}",
+      "sustained_critical": "Un problème critique persistant sur {service}"
+    },
+    "opened": {
+      "multiple_critical": "Ouvert automatiquement : {problems} problèmes critiques sur {service} en moins de quinze minutes.",
+      "sustained_critical": "Ouvert automatiquement : un problème critique sur {service}, que les utilisateurs atteignent, est ouvert depuis plus de quinze minutes."
+    }
   }
 }
