@@ -1765,6 +1765,47 @@
         "rolled_back": "Rolled back",
         "unknown": "Unknown"
       }
+    },
+    "ask": {
+      "title": "Ask OpsWatch",
+      "description": "A question about this environment, answered from what OpsWatch has already measured.",
+      "bands": "The answer is a hypothesis. It is built from evidence OpsWatch collected — problems, deployments, error groups, family health — and it is shown beside that evidence so you can check it rather than believe it.",
+      "notConfigured": "No AI provider is configured, so there is nothing to ask.",
+      "configure": "Configure one",
+      "question": "Your question",
+      "label": "Question",
+      "placeholder": "Why did checkout start failing this afternoon?",
+      "scope": "Only this environment, and only the last 24 hours of what OpsWatch recorded. Your question and that evidence are sent to the provider you configured; nothing else is.",
+      "ask": "Ask",
+      "disabled": "Connect an AI provider in Settings to ask a question. Every other page works without one.",
+      "hypothesis": "Hypothesis",
+      "hypothesisHint": "A guess from a model, not a measurement. OpsWatch does not know whether it is right.",
+      "builtFrom": "Built from",
+      "refs": {
+        "problem": "Problem",
+        "deployment": "Deployment",
+        "error": "Error group",
+        "service": "Service",
+        "incident": "Incident",
+        "infrastructure": "Resource",
+        "alert": "Alert",
+        "synthetic": "Check",
+        "log": "Log",
+        "slo": "Objective",
+        "repository": "Repository"
+      },
+      "by": "Answered by {model}",
+      "errors": {
+        "invalid_question": "Ask a question of up to 500 characters.",
+        "no_evidence": "OpsWatch has not read this environment yet, so there is nothing to answer from. The first collector cycle will change that.",
+        "not_configured": "No AI provider is configured.",
+        "unauthorized": "The provider refused the stored key. Check it in Settings.",
+        "rate_limited": "The provider is rate-limiting this key right now. Try again shortly.",
+        "unreachable": "The provider could not be reached.",
+        "refused_endpoint": "OpsWatch refused to call the configured address: it resolves inside your network.",
+        "bad_response": "The provider answered with something OpsWatch could not read.",
+        "timeout": "The provider did not answer in time."
+      }
     }
   },
   "Insights": {
@@ -1817,7 +1858,8 @@
       "checkup": "Checkup",
       "incidents": "Incidents",
       "synthetics": "Synthetics",
-      "alerts": "Alerts"
+      "alerts": "Alerts",
+      "ask": "Ask OpsWatch"
     },
     "containers": {
       "services": "Services",

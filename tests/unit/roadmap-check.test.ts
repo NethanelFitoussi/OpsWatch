@@ -21,7 +21,8 @@ describe('the checker actually looks at things', () => {
     const capabilities = notes.filter((note) => note.check === 'capabilities');
     // There are unimplemented capabilities today; a run that found none would mean the check stopped reading.
     expect(capabilities.length).toBeGreaterThan(0);
-    expect(capabilities.some((note) => note.detail.includes('ai'))).toBe(true);
+    // `logs` is served by the older non-v1 route, so v1 does not advertise it yet (LOG-5).
+    expect(capabilities.some((note) => note.detail.includes('logs'))).toBe(true);
   });
 
   it('reports contract schemas nothing serves, which is the roadmap’s own backlog', () => {

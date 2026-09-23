@@ -120,9 +120,11 @@ function checkCapabilities(): CheckResult {
       continue;
     }
     if (!implemented.get(feature)) continue;
-    // `environments` is served at /environments; the rest follow their own name.
-    const candidates = [join(API_V1, feature, 'route.ts'), join(API_V1, feature.replace(/s$/, ''), 'route.ts')];
-    if (!candidates.some((candidate) => existsSync(candidate))) {
+    // `environments` is served at /environments; the rest follow their own name. A feature may serve from
+    // a sub-path — `/ai/ask`, `/me/preferences` — so any route under its directory counts as serving it.
+    const roots = [join(API_V1, feature), join(API_V1, feature.replace(/s$/, ''))];
+    const served = roots.some((root) => walk(root).some((file) => file.endsWith(`route.ts`)));
+    if (!served) {
       failures.push({ check: 'capabilities', detail: `${feature} is advertised as implemented but has no /api/v1/${feature} route` });
     }
   }

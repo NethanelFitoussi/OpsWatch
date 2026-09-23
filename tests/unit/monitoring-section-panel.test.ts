@@ -28,6 +28,7 @@ describe('sectionLinks', () => {
       { subsection: 'synthetics', href: '/c/abc123def456/eu-west-1/overview/synthetics', comingSoon: false },
       { subsection: 'insights', href: '/c/abc123def456/eu-west-1/overview/insights', comingSoon: false },
       { subsection: 'checkup', href: '/c/abc123def456/eu-west-1/overview/checkup', comingSoon: false },
+      { subsection: 'ask', href: '/c/abc123def456/eu-west-1/overview/ask', comingSoon: false },
     ]);
   });
 
