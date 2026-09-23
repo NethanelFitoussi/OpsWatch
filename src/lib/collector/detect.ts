@@ -1,5 +1,5 @@
 import 'server-only';
-import { familyOfKind } from '../detect/family';
+import { familyOfKind, familyStatusOf } from '../detect/family';
 import { applyCycle } from '../detect/lifecycle';
 import { outcomesFromInsights, type EvaluatedPair } from '../detect/aws';
 import type { SubjectOutcome, SubjectRef } from '../detect/types';
@@ -29,12 +29,6 @@ import type { JobOutcome } from './runner';
 // the collector - and everything it drags in - to get it.
 export { familyOfKind };
 
-/** A family is as bad as its worst insight; with none, and having been read, it is healthy. */
-function severityOf(insights: readonly { severity: string }[]): 'critical' | 'degraded' | null {
-  if (insights.some((insight) => insight.severity === 'critical')) return 'critical';
-  return insights.length > 0 ? 'degraded' : null;
-}
-
 export type DetectJobInput = {
   db: Db;
   connectionId: string;
@@ -55,23 +49,6 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
   );
   const read = new Set(families.filter(({ result }) => result.ok).map(({ family }) => family));
   const insights = families.flatMap(({ result }) => (result.ok ? result.data.insights : []));
-
-  // What each family looked like, written down so Health can answer instantly and without AWS. A family that
-  // could not be read says so, rather than being recorded as healthy — §2's rule that the two never look alike.
-  for (const { family, result } of families) {
-    const worst = result.ok ? severityOf(result.data.insights) : null;
-    recordFamilySnapshot(input.db, {
-      connectionId: input.connectionId,
-      scope: input.scope,
-      family,
-      status: result.ok ? (worst ?? 'healthy') : 'unknown',
-      total: result.ok ? result.data.total : null,
-      affected: result.ok ? result.data.affected : null,
-      readAt: input.nowMs,
-      unavailableReason: result.ok ? null : result.reason,
-      unavailableCode: result.ok ? null : (result.code ?? null),
-    });
-  }
 
   const live = listLiveProblems(input.db, input.connectionId, input.scope);
 
@@ -117,6 +94,25 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
   applyTransitions(input.db, { connectionId: input.connectionId, scope: input.scope }, transitions);
 
   const liveNow = listLiveProblems(input.db, input.connectionId, input.scope).map(({ row }) => row);
+
+  // What each family looked like, written down so Health can answer instantly and without AWS. Written
+  // *after* the cycle, because the severities that belong on Health are the ones the problems ended up
+  // with. A family that could not be read says so, rather than being recorded as healthy — §2's rule that
+  // the two never look alike.
+  for (const { family, result } of families) {
+    const worst = result.ok ? familyStatusOf(liveNow.filter((row) => familyOfKind(row.kind) === family)) : null;
+    recordFamilySnapshot(input.db, {
+      connectionId: input.connectionId,
+      scope: input.scope,
+      family,
+      status: result.ok ? (worst ?? 'healthy') : 'unknown',
+      total: result.ok ? result.data.total : null,
+      affected: result.ok ? result.data.affected : null,
+      readAt: input.nowMs,
+      unavailableReason: result.ok ? null : result.reason,
+      unavailableCode: result.ok ? null : (result.code ?? null),
+    });
+  }
 
   // §15, on the same rows: an alert is a statement about what is live now, so it is decided here rather
   // than by a job that would see a different set five minutes later.
