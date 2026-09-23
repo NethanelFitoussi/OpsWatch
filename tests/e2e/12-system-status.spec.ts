@@ -46,3 +46,31 @@ test('System status redirects an unauthenticated visitor to login', async ({ pag
   await page.goto('/en/settings/status');
   await expect(page).toHaveURL(/\/en\/login$/);
 });
+
+test('§12 — preferences belong to the user, and an update is partial', async ({ page }) => {
+  await login(page);
+
+  // A user who has set none gets the defaults rather than an empty object.
+  const initial = await page.request.get('/api/v1/me/preferences').then((r) => r.json());
+  expect(initial.notifications.minSeverity).toBe('critical');
+  expect(initial.notifications.categories.length).toBeGreaterThan(0);
+
+  await page.request.post('/api/v1/me/preferences', { data: { locale: 'fr', defaultEnvironmentId: 'c1:us-east-1' } });
+  // Sending only the notifications must not erase what was set before.
+  const patched = await page.request
+    .post('/api/v1/me/preferences', { data: { notifications: { minSeverity: 'warning', categories: ['alert'] } } })
+    .then((r) => r.json());
+
+  expect(patched).toMatchObject({ locale: 'fr', defaultEnvironmentId: 'c1:us-east-1' });
+  expect(patched.notifications).toEqual({ minSeverity: 'warning', categories: ['alert'] });
+
+  // Left as found, so later specs see the account they expect.
+  await page.request.post('/api/v1/me/preferences', {
+    data: { locale: null, defaultEnvironmentId: null, notifications: { minSeverity: 'critical', categories: ['critical_problem', 'alert', 'synthetic_failure', 'incident', 'recovery'] } },
+  });
+});
+
+test('preferences need a session', async ({ request }) => {
+  expect((await request.get('/api/v1/me/preferences')).status()).toBe(401);
+  expect((await request.post('/api/v1/me/preferences', { data: {} })).status()).toBe(401);
+});
