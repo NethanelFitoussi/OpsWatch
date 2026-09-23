@@ -25,10 +25,10 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 52 |
-| `PARTIAL` | 16 |
-| `FOUNDATION_ONLY` | 6 |
-| `NOT_STARTED` | 16 |
+| `DONE` | 54 |
+| `PARTIAL` | 17 |
+| `FOUNDATION_ONLY` | 5 |
+| `NOT_STARTED` | 14 |
 | `BLOCKED_EXTERNAL` | 4 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **97** |
@@ -163,12 +163,12 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ALE-1 | Alert model and rules | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `alertSummary`/`alertDetail` exist; mobile renders them; nothing produces one |
-| ALE-2 | Alert lifecycle, acknowledge | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| ALE-1 | Alert model and rules | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Rules and alerts, §15.1's install set created visibly, `/api/v1/alerts` and a page |
+| ALE-2 | Alert lifecycle, acknowledge | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Fire, suppress, refire and resolve are real; acknowledging from the UI is not wired |
 | ALE-3 | Notification preferences | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Contract + mobile UI; no server storage |
-| ALE-4 | Delivery (email / Slack / webhook) | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| ALE-4 | Delivery (email / Slack / webhook) | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | Deliberately last: §15 promises nothing leaves the instance until a notifier exists, and email needs a new runtime dependency |
 | ALE-5 | Push notifications | ✗ | ✗ | ✓ | · | ✓ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs an EAS project and APNs/FCM credentials |
-| ALE-6 | Deduplication / noise control | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| ALE-6 | Deduplication / noise control | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | One alert per rule and subject, a 30-minute cooldown, and the suppressed count shown so the quiet is visible |
 
 ## Incidents
 

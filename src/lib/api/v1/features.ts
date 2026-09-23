@@ -22,7 +22,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   services: false,
   infrastructure: false,
   logs: false,
-  alerts: false,
+  // GET /alerts serves the rows the detect cycle raises (§15). In-app only: nothing leaves the instance.
+  alerts: true,
   // GET /incidents and /incidents/{id} serve the rows the detect cycle opens (§16).
   incidents: true,
   synthetics: false,

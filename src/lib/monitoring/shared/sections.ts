@@ -5,7 +5,7 @@ import type { MonitoringSection } from './paths';
  * These segments are URL vocabulary and are never translated; `Sections.<section>.<segment>` holds their labels.
  */
 export const SUBSECTIONS = {
-  overview: ['brief', 'health', 'problems', 'incidents', 'synthetics', 'insights', 'checkup'],
+  overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup'],
   errors: ['groups', 'sources'],
   containers: ['services', 'report'],
   databases: ['instances', 'queries', 'report'],
@@ -61,6 +61,7 @@ export const SUBSECTION_ICONS: Record<
   checkup: 'audit',
   incidents: 'problems',
   synthetics: 'health',
+  alerts: 'problems',
   services: 'list',
   instances: 'list',
   list: 'list',

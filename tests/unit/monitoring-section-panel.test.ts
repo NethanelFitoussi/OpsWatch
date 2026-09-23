@@ -23,6 +23,7 @@ describe('sectionLinks', () => {
       { subsection: 'brief', href: '/c/abc123def456/eu-west-1/overview/brief', comingSoon: false },
       { subsection: 'health', href: '/c/abc123def456/eu-west-1/overview/health', comingSoon: false },
       { subsection: 'problems', href: '/c/abc123def456/eu-west-1/overview/problems', comingSoon: false },
+      { subsection: 'alerts', href: '/c/abc123def456/eu-west-1/overview/alerts', comingSoon: false },
       { subsection: 'incidents', href: '/c/abc123def456/eu-west-1/overview/incidents', comingSoon: false },
       { subsection: 'synthetics', href: '/c/abc123def456/eu-west-1/overview/synthetics', comingSoon: false },
       { subsection: 'insights', href: '/c/abc123def456/eu-west-1/overview/insights', comingSoon: false },
