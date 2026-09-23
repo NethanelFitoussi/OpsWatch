@@ -18,6 +18,7 @@ export const generateMetadata = localizedTitle('Settings.title');
 const MORE_SETTINGS = [
   { key: 'history', href: '/settings/history' },
   { key: 'repositories', href: '/settings/repositories' },
+  { key: 'audit', href: '/settings/audit' },
   { key: 'status', href: '/settings/status' },
 ] as const;
 

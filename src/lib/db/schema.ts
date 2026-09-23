@@ -196,6 +196,41 @@ export const userPreferences = sqliteTable('user_preferences', {
 
 export type UserPreferencesRow = typeof userPreferences.$inferSelect;
 
+export const AUDIT_ACTOR_KINDS = ['user', 'system'] as const;
+export const AUDIT_RESULTS = ['ok', 'denied', 'failed'] as const;
+
+/**
+ * The administrative audit log (§21).
+ *
+ * **Append-only.** No code path updates or deletes a row — not even the retention purge, which writes its
+ * own entry rather than quietly removing others. A log somebody can edit is not evidence, and the only way
+ * to be sure of that is for there to be no update or delete statement against this table anywhere.
+ *
+ * `userAgentHash` rather than the user agent: enough to tell two devices apart, not enough to fingerprint
+ * one. The `details` blob never carries a credential, a token or the content of an AI question.
+ */
+export const auditLog = sqliteTable(
+  'audit_log',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    at: integer('at').notNull(),
+    /** Null for `system`, which is what a collector or a scheduled purge acts as. */
+    actorUserId: integer('actor_user_id'),
+    actorKind: text('actor_kind', { enum: AUDIT_ACTOR_KINDS }).notNull(),
+    action: text('action').notNull(),
+    subjectType: text('subject_type'),
+    subjectId: text('subject_id'),
+    result: text('result', { enum: AUDIT_RESULTS }).notNull(),
+    ip: text('ip'),
+    userAgentHash: text('user_agent_hash'),
+    details: text('details', { mode: 'json' }).$type<Record<string, string | number | boolean>>().notNull(),
+  },
+  (t) => [index('audit_log_at').on(t.at), index('audit_log_action').on(t.action, t.at)],
+);
+
+export type AuditLogRow = typeof auditLog.$inferSelect;
+
 export const ALERT_CONDITIONS = ['problem', 'synthetic'] as const;
 export const ALERT_CHANNELS = ['in_app'] as const;
 
