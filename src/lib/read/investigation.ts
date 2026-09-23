@@ -13,7 +13,10 @@ import {
   type Correlation,
   type Fact,
 } from '../detect/investigation';
+import { bucketOf, robustZ } from '../detect/baseline';
+import { readBaseline } from '../store/baselines';
 import { listEvents } from '../store/events';
+import { readHistoryRange } from '../store/history';
 
 /**
  * A problem's investigation timeline, in §7's three bands (INV-1, INV-3).
@@ -26,6 +29,9 @@ import { listEvents } from '../store/events';
 
 /** How far either side of the problem's start to gather facts from. */
 const TIMELINE_WINDOW_MS = DEPLOYMENT_WINDOW_MS;
+/** One rollup interval either side, so a problem opening on a boundary still finds the reading. */
+const TRAFFIC_INTERVAL_MS = 5 * 60_000;
+
 /** A bound, so an environment with a noisy hour cannot produce an unbounded timeline. */
 export const TIMELINE_FACT_LIMIT = 100;
 
@@ -130,6 +136,7 @@ export function readInvestigation(db: Db, problem: ProblemRow, labels: Investiga
       // March is not called noise today.
       reopensInWindow: countReopens(db, problem, nowMs),
       serviceId: problem.serviceId,
+      trafficRobustZ: trafficDeviation(db, problem),
     },
     facts,
     correlations,
@@ -151,4 +158,35 @@ export function readInvestigation(db: Db, problem: ProblemRow, labels: Investiga
   ];
 
   return { timeline, notEvaluated: NOT_EVALUATED };
+}
+
+/**
+ * How unusual the traffic was when the problem opened, or null when that cannot be said (§8).
+ *
+ * Three things have to be true: the service has request rollups, the interval the problem opened in was
+ * measured, and §8 has a baseline for that hour of the week. Any one missing and the answer is `null` — not
+ * a zero, which would read as "traffic was normal" and let §7 rule out an explanation it never tested.
+ *
+ * The subject is the problem's own service. Traffic elsewhere in the account surging at the same moment is
+ * not a fact about this problem, and treating it as one is how a correlation engine becomes a horoscope.
+ */
+function trafficDeviation(db: Db, problem: ProblemRow): number | null {
+  if (problem.serviceId === null) return null;
+  const key = { connectionId: problem.connectionId, scope: problem.scope, subjectId: problem.serviceId, metric: 'requests' };
+
+  const baseline = readBaseline(db, key, bucketOf(problem.firstSeenAt));
+  if (baseline === null) return null;
+
+  // The interval the problem opened in, from the same rollups the baseline was computed from.
+  const points = readHistoryRange(
+    db,
+    { category: 'metric', ...key, resolution: '5m' },
+    problem.firstSeenAt - TRAFFIC_INTERVAL_MS,
+    problem.firstSeenAt + TRAFFIC_INTERVAL_MS,
+  );
+  const measured = points.filter((point) => point.value !== null);
+  const value = measured[measured.length - 1]?.value;
+  if (value === undefined || value === null) return null;
+
+  return robustZ(value, baseline);
 }

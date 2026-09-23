@@ -1540,12 +1540,14 @@
       "hypothesis": {
         "deploy_regression": "A recent deployment may have introduced this",
         "capacity_shortfall": "There may not be enough capacity for the current load",
-        "noise": "This problem may be flapping because the detector is too sensitive"
+        "noise": "This problem may be flapping because the detector is too sensitive",
+        "traffic_surge": "Traffic was far above normal for this hour of the week"
       },
       "confirm": {
         "deploy_regression.confirm": "Compare the deployed revision with the one before it, and check whether rolling back stops the errors.",
         "capacity_shortfall.confirm": "Check desired against running counts, and whether raising the desired count clears it.",
-        "noise.confirm": "Look at how often this has opened and closed. If nothing else changed, the threshold is probably too tight."
+        "noise.confirm": "Look at how often this has opened and closed. If nothing else changed, the threshold is probably too tight.",
+        "traffic_surge.confirm": "Compare the request count with the same hour on previous weeks, and check whether the problem clears as traffic falls back."
       }
     },
     "code": {

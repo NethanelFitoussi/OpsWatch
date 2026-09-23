@@ -858,3 +858,33 @@ export const installRuleOffers = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.connectionId, t.scope, t.name] })],
 );
+
+/**
+ * §8's baselines: what one series normally reads at one hour of the week.
+ *
+ * One row per `(environment, subject, metric, bucket)`, recomputed by the `baselines` job from the rollups
+ * already stored. Nothing here is a measurement of now — it is a summary of the past, kept so that
+ * "is this unusual?" can be answered without re-reading weeks of history on every page load.
+ *
+ * `mad` may legitimately be zero, for a series that is always the same. That is why it is a column rather
+ * than an absence: the arithmetic distinguishes "no spread" from "no baseline", and so must the storage.
+ */
+export const metricBaselines = sqliteTable(
+  'metric_baselines',
+  {
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    subjectId: text('subject_id').notNull(),
+    metric: text('metric').notNull(),
+    /** Hour of the week in UTC, 0–167. */
+    bucket: integer('bucket').notNull(),
+    median: real('median').notNull(),
+    mad: real('mad').notNull(),
+    /** How many observations it was computed from, so a thin baseline can be shown as thin. */
+    samples: integer('samples').notNull(),
+    computedAt: integer('computed_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.connectionId, t.scope, t.subjectId, t.metric, t.bucket] })],
+);
+
+export type MetricBaselineRow = typeof metricBaselines.$inferSelect;

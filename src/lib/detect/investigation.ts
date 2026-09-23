@@ -12,6 +12,8 @@
  * Pure, so the whole catalogue can be run against fixtures. Nothing here reads a clock, a database or AWS.
  */
 
+import { ANOMALY_Z } from './baseline';
+
 /** §7's window for a correlation: two facts closer than this are worth putting side by side. */
 export const CORRELATION_WINDOW_MS = 15 * 60_000;
 /** §5's wider window for a deployment, which still counts but carries less weight. */
@@ -118,12 +120,16 @@ export function correlationsFor(anchor: Fact, facts: readonly Fact[], windowMs =
 /**
  * §7's catalogue, restricted to the entries this build can actually evaluate.
  *
- * The others — `traffic_surge`, `query_regression`, `upstream_edge`, `certificate_or_dns`,
- * `dependency_saturation` — need baselines, Performance Insights digests, Cloudflare or synthetics, none of
- * which is collected. They are listed in `NOT_EVALUATED` rather than quietly omitted, so a reader can see
- * the catalogue was not fully run. Same rule as Checkup, for the same reason.
+ * The others — `query_regression`, `upstream_edge`, `certificate_or_dns`, `dependency_saturation` — need
+ * Performance Insights digests, Cloudflare or a dependency map, none of which is collected. They are listed
+ * in `NOT_EVALUATED` rather than quietly omitted, so a reader can see the catalogue was not fully run. Same
+ * rule as Checkup, for the same reason.
+ *
+ * `traffic_surge` left this list when §8's baselines arrived: it is evaluated when a baseline exists for the
+ * service's request count, and **only then**. Without one it is not "no surge" — it is not evaluated, which
+ * is why the caller passes `null` rather than a zero.
  */
-export const NOT_EVALUATED = ['dependency_saturation', 'traffic_surge', 'query_regression', 'upstream_edge', 'certificate_or_dns'] as const;
+export const NOT_EVALUATED = ['dependency_saturation', 'query_regression', 'upstream_edge', 'certificate_or_dns'] as const;
 
 export type ProblemContext = {
   kind: string;
@@ -137,6 +143,14 @@ export type ProblemContext = {
    */
   reopensInWindow: number;
   serviceId: string | null;
+  /**
+   * How far above its baseline the service's traffic was when the problem opened, in robust standard
+   * deviations (§8).
+   *
+   * **`null` means not evaluated, never "no surge."** No baseline, no request rollups, or a series with no
+   * spread all give null, and a hypothesis must not be withheld as though it had been tested and rejected.
+   */
+  trafficRobustZ: number | null;
 };
 
 export function hypothesesFor(problem: ProblemContext, facts: readonly Fact[], correlations: readonly Correlation[]): Hypothesis[] {
@@ -164,6 +178,19 @@ export function hypothesesFor(problem: ProblemContext, facts: readonly Fact[], c
   const capacityKinds = ['ecs_tasks_below_desired', 'alb_unhealthy_hosts'];
   if (capacityKinds.includes(problem.kind) && deployments.length === 0) {
     found.push({ id: 'capacity_shortfall', confidence: 'high', supporting: [], confirmedBy: 'capacity_shortfall.confirm' });
+  }
+
+  // §7's `traffic_surge`: the service was doing far more than it normally does for this hour of the week.
+  // Stated as a correlation and nothing more — a surge and a problem at once is an observation, and load
+  // being the cause is a reading of it that only the operator can make. `high` when a deployment does not
+  // also explain it, because two explanations at equal confidence help nobody choose.
+  if (problem.trafficRobustZ !== null && problem.trafficRobustZ >= ANOMALY_Z) {
+    found.push({
+      id: 'traffic_surge',
+      confidence: deployments.length === 0 ? 'high' : 'medium',
+      supporting: [],
+      confirmedBy: 'traffic_surge.confirm',
+    });
   }
 
   // §5's `noise`: it proposes tuning the detector rather than looking at the estate.

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { TIMELINE_FACT_LIMIT, readInvestigation, type InvestigationLabels } from '@/lib/read/investigation';
+import { bucketOf } from '@/lib/detect/baseline';
+import { opswatchDbProvider } from '@/lib/history/opswatch-db';
+import { writeBaselines } from '@/lib/store/baselines';
 import { appendEvent } from '@/lib/store/events';
 import { insertProblem } from '@/lib/store/problems';
 import { createTestDb } from '../helpers/db';
@@ -125,5 +128,70 @@ describe('§7 — the three bands reach the wire as three kinds', () => {
     seedEvent(db, 'deployment_started', NOW - 5 * MINUTE, { connectionId: 'other', payload: { taskDefinition: 'x' } });
     const { timeline } = readInvestigation(db, seedProblem(db), labels, NOW);
     expect(timeline.filter((item) => item.kind === 'fact')).toEqual([]);
+  });
+});
+
+
+describe('§8 — traffic_surge, from a stored baseline', () => {
+  const STEP = 5 * 60_000;
+  const key = { ...env, subjectId: 'prod/web', metric: 'requests' };
+
+  /** A baseline for the hour the problem opens in, and the reading it opened at. */
+  const seedTraffic = async (db: ReturnType<typeof createTestDb>, mad: number, value: number | null) => {
+    writeBaselines(db, key, new Map([[bucketOf(NOW), { median: 100, mad, samples: 40 }]]), NOW);
+    if (value === null) return;
+    await opswatchDbProvider(db).write(
+      [{
+        category: 'metric' as const, ...key, ...env,
+        intervalStart: Math.floor(NOW / STEP) * STEP,
+        resolution: '5m' as const, value, samples: 1,
+      }],
+      NOW,
+    );
+  };
+
+  const hypotheses = (db: ReturnType<typeof createTestDb>, problem: ReturnType<typeof seedProblem>) =>
+    readInvestigation(db, problem, labels, NOW).timeline.filter((one) => one.kind === 'hypothesis').map((one) => one.type);
+
+  it('THE RULING: a surge above §8’s threshold becomes a hypothesis', async () => {
+    const db = createTestDb();
+    const problem = seedProblem(db);
+    await seedTraffic(db, 10, 1000);
+    expect(hypotheses(db, problem)).toContain('traffic_surge');
+  });
+
+  it('THE RULING: ordinary traffic does not, and nor does no baseline at all', async () => {
+    const quiet = createTestDb();
+    const one = seedProblem(quiet);
+    await seedTraffic(quiet, 10, 105);
+    expect(hypotheses(quiet, one)).not.toContain('traffic_surge');
+
+    // No baseline: the question was never asked, which must look the same as it does here and mean
+    // something different — hence `notEvaluated` staying honest about the rest of the catalogue.
+    const blank = createTestDb();
+    const two = seedProblem(blank);
+    expect(hypotheses(blank, two)).not.toContain('traffic_surge');
+  });
+
+  it('THE RULING: a baseline with no spread says nothing rather than calling everything a surge', async () => {
+    const db = createTestDb();
+    const problem = seedProblem(db);
+    // A series that has been exactly 100 for a month. Every arithmetic answer is zero or infinity.
+    await seedTraffic(db, 0, 100_000);
+    expect(hypotheses(db, problem)).not.toContain('traffic_surge');
+  });
+
+  it('a baseline with no reading to compare against says nothing', async () => {
+    const db = createTestDb();
+    const problem = seedProblem(db);
+    await seedTraffic(db, 10, null);
+    expect(hypotheses(db, problem)).not.toContain('traffic_surge');
+  });
+
+  it('a problem with no service is compared with nothing, rather than with the account', async () => {
+    const db = createTestDb();
+    const problem = seedProblem(db, { serviceId: null, subjectId: 'prod/web' });
+    await seedTraffic(db, 10, 1000);
+    expect(hypotheses(db, problem)).not.toContain('traffic_surge');
   });
 });

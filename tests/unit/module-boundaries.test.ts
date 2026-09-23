@@ -78,6 +78,8 @@ const SERVER_ONLY_MODULES = [
   'lib/collector/run-job.ts',
   'lib/collector/detect.ts',
   'lib/collector/errors-job.ts',
+  'lib/collector/baselines-job.ts',
+  'lib/store/baselines.ts',
   'lib/detect/errors.ts',
   'lib/detect/log-parse.ts',
   'lib/store/logs-budget.ts',
