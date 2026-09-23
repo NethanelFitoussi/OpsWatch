@@ -273,7 +273,7 @@
     "failedRequest": "Le test n'a pas pu être lancé. Réessayez."
   },
   "GettingStarted": {
-    "metaTitle": "Premiers pas",
+    "metaTitle": "Démarrer",
     "title": "Connectez votre compte AWS",
     "subtitle": "Lecture seule, révocable à tout moment, et rien ne quitte votre infrastructure.",
     "cta": "Connecter un compte",
@@ -647,7 +647,412 @@
       "outputsCount": "Outputs ({count})",
       "key": "Key",
       "value": "Value"
-    }
+    },
+    "hub": {
+      "title": "Connectez les systèmes que vous utilisez",
+      "subtitle": "OpsWatch lit ce que vous exécutez déjà et vous prévient quand quelque chose ne va pas. Commencez par celui que vous avez.",
+      "intro": "La plupart des installations commencent par AWS, car c'est là que se trouvent les services, les bases de données et les répartiteurs de charge. Les autres rendent ce qu'OpsWatch découvre plus facile à traiter — aucun n'est obligatoire, et chacun dit clairement ce qu'il apporte.",
+      "guidesTitle": "Ce que vous pouvez connecter",
+      "guidesIntro": "Chaque guide couvre ce que l'intégration débloque, ce qu'elle exige, ce qu'OpsWatch a exactement le droit d'en faire, et comment la retirer.",
+      "names": {
+        "aws": "AWS",
+        "github": "GitHub",
+        "cloudflare": "Cloudflare",
+        "ai": "Fournisseur d'IA"
+      },
+      "unlocks": {
+        "aws": "Services, bases de données, répartiteurs de charge, alarmes, journaux, erreurs et déploiements. C'est la surveillance elle-même.",
+        "github": "Transforme une ligne de pile en lien vers le fichier dont elle provient, et indique quels commits un déploiement portait.",
+        "cloudflare": "Trafic, cache et événements de sécurité en périphérie, pour les zones que vous choisissez.",
+        "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré. Rien d'autre n'en dépend."
+      },
+      "states": {
+        "connected": "Connecté",
+        "degraded": "À vérifier",
+        "not_configured": "Non connecté",
+        "unavailable": "À venir"
+      },
+      "detail": {
+        "awsConnected": "{accounts, plural, one {# compte connecté} other {# comptes connectés}}",
+        "awsFailing": "{failing} sur {accounts} ne peuvent pas être lus — ouvrez le compte et lancez son test de permissions.",
+        "githubConnected": "{repositories, plural, =0 {aucun dépôt enregistré} one {# dépôt} other {# dépôts}}",
+        "githubNoToken": "Des dépôts sont enregistrés mais aucun jeton n'est stocké : le contenu des fichiers ne peut pas être lu.",
+        "aiConnected": "{provider} · {model}",
+        "ai_untested": "Une clé est enregistrée mais n'a jamais été testée. Testez-la pour savoir si elle fonctionne.",
+        "ai_failed": "Le dernier test a échoué. Vérifiez la clé, ou collez-en une nouvelle.",
+        "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
+        "cloudflareNoZones": "Le jeton est vérifié mais aucune zone n'est choisie : rien n'est encore lu.",
+        "cloudflare_untested": "Un jeton est enregistré mais n'a jamais été vérifié.",
+        "cloudflare_failed": "La dernière vérification a échoué. Vérifiez la portée du jeton dans Cloudflare."
+      },
+      "readGuide": "Lire le guide",
+      "setUp": "Configurer",
+      "manage": "Gérer",
+      "backToGuides": "Tous les guides",
+      "signInTitle": "Se connecter",
+      "signInIntro": "La connexion Google sert à entrer dans OpsWatch, ce n'est pas un système qu'OpsWatch lit. Elle se configure dans l'environnement plutôt que depuis une page, et la page Intégrations indique si elle est active.",
+      "allIntegrations": "Voir toutes les intégrations"
+    },
+    "github": {
+      "metaTitle": "Connecter GitHub",
+      "title": "Connecter GitHub",
+      "subtitle": "Pour qu'un problème puisse vous dire ce qui a changé.",
+      "cta": "Connecter GitHub",
+      "manageCta": "Gérer la connexion",
+      "chainLabel": "Comment un problème remonte jusqu'au code",
+      "chain": {
+        "0": {
+          "title": "Service",
+          "detail": "Un service ECS qu'OpsWatch surveille déjà."
+        },
+        "1": {
+          "title": "Dépôt",
+          "detail": "Vous associez le service au dépôt qui le construit."
+        },
+        "2": {
+          "title": "Déploiement",
+          "detail": "Le collecteur enregistre chaque livraison de ce service."
+        },
+        "3": {
+          "title": "Commit",
+          "detail": "OpsWatch lit les commits entre une livraison et la précédente."
+        },
+        "4": {
+          "title": "Fichiers modifiés",
+          "detail": "Chemins et nombres de lignes pour chacun de ces commits."
+        },
+        "5": {
+          "title": "Problème",
+          "detail": "Un problème ouvert après la livraison est présenté à côté, avec l'écart indiqué."
+        }
+      },
+      "unlocks": {
+        "title": "Ce qu'apporte la connexion de GitHub",
+        "intro": "Sans elle, OpsWatch peut vous dire qu'un service a cassé douze minutes après un déploiement. Avec elle, il peut aussi dire quels commits ce déploiement portait et quels fichiers ils touchaient — et relier une ligne de pile au fichier dont elle provient."
+      },
+      "before": {
+        "title": "Avant de commencer",
+        "intro": "Deux choses, et aucune ne surprend ensuite.",
+        "needTerm": "Ce qu'il vous faut",
+        "needDetail": "Un compte GitHub qui voit les dépôts dont vos services sont construits, et le droit de créer un jeton d'accès personnel à portée fine pour eux.",
+        "costTerm": "Ce que cela coûte",
+        "costDetail": "Rien. OpsWatch fait quelques requêtes en lecture par déploiement, limitées à dix commits et vingt fichiers chacun, et stocke le résultat : une page n'appelle jamais GitHub."
+      },
+      "permissions": {
+        "title": "Ce qu'OpsWatch a le droit de faire",
+        "intro": "Lire vos dépôts. C'est tout.",
+        "grantTerm": "Ce qu'il faut accorder",
+        "grantDetail": "Contents: Read et Metadata: Read, limités aux dépôts qu'OpsWatch doit connaître. Rien d'autre n'est nécessaire ni utilisé.",
+        "whyTerm": "Pourquoi ces deux-là",
+        "whyDetail": "Metadata nomme le dépôt et sa branche par défaut, pour qu'un lien pointe au bon endroit. Contents lit la liste des commits et les fichiers que chacun a modifiés. Ni l'un ni l'autre ne peut modifier quoi que ce soit.",
+        "guaranteeTitle": "Pourquoi la lecture seule est ici plus qu'une promesse",
+        "guaranteeDetail": "Le client GitHub d'OpsWatch ne contient aucune requête d'écriture — ni création, ni mise à jour, ni suppression. Un jeton qui aurait une permission d'écriture ne servirait quand même qu'à lire, car aucun code ne pourrait faire autrement. Un test vérifie cette absence, elle ne peut donc pas changer discrètement."
+      },
+      "steps": {
+        "title": "La connexion",
+        "methodTitle": "À partir d'un jeton à portée fine",
+        "methodIntro": "Cinq étapes, et vous pouvez vous arrêter après la troisième — un jeton vérifié relie déjà les lignes de pile aux fichiers.",
+        "token": {
+          "title": "Créez un jeton à portée fine dans GitHub",
+          "purpose": "Un jeton à portée fine est limité aux dépôts que vous choisissez : OpsWatch ne voit pas le reste de votre compte.",
+          "body": "Dans GitHub, ouvrez Settings → Developer settings → Personal access tokens → Fine-grained tokens et créez-en un. Choisissez uniquement les dépôts dont vos services sont construits, et réglez Repository permissions → Contents sur Read-only et Metadata sur Read-only. Copiez le jeton : GitHub ne l'affiche qu'une fois."
+        },
+        "store": {
+          "title": "Collez-le dans OpsWatch",
+          "purpose": "Il est chiffré avant d'être stocké, avec une clé dérivée pour ce seul usage.",
+          "body": "Ouvrez Réglages → Dépôts et collez le jeton. Il n'est jamais renvoyé à votre navigateur ensuite — le champ reste vide, et le laisser vide conserve ce qui est déjà stocké. Une clé d'IA ou un identifiant AWS ne peut pas être déchiffré par la même dérivation : une fuite n'est pas toutes les fuites."
+        },
+        "verify": {
+          "title": "Vérifiez-le",
+          "purpose": "Un jeton enregistré n'est pas un jeton qui fonctionne, et OpsWatch ne prétendra pas le contraire.",
+          "body": "Appuyez sur Vérifier le jeton. OpsWatch demande à GitHub à qui appartient le jeton et affiche le nom du compte. Tant que ce n'est pas fait, la connexion affiche « Enregistré, non vérifié » partout où elle apparaît."
+        },
+        "discover": {
+          "title": "Recherchez vos dépôts",
+          "purpose": "Pour choisir parmi ce qui existe plutôt que de saisir un propriétaire et un nom.",
+          "body": "Appuyez sur Rechercher les dépôts. OpsWatch liste ce que le jeton peut voir, avec la branche par défaut indiquée par GitHub pour chacun. Cochez ceux à enregistrer et sauvegardez. La branche compte : un dépôt enregistré sur une branche inexistante construit des liens vers des fichiers que personne ne peut ouvrir."
+        },
+        "map": {
+          "title": "Associez un service à un dépôt",
+          "purpose": "C'est le lien qui transforme un déploiement en liste de commits.",
+          "body": "Ouvrez un problème du service, ou le détail de son erreur, et acceptez le dépôt suggéré par OpsWatch — ou corrigez-le. L'association n'est jamais appliquée automatiquement : une mauvaise association envoie quelqu'un vers le mauvais diff pendant un incident, ce qui est pire que pas d'association du tout."
+        }
+      },
+      "states": {
+        "title": "À quoi ressemble « bon » et « presque »",
+        "intro": "La page Intégrations, la page Comptes et ce guide lisent le même état : ils ne peuvent pas se contredire.",
+        "goodTerm": "Connecté",
+        "goodDetail": "Le jeton est vérifié et au moins un dépôt est enregistré. Les détails de déploiement listent les commits dès le prochain cycle du collecteur, et les lignes de pile pointent vers les fichiers au commit que l'erreur a suivi.",
+        "degradedTerm": "À vérifier",
+        "degradedDetail": "En général un jeton jamais vérifié, ou des dépôts enregistrés sans jeton. Le second est un état réel et utile : les liens vers les fichiers fonctionnent, le contenu des fichiers non, et la page dit lequel."
+      },
+      "failures": {
+        "title": "Quand cela ne marche pas",
+        "intro": "OpsWatch ne vous montre jamais le texte d'erreur de GitHub — il peut citer votre jeton — et nomme donc la cause avec ses propres mots.",
+        "unauthorized": {
+          "title": "GitHub a refusé le jeton",
+          "fix": "Il a expiré, a été révoqué, ou a été collé incomplètement. Créez-en un nouveau et remplacez-le ; l'ancien est alors supprimé."
+        },
+        "forbidden": {
+          "title": "Le jeton est valide mais manque d'une permission",
+          "fix": "Ajoutez Contents: Read et Metadata: Read aux permissions de dépôt du jeton. OpsWatch distingue ce cas d'une limitation de débit, car ils se corrigent différemment."
+        },
+        "rateLimited": {
+          "title": "GitHub limite le débit du jeton",
+          "fix": "Attendez quelques minutes. OpsWatch lit au plus dix commits par déploiement et cinq déploiements par cycle : c'est donc généralement un autre outil qui partage le jeton."
+        },
+        "noRepositories": {
+          "title": "La recherche de dépôts ne renvoie rien",
+          "fix": "Le jeton n'est limité à aucun dépôt, ou à des dépôts que le compte ne voit pas. Modifiez son Repository access dans GitHub."
+        },
+        "wrongBranch": {
+          "title": "Les liens de fichier renvoient une 404",
+          "fix": "Le dépôt est enregistré sur une branche inexistante. Relancez Rechercher les dépôts : OpsWatch enregistre la branche par défaut indiquée par GitHub plutôt qu'une branche saisie."
+        }
+      },
+      "manage": {
+        "title": "Modifier ou retirer plus tard",
+        "intro": "Tout est réversible depuis Réglages → Dépôts.",
+        "disconnectTitle": "Ce que fait la déconnexion",
+        "disconnectDetail": "Le jeton est supprimé, pas marqué — une ligne conservée avec son secret serait quelque chose que vous avez demandé à OpsWatch d'oublier et qu'il n'a pas oublié. Vos dépôts et associations restent, car les liens vers les fichiers et l'association de service fonctionnent sans jeton. Reconnectez-vous en collant un nouveau jeton."
+      }
+    },
+    "cloudflare": {
+      "metaTitle": "Connecter Cloudflare",
+      "title": "Connecter Cloudflare",
+      "subtitle": "Pour que ce qui se passe en périphérie fasse partie du tableau.",
+      "cta": "Connecter Cloudflare",
+      "manageCta": "Gérer la connexion",
+      "chainLabel": "Comment se fait une connexion Cloudflare",
+      "chain": {
+        "0": {
+          "title": "Jeton",
+          "detail": "Vous créez un jeton d'API en lecture seule dans Cloudflare et le collez ici."
+        },
+        "1": {
+          "title": "Vérification",
+          "detail": "OpsWatch demande à Cloudflare si le jeton fonctionne, et le dit."
+        },
+        "2": {
+          "title": "Zones",
+          "detail": "Il liste les zones que le jeton peut voir."
+        },
+        "3": {
+          "title": "Votre choix",
+          "detail": "Seules les zones cochées sont lues. Rien d'autre n'est touché."
+        }
+      },
+      "unlocks": {
+        "title": "Ce qu'apporte la connexion de Cloudflare",
+        "intro": "OpsWatch voit votre infrastructure de l'intérieur. Cloudflare voit ce qui l'a atteinte. Relier les deux, c'est ainsi qu'un répartiteur de charge calme et un pic de requêtes bloquées cessent d'être deux histoires séparées."
+      },
+      "before": {
+        "title": "Avant de commencer",
+        "intro": "Un jeton, et une décision sur sa portée.",
+        "needTerm": "Ce qu'il vous faut",
+        "needDetail": "Un compte Cloudflare avec au moins une zone, et le droit de créer un jeton d'API pour elle.",
+        "costTerm": "Ce que cela coûte",
+        "costDetail": "Rien. Les lectures entrent dans le quota d'API inclus de Cloudflare, et OpsWatch ne lit que les zones que vous choisissez."
+      },
+      "permissions": {
+        "title": "Ce qu'OpsWatch a le droit de faire",
+        "intro": "Lire les zones que vous choisissez. Il ne peut modifier aucun réglage, purger aucun cache ni modifier aucune règle.",
+        "grantTerm": "Ce qu'il faut accorder",
+        "grantDetail": "Zone → Zone → Read, et Zone → Analytics → Read, limités aux zones à surveiller. Aucune permission d'écriture n'est nécessaire.",
+        "whyTerm": "Pourquoi ces deux-là",
+        "whyDetail": "Zone: Read nomme vos zones pour que vous choisissiez dans une liste plutôt que de coller un identifiant. Analytics: Read est la source des chiffres de trafic, de cache et d'événements de sécurité.",
+        "guaranteeTitle": "Limité deux fois",
+        "guaranteeDetail": "Le jeton porte les permissions que vous lui avez données, et OpsWatch ne lit ensuite que les zones cochées ici. Qu'un jeton voie quarante zones ne met pas quarante zones sur une page — cela montrerait le trafic de quelqu'un d'autre à un lecteur qui ne l'a pas demandé."
+      },
+      "steps": {
+        "title": "La connexion",
+        "methodTitle": "À partir d'un jeton d'API",
+        "methodIntro": "Cinq étapes. Rien n'est lu avant la dernière.",
+        "token": {
+          "title": "Créez un jeton d'API dans Cloudflare",
+          "purpose": "Limité aux zones qu'OpsWatch doit voir, et à leur lecture.",
+          "body": "Dans Cloudflare, ouvrez My Profile → API Tokens → Create Token et partez d'un jeton personnalisé. Ajoutez Zone → Zone → Read et Zone → Analytics → Read, puis réglez Zone Resources sur les zones précises à surveiller. Copiez le jeton : Cloudflare ne l'affiche qu'une fois."
+        },
+        "store": {
+          "title": "Collez-le dans OpsWatch",
+          "purpose": "Il est chiffré avant d'être stocké, avec une clé dérivée pour ce seul usage.",
+          "body": "Ouvrez Réglages → Cloudflare et collez le jeton. Il n'est jamais renvoyé à votre navigateur — le champ reste vide ensuite. La dérivation est propre à Cloudflare : un chemin de code manipulant un identifiant AWS ou une clé d'IA ne peut pas le lire."
+        },
+        "verify": {
+          "title": "Vérifiez-le",
+          "purpose": "Un jeton enregistré n'est pas un jeton qui fonctionne.",
+          "body": "Appuyez sur Vérifier le jeton. OpsWatch demande à Cloudflare s'il est actif et enregistre la réponse. Tant que cela n'a pas réussi, la connexion affiche « Enregistré, non vérifié » sur chaque page qui la mentionne."
+        },
+        "discover": {
+          "title": "Recherchez vos zones",
+          "purpose": "Pour choisir parmi ce qui existe plutôt que de coller un identifiant de zone.",
+          "body": "Appuyez sur Rechercher les zones. OpsWatch liste ce que le jeton peut voir, avec le statut de chaque zone. Si la liste est vide, le jeton n'est limité à aucune zone — modifiez ses Zone Resources dans Cloudflare."
+        },
+        "choose": {
+          "title": "Choisissez ce qui est lu",
+          "purpose": "C'est l'étape qui décide de ce qu'OpsWatch regarde réellement.",
+          "body": "Cochez les zones voulues et enregistrez. Tant qu'aucune n'est cochée, la connexion est vérifiée et ne lit rien, et OpsWatch le dit exactement plutôt que de se prétendre connecté. Modifier la sélection ensuite ne touche jamais au jeton."
+        }
+      },
+      "states": {
+        "title": "À quoi ressemble « bon » et « presque »",
+        "intro": "Le même état apparaît sur ce guide, la page Intégrations et la page Comptes. Ils lisent une seule source.",
+        "goodTerm": "Connecté",
+        "goodDetail": "Le jeton est vérifié et au moins une zone est choisie. La connexion est prête pour les chiffres de périphérie à mesure qu'ils arrivent.",
+        "degradedTerm": "À vérifier",
+        "degradedDetail": "Soit le jeton n'a jamais été vérifié, soit il l'est et aucune zone n'est choisie. Le second ne lit rien du tout, d'où le refus de l'appeler connecté."
+      },
+      "failures": {
+        "title": "Quand cela ne marche pas",
+        "intro": "Le texte d'erreur de Cloudflare n'atteint jamais les pages d'OpsWatch — il peut citer l'identifiant d'un jeton — les échecs sont donc nommés avec les mots d'OpsWatch.",
+        "unauthorized": {
+          "title": "Cloudflare a refusé le jeton",
+          "fix": "Il a expiré, a été renouvelé, ou a été collé incomplètement. Créez-en un nouveau et remplacez-le."
+        },
+        "forbidden": {
+          "title": "Le jeton est valide mais manque d'une permission",
+          "fix": "Ajoutez Zone → Analytics → Read. OpsWatch distingue ce cas d'une limitation de débit, car attendre n'y changera rien."
+        },
+        "rateLimited": {
+          "title": "Cloudflare limite le débit du jeton",
+          "fix": "Attendez quelques minutes. Si cela persiste, un autre outil partage probablement le jeton."
+        },
+        "noZones": {
+          "title": "La recherche de zones ne renvoie rien",
+          "fix": "Les Zone Resources du jeton ne visent aucune zone, ou des zones que ce compte ne voit pas. Modifiez-les dans Cloudflare puis vérifiez à nouveau."
+        },
+        "nothingAppears": {
+          "title": "Connecté, mais aucun chiffre",
+          "fix": "Vérifiez qu'une zone est cochée. Un jeton vérifié sans zone sélectionnée ne lit rien, et la connexion le dit plutôt que de paraître saine."
+        }
+      },
+      "manage": {
+        "title": "Modifier ou retirer plus tard",
+        "intro": "Tout est réversible depuis Réglages → Cloudflare.",
+        "disconnectTitle": "Ce que fait la déconnexion",
+        "disconnectDetail": "Le jeton et la sélection de zones sont supprimés ensemble. Rien n'est conservé « pour l'historique » — un secret stocké que vous avez demandé à OpsWatch d'oublier serait un secret qu'il n'a pas oublié. Reconnectez-vous en collant un nouveau jeton."
+      }
+    },
+    "ai": {
+      "metaTitle": "Connecter un fournisseur d'IA",
+      "title": "Connecter un fournisseur d'IA",
+      "subtitle": "Facultatif. OpsWatch est complet sans.",
+      "cta": "Configurer un fournisseur",
+      "manageCta": "Gérer le fournisseur",
+      "chainLabel": "Comment une réponse est présentée",
+      "chain": {
+        "0": {
+          "title": "Faits observés",
+          "detail": "Ce qu'OpsWatch a enregistré, horodaté. Jamais déduit."
+        },
+        "1": {
+          "title": "Corrélations",
+          "detail": "Deux faits enregistrés proches dans le temps, avec l'écart indiqué. Jamais une cause."
+        },
+        "2": {
+          "title": "Hypothèse d'IA",
+          "detail": "Une supposition d'un modèle, étiquetée comme telle, à côté des preuves utilisées."
+        },
+        "3": {
+          "title": "Investigation suggérée",
+          "detail": "Ce qui trancherait, pour que vous puissiez vérifier plutôt que croire."
+        }
+      },
+      "unlocks": {
+        "title": "Ce qu'apporte un fournisseur",
+        "intro": "Un modèle qui lit ce qu'OpsWatch a déjà mesuré et le dit en une phrase. Il ne mesure rien, ne décide rien et ne change rien — le regroupement, la sévérité, les références et les anomalies sont calculés par des formules écrites, qu'un fournisseur soit configuré ou non."
+      },
+      "before": {
+        "title": "Avant de commencer",
+        "intro": "Un compte chez l'un des fournisseurs pris en charge, et la décision de vouloir cela ou non.",
+        "needTerm": "Ce qu'il vous faut",
+        "needDetail": "Une clé d'API Anthropic ou OpenAI, ou l'adresse de tout point de terminaison parlant le format de conversation OpenAI — y compris un que vous hébergez vous-même.",
+        "costTerm": "Ce que cela coûte",
+        "costDetail": "Le tarif habituel de votre fournisseur, et seulement quand quelqu'un pose une question. Rien ne tourne selon un calendrier. Un test de connexion coûte un seul jeton."
+      },
+      "permissions": {
+        "title": "Ce qu'OpsWatch envoie, et ce qu'il n'envoie pas",
+        "intro": "Votre question, et un ensemble borné de preuves déjà collectées.",
+        "grantTerm": "Ce qui part chez le fournisseur",
+        "grantDetail": "Les huit pires problèmes ouverts, cinq déploiements récents, cinq groupes d'erreurs modifiés, et l'état de chaque famille — sur les dernières 24 heures, plafonné à 32 ko. Titres, comptes et horodatages.",
+        "whyTerm": "Ce qui ne part jamais",
+        "whyDetail": "Aucun extrait de base de données, aucune ligne de journal brute, aucun identifiant AWS, aucun identifiant de compte, et rien en dehors de l'environnement sur lequel porte la question. Les limites s'appliquent à la construction de l'ensemble, pas après coup.",
+        "guaranteeTitle": "Ce qu'il est interdit au modèle de faire",
+        "guaranteeDetail": "Ne jamais énoncer un nombre, un service ou une heure absent des preuves. Ne jamais dire qu'une chose en a causé une autre — seulement que deux choses sont survenues proches l'une de l'autre, et à quel point. Dire quand les preuves ne permettent pas de répondre. Il lit votre parc, il ne le modifie pas : OpsWatch n'a aucun accès en écriture à votre infrastructure ni à votre code."
+      },
+      "steps": {
+        "title": "La configuration",
+        "methodTitle": "À partir d'une clé d'API",
+        "methodIntro": "Cinq étapes, toutes annulables d'un seul bouton.",
+        "choose": {
+          "title": "Choisissez un fournisseur",
+          "purpose": "Pour qu'en changer plus tard soit un réglage et non une réécriture.",
+          "body": "Anthropic et OpenAI se configurent par leur nom. La troisième option, un point de terminaison compatible OpenAI, sert à une passerelle ou à un modèle que vous hébergez — vous fournissez l'adresse, en https."
+        },
+        "key": {
+          "title": "Collez votre clé d'API",
+          "purpose": "C'est le seul identifiant nécessaire.",
+          "body": "Ouvrez Réglages → Fournisseur d'IA et collez-la. Laisser le champ vide conserve ce qui est déjà stocké : c'est ainsi que l'on change de modèle sans retaper la clé."
+        },
+        "store": {
+          "title": "Comment elle est stockée",
+          "purpose": "Pour que vous sachiez ce qu'un attaquant devrait atteindre.",
+          "body": "Chiffrée avec une clé dérivée pour ce seul usage, et jamais renvoyée à votre navigateur. La fonction qui construit une requête vers votre fournisseur ne reçoit pas la clé du tout : un proxy qui journalise les corps de requête ne peut pas la capturer."
+        },
+        "test": {
+          "title": "Testez la connexion",
+          "purpose": "Une clé enregistrée n'est pas une clé qui fonctionne.",
+          "body": "Appuyez sur Tester la connexion. OpsWatch fait un appel d'un seul jeton et enregistre le résultat : connecté, invalide ou indisponible. Tant que cela n'a pas réussi, le fournisseur affiche « Enregistré, non testé » partout — et Demander à OpsWatch reste indisponible, car une capacité est ce que l'on peut utiliser, pas ce qui est stocké."
+        },
+        "ask": {
+          "title": "Posez une question",
+          "purpose": "C'est toute la fonctionnalité.",
+          "body": "Ouvrez Vue d'ensemble → Demander à OpsWatch dans n'importe quel environnement. La réponse apparaît sous un titre qui la nomme hypothèse, avec en dessous les problèmes, déploiements et groupes d'erreurs à partir desquels elle a été construite, et le modèle nommé. Si OpsWatch n'a pas encore lu l'environnement, il refuse de poser la question plutôt que d'obtenir une réponse assurée sur un parc que personne n'a regardé."
+        }
+      },
+      "states": {
+        "title": "À quoi ressemble « bon » et « presque »",
+        "intro": "Ce guide, la page Intégrations et la page Comptes lisent le même état.",
+        "goodTerm": "Connecté",
+        "goodDetail": "La clé a été testée avec succès. Demander à OpsWatch apparaît à la fin du menu Vue d'ensemble, après toutes les surfaces déterministes.",
+        "degradedTerm": "À vérifier",
+        "degradedDetail": "Une clé est enregistrée mais non testée, ou son dernier test a échoué. Changer le modèle ou le point de terminaison ramène également ici : c'est une autre connexion, et l'ancien résultat n'en dit rien."
+      },
+      "failures": {
+        "title": "Quand cela ne marche pas",
+        "intro": "Le texte d'erreur de votre fournisseur n'atteint jamais une page d'OpsWatch — certains y renvoient la clé — les échecs sont donc nommés avec les mots d'OpsWatch.",
+        "unauthorized": {
+          "title": "Le fournisseur a refusé la clé",
+          "fix": "Vérifiez-la, ou collez-en une nouvelle. Cela apparaît aussi si OPSWATCH_SECRET a changé depuis l'enregistrement, ce qui rend la clé indéchiffrable : enregistrez-la de nouveau."
+        },
+        "rateLimited": {
+          "title": "Le fournisseur limite le débit de la clé",
+          "fix": "Attendez, ou utilisez une clé avec plus de marge. OpsWatch envoie une requête par question et n'en lance jamais selon un calendrier."
+        },
+        "refusedEndpoint": {
+          "title": "OpsWatch a refusé d'appeler l'adresse",
+          "fix": "Un point de terminaison personnalisé qui résout à l'intérieur de votre réseau ou vers le service de métadonnées du cloud est refusé avant l'envoi, et à chaque redirection. Utilisez une adresse https publique."
+        },
+        "noEvidence": {
+          "title": "« Il n'y a rien à partir de quoi répondre »",
+          "fix": "Le collecteur n'a pas encore lu cet environnement. C'est volontaire : interroger un modèle quand même produirait un paragraphe assuré sur un parc que personne n'a regardé."
+        },
+        "timeout": {
+          "title": "Le fournisseur n'a pas répondu à temps",
+          "fix": "La limite est de trente secondes. Un très gros modèle derrière une passerelle lente peut la dépasser ; essayez-en un plus petit."
+        }
+      },
+      "manage": {
+        "title": "Modifier ou retirer plus tard",
+        "intro": "Tout est réversible depuis Réglages → Fournisseur d'IA.",
+        "disconnectTitle": "Ce que fait la déconnexion",
+        "disconnectDetail": "La clé est supprimée et le fournisseur oublié. Demander à OpsWatch disparaît du menu et toutes les autres pages fonctionnent exactement comme avant — c'est tout l'intérêt d'une IA facultative plutôt que simplement désactivable."
+      }
+    },
+    "aws": {
+      "metaTitle": "Premiers pas"
+    },
+    "allGuides": "Tous les guides"
   },
   "IdentityErrors": {
     "title": "Erreur AWS : {code}.",
@@ -2286,7 +2691,8 @@
         "cloudflareNoZones": "vérifié, aucune zone choisie pour l'instant",
         "cloudflare_untested": "enregistré, non vérifié",
         "cloudflare_failed": "la dernière vérification a échoué"
-      }
+      },
+      "readGuide": "Lire le guide"
     },
     "cloudflare": {
       "title": "Cloudflare",
@@ -2400,6 +2806,7 @@
     },
     "signIn": "Se connecter avec Google",
     "signInHint": "Google est un fournisseur d'authentification, pas un système qu'OpsWatch lit. Il se configure dans l'environnement plutôt qu'ici, et la page Intégrations indique s'il est actif.",
-    "allIntegrations": "Voir toutes les intégrations"
+    "allIntegrations": "Voir toutes les intégrations",
+    "readGuide": "Lire le guide"
   }
 }

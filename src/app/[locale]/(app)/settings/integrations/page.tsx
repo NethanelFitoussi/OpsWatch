@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
+import { guidePath, hasGuide } from '@/lib/integrations/guides';
 import { integrationStatuses } from '@/lib/integrations/status';
 
 type Props = { params: Promise<{ locale: string }> };
@@ -38,7 +39,7 @@ export default async function IntegrationsPage({ params }: Props) {
 
       <ul className="flex flex-col gap-3">
         {statuses.map((status) => (
-          <li key={status.id}>
+          <li key={status.id} data-integration={status.id} data-state={status.state}>
             <MonitoringCard title={t(`names.${status.id}`)}>
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tracking-wide uppercase">{t(`states.${status.state}`)}</span>
@@ -51,13 +52,19 @@ export default async function IntegrationsPage({ params }: Props) {
               {/* What OpsWatch is allowed to do with the connection, beside the button that creates it. */}
               <p className="mt-1 text-sm text-muted-foreground">{t(`access.${status.id}`)}</p>
 
-              {status.href !== null && (
-                <p className="mt-2">
+              <p className="mt-2 flex flex-wrap gap-4">
+                {status.href !== null && (
                   <Link href={status.href} className="text-sm font-medium underline-offset-4 hover:underline">
                     {status.state === 'not_configured' ? t('configure') : t('manage')}
                   </Link>
-                </p>
-              )}
+                )}
+                {/* The three entry points complement each other: manage here, learn there, add from Accounts. */}
+                {hasGuide(status.id) && (
+                  <Link href={guidePath(status.id)} className="text-sm underline-offset-4 hover:underline">
+                    {t('readGuide')}
+                  </Link>
+                )}
+              </p>
             </MonitoringCard>
           </li>
         ))}

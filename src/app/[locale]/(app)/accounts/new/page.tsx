@@ -10,6 +10,7 @@ import { Link } from '@/i18n/navigation';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
 import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
+import { guidePath, hasGuide } from '@/lib/integrations/guides';
 import { integrationStatuses } from '@/lib/integrations/status';
 
 type Props = { params: Promise<{ locale: string }> };
@@ -56,7 +57,7 @@ export default async function ChooseConnectionPage({ params }: Props) {
           // A card that cannot be completed says so and offers no way in. There are no dead ends here.
           const reachable = spec.available && status.href !== null;
           return (
-            <li key={status.id}>
+            <li key={status.id} data-integration={status.id} data-state={status.state}>
               <Card className="flex h-full flex-col">
                 <CardHeader>
                   <CardTitle className="flex flex-wrap items-center gap-2 text-base font-semibold">
@@ -72,9 +73,17 @@ export default async function ChooseConnectionPage({ params }: Props) {
                     <p className="text-xs text-muted-foreground">{t(`detail.${status.detailKey}`, status.values)}</p>
                   )}
                   {reachable ? (
-                    <Button asChild variant={status.state === 'connected' ? 'outline' : 'default'} className="w-full sm:w-auto">
-                      <Link href={status.href ?? '/accounts'}>{t(status.state === 'not_configured' ? 'connect' : 'manage')}</Link>
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button asChild variant={status.state === 'connected' ? 'outline' : 'default'}>
+                        <Link href={status.href ?? '/accounts'}>{t(status.state === 'not_configured' ? 'connect' : 'manage')}</Link>
+                      </Button>
+                      {/* Somewhere to read first, for anybody who wants to know what they are agreeing to. */}
+                      {hasGuide(status.id) && (
+                        <Link href={guidePath(status.id)} className="text-sm underline-offset-4 hover:underline">
+                          {t('readGuide')}
+                        </Link>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm">{t('unavailableHint')}</p>
                   )}

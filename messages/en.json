@@ -273,7 +273,7 @@
     "failedRequest": "The test could not be run. Please try again."
   },
   "GettingStarted": {
-    "metaTitle": "Getting started",
+    "metaTitle": "Get started",
     "title": "Connect your AWS account",
     "subtitle": "Read-only, revocable at any time, and nothing leaves your infrastructure.",
     "cta": "Connect an account",
@@ -647,7 +647,412 @@
       "outputsCount": "Outputs ({count})",
       "key": "Key",
       "value": "Value"
-    }
+    },
+    "hub": {
+      "title": "Connect the systems you use",
+      "subtitle": "OpsWatch reads what you already run and tells you when something is wrong. Start with whichever of these you have.",
+      "intro": "Most installations begin with AWS, because that is where the services, databases and load balancers are. The others make what OpsWatch finds easier to act on — none of them is required, and each says plainly what it adds.",
+      "guidesTitle": "What you can connect",
+      "guidesIntro": "Each guide covers what the integration unlocks, what it needs, exactly what OpsWatch is allowed to do with it, and how to take it away again.",
+      "names": {
+        "aws": "AWS",
+        "github": "GitHub",
+        "cloudflare": "Cloudflare",
+        "ai": "AI provider"
+      },
+      "unlocks": {
+        "aws": "Services, databases, load balancers, alarms, logs, errors and deployments. This is the monitoring itself.",
+        "github": "Turns a stack frame into a link to the file it came from, and tells you which commits a deployment carried.",
+        "cloudflare": "Traffic, cache and security events at the edge, for the zones you choose.",
+        "ai": "Optional. Lets a model narrate what OpsWatch already measured. Nothing else depends on it."
+      },
+      "states": {
+        "connected": "Connected",
+        "degraded": "Needs attention",
+        "not_configured": "Not connected",
+        "unavailable": "Coming later"
+      },
+      "detail": {
+        "awsConnected": "{accounts, plural, one {# account connected} other {# accounts connected}}",
+        "awsFailing": "{failing} of {accounts} cannot be read right now — open the account and run its permission test.",
+        "githubConnected": "{repositories, plural, =0 {no repositories recorded yet} one {# repository} other {# repositories}}",
+        "githubNoToken": "Repositories are recorded but no token is stored, so file contents cannot be read.",
+        "aiConnected": "{provider} · {model}",
+        "ai_untested": "A key is saved but has never been tested. Test it to find out whether it works.",
+        "ai_failed": "The last test failed. Check the key, or paste a new one.",
+        "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
+        "cloudflareNoZones": "The token is verified but no zone is chosen, so nothing is read yet.",
+        "cloudflare_untested": "A token is saved but has never been verified.",
+        "cloudflare_failed": "The last verification failed. Check the token's scope in Cloudflare."
+      },
+      "readGuide": "Read the guide",
+      "setUp": "Set it up",
+      "manage": "Manage",
+      "backToGuides": "All guides",
+      "signInTitle": "Signing in",
+      "signInIntro": "Google sign-in is how people get into OpsWatch, not something OpsWatch reads from. It is configured in the environment rather than from a page, and the Integrations page shows whether it is on.",
+      "allIntegrations": "See all integrations"
+    },
+    "github": {
+      "metaTitle": "Connect GitHub",
+      "title": "Connect GitHub",
+      "subtitle": "So that a problem can tell you what changed.",
+      "cta": "Connect GitHub",
+      "manageCta": "Manage the connection",
+      "chainLabel": "How a problem reaches the code that caused it",
+      "chain": {
+        "0": {
+          "title": "Service",
+          "detail": "An ECS service OpsWatch already watches."
+        },
+        "1": {
+          "title": "Repository",
+          "detail": "You map the service to the repository that builds it."
+        },
+        "2": {
+          "title": "Deployment",
+          "detail": "The collector records each rollout of that service."
+        },
+        "3": {
+          "title": "Commit",
+          "detail": "OpsWatch reads the commits between one rollout and the last."
+        },
+        "4": {
+          "title": "Changed files",
+          "detail": "Paths and line counts for each of those commits."
+        },
+        "5": {
+          "title": "Problem",
+          "detail": "A problem that opened after the rollout is shown beside it, with the gap stated."
+        }
+      },
+      "unlocks": {
+        "title": "What connecting GitHub adds",
+        "intro": "Without it, OpsWatch can tell you a service broke twelve minutes after a deployment. With it, it can also tell you which commits that deployment carried and which files they touched — and link a stack frame to the file it came from."
+      },
+      "before": {
+        "title": "Before you start",
+        "intro": "Two things, and neither is a surprise later.",
+        "needTerm": "What you need",
+        "needDetail": "A GitHub account that can see the repositories your services are built from, and permission to create a fine-grained personal access token for them.",
+        "costTerm": "What it costs",
+        "costDetail": "Nothing. OpsWatch makes a handful of read requests per deployment, bounded at ten commits and twenty files each, and stores the result so a page never calls GitHub."
+      },
+      "permissions": {
+        "title": "What OpsWatch is allowed to do",
+        "intro": "Read your repositories. That is the whole of it.",
+        "grantTerm": "What to grant",
+        "grantDetail": "Contents: Read and Metadata: Read, scoped to the repositories you want OpsWatch to know about. Nothing else is needed and nothing else is used.",
+        "whyTerm": "Why those two",
+        "whyDetail": "Metadata names the repository and its default branch, so a link points at the right place. Contents reads the commit list and the files each commit changed. Neither can alter anything.",
+        "guaranteeTitle": "Why read-only is more than a promise here",
+        "guaranteeDetail": "OpsWatch's GitHub client contains no write request — not a create, not an update, not a delete. A token that happens to carry write permission would still only ever be used to read, because there is no code that could do otherwise. A test asserts that absence, so it cannot quietly change."
+      },
+      "steps": {
+        "title": "Connecting it",
+        "methodTitle": "From a fine-grained token",
+        "methodIntro": "Five steps, and you can stop after the third — a verified token already links stack frames to files.",
+        "token": {
+          "title": "Create a fine-grained token in GitHub",
+          "purpose": "A fine-grained token is scoped to the repositories you pick, so OpsWatch cannot see the rest of your account.",
+          "body": "In GitHub, open Settings → Developer settings → Personal access tokens → Fine-grained tokens, and create one. Choose only the repositories your services are built from, and set Repository permissions → Contents to Read-only and Metadata to Read-only. Copy the token: GitHub shows it once."
+        },
+        "store": {
+          "title": "Paste it into OpsWatch",
+          "purpose": "It is encrypted before it is stored, with a key derived for this purpose alone.",
+          "body": "Open Settings → Repositories and paste the token. It is never sent back to your browser afterwards — the field stays empty, and leaving it empty keeps whatever is already stored. An AI key or an AWS credential cannot be decrypted by the same derivation, so one leak is not all of them."
+        },
+        "verify": {
+          "title": "Verify it",
+          "purpose": "A saved token is not a working token, and OpsWatch will not pretend otherwise.",
+          "body": "Press Verify token. OpsWatch asks GitHub who the token belongs to and shows the account name. Until it does, the connection reads \"Saved, not verified\" everywhere it appears."
+        },
+        "discover": {
+          "title": "Find your repositories",
+          "purpose": "So you pick from what exists rather than typing an owner and a name.",
+          "body": "Press Find repositories. OpsWatch lists what the token can see, with the default branch GitHub reports for each. Tick the ones you want recorded and save. The branch matters: a repository recorded against a branch that does not exist builds links to files nobody can open."
+        },
+        "map": {
+          "title": "Map a service to a repository",
+          "purpose": "This is the link that turns a deployment into a list of commits.",
+          "body": "Open a problem on the service, or its error detail, and accept the repository OpsWatch suggests — or correct it. Mapping is never applied automatically: a wrong mapping sends somebody to the wrong diff during an incident, which is worse than no mapping at all."
+        }
+      },
+      "states": {
+        "title": "What good and not-quite-right look like",
+        "intro": "The Integrations page, the Accounts page and this guide all read the same state, so they cannot disagree.",
+        "goodTerm": "Connected",
+        "goodDetail": "The token is verified and at least one repository is recorded. Deployment details start listing commits on the next collector cycle, and stack frames link to files at the commit the error followed.",
+        "degradedTerm": "Needs attention",
+        "degradedDetail": "Usually a token that has never been verified, or repositories recorded without a token. The second is a real, useful state: links to files work and file contents do not, and the page says which."
+      },
+      "failures": {
+        "title": "When it does not work",
+        "intro": "OpsWatch never shows you GitHub's own error text — it can quote your token back — so it names the cause in its own words.",
+        "unauthorized": {
+          "title": "GitHub refused the token",
+          "fix": "It has expired, been revoked, or was pasted incompletely. Create a new one and replace it; the old one is deleted when you do."
+        },
+        "forbidden": {
+          "title": "The token is valid but lacks a permission",
+          "fix": "Add Contents: Read and Metadata: Read to the token's repository permissions. OpsWatch tells this apart from a rate limit, because they are fixed differently."
+        },
+        "rateLimited": {
+          "title": "GitHub is rate-limiting the token",
+          "fix": "Wait a few minutes. OpsWatch reads at most ten commits per deployment and five deployments per cycle, so this is usually another tool sharing the token."
+        },
+        "noRepositories": {
+          "title": "Find repositories returns nothing",
+          "fix": "The token is scoped to no repository, or to repositories the account cannot see. Edit its Repository access in GitHub."
+        },
+        "wrongBranch": {
+          "title": "File links open a 404",
+          "fix": "The repository is recorded against a branch that does not exist. Re-run Find repositories: OpsWatch records the default branch GitHub reports rather than one you typed."
+        }
+      },
+      "manage": {
+        "title": "Changing or removing it later",
+        "intro": "Everything is reversible from Settings → Repositories.",
+        "disconnectTitle": "What disconnecting does",
+        "disconnectDetail": "The token is deleted, not flagged — a row kept with its secret would be something you asked OpsWatch to forget and it did not. Your repositories and mappings stay, because links to files and service mapping work without a token. Reconnect by pasting a new one."
+      }
+    },
+    "cloudflare": {
+      "metaTitle": "Connect Cloudflare",
+      "title": "Connect Cloudflare",
+      "subtitle": "So that what happens at the edge is part of the picture.",
+      "cta": "Connect Cloudflare",
+      "manageCta": "Manage the connection",
+      "chainLabel": "How a Cloudflare connection is made",
+      "chain": {
+        "0": {
+          "title": "Token",
+          "detail": "You create a read-only API token in Cloudflare and paste it here."
+        },
+        "1": {
+          "title": "Verification",
+          "detail": "OpsWatch asks Cloudflare whether the token works, and says so."
+        },
+        "2": {
+          "title": "Zones",
+          "detail": "It lists the zones the token can see."
+        },
+        "3": {
+          "title": "Your choice",
+          "detail": "Only the zones you tick are read. Nothing else is touched."
+        }
+      },
+      "unlocks": {
+        "title": "What connecting Cloudflare adds",
+        "intro": "OpsWatch sees your infrastructure from the inside. Cloudflare sees what reached it. Connecting the two is how a quiet load balancer and a spike in blocked requests stop being separate stories."
+      },
+      "before": {
+        "title": "Before you start",
+        "intro": "One token, and a decision about scope.",
+        "needTerm": "What you need",
+        "needDetail": "A Cloudflare account with at least one zone, and permission to create an API token for it.",
+        "costTerm": "What it costs",
+        "costDetail": "Nothing. The reads are within Cloudflare's included API allowance, and OpsWatch reads only the zones you choose."
+      },
+      "permissions": {
+        "title": "What OpsWatch is allowed to do",
+        "intro": "Read the zones you pick. It cannot change a setting, purge a cache or edit a rule.",
+        "grantTerm": "What to grant",
+        "grantDetail": "Zone → Zone → Read, and Zone → Analytics → Read, scoped to the zones you want watched. No write permission is needed.",
+        "whyTerm": "Why those two",
+        "whyDetail": "Zone: Read names your zones so you can choose from a list instead of pasting an identifier. Analytics: Read is what traffic, cache and security-event figures come from.",
+        "guaranteeTitle": "Scoped twice over",
+        "guaranteeDetail": "The token carries the permissions you gave it, and OpsWatch then reads only the zones you ticked here. A token that can see forty zones does not put forty zones on a page — that would show somebody else's traffic to a reader who never asked for it."
+      },
+      "steps": {
+        "title": "Connecting it",
+        "methodTitle": "From an API token",
+        "methodIntro": "Five steps. Nothing is read until the last one.",
+        "token": {
+          "title": "Create an API token in Cloudflare",
+          "purpose": "Scoped to the zones you want OpsWatch to see, and to reading them.",
+          "body": "In Cloudflare, open My Profile → API Tokens → Create Token, and start from a custom token. Add Zone → Zone → Read and Zone → Analytics → Read, then set Zone Resources to the specific zones you want watched. Copy the token: Cloudflare shows it once."
+        },
+        "store": {
+          "title": "Paste it into OpsWatch",
+          "purpose": "It is encrypted before it is stored, with a key derived for this purpose alone.",
+          "body": "Open Settings → Cloudflare and paste the token. It is never sent back to your browser — the field stays empty afterwards. The derivation is Cloudflare's own, so a code path handling an AWS credential or an AI key cannot read it."
+        },
+        "verify": {
+          "title": "Verify it",
+          "purpose": "A saved token is not a working token.",
+          "body": "Press Verify token. OpsWatch asks Cloudflare whether it is live and records the answer. Until it passes, the connection reads \"Saved, not verified\" on every page that mentions it."
+        },
+        "discover": {
+          "title": "Find your zones",
+          "purpose": "So you choose from what exists rather than pasting a zone identifier.",
+          "body": "Press Find zones. OpsWatch lists what the token can see, with each zone's status. If the list is empty, the token is scoped to no zone — edit its Zone Resources in Cloudflare."
+        },
+        "choose": {
+          "title": "Choose what to read",
+          "purpose": "This is the step that decides what OpsWatch actually looks at.",
+          "body": "Tick the zones you want and save. Until at least one is ticked the connection is verified and reads nothing, and OpsWatch says exactly that rather than claiming to be connected. Changing the selection later never disturbs the token."
+        }
+      },
+      "states": {
+        "title": "What good and not-quite-right look like",
+        "intro": "The same state appears on this guide, the Integrations page and the Accounts page. They read one source.",
+        "goodTerm": "Connected",
+        "goodDetail": "The token is verified and at least one zone is chosen. The connection is ready for the edge figures as they land.",
+        "degradedTerm": "Needs attention",
+        "degradedDetail": "Either the token has never been verified, or it is verified and no zone is chosen. The second reads nothing at all, which is why it is not called connected."
+      },
+      "failures": {
+        "title": "When it does not work",
+        "intro": "Cloudflare's own error text never reaches OpsWatch's pages — it can quote a token's identifier — so failures are named in OpsWatch's words.",
+        "unauthorized": {
+          "title": "Cloudflare refused the token",
+          "fix": "It has expired, been rolled, or was pasted incompletely. Create a new one and replace it."
+        },
+        "forbidden": {
+          "title": "The token is valid but lacks a permission",
+          "fix": "Add Zone → Analytics → Read. OpsWatch distinguishes this from a rate limit, because waiting will not fix it."
+        },
+        "rateLimited": {
+          "title": "Cloudflare is rate-limiting the token",
+          "fix": "Wait a few minutes. If it persists, another tool is probably sharing the token."
+        },
+        "noZones": {
+          "title": "Find zones returns nothing",
+          "fix": "The token's Zone Resources are set to no zone, or to zones this account cannot see. Edit them in Cloudflare and verify again."
+        },
+        "nothingAppears": {
+          "title": "Connected, but no figures yet",
+          "fix": "Check that a zone is ticked. A verified token with no zone selected reads nothing, and the connection says so rather than looking healthy."
+        }
+      },
+      "manage": {
+        "title": "Changing or removing it later",
+        "intro": "Everything is reversible from Settings → Cloudflare.",
+        "disconnectTitle": "What disconnecting does",
+        "disconnectDetail": "The token and the zone selection are deleted together. Nothing is kept \"for the history\" — a stored secret you asked OpsWatch to forget would be a secret it did not forget. Reconnect by pasting a new token."
+      }
+    },
+    "ai": {
+      "metaTitle": "Connect an AI provider",
+      "title": "Connect an AI provider",
+      "subtitle": "Optional. OpsWatch is complete without one.",
+      "cta": "Configure a provider",
+      "manageCta": "Manage the provider",
+      "chainLabel": "How an answer is presented",
+      "chain": {
+        "0": {
+          "title": "Observed evidence",
+          "detail": "What OpsWatch recorded, with timestamps. Never inferred."
+        },
+        "1": {
+          "title": "Correlations",
+          "detail": "Two recorded facts close together, with the gap stated. Never a cause."
+        },
+        "2": {
+          "title": "AI hypothesis",
+          "detail": "A guess from a model, labelled as one, beside the evidence it used."
+        },
+        "3": {
+          "title": "Suggested investigation",
+          "detail": "What would settle it, so you can check rather than believe."
+        }
+      },
+      "unlocks": {
+        "title": "What connecting a provider adds",
+        "intro": "A model that can read what OpsWatch already measured and say it in a sentence. It does not measure anything, decide anything, or change anything — grouping, severity, baselines and anomalies are computed by written formulas whether or not a provider is configured."
+      },
+      "before": {
+        "title": "Before you start",
+        "intro": "An account with one of the supported providers, and a decision about whether you want this at all.",
+        "needTerm": "What you need",
+        "needDetail": "An API key from Anthropic or OpenAI, or the address of any endpoint that speaks the OpenAI chat format — including one you host yourself.",
+        "costTerm": "What it costs",
+        "costDetail": "Your provider's usual per-token charge, and only when somebody asks a question. Nothing runs on a schedule. A connection test costs a single token."
+      },
+      "permissions": {
+        "title": "What OpsWatch sends, and what it does not",
+        "intro": "Your question, and a bounded pack of evidence it already collected.",
+        "grantTerm": "What goes to the provider",
+        "grantDetail": "The eight worst open problems, five recent deployments, five error groups that changed, and how each family looks — over the last 24 hours, capped at 32 kB. Titles, counts and timestamps.",
+        "whyTerm": "What never does",
+        "whyDetail": "No database dump, no raw log lines, no AWS credentials, no account identifiers, and nothing outside the environment you asked about. The limits are applied when the pack is built, not checked afterwards.",
+        "guaranteeTitle": "What the model is told it may not do",
+        "guaranteeDetail": "Never state a number, a service or a time that is not in the evidence. Never say one thing caused another — only that two happened close together, and how close. Say when the evidence does not support an answer. It is reading your estate, not changing it: OpsWatch has no write access to your infrastructure or your code."
+      },
+      "steps": {
+        "title": "Configuring it",
+        "methodTitle": "From an API key",
+        "methodIntro": "Five steps, and you can undo all of them with one button.",
+        "choose": {
+          "title": "Choose a provider",
+          "purpose": "So swapping later is a setting rather than a rewrite.",
+          "body": "Anthropic and OpenAI are configured by name. The third option, an OpenAI-compatible endpoint, is for a gateway or a model you host yourself — you supply the address, over https."
+        },
+        "key": {
+          "title": "Paste your API key",
+          "purpose": "It is the only credential this needs.",
+          "body": "Open Settings → AI provider and paste it. Leaving the field empty keeps whatever is already stored, which is how you change the model without retyping the key."
+        },
+        "store": {
+          "title": "How it is stored",
+          "purpose": "So you know what an attacker would have to reach.",
+          "body": "Encrypted with a key derived for this purpose alone, and never sent back to your browser. The function that builds a request to your provider is not given the key at all, so a proxy that logs request bodies cannot capture it."
+        },
+        "test": {
+          "title": "Test the connection",
+          "purpose": "A saved key is not a working key.",
+          "body": "Press Test connection. OpsWatch makes a one-token call and records the result as connected, invalid or unavailable. Until it passes, the provider reads \"Saved, not tested\" everywhere — and Ask OpsWatch stays unavailable, because a capability is what you can use rather than what is stored."
+        },
+        "ask": {
+          "title": "Ask a question",
+          "purpose": "This is the whole feature.",
+          "body": "Open Overview → Ask OpsWatch in any environment. The answer appears under a heading that calls it a hypothesis, with the problems, deployments and error groups it was built from listed beneath it, and the model named. If OpsWatch has not read the environment yet it refuses to ask rather than getting a confident answer about an estate nobody has looked at."
+        }
+      },
+      "states": {
+        "title": "What good and not-quite-right look like",
+        "intro": "This guide, the Integrations page and the Accounts page read the same state.",
+        "goodTerm": "Connected",
+        "goodDetail": "The key has been tested and passed. Ask OpsWatch appears at the end of the Overview menu, after every deterministic surface.",
+        "degradedTerm": "Needs attention",
+        "degradedDetail": "A key is saved but untested, or its last test failed. Changing the model or the endpoint also returns it here: that is a different connection, and the old result says nothing about it."
+      },
+      "failures": {
+        "title": "When it does not work",
+        "intro": "Your provider's own error text never reaches an OpsWatch page — some providers echo the key back in it — so failures are named in OpsWatch's words.",
+        "unauthorized": {
+          "title": "The provider refused the key",
+          "fix": "Check it, or paste a new one. This also appears if OPSWATCH_SECRET changed since the key was stored, which makes it undecryptable: store it again."
+        },
+        "rateLimited": {
+          "title": "The provider is rate-limiting the key",
+          "fix": "Wait, or use a key with more headroom. OpsWatch sends one request per question and never runs one on a schedule."
+        },
+        "refusedEndpoint": {
+          "title": "OpsWatch refused to call the address",
+          "fix": "A custom endpoint that resolves inside your network or to the cloud metadata service is refused before the request is made, and again on every redirect. Use a public https address."
+        },
+        "noEvidence": {
+          "title": "\"There is nothing to answer from\"",
+          "fix": "The collector has not read that environment yet. This is deliberate: asking a model anyway would produce a confident paragraph about an estate nobody has looked at."
+        },
+        "timeout": {
+          "title": "The provider did not answer in time",
+          "fix": "Thirty seconds is the limit. A very large model behind a slow gateway can exceed it; try a smaller one."
+        }
+      },
+      "manage": {
+        "title": "Changing or removing it later",
+        "intro": "Everything is reversible from Settings → AI provider.",
+        "disconnectTitle": "What disconnecting does",
+        "disconnectDetail": "The key is deleted and the provider forgotten. Ask OpsWatch disappears from the menu and every other page works exactly as it did — which is the point of AI being optional rather than merely switchable."
+      }
+    },
+    "aws": {
+      "metaTitle": "Getting started"
+    },
+    "allGuides": "All guides"
   },
   "IdentityErrors": {
     "title": "AWS error: {code}.",
@@ -2286,7 +2691,8 @@
         "cloudflareNoZones": "verified, no zone chosen yet",
         "cloudflare_untested": "saved, not verified",
         "cloudflare_failed": "the last verification failed"
-      }
+      },
+      "readGuide": "Read the guide"
     },
     "cloudflare": {
       "title": "Cloudflare",
@@ -2400,6 +2806,7 @@
     },
     "signIn": "Signing in with Google",
     "signInHint": "Google is an authentication provider, not something OpsWatch reads from. It is configured in the environment rather than here, and the Integrations page shows whether it is on.",
-    "allIntegrations": "See all integrations"
+    "allIntegrations": "See all integrations",
+    "readGuide": "Read the guide"
   }
 }
