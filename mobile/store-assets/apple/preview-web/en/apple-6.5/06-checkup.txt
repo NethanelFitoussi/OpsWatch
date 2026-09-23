@@ -1,0 +1,29 @@
+# What is wrong with how the environment is set up — and how much of the catalogue could be checked.
+# route: /checkup
+
+
+DEMO DATA: fictional, not from a real server
+Checkup
+
+Updated just now
+10 of 12 checks ran
+2 could not run
+A finding is about configuration and stays until someone changes a setting. A problem is something breaking now, and goes away when it stops.
+FINDINGS
+
+Warning
+1 collection job(s) failing: errors
+
+Warning
+No log group is switched on, so no errors are being collected
+
+Warning
+cloudfront could not be read (denied)
+
+Info
+Historical collection is off, so there are no baselines, SLOs or long-term reports
+CHECKS THAT COULD NOT RUN
+Log scanning budget
+OpsWatch does not collect the data this check reads yet.
+CloudFormation stack version
+The permission this needs was refused, so the answer cannot be known from here.

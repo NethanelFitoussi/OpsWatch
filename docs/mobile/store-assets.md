@@ -37,14 +37,22 @@ screen added once appears in both. The order is the filename, which is the order
 | 03 | Problems | Every open problem, worst first, with what it affects |
 | 04 | Problem detail | Why OpsWatch thinks this is a problem: the evidence |
 | 05 | Errors | Exceptions grouped by fingerprint, with the frame that is yours |
-| 06 | Services | Every service, its health, and what is wrong with it |
-| 07 | Infrastructure | The infrastructure underneath, and what is struggling |
-| 08 | System status | Whether OpsWatch itself is collecting — so you know if you can trust the rest |
+| 06 | Checkup | What is wrong with how the environment is set up, and how much could be checked |
+| 07 | System status | Whether OpsWatch itself is collecting — so you know if you can trust the rest |
 
-**Only capabilities that genuinely exist.** Every screen here works today against the demo and against a server that
-implements the corresponding capability. Nothing is a placeholder, a disabled control or a "coming soon", and nothing
-is behind a server feature that is not implemented — Ask OpsWatch and push notifications are therefore absent, because
-no server provides them yet ([api-contract.md](api-contract.md)).
+**Only capabilities a server implements today**, which is stricter than "the app has the screen" and deliberately so.
+
+The app also has Services, Infrastructure, Logs, Alerts, Incidents, Synthetics, SLOs and Deployments, and they all
+work against the demo. But the server currently reports every one of them as `false`, so somebody who installs the
+app and points it at a real OpsWatch finds them unavailable. A listing showing them would be selling something the
+buyer does not get, so they are not in the set. Services and Infrastructure *were* in it, and were removed for this
+reason once the check was actually made.
+
+The authority is `src/lib/api/v1/features.ts` on `main`: its `IMPLEMENTED` map is the list of what may appear here.
+When one flips to `true`, add the screen back — [Adding a screen later](#adding-a-screen-later).
+
+Seven screens also sits inside Google Play's limit of eight phone screenshots, which is worth knowing before adding
+more.
 
 ## The data
 

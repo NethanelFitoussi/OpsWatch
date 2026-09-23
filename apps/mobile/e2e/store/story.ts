@@ -5,9 +5,15 @@
  * here appears in both. Each entry names the screen, how to reach it, and what must be on it before the shutter
  * opens — the last part matters, because a screenshot of a half-loaded screen is worse than no screenshot.
  *
- * **Only capabilities that genuinely exist.** Nothing here is behind an unimplemented server feature, and nothing is
- * a placeholder or a "coming soon". The demo advertises the same capability set the app really has, so a screen that
- * would show "not available on this server" cannot accidentally be photographed.
+ * **Only capabilities a server implements today.** This is stricter than "the app has the screen", and deliberately.
+ * The app has Services, Infrastructure, Logs, Alerts, Incidents, Synthetics, SLOs and Deployments, and they work
+ * against the demo — but the server reports every one of them as `false` right now, so somebody installing the app
+ * and pointing it at a real OpsWatch would find them unavailable. A store listing that showed them would be selling
+ * something the buyer does not get.
+ *
+ * They come back the moment the server implements them: add the entry here and the matching line in
+ * `capture-android.sh`, and the validator fails until every target has been recaptured. The check to run first is
+ * `src/lib/api/v1/features.ts` on `main` — the `IMPLEMENTED` map is the list of what may appear here.
  */
 export type Shot = {
   /** `01-production-health` — the order is the filename, so the store listing order is the directory order. */
@@ -56,19 +62,13 @@ export const STORY: Shot[] = [
     settleOn: 'error-message',
   },
   {
-    name: '06-services',
-    caption: 'Every service, its health and what is wrong with it.',
-    path: '/services',
-    settleOn: 'services-screen',
+    name: '06-checkup',
+    caption: 'What is wrong with how the environment is set up — and how much of the catalogue could be checked.',
+    path: '/checkup',
+    settleOn: 'checkup-coverage',
   },
   {
-    name: '07-infrastructure',
-    caption: 'The infrastructure underneath, and which parts are struggling.',
-    path: '/infrastructure',
-    settleOn: 'infrastructure-screen',
-  },
-  {
-    name: '08-system-status',
+    name: '07-system-status',
     caption: 'Whether OpsWatch itself is collecting — so you know if you can trust the rest.',
     path: '/system',
     settleOn: 'system-verdict',
