@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 58 |
-| `PARTIAL` | 15 |
+| `DONE` | 59 |
+| `PARTIAL` | 14 |
 | `FOUNDATION_ONLY` | 4 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -189,8 +189,8 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| SLO-1 | Definitions and measurement (§19) | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Availability measured from stored ALB rollups and shown in reports. No per-service SLO *definitions* yet, so it measures against a default objective |
-| SLO-2 | Error budget and burn rate | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Budget shown in reports. Burn-rate alerting (14.4×/6×) is implemented but nothing acts on it — needs ALE-1 |
+| SLO-1 | Definitions and measurement (§19) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Per-subject objectives are defined on `load-balancers/objectives`, measured from stored rollups, served at `GET /slos`, and used by reports in place of the default |
+| SLO-2 | Error budget and burn rate | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Budget and burn rate are computed per objective and shown. `burnAlert` decides fast from slow, and no rule yet raises an alert from it |
 | SLO-3 | "Not enough history" below a quarter | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Enforced in `evaluateSlo`; a sparse window yields no figure rather than a ratio over the fraction that exists |
 
 ## Cloudflare
@@ -292,9 +292,13 @@ explicit that timestamps correlating is never a claim of causation, and the UI m
 window arithmetic, the ordering, and the wording. Browser: required. Mobile: `deploymentSummary` already
 exists in the contract, so the field is additive.
 
-**Checkpoint D — per-service SLO definitions (SLO-1, SLO-2).** The arithmetic and the rollups exist; what is
-missing is letting an operator *define* an SLO rather than measuring everything against a default 99.9 %, and
-somewhere for a burn-rate alert to go (needs ALE-1).
+**Checkpoint D1 — per-service SLO definitions (SLO-1). DONE.** An operator writes their own target on
+`load-balancers/objectives`; it is measured from stored rollups, served at `GET /slos`, and a report row now
+uses the objective defined for that subject instead of the hard-wired 99.9 %. The metrics job also stores
+p95 now, in a request of its own, so a latency objective has something to measure.
+
+**Checkpoint D2 — burn-rate alerting (SLO-2).** The remaining half: `burnAlert` already tells a fast burn
+from a slow one, and nothing raises an alert from it. ALE-1 now exists, so there is somewhere for one to go.
 
 ### LATER
 

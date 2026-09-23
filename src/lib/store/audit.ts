@@ -35,6 +35,7 @@ export const AUDIT_ACTIONS = [
   'integration_update',
   'synthetic_update',
   'alert_rule_update',
+  'slo_update',
   'alert_acknowledge',
   'incident_dismiss',
   'export_download',

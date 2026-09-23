@@ -155,6 +155,41 @@ describe('the availability rollups §19 reads back', () => {
     expect(outcome).toMatchObject({ covered: 5, total: 5 });
   });
 
+  /** The percentile request is a separate one: `getMetricSeries` is called twice, and this answers each. */
+  const byRequest = (availability: Record<string, number[]>, latency: Record<string, number[]>) =>
+    (_target: unknown, queries: readonly { stat: string }[]) => ({
+      ok: true,
+      data: queries[0]?.stat === 'p95'
+        ? Object.entries(latency).map(([id, values]) => ({ id, label: id, timestamps: values.map((_, i) => NOW - i * 60_000), values }))
+        : series(availability),
+    });
+
+  it('THE RULING: p95 is asked for in a request of its own, because a percentile cannot share one', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW);
+    listLoadBalancers.mockResolvedValue({ ok: true, data: balancers });
+    getMetricSeries.mockImplementation(byRequest({}, { lb0p95: [0.42] }));
+
+    await runMetricsJob({ db, ...env, nowMs: NOW });
+
+    expect(getMetricSeries).toHaveBeenCalledTimes(2);
+    const stats = getMetricSeries.mock.calls.map((call) => (call[1] as { stat: string }[]).map((query) => query.stat));
+    // No request mixes them: one is all Sums, the other all percentiles.
+    for (const request of stats) expect(new Set(request).size).toBe(1);
+    // Stored as CloudWatch reports it — seconds. The objective converts, so history is not rewritten by a unit.
+    expect((await readMetric(db, 'p95')).points[0]?.value).toBe(0.42);
+  });
+
+  it('a p95 CloudWatch had no datapoint for is null, not an instant response', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW);
+    listLoadBalancers.mockResolvedValue({ ok: true, data: balancers });
+    getMetricSeries.mockImplementation(byRequest({}, {}));
+
+    await runMetricsJob({ db, ...env, nowMs: NOW });
+    expect((await readMetric(db, 'p95')).points[0]?.value).toBeNull();
+  });
+
   it('bounds the fan-out, so a large account cannot turn a five-minute job loose', async () => {
     expect(SLO_LOAD_BALANCER_LIMIT).toBeGreaterThan(0);
     expect(SLO_LOAD_BALANCER_LIMIT).toBeLessThanOrEqual(50);

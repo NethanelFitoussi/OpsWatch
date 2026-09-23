@@ -21,6 +21,7 @@ import {
   reportSchema,
   serverInfoSchema,
   sessionListSchema,
+  sloSummarySchema,
   systemStatusSchema,
 } from '@opswatch/contract';
 
@@ -176,6 +177,16 @@ export const API_ROUTES: ApiRouteSpec[] = [
     auth: 'session',
     summary: 'Alerts in one environment, newest first, with how many fires the cooldown suppressed.',
     response: pageSchema(alertSummarySchema),
+    status: 200,
+    errors: ['unauthorized', 'invalid_request', 'not_found'],
+  },
+  {
+    method: 'get',
+    path: '/slos',
+    operationId: 'listSlos',
+    auth: 'session',
+    summary: 'The objectives defined for one environment, measured from stored history. An objective with no history behind it reports no figure rather than a full one.',
+    response: pageSchema(sloSummarySchema),
     status: 200,
     errors: ['unauthorized', 'invalid_request', 'not_found'],
   },

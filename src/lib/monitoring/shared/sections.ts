@@ -9,7 +9,7 @@ export const SUBSECTIONS = {
   errors: ['groups', 'sources'],
   containers: ['services', 'report'],
   databases: ['instances', 'queries', 'report'],
-  'load-balancers': ['list', 'report'],
+  'load-balancers': ['list', 'objectives', 'report'],
   alarms: ['list', 'report'],
   // Task 22 moves 'volume' to the front when the Logs dashboard exists; until then 'search' stays the default
   // so `/logs` never redirects to a page that does not exist yet.
@@ -66,6 +66,7 @@ export const SUBSECTION_ICONS: Record<
   instances: 'list',
   list: 'list',
   report: 'report',
+  objectives: 'health',
   queries: 'queries',
   search: 'search',
   volume: 'volume',
