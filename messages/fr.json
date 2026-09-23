@@ -1540,12 +1540,14 @@
       "hypothesis": {
         "deploy_regression": "Un déploiement récent a pu introduire ceci",
         "capacity_shortfall": "La capacité est peut-être insuffisante pour la charge actuelle",
-        "noise": "Ce problème oscille peut-être parce que le détecteur est trop sensible"
+        "noise": "Ce problème oscille peut-être parce que le détecteur est trop sensible",
+        "traffic_surge": "Le trafic était très au-dessus de la normale pour cette heure de la semaine"
       },
       "confirm": {
         "deploy_regression.confirm": "Comparez la révision déployée avec la précédente, et voyez si revenir en arrière arrête les erreurs.",
         "capacity_shortfall.confirm": "Comparez le nombre souhaité au nombre en cours, et voyez si augmenter le premier suffit.",
-        "noise.confirm": "Regardez la fréquence des ouvertures et fermetures. Si rien d’autre n’a changé, le seuil est probablement trop serré."
+        "noise.confirm": "Regardez la fréquence des ouvertures et fermetures. Si rien d’autre n’a changé, le seuil est probablement trop serré.",
+        "traffic_surge.confirm": "Comparez le nombre de requêtes avec la même heure des semaines précédentes, et vérifiez si le problème disparaît quand le trafic retombe."
       }
     },
     "code": {

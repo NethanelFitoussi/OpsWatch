@@ -63,7 +63,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INT-1 | Collector runtime, scheduling | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Visible on System status |
 | INT-2 | Single-writer lock (§33.4) | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Conditional UPDATE; refresh carries `AND owner = ?` |
-| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **11 jobs declared, 6 implemented** (`detect`, `errors`, `metrics`, `compact`, `deployments`, `synthetics`). Remaining: `inventory`, `queries`, `logvolume`, `baselines`, `slo` |
+| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **11 jobs declared, 7 implemented** (`detect`, `errors`, `metrics`, `compact`, `deployments`, `synthetics`, `baselines`). `inventory`, `queries`, `logvolume` remain; `slo` is no longer needed, since the metrics job stores what §19 reads |
 | INT-4 | Detector execution, isolation (§33.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Fired / clear / not_evaluated |
 | INT-5 | Problem identity (§33.2) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Length-prefixed key; digest pinned |
 | INT-6 | Lifecycle, reopen, flap | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
@@ -136,7 +136,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | INV-1 | Investigation timeline | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Rendered on Problem detail. No standalone investigation object or `/api/v1` route yet |
 | INV-2 | Cross-signal correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Any two facts in the events spine sharing a subject or service, within §7's window, with the measured Δt |
 | INV-3 | Observed fact vs correlation vs hypothesis | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Three headed groups, not badges on one list. Only a hypothesis carries a confidence, and five catalogue entries are declared unevaluated |
-| INV-4 | Probable-cause evidence chain | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Three of §5's eight hypotheses evaluated; the other five need baselines, PI digests, Cloudflare or synthetics |
+| INV-4 | Probable-cause evidence chain | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Four of §5's eight hypotheses evaluated. `traffic_surge` joined them with §8's baselines; the rest need PI digests, Cloudflare or the dependency map, and are named in `NOT_EVALUATED` rather than omitted |
 | INV-5 | Investigation workspace (§R) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
 
 ## Deployments

@@ -1,6 +1,7 @@
 import 'server-only';
 import { getDb } from '../db/client';
 import { env } from '../env';
+import { runBaselinesJob } from './baselines-job';
 import { runCompactJob } from './compact-job';
 import { runDeploymentsJob } from './deployments-job';
 import { runDetectJob } from './detect';
@@ -39,6 +40,9 @@ export const runJob: JobRun = async (job, nowMs) => {
     case 'metrics':
       // It checks the history switch itself and does nothing while history is off (§31.1).
       return runMetricsJob(scoped);
+    case 'baselines':
+      // Reads only what is already stored, so it asks AWS for nothing and is free to look back four weeks.
+      return runBaselinesJob(scoped);
     default:
       return { covered: 0, total: 0 };
   }

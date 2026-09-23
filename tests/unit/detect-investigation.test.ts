@@ -37,7 +37,7 @@ const fact = (over: Partial<Fact> = {}): Fact => ({
   ...over,
 });
 
-const problem = { kind: 'ecs_cpu_high', firstSeenAt: NOW, reopensInWindow: 0, serviceId: 'prod/web' };
+const problem = { kind: 'ecs_cpu_high', firstSeenAt: NOW, reopensInWindow: 0, serviceId: 'prod/web', trafficRobustZ: null };
 
 describe('band 1 — observed facts, never inferred', () => {
   it('THE RULING: one event becomes one fact, and nothing else becomes a fact at all', () => {
@@ -118,6 +118,44 @@ describe('band 2 — correlations, which state a gap and never a cause', () => {
   });
 });
 
+describe('§7 — traffic_surge, once §8 has a baseline to compare against', () => {
+  const anchor = fact({ id: 'anchor' });
+  const deployment = fact({ id: 'dep', type: 'deployment_started', at: NOW - 10 * MINUTE });
+
+  it('THE RULING: no baseline is not evaluated, never "traffic was normal"', () => {
+    // `null` must not be read as a zero deviation: withholding the hypothesis as though it had been tested
+    // and rejected is exactly the failure §2.6 forbids.
+    expect(hypothesesFor(problem, [], []).map((one) => one.id)).not.toContain('traffic_surge');
+    expect(hypothesesFor({ ...problem, trafficRobustZ: 0 }, [], []).map((one) => one.id)).not.toContain('traffic_surge');
+  });
+
+  it('is raised once the deviation passes §8’s threshold, and not before', () => {
+    expect(hypothesesFor({ ...problem, trafficRobustZ: 2.9 }, [], []).map((one) => one.id)).not.toContain('traffic_surge');
+    expect(hypothesesFor({ ...problem, trafficRobustZ: 3 }, [], [])[0]).toMatchObject({ id: 'traffic_surge', confidence: 'high' });
+  });
+
+  it('THE RULING: a deployment that also explains it lowers the confidence rather than hiding it', () => {
+    const surging = { ...problem, trafficRobustZ: 8 };
+    const withDeployment = hypothesesFor(surging, [deployment], correlationsFor(anchor, [deployment]));
+    // Both are offered — the operator chooses — but two explanations at equal confidence help nobody.
+    expect(withDeployment.map((one) => one.id).sort()).toEqual(['deploy_regression', 'traffic_surge']);
+    expect(withDeployment.find((one) => one.id === 'traffic_surge')?.confidence).toBe('medium');
+  });
+
+  it('carries no supporting facts, because a surge is measured rather than evented', () => {
+    const [hypothesis] = hypothesesFor({ ...problem, trafficRobustZ: 5 }, [], []);
+    expect(hypothesis.supporting).toEqual([]);
+    // And it still says what would confirm it, like every other entry in the catalogue.
+    expect(hypothesis.confirmedBy).toBe('traffic_surge.confirm');
+  });
+
+  it('has left the not-evaluated list, because it is evaluated now', () => {
+    expect(NOT_EVALUATED).not.toContain('traffic_surge');
+    // The rest are still named rather than quietly omitted, so a reader sees the catalogue was not fully run.
+    expect(NOT_EVALUATED).toContain('query_regression');
+  });
+});
+
 describe('band 3 — hypotheses, from a fixed catalogue', () => {
   const deployment = fact({ id: 'dep', type: 'deployment_started', at: NOW - 10 * MINUTE });
   const errorSignal = fact({ id: 'err', type: 'error_group_appeared', at: NOW - 3 * MINUTE });
@@ -187,8 +225,8 @@ describe('band 3 — hypotheses, from a fixed catalogue', () => {
 
   it('THE RULING: the entries it cannot evaluate are declared, not quietly omitted', () => {
     // A reader must be able to see the catalogue was not fully run — the same rule as Checkup.
-    expect([...NOT_EVALUATED]).toContain('traffic_surge');
     expect([...NOT_EVALUATED]).toContain('query_regression');
+    expect([...NOT_EVALUATED]).toContain('dependency_saturation');
     expect(NOT_EVALUATED.length).toBeGreaterThan(0);
   });
 });
