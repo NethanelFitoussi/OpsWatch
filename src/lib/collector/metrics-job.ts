@@ -3,8 +3,8 @@ import type { Db } from '../db/client';
 import { opswatchDbProvider } from '../history/opswatch-db';
 import { RESOLUTION_MS, type HistoryPoint } from '../history/provider';
 import { readHistorySettings } from '../history/settings';
-import { listLoadBalancers, loadBalancerQueries } from '../monitoring/elb';
-import { getMetricSeries, seriesById } from '../monitoring/metrics';
+import { listLoadBalancers, loadBalancerLatencyQuery, loadBalancerQueries } from '../monitoring/elb';
+import { getMetricSeries, latestValue, seriesById } from '../monitoring/metrics';
 import { INSIGHT_FAMILIES, loadFamily } from '../monitoring/overview';
 import { recentWindow } from '../monitoring/shared/time-range';
 import { resolveTarget } from '../monitoring/target';
@@ -31,6 +31,9 @@ export const SLO_LOAD_BALANCER_LIMIT = 25;
 
 /** The metrics §19 computes availability from: good = requests − (elb5xx + target5xx). */
 const AVAILABILITY_METRICS = ['requests', 'elb5xx', 'target5xx'] as const;
+
+/** The series a latency objective is measured on. Stored under the same subject as the availability ones. */
+const LATENCY_METRIC = 'p95';
 
 /**
  * Sums a series over the interval. `null` when CloudWatch returned no datapoint at all, which the SLO
@@ -127,6 +130,30 @@ export async function runMetricsJob(input: MetricsJobInput): Promise<JobOutcome>
             samples: 1,
           });
         }
+      }
+    }
+
+    // p95, in a request of its own: a percentile query cannot share one with a Sum query, and a latency
+    // objective has nothing to measure without it. One extra request per cycle, behind the same switch.
+    const latency = await getMetricSeries(
+      target.data,
+      chosen.map((balancer, index) => loadBalancerLatencyQuery(balancer, `lb${index}`)),
+      window,
+    );
+    if (latency.ok) {
+      for (const [index, balancer] of chosen.entries()) {
+        points.push({
+          category: 'metric',
+          subjectId: balancer.name,
+          metric: LATENCY_METRIC,
+          connectionId: input.connectionId,
+          scope: input.scope,
+          intervalStart,
+          resolution: METRICS_RESOLUTION,
+          // Null when CloudWatch had no datapoint: an interval nobody measured, not an instant response.
+          value: latestValue(seriesById(latency.data, `lb${index}p95`)),
+          samples: 1,
+        });
       }
     }
   }

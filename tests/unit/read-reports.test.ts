@@ -15,6 +15,7 @@ import { opswatchDbProvider } from '@/lib/history/opswatch-db';
 import { insertProblem, updateProblem } from '@/lib/store/problems';
 import { recordDeployments } from '@/lib/store/deployments';
 import { recordError, upsertLogSource } from '@/lib/store/errors';
+import { upsertSloDefinition } from '@/lib/store/slos';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
 
@@ -309,9 +310,32 @@ describe('§19 — real availability, where the rollups exist', () => {
   });
 
   it('measures against a stated objective rather than an implicit one', () => {
-    // Three nines. It is the default only because no per-service SLO can be defined yet (SLO-1), and the
+    // Three nines, used where nobody has defined an objective for the subject. It is a suggestion, and the
     // error-budget figure on the page is meaningless without knowing what it is a budget against.
     expect(DEFAULT_AVAILABILITY_OBJECTIVE).toBe(0.999);
+  });
+
+  it('THE RULING: a defined objective is what its subject is measured against, not the default (SLO-1)', async () => {
+    const db = createTestDb();
+    writeHistorySettings(db, { enabled: true }, NOW - 30 * DAY);
+    await opswatchDbProvider(db).write(
+      [{ category: 'metric', subjectId: 'ecs', metric: 'affected', ...env, intervalStart: align(NOW) - step, resolution: '5m', value: 0, samples: 1 }],
+      NOW,
+    );
+    // Exactly 99.9 %: the default's budget is spent to the last request, so the row is critical.
+    await storeAlb(db, 'prod-alb', 100, 1);
+    expect(sectionOf(readReport(db, day, context), 'availability')?.rows.find((row) => row.id === 'prod-alb')?.severity).toBe('critical');
+
+    // The same history, against the objective somebody actually chose for this load balancer.
+    upsertSloDefinition(
+      db,
+      { ...env, name: 'Web availability', kind: 'availability', subjectId: 'prod-alb', objective: 0.99, latencyThresholdMs: null, windowDays: 30, enabled: true },
+      NOW,
+    );
+    const row = sectionOf(readReport(db, day, context), 'availability')?.rows.find((one) => one.id === 'prod-alb');
+    // Same measurement — what changed is the target it is held to.
+    expect(row?.value).toBeCloseTo(99.9, 6);
+    expect(row?.severity).toBeUndefined();
   });
 
   it('THE RULING: too few intervals to stand behind gives no figure, even with rollups present', async () => {

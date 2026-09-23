@@ -1693,6 +1693,55 @@
         "not_found": "That is not in this environment.",
         "already_acknowledged": "That alert was already acknowledged."
       }
+    },
+    "objectives": {
+      "title": "Objectives",
+      "description": "What you promised, and what the stored history says about it.",
+      "measured": "Every figure here is computed from rollups OpsWatch already stored. Opening this page reads nothing from AWS and costs nothing.",
+      "historyOff": "Historical collection is off, so there is nothing stored to measure. Your objectives are kept, and each one reports no figure rather than one it cannot support.",
+      "defined": "Defined objectives",
+      "none": "No objectives are defined.",
+      "noneHint": "Until one is, availability is measured against 99.9% — a reasonable suggestion, but not a decision anyone here made.",
+      "add": "Define an objective",
+      "sameNameHint": "Saving with a name that already exists changes that objective rather than adding a second one.",
+      "name": "Name",
+      "subject": "Load balancer",
+      "subjectHint": "Chosen from the load balancers OpsWatch has stored metrics for.",
+      "subjectsEmpty": "Nothing has been stored yet, so there is no list to choose from. A name typed here is measured as soon as collection reaches it.",
+      "kind": "Measured on",
+      "kinds": {
+        "availability": "Availability",
+        "latency": "Latency"
+      },
+      "objective": "Objective (%)",
+      "objectiveHint": "99.9 means one thousandth of requests may fail before the budget is spent.",
+      "window": "Window (days)",
+      "threshold": "Latency threshold (ms)",
+      "thresholdHint": "For a latency objective. It is measured as the share of five-minute intervals whose p95 was at or below this — an interval-level approximation, because a read-only load balancer gives no per-request histogram.",
+      "enable": "Measure this objective",
+      "save": "Save objective",
+      "saved": "Saved.",
+      "remove": "Remove",
+      "target": "Target {value}",
+      "current": "Now {value}",
+      "notMeasured": "Not measured",
+      "budget": "Budget left {value}",
+      "status": {
+        "healthy": "Healthy",
+        "at_risk": "At risk",
+        "breached": "Breached",
+        "unknown": "Unknown"
+      },
+      "errors": {
+        "invalid_name": "Give the objective a name of up to 100 characters.",
+        "invalid_kind": "Choose availability or latency.",
+        "invalid_subject": "Name the load balancer this objective is measured on.",
+        "invalid_objective": "An objective is a percentage above 0 and at most 100.",
+        "invalid_threshold": "A latency objective needs a threshold in milliseconds, above zero.",
+        "invalid_window": "A window is between 1 and 90 days.",
+        "not_found": "That objective is not in this environment.",
+        "forbidden": "Only an administrator can change objectives."
+      }
     }
   },
   "Insights": {
@@ -1753,7 +1802,8 @@
     },
     "load-balancers": {
       "list": "Load balancers",
-      "report": "Report"
+      "report": "Report",
+      "objectives": "Objectives"
     },
     "alarms": {
       "list": "Alarms",
@@ -1969,6 +2019,7 @@
         "integration_update": "Integration changed",
         "synthetic_update": "Synthetic check changed",
         "alert_rule_update": "Alert rule changed",
+        "slo_update": "Objective changed",
         "alert_acknowledge": "Alert acknowledged",
         "incident_dismiss": "Incident dismissed",
         "export_download": "Export downloaded",

@@ -23,7 +23,8 @@ describe('the sub-section catalogue', () => {
       errors: ['groups', 'sources'],
       containers: ['services', 'report'],
       databases: ['instances', 'queries', 'report'],
-      'load-balancers': ['list', 'report'],
+      // §19's objectives sit with the load balancers they are measured on, between the list and the report.
+      'load-balancers': ['list', 'objectives', 'report'],
       alarms: ['list', 'report'],
       // Task 22 moves 'volume' to the front when the Logs dashboard exists; until then 'search' is the default.
       logs: ['search', 'volume', 'endpoints'],

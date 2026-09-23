@@ -27,7 +27,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   // GET /incidents and /incidents/{id} serve the rows the detect cycle opens (§16).
   incidents: true,
   synthetics: false,
-  slos: false,
+  // GET /slos measures the objectives an operator defined against stored history (§19).
+  slos: true,
   deployments: false,
   // GET /reports summarises the rows the collector already wrote, and names the halves it cannot answer.
   reports: true,

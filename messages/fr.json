@@ -1693,6 +1693,55 @@
         "not_found": "Cet élément n’est pas dans cet environnement.",
         "already_acknowledged": "Cette alerte était déjà acquittée."
       }
+    },
+    "objectives": {
+      "title": "Objectifs",
+      "description": "Ce que vous avez promis, et ce que l'historique enregistré en dit.",
+      "measured": "Chaque chiffre ici est calculé à partir des agrégats déjà stockés par OpsWatch. Ouvrir cette page ne lit rien sur AWS et ne coûte rien.",
+      "historyOff": "La collecte historique est désactivée : il n'y a rien de stocké à mesurer. Vos objectifs sont conservés, et chacun n'affiche aucun chiffre plutôt qu'un chiffre qu'il ne peut pas justifier.",
+      "defined": "Objectifs définis",
+      "none": "Aucun objectif n'est défini.",
+      "noneHint": "Tant qu'il n'y en a pas, la disponibilité est mesurée par rapport à 99,9 % — une suggestion raisonnable, mais la décision de personne ici.",
+      "add": "Définir un objectif",
+      "sameNameHint": "Enregistrer avec un nom déjà utilisé modifie cet objectif plutôt que d'en ajouter un second.",
+      "name": "Nom",
+      "subject": "Répartiteur de charge",
+      "subjectHint": "Choisi parmi les répartiteurs de charge pour lesquels OpsWatch a stocké des métriques.",
+      "subjectsEmpty": "Rien n'a encore été stocké, il n'y a donc pas de liste à proposer. Un nom saisi ici sera mesuré dès que la collecte l'atteindra.",
+      "kind": "Mesuré sur",
+      "kinds": {
+        "availability": "Disponibilité",
+        "latency": "Latence"
+      },
+      "objective": "Objectif (%)",
+      "objectiveHint": "99,9 signifie qu'un millième des requêtes peut échouer avant que le budget ne soit épuisé.",
+      "window": "Fenêtre (jours)",
+      "threshold": "Seuil de latence (ms)",
+      "thresholdHint": "Pour un objectif de latence. Il est mesuré comme la part des intervalles de cinq minutes dont le p95 était inférieur ou égal à ce seuil — une approximation par intervalle, car un répartiteur de charge en lecture seule ne fournit pas d'histogramme par requête.",
+      "enable": "Mesurer cet objectif",
+      "save": "Enregistrer l'objectif",
+      "saved": "Enregistré.",
+      "remove": "Supprimer",
+      "target": "Cible {value}",
+      "current": "Actuel {value}",
+      "notMeasured": "Non mesuré",
+      "budget": "Budget restant {value}",
+      "status": {
+        "healthy": "Sain",
+        "at_risk": "À risque",
+        "breached": "Dépassé",
+        "unknown": "Inconnu"
+      },
+      "errors": {
+        "invalid_name": "Donnez à l'objectif un nom d'au plus 100 caractères.",
+        "invalid_kind": "Choisissez disponibilité ou latence.",
+        "invalid_subject": "Indiquez le répartiteur de charge sur lequel cet objectif est mesuré.",
+        "invalid_objective": "Un objectif est un pourcentage supérieur à 0 et au plus égal à 100.",
+        "invalid_threshold": "Un objectif de latence exige un seuil en millisecondes, supérieur à zéro.",
+        "invalid_window": "Une fenêtre est comprise entre 1 et 90 jours.",
+        "not_found": "Cet objectif n'appartient pas à cet environnement.",
+        "forbidden": "Seul un administrateur peut modifier les objectifs."
+      }
     }
   },
   "Insights": {
@@ -1753,7 +1802,8 @@
     },
     "load-balancers": {
       "list": "Répartiteurs",
-      "report": "Rapport"
+      "report": "Rapport",
+      "objectives": "Objectifs"
     },
     "alarms": {
       "list": "Alarmes",
@@ -1969,6 +2019,7 @@
         "integration_update": "Intégration modifiée",
         "synthetic_update": "Vérification synthétique modifiée",
         "alert_rule_update": "Règle d’alerte modifiée",
+        "slo_update": "Objectif modifié",
         "alert_acknowledge": "Alerte acquittée",
         "incident_dismiss": "Incident écarté",
         "export_download": "Export téléchargé",

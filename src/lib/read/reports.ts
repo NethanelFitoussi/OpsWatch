@@ -8,6 +8,7 @@ import { readHistorySettings } from '../history/settings';
 import { countDeployments, listDeployments } from '../store/deployments';
 import { countOccurrences, enabledLogSources, recentErrorGroups } from '../store/errors';
 import { listHistorySubjects, readHistoryRange } from '../store/history';
+import { objectiveFor } from '../store/slos';
 import { countProblemsInWindow, worstSubjectsInWindow } from '../store/problems';
 
 /**
@@ -255,7 +256,10 @@ function requestAvailability(
     const buckets = [...requests.keys()].map((at) => albBucket(requests.get(at) ?? null, elb.get(at) ?? null, target.get(at) ?? null));
     all.push(...buckets);
 
-    const result = evaluateSlo(buckets, DEFAULT_AVAILABILITY_OBJECTIVE, expected);
+    // The objective an operator defined for this subject, where there is one. Without a definition the
+    // figure is measured against §19's default, which is the tool's suggestion rather than their target.
+    const defined = objectiveFor(db, query.connectionId, query.scope, subjectId);
+    const result = evaluateSlo(buckets, defined?.objective ?? DEFAULT_AVAILABILITY_OBJECTIVE, expected);
     rows.push({
       id: subjectId,
       label: subjectId,
@@ -268,6 +272,8 @@ function requestAvailability(
     });
   }
 
+  // The environment figure stays on the default: pooling subjects that were given different objectives
+  // into one ratio would measure them against a target nobody set. The per-subject rows carry theirs.
   const overall = evaluateSlo(all, DEFAULT_AVAILABILITY_OBJECTIVE, expected * Math.max(1, subjects.length));
   return { current: overall.current, budgetRemaining: overall.budgetRemaining, rows };
 }

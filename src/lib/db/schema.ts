@@ -798,3 +798,43 @@ export const historySettings = sqliteTable('history_settings', {
 
 export type HistorySettingsRow = typeof historySettings.$inferSelect;
 
+
+/** What an objective is measured on (§19). Availability reads request counts; latency reads stored p95s. */
+export const SLO_KINDS = ['availability', 'latency'] as const;
+export type SloKind = (typeof SLO_KINDS)[number];
+
+/**
+ * One service level objective, as an operator defined it (§19).
+ *
+ * Definitions are the thing that was missing: the arithmetic and the rollups already existed, so every
+ * availability figure was measured against one hard-wired 99.9 %. An objective is a **decision about a
+ * particular service** — a batch worker and a checkout API do not deserve the same number — and until it
+ * can be written down, the figure is the tool's opinion rather than the operator's target.
+ *
+ * `subjectId` is the id the rollups are stored under, so a definition points at a series that exists rather
+ * than at a name somebody typed. Nothing here stores a measurement: every figure is computed from history
+ * on read, which is what keeps a definition free to change without rewriting the past.
+ */
+export const sloDefinitions = sqliteTable(
+  'slo_definitions',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: SLO_KINDS }).notNull(),
+    /** The history subject this is measured on — a load balancer, as the metrics job stores it. */
+    subjectId: text('subject_id').notNull(),
+    /** A fraction: 0.999 is 99.9 %. Stored as written, never rounded for display. */
+    objective: real('objective').notNull(),
+    /** Milliseconds, for a latency objective. Null for an availability one, where it means nothing. */
+    latencyThresholdMs: integer('latency_threshold_ms'),
+    /** The window the objective is measured over, in days. */
+    windowDays: integer('window_days').notNull().default(30),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('slo_definitions_name').on(t.connectionId, t.scope, t.name)],
+);
+
+export type SloDefinitionRow = typeof sloDefinitions.$inferSelect;
