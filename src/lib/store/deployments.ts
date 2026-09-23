@@ -6,6 +6,7 @@ import { deployments, type DeploymentRow } from '../db/schema';
 import type { SeenDeployment } from '../detect/deployment';
 import { isSettled } from '../detect/deployment';
 import { appendEvent } from './events';
+import type { SeqPage } from './problems';
 
 /**
  * Deployments, as the collector records them (DEP-1).
@@ -143,6 +144,40 @@ export function listDeployments(db: Db, filter: DeploymentFilter, limit: number)
     .orderBy(desc(deployments.startedAt), asc(deployments.deploymentId))
     .limit(limit)
     .all();
+}
+
+/**
+ * One page of deployments, on the immutable `(seq, id)` axis every other list uses (§33.6).
+ *
+ * Deliberately not the `startedAt` axis `listDeployments` reads. A cursor must be stable: `startedAt` moves
+ * while a rollout is in progress, and a page resumed against it would skip or repeat a deployment that
+ * finished between two requests. Newest first is what a timeline wants; resumable is what a cursor needs.
+ */
+export function pageDeployments(
+  db: Db,
+  filter: DeploymentFilter,
+  cursor: { afterSeq: number; afterId: string } | null,
+  limit: number,
+): SeqPage<DeploymentRow> {
+  const where = [eq(deployments.connectionId, filter.connectionId), eq(deployments.scope, filter.scope)];
+  if (filter.serviceId !== undefined) where.push(eq(deployments.serviceId, filter.serviceId));
+  if (filter.sinceMs !== undefined) where.push(gte(deployments.startedAt, filter.sinceMs));
+  if (filter.untilMs !== undefined) where.push(lt(deployments.startedAt, filter.untilMs));
+  if (cursor !== null) where.push(lt(deployments.seq, cursor.afterSeq));
+
+  // Descending, so the newest deployment is the first row of the first page — and the cursor walks backwards
+  // through rows that never change position, because `seq` is assigned once at insert.
+  const rows = db
+    .select()
+    .from(deployments)
+    .where(and(...where))
+    .orderBy(desc(deployments.seq))
+    .limit(limit + 1)
+    .all();
+  const items = rows.slice(0, limit);
+  const more = rows.length > limit;
+  const last = items[items.length - 1];
+  return { items, nextSeq: more && last ? last.seq : null, nextId: more && last ? last.id : null };
 }
 
 export function countDeployments(db: Db, filter: DeploymentFilter): { total: number; failed: number } {

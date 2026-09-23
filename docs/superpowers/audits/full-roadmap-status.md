@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 62 |
-| `PARTIAL` | 11 |
+| `DONE` | 63 |
+| `PARTIAL` | 10 |
 | `FOUNDATION_ONLY` | 4 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -145,7 +145,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | DEP-1 | Deployment collection | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Records ECS deployments and their outcome; visible in section reports |
 | DEP-2 | Deployment ↔ problem correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Same service, within 30 min before, with the measured Δt. The card says it is a gap in time and not a cause |
-| DEP-3 | Deployment history surface | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | In reports only; no dedicated page or `/api/v1/deployments` |
+| DEP-3 | Deployment history surface | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | `containers/deployments` and `GET /deployments`, `GET /deployments/{id}`. The detail names the problems that started after a deployment as a correlation, never a cause |
 
 ## Repository / GitHub
 

@@ -100,6 +100,7 @@ const SERVER_ONLY_MODULES = [
   'lib/store/slos.ts',
   'lib/read/slos.ts',
   'lib/read/synthetics.ts',
+  'lib/read/deployments.ts',
   'lib/read/paging.ts',
   'lib/read/render.ts',
   'lib/api/v1/environment.ts',
