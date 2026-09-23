@@ -28,6 +28,8 @@ import type {
   SyntheticDetail,
 
   SystemStatus,
+
+  Checkup,
 } from '@/api/contract';
 
 const MIN = 60_000;
@@ -54,6 +56,7 @@ export type DemoDataset = {
   investigations: Investigation[];
   repository: RepositoryEvidence[];
   systemStatus: SystemStatus;
+  checkup: Checkup;
 };
 
 /**
@@ -940,8 +943,25 @@ export function buildDemoDataset(now: number = Date.now()): DemoDataset {
         // The app has no Reports surface, so the demo server does not advertise one: a capability nothing consumes
         // would only inflate the count the Connect screen shows.
         reports: false,
+        checkup: true,
         push: false,
       },
+    },
+    checkup: {
+      generatedAt: now,
+      // A realistic spread: one critical, one warning, one informational — and, deliberately, two checks that could
+      // not run, so the coverage line has something to say and the screen's §2.6 behaviour is exercised in the demo.
+      findings: [
+        { id: 'errors_not_collected', severity: 'warning', subject: null, values: { discovered: 14 } },
+        { id: 'history_off', severity: 'info', subject: null, values: {} },
+        { id: 'collector_job_failing', severity: 'warning', subject: null, values: { count: 1, jobs: 'errors' } },
+        { id: 'family_unreadable', severity: 'warning', subject: 'cloudfront', values: { family: 'cloudfront', reason: 'denied', code: 'AccessDenied' } },
+      ],
+      coverage: { ran: 10, notRun: 2, total: 12 },
+      notRun: [
+        { id: 'logs_budget', reason: 'not_collected', values: {} },
+        { id: 'template_outdated', reason: 'denied', values: {} },
+      ],
     },
     systemStatus: {
       version: '0.1.0-demo',

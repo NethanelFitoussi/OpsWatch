@@ -77,6 +77,8 @@ import {
   type User,
   systemStatusSchema,
   type SystemStatus,
+  checkupSchema,
+  type Checkup,
 } from './contract';
 import { request, type Transport } from './http';
 
@@ -126,6 +128,11 @@ export interface OpsWatchClient {
    * `forbidden` here is an ordinary answer for a non-admin account, not a failure.
    */
   systemStatus(): Promise<SystemStatus>;
+  /**
+   * What is wrong with how one environment is set up. Environment-scoped, and the answer always carries how much of
+   * the catalogue ran — a findings list without that is not a measurement (§2.6).
+   */
+  checkup(scope: Scope): Promise<Checkup>;
   health(scope: Scope): Promise<Health>;
   brief(scope: Scope): Promise<Brief>;
 
@@ -227,6 +234,7 @@ export function createHttpClient(options: HttpClientOptions): OpsWatchClient {
 
     environments: () => get('/environments', listOf(environmentSchema)),
     systemStatus: () => get('/system/status', systemStatusSchema),
+    checkup: (scope) => get('/checkup', checkupSchema, env(scope)),
     health: (scope) => get('/health', healthSchema, env(scope)),
     brief: (scope) => get('/brief', briefSchema, env(scope)),
 

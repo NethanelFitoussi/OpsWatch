@@ -33,7 +33,7 @@ describe('parseDeepLink', () => {
    * This asserts that every top-level screen the app ships is reachable by link.
    */
   it('lists every top-level screen the app has', () => {
-    const screens = ['/', '/problems', '/alerts', '/services', '/errors', '/incidents', '/synthetics', '/slos', '/deployments', '/logs', '/infrastructure', '/brief', '/search', '/ask', '/settings', '/system'];
+    const screens = ['/', '/problems', '/alerts', '/services', '/errors', '/incidents', '/synthetics', '/slos', '/deployments', '/logs', '/infrastructure', '/brief', '/search', '/ask', '/settings', '/system', '/checkup'];
     for (const screen of screens) expect(parseDeepLink(`opswatch:/${screen}`)).toBe(screen);
   });
 

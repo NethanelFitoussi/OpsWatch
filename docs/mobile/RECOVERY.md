@@ -4,8 +4,15 @@
 > transcript: this file, the git history and the fifteen documents beside it are enough for a fresh session to
 > reconstruct the state and carry on. Keep it current — it is part of the work, not a report about it.
 
-**Branch:** `feature/mobile` · **Base:** `7c471fd` on `main` · **Remote:** pushed to `origin/feature/mobile` after
-every green checkpoint. **Never merged to `main`.**
+**Branch:** `feature/mobile` · **Remote:** pushed to `origin/feature/mobile` after every green checkpoint.
+
+**Completed checkpoints are integrated into `main` as they land**, not held back to the end. The workflow for each
+one: finish it, run the gates, `git fetch origin`, reconcile whatever the Web/API side has pushed meanwhile, run the
+mobile *and* server gates on the merged tree, merge into `main` with a normal `--no-ff` merge, push, and go back to
+the branch. Active, unfinished work stays here; `main` is the latest tested state of the whole project.
+
+**Never force-push `main`, never reset it to this branch, and never commit into the Web/API worktree.** It is a
+separate checkout at a sibling path with `main` checked out — read it, run against it, but do not write to it.
 
 The app is a standalone npm project in [`apps/mobile`](../../apps/mobile) with its own `package.json` and lockfile.
 Everything this branch touches is under `apps/mobile/`, `docs/mobile/` and `.github/workflows/mobile*.yml`.
@@ -35,6 +42,10 @@ change to it has to be argued.
 
 ## Where the work stands
 
+**Capabilities are re-checked against the server on every reconciliation**, not read from a list written earlier.
+As of `origin/main` 737be47 the server implements `health`, `brief`, `problems`, `errors`, `reports` and `checkup`;
+everything else the app gates on is still `false`, and the app says so rather than pretending.
+
 **Every screen in the brief exists** and is wired to the contract: Connect/Login, Home, Morning Brief, Problems,
 Errors, Services, Infrastructure, Logs, Investigations, Alerts, Incidents, Synthetics, SLOs, Deployments, repository
 evidence, Ask OpsWatch, global search, favorites, environments, settings. The remaining work is depth, verification
@@ -46,8 +57,9 @@ been built as a release APK and run on an Android 15 emulator, including deep li
 tablet geometry; the web export has been toured at six device profiles. **iOS has never been run** — this was
 developed on Linux, and the iOS project has only ever been generated and read statically.
 
-**Two security reviews** have been done and their findings closed; [security.md](security.md) keeps the findings as a
-historical record rather than deleting them.
+**Three security reviews** have been done and their findings closed; [security.md](security.md) keeps them as a
+historical record rather than deleting them. The third covered the surface added after the second — screenshot mode,
+System status, Checkup and the list filters.
 
 ### Blocked on the server, and safe to leave blocked
 
@@ -57,26 +69,25 @@ the server does not provide the feature rather than pretending it does.
 | Item | What is missing | What the app does meanwhile |
 |---|---|---|
 | Push notifications end to end | No server implements `features.push`; needs an EAS project and APNs/FCM credentials | Local notifications work; the screen says push is unavailable ([notifications.md](notifications.md)) |
+| The final App Store screenshots | **Requires macOS.** No Mac has been available at any point in this work, so the Apple assets cannot be produced here at all | Google Play assets are real and complete; Apple has layout previews plus the exact macOS procedure ([store-assets.md](store-assets.md#generating-the-apple-set-macos-only)) |
 | Ask OpsWatch end to end | No server implements `features.ai` | The entry points are hidden by the capability gate |
 | A single-log-entry endpoint | `GET /logs/{id}` does not exist in the contract | Deep links to a log line open the search that contains it ([api-contract.md](api-contract.md#contract-gaps--requests)) |
 | Google sign-in | Needs a configured server and a real client id | The button appears only when the server advertises it |
 
-### The contract switchover
+### The shared contract
 
-`packages/contract` is on the server team's `feature/opswatch-intelligence` branch and **not yet on `main`**. Until it
-is, this branch keeps its local copy and proves the two agree.
+**The switchover is done.** `packages/contract` is on `main`, and `apps/mobile/src/api/contract.ts` is a re-export of
+it — there is one contract, and the app consumes it directly. The parity suite that guarded the two copies against
+each other has been deleted, because with one copy it had become a comparison of the package with itself.
 
-```bash
-cd apps/mobile
-OPSWATCH_CONTRACT_DIR=/path/to/packages/contract npx jest parity
-```
+What still guards it: `src/api/__tests__/pagination-agreement.test.ts` holds the app and the contract to the same
+answer about which endpoints are cursored and which filters each honours, in both directions. On the server side,
+`tests/unit/contract-additive.test.ts` guards the package against its own history.
 
-Last run: **66/66** against their `3881b23`, which includes the ten additive fields they landed for this app. Metro
-and Jest are already wired for the package, so the switchover is one file: `src/api/contract.ts` becomes a re-export
-of `@opswatch/contract`, and the local schemas are deleted. [merge-notes.md](merge-notes.md) has the state table.
-
-**Do not modify the Web/API worktree.** It is a separate checkout at a sibling path with its own branch checked out.
-Read it, run parity against it, and record findings here or in `merge-notes.md` — never commit into it.
+Resolution is wired in three places for the same reason — the contract is a directory of TypeScript files at the
+repository root, not an installed package: a `tsconfig` path, a Metro `extraNodeModules` entry, and a Jest
+`moduleNameMapper`. `tsconfig` also maps `zod` to this app's copy, because the repository root has no `node_modules`
+of its own and the package's own `zod` import would otherwise resolve to nothing, silently typing every schema `any`.
 
 ## Decisions that are not obvious from the code
 

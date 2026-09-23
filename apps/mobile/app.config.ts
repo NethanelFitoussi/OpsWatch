@@ -29,6 +29,19 @@ if (env('EAS_BUILD_PROFILE') === 'production' && (iosBundleId === PLACEHOLDER_ID
       'Set OPSWATCH_IOS_BUNDLE_ID and OPSWATCH_ANDROID_PACKAGE as EAS environment variables first (docs/mobile/release.md).',
   );
 }
+/**
+ * Screenshot mode stops the app's clock. In a build people actually use that is not a cosmetic bug: every age on
+ * every screen would freeze, and a monitoring app would go on reporting hours-old data as "updated just now" — the
+ * one thing it exists not to do. The value is an environment variable, so it can be left behind in a shell, a CI
+ * job or an EAS project and reach a release nobody meant it to.
+ */
+if (env('EAS_BUILD_PROFILE') === 'production' && env('EXPO_PUBLIC_SCREENSHOT_AT') !== undefined) {
+  throw new Error(
+    'Refusing to build the production profile with EXPO_PUBLIC_SCREENSHOT_AT set. It freezes the clock, which is ' +
+      'for store screenshots only (docs/mobile/store-assets.md). Unset it, or build a non-production profile.',
+  );
+}
+
 const easProjectId = env('EAS_PROJECT_ID');
 const associatedDomain = env('OPSWATCH_ASSOCIATED_DOMAIN');
 
