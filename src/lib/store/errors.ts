@@ -40,6 +40,14 @@ export type SeenError = {
   sampleMessage: string;
   normalizedMessage: string;
   topFrames: string[];
+  /**
+   * The raw location of **this** sighting: file, function, line, column.
+   *
+   * Kept apart from `topFrames` on purpose. `topFrames` is normalised and decides nothing about identity
+   * beyond what the fingerprint already used; this is a sample that moves as the error moves, and pointing
+   * at a line is the only thing it is for.
+   */
+  sampleFrames?: { file: string; function: string | null; line: number | null; column: number | null }[];
   at: number;
   count: number;
   instances: number | null;
@@ -71,6 +79,9 @@ export function recordError(db: Db, seen: SeenError): ErrorGroupRow {
           .set({
             lastSeenAt: Math.max(existing.lastSeenAt, seen.at),
             sampleMessage: seen.sampleMessage,
+            // The newest sighting's location replaces the last one. A sample is meant to be current; a
+            // sample kept from the first sighting would point at code three weeks of deploys behind.
+            ...(seen.sampleFrames === undefined ? {} : { sampleFrames: seen.sampleFrames }),
             ...statusFor(existing, seen.at),
           })
           .where(eq(errorGroups.id, existing.id))
@@ -90,6 +101,7 @@ export function recordError(db: Db, seen: SeenError): ErrorGroupRow {
             sampleMessage: seen.sampleMessage,
             normalizedMessage: seen.normalizedMessage,
             topFrames: seen.topFrames,
+            sampleFrames: seen.sampleFrames ?? null,
             firstSeenAt: seen.at,
             lastSeenAt: seen.at,
             status: 'new',

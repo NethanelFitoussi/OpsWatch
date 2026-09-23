@@ -162,6 +162,13 @@
       "when": 1790159209488,
       "tag": "0022_foamy_lethal_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1790168286936,
+      "tag": "0023_complex_warstar",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `error_groups` ADD `sample_frames` text;

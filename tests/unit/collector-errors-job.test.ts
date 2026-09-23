@@ -3,6 +3,7 @@ import { ERRORS_QUERY_LIMIT, ERRORS_WINDOW_MS, errorQuery, ingest } from '@/lib/
 import { BYTES_PER_GB, DAY_MS, budgetState, dayOf, readUsage, recordBudgetStop, recordScan, usageForDay } from '@/lib/store/logs-budget';
 import { countOccurrences, pageErrorGroups, upsertLogSource } from '@/lib/store/errors';
 import { parseLine, parseStack } from '@/lib/detect/log-parse';
+import { fingerprint } from '@/lib/detect/fingerprint';
 import { createTestDb } from '../helpers/db';
 
 const NOW = Date.UTC(2026, 8, 22, 12, 0, 0);
@@ -179,19 +180,30 @@ describe('parsing a line', () => {
 });
 
 describe('parsing a stack', () => {
-  it('reads Node frames, with and without a function name', () => {
+  it('reads Node frames, with and without a function name, and keeps where in the file', () => {
     expect(parseStack('at chargeCard (/app/a.ts:184:7)\n    at /app/b.ts:9:1')).toEqual([
-      { file: '/app/a.ts', function: 'chargeCard' },
-      { file: '/app/b.ts' },
+      { file: '/app/a.ts', function: 'chargeCard', line: 184, column: 7 },
+      { file: '/app/b.ts', line: 9, column: 1 },
     ]);
   });
 
-  it('reads Python frames', () => {
-    expect(parseStack('  File "/app/x.py", line 12, in charge')).toEqual([{ file: '/app/x.py', function: 'charge' }]);
+  it('reads Python frames, with the line it names', () => {
+    expect(parseStack('  File "/app/x.py", line 12, in charge')).toEqual([{ file: '/app/x.py', function: 'charge', line: 12 }]);
   });
 
   it('ignores lines that are not frames, such as the message itself', () => {
-    expect(parseStack("TypeError: boom\n    at run (/app/a.ts:1:1)")).toEqual([{ file: '/app/a.ts', function: 'run' }]);
+    expect(parseStack("TypeError: boom\n    at run (/app/a.ts:1:1)")).toEqual([{ file: '/app/a.ts', function: 'run', line: 1, column: 1 }]);
+  });
+
+  it('THE RULING: a line number never reaches the fingerprint, so a blank line cannot split a group', () => {
+    // §4.4 groups on the file and the function. The line is kept on the frame for a *sighting* to point
+    // at, and `normalizeFrame` — which is what the fingerprint reads — does not carry it.
+    const before = parseStack('at charge (/app/a.ts:184:7)');
+    const after = parseStack('at charge (/app/a.ts:203:7)');
+    expect(before[0].line).not.toBe(after[0].line);
+    expect(fingerprint({ type: 'TypeError', message: 'boom', frames: before })).toBe(
+      fingerprint({ type: 'TypeError', message: 'boom', frames: after }),
+    );
   });
 
   it('answers an empty list for no stack at all', () => {

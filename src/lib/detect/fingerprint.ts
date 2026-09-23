@@ -29,6 +29,16 @@ export type StackFrame = {
   function?: string;
   /** Preferred over both when a source map resolved it (§33.13). */
   symbol?: string;
+  /**
+   * Where in the file, when the stack said so.
+   *
+   * **Never part of the fingerprint.** §4.4 groups on the file and the function precisely so that adding a
+   * blank line does not split an error group in two — `normalizeFrame` builds `file:function` and these
+   * are not in it. They exist so that a *sighting* can point at a line while the *group* stays stable:
+   * two questions, two answers, rather than one answer that is wrong for one of them.
+   */
+  line?: number;
+  column?: number;
 };
 
 export type FingerprintInput = {
@@ -96,4 +106,26 @@ export function fingerprint(input: FingerprintInput): string {
   // With no usable stack, the log group stands in for it, so two unrelated sources do not merge (§4.4 step 5).
   const tail = frames.length > 0 ? frames.join('\n') : (input.logGroup ?? '');
   return sha256Hex(`${input.type ?? ''}\n${normalizeMessage(input.message)}\n${tail}`).slice(0, 32);
+}
+
+/**
+ * The frames of one sighting, kept as they were read (REPO-5).
+ *
+ * The counterpart to `significantFrames`: same input, same vendor filtering, same cap — and it keeps the
+ * file, the function, the line and the column instead of normalising them away. `significantFrames` feeds
+ * the fingerprint and must never carry a line; this feeds a link and is useless without one.
+ *
+ * Nothing here is an input to `fingerprint`. A test asserts that two sightings differing only by line
+ * number produce one group, which is the invariant this whole split exists to protect.
+ */
+export function sampleFrames(frames: readonly StackFrame[]): { file: string; function: string | null; line: number | null; column: number | null }[] {
+  return frames
+    .filter((frame) => frame.file !== undefined && !VENDOR.test(frame.file))
+    .slice(0, MAX_FRAMES)
+    .map((frame) => ({
+      file: frame.file as string,
+      function: frame.symbol ?? frame.function ?? null,
+      line: frame.line ?? null,
+      column: frame.column ?? null,
+    }));
 }

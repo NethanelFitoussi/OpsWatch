@@ -39,6 +39,13 @@ export type FrameEvidence = {
   /** True when the link points at a branch rather than a commit, so line numbers may have moved (§13). */
   refIsMoving: boolean;
   ref: string | null;
+  /**
+   * Where the most recent sighting was in the file, when the stack said so.
+   *
+   * From the sample stored on the group, never from the fingerprint. Null when the stack carried no line —
+   * in which case the link opens the file rather than guessing a line that would point at nothing.
+   */
+  line: number | null;
 };
 
 export type CodeEvidence =
@@ -98,8 +105,14 @@ export function readCodeEvidence(db: Db, group: ErrorGroupRow): CodeEvidence {
   if (mapping !== null) {
     const repository = findRepository(db, mapping.repositoryId);
     if (repository !== null) {
-      const frames: FrameEvidence[] = group.topFrames.map((raw) => {
+      const samples = group.sampleFrames ?? [];
+      const frames: FrameEvidence[] = group.topFrames.map((raw, index) => {
         const { file, functionName } = splitFrame(raw);
+        // Paired by position: `sampleFrames` and `topFrames` are built from one parse, in one order, with
+        // the same filter and the same cap. Matched by path as well, so a shorter sample cannot misalign
+        // the rest — a line from the wrong frame is worse than no line.
+        const sample = samples[index];
+        const line = sample !== undefined && sample.file === file ? sample.line : null;
         // The commit of the deployment this error followed, where there is one. Without it the ref is the
         // default branch, and `refIsMoving` says so rather than letting a stale link look authoritative.
         const located = locateFrame(file, { repositoryId: repository.id, pathPrefix: mapping.pathPrefix }, repository, pinned);
@@ -108,9 +121,10 @@ export function readCodeEvidence(db: Db, group: ErrorGroupRow): CodeEvidence {
           file,
           functionName,
           path: located?.path ?? null,
-          url: located === null ? null : fileUrl(repository, located),
+          url: located === null ? null : fileUrl(repository, located, line),
           refIsMoving: located?.refIsMoving ?? false,
           ref: located?.ref ?? null,
+          line,
         };
       });
 
