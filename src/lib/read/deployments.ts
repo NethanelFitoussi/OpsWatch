@@ -1,8 +1,9 @@
 import 'server-only';
-import type { DeploymentDetail, DeploymentSummary } from '@opswatch/contract';
+import type { DeploymentDetail, DeploymentSummary, RepositoryEvidence } from '@opswatch/contract';
 import type { Db } from '../db/client';
 import type { DeploymentRow } from '../db/schema';
 import { DEPLOYMENT_WINDOW_MS, correlateDeployments } from '../detect/correlate';
+import { hasFetchedCommits, listDeploymentCommits } from '../store/deployment-commits';
 import { findDeployment, listDeployments, pageDeployments } from '../store/deployments';
 import { listEvidence, listLiveProblems } from '../store/problems';
 import { toPage, toStoreCursor } from './paging';
@@ -98,11 +99,72 @@ export function getDeployment(
     )
     .sort((a, b) => a.minutesAfterDeployment - b.minutesAfterDeployment);
 
+  const commits = listDeploymentCommits(db, row.id);
+  const changed = commits.flatMap((commit) => commit.files);
+
   return {
     ...toDeploymentSummary(row),
+    // The newest commit in the window is the one the deployment shipped, and the one a reader recognises.
+    ...(commits[0] === undefined
+      ? {}
+      : {
+          commit: {
+            sha: commits[0].sha,
+            message: commits[0].message,
+            ...(commits[0].author === null ? {} : { author: commits[0].author }),
+            at: commits[0].at,
+            url: commitUrl(commits[0].repository, commits[0].sha),
+          },
+          repository: commits[0].repository,
+        }),
+    // Only when the commits were actually fetched. Zeroes for a deployment nobody enriched would read as
+    // "nothing changed", which is the one thing this whole chain exists to stop (§2.4).
+    ...(hasFetchedCommits(db, row.id)
+      ? {
+          changes: {
+            files: new Set(changed.map((file) => file.path)).size,
+            additions: changed.reduce((total, file) => total + file.additions, 0),
+            deletions: changed.reduce((total, file) => total + file.deletions, 0),
+          },
+        }
+      : {}),
     relatedProblems,
-    evidence: [],
+    evidence: commits.map(toEvidence),
     // Nothing here changes a deployment: OpsWatch reads AWS and never rolls anything back.
     allowedActions: [],
+  };
+}
+
+/**
+ * A link to a commit, built by the server because only the server knows the provider.
+ *
+ * Every repository OpsWatch knows about today is on github.com. When an enterprise host becomes a stored
+ * field this is the one place that has to learn about it, which is why the link is built here rather than
+ * assembled by each client from parts.
+ */
+function commitUrl(repository: string, sha: string): string {
+  return `https://github.com/${repository}/commit/${sha}`;
+}
+
+/** One commit as §J's repository evidence: what changed, where, and a way to go and look. */
+function toEvidence(commit: ReturnType<typeof listDeploymentCommits>[number]): RepositoryEvidence {
+  const files = commit.files;
+  return {
+    id: commit.sha,
+    repository: commit.repository,
+    commit: {
+      sha: commit.sha,
+      message: commit.message,
+      ...(commit.author === null ? {} : { author: commit.author }),
+      at: commit.at,
+      url: commitUrl(commit.repository, commit.sha),
+    },
+    // The first file is what the evidence points at; the summary carries the rest of the count, so a
+    // commit touching forty files does not look like a commit touching one.
+    ...(files[0] === undefined ? {} : { file: files[0].path }),
+    summary:
+      files.length === 0
+        ? commit.message
+        : `${commit.message} — ${files.length} ${files.length === 1 ? 'file' : 'files'}, +${files.reduce((a, f) => a + f.additions, 0)} −${files.reduce((a, f) => a + f.deletions, 0)}`,
   };
 }

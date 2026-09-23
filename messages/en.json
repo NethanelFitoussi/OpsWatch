@@ -110,7 +110,25 @@
       "role": "IAM role",
       "ambient": "Running on AWS",
       "keys": "Access keys"
-    }
+    },
+    "provider": {
+      "aws": "AWS",
+      "github": "GitHub",
+      "ai": "AI provider",
+      "cloudflare": "Cloudflare",
+      "google": "Google sign-in"
+    },
+    "states": {
+      "connected": "Connected",
+      "degraded": "Needs attention",
+      "not_configured": "Not connected",
+      "unavailable": "Coming later"
+    },
+    "otherConnections": "Other connections",
+    "otherConnectionsHint": "Beyond AWS, OpsWatch can read your repositories and your edge, and can use a model to narrate what it measured.",
+    "connectOther": "Connect",
+    "manageOther": "Manage",
+    "allIntegrations": "See all integrations"
   },
   "Services": {
     "ecs": "Amazon ECS",
@@ -1806,6 +1824,27 @@
         "bad_response": "The provider answered with something OpsWatch could not read.",
         "timeout": "The provider did not answer in time."
       }
+    },
+    "deployment": {
+      "title": "Deployment",
+      "description": "What shipped, and what happened afterwards.",
+      "status": {
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "failed": "Failed",
+        "rolled_back": "Rolled back",
+        "unknown": "Unknown"
+      },
+      "shipped": "What shipped",
+      "changes": "{files, plural, one {# file} other {# files}} changed, +{additions} −{deletions}",
+      "unknownAuthor": "author unknown",
+      "noGithub": "GitHub is not connected, so OpsWatch cannot say which commits this deployment carried. Connect it in Settings → Repositories.",
+      "noMapping": "{service} is not mapped to a repository yet, so OpsWatch does not know where to look. Map it from a problem on this service.",
+      "notFetched": "The commits for this deployment have not been fetched. That is not the same as nothing having changed — the collector fetches them on its next cycle.",
+      "related": "Problems that started after this",
+      "relatedHint": "Problems on the same service that opened within half an hour after this deployment started. That is a measured gap, not a cause — things often follow each other for no related reason.",
+      "noRelated": "No problem opened on this service in the half hour after it.",
+      "after": "{minutes} min after"
     }
   },
   "Insights": {
@@ -2312,5 +2351,55 @@
       "multiple_critical": "Raised automatically: {problems} critical problems opened on {service} within fifteen minutes.",
       "sustained_critical": "Raised automatically: a critical problem on {service}, which users reach, has been open for more than fifteen minutes."
     }
+  },
+  "Connect": {
+    "title": "Choose what to connect",
+    "description": "OpsWatch reads from the systems you connect. Everything is read-only where the provider allows it, and every credential is encrypted before it is stored.",
+    "back": "Back to connections",
+    "connect": "Connect",
+    "manage": "Manage",
+    "unavailableHint": "Not available in this build yet.",
+    "names": {
+      "aws": "AWS",
+      "github": "GitHub",
+      "ai": "AI provider",
+      "cloudflare": "Cloudflare",
+      "google": "Google sign-in"
+    },
+    "states": {
+      "connected": "Connected",
+      "degraded": "Needs attention",
+      "not_configured": "Available",
+      "unavailable": "Coming later"
+    },
+    "enables": {
+      "aws": "Services, databases, load balancers, alarms, logs, errors and deployments — the monitoring OpsWatch is built around.",
+      "github": "Links a stack frame to the file it came from, and tells you which commits a deployment carried.",
+      "ai": "Optional. Lets a model narrate what OpsWatch already measured, for Ask OpsWatch and investigations.",
+      "cloudflare": "Traffic, cache and security events at the edge, for the zones you choose.",
+      "google": "Signing in with a Google account instead of a password."
+    },
+    "access": {
+      "aws": "A read-only IAM role, ambient credentials, or access keys. The CloudFormation template lists every action it grants.",
+      "github": "Repository contents, read-only. OpsWatch never writes to your code and has no code that could.",
+      "ai": "Your API key, used only for questions you ask. OpsWatch is complete without it.",
+      "cloudflare": "An API token scoped to the zones you pick, read-only."
+    },
+    "detail": {
+      "awsConnected": "{accounts, plural, one {# account connected} other {# accounts connected}}",
+      "awsFailing": "{failing} of {accounts} cannot be read right now",
+      "githubConnected": "{repositories, plural, =0 {no repositories recorded yet} one {# repository} other {# repositories}}",
+      "githubNoToken": "{repositories, plural, =0 {no repositories recorded yet} one {# repository} other {# repositories}} — no token, so file contents cannot be read",
+      "aiConnected": "{provider} · {model}",
+      "ai_untested": "{provider} · {model} — saved, not tested",
+      "ai_failed": "{provider} · {model} — the last test failed",
+      "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
+      "cloudflareNoZones": "verified, no zone chosen yet",
+      "cloudflare_untested": "saved, not verified",
+      "cloudflare_failed": "the last verification failed"
+    },
+    "signIn": "Signing in with Google",
+    "signInHint": "Google is an authentication provider, not something OpsWatch reads from. It is configured in the environment rather than here, and the Integrations page shows whether it is on.",
+    "allIntegrations": "See all integrations"
   }
 }

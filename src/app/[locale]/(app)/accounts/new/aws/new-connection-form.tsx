@@ -13,7 +13,7 @@ import { CONNECTION_METHODS, type ConnectionMethod } from '@/lib/connections/typ
 import type { FormAction } from '@/lib/forms/action-state';
 import { CONNECTION_NAME_MAX } from '@/lib/limits';
 import { cn } from '@/lib/utils';
-import type { FormState } from '../actions';
+import type { FormState } from '../../actions';
 
 /** One group of the form: a bordered panel, like the cards of the other pages. */
 const PANEL = 'rounded-xl border bg-card p-4 sm:p-6';

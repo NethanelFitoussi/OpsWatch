@@ -39,7 +39,7 @@ test('refuses a role ARN from another account and keeps what was typed', async (
 });
 
 test('the wizard keeps the name, account ID and regions after a validation error', async ({ page }) => {
-  await page.goto('/en/accounts/new');
+  await page.goto('/en/accounts/new/aws');
   await page.locator('input[name="method"][value="keys"]').check({ force: true });
   await page.getByLabel('Connection name').fill('Kept values');
   // Passes the browser pattern but has only 10 digits, so the server refuses it.

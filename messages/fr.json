@@ -110,7 +110,25 @@
       "role": "Rôle IAM",
       "ambient": "Exécution sur AWS",
       "keys": "Clés d'accès"
-    }
+    },
+    "provider": {
+      "aws": "AWS",
+      "github": "GitHub",
+      "ai": "Fournisseur d'IA",
+      "cloudflare": "Cloudflare",
+      "google": "Connexion Google"
+    },
+    "states": {
+      "connected": "Connecté",
+      "degraded": "À vérifier",
+      "not_configured": "Non connecté",
+      "unavailable": "À venir"
+    },
+    "otherConnections": "Autres connexions",
+    "otherConnectionsHint": "Au-delà d'AWS, OpsWatch peut lire vos dépôts et votre périphérie, et utiliser un modèle pour raconter ce qu'il a mesuré.",
+    "connectOther": "Connecter",
+    "manageOther": "Gérer",
+    "allIntegrations": "Voir toutes les intégrations"
   },
   "Services": {
     "ecs": "Amazon ECS",
@@ -1806,6 +1824,27 @@
         "bad_response": "Le fournisseur a répondu quelque chose qu'OpsWatch n'a pas su lire.",
         "timeout": "Le fournisseur n'a pas répondu à temps."
       }
+    },
+    "deployment": {
+      "title": "Déploiement",
+      "description": "Ce qui a été livré, et ce qui s'est passé ensuite.",
+      "status": {
+        "in_progress": "En cours",
+        "completed": "Terminé",
+        "failed": "Échoué",
+        "rolled_back": "Annulé",
+        "unknown": "Inconnu"
+      },
+      "shipped": "Ce qui a été livré",
+      "changes": "{files, plural, one {# fichier} other {# fichiers}} modifiés, +{additions} −{deletions}",
+      "unknownAuthor": "auteur inconnu",
+      "noGithub": "GitHub n'est pas connecté : OpsWatch ne peut pas dire quels commits ce déploiement portait. Connectez-le dans Réglages → Dépôts.",
+      "noMapping": "{service} n'est pas encore associé à un dépôt : OpsWatch ne sait pas où chercher. Associez-le depuis un problème de ce service.",
+      "notFetched": "Les commits de ce déploiement n'ont pas été récupérés. Ce n'est pas la même chose que rien n'ayant changé — le collecteur les récupérera au prochain cycle.",
+      "related": "Problèmes survenus après",
+      "relatedHint": "Problèmes du même service ouverts dans la demi-heure suivant le début de ce déploiement. C'est un écart mesuré, pas une cause — les choses se suivent souvent sans lien.",
+      "noRelated": "Aucun problème n'a été ouvert sur ce service dans la demi-heure qui a suivi.",
+      "after": "{minutes} min après"
     }
   },
   "Insights": {
@@ -2312,5 +2351,55 @@
       "multiple_critical": "Ouvert automatiquement : {problems} problèmes critiques sur {service} en moins de quinze minutes.",
       "sustained_critical": "Ouvert automatiquement : un problème critique sur {service}, que les utilisateurs atteignent, est ouvert depuis plus de quinze minutes."
     }
+  },
+  "Connect": {
+    "title": "Choisissez ce que vous voulez connecter",
+    "description": "OpsWatch lit les systèmes que vous connectez. Tout est en lecture seule là où le fournisseur le permet, et chaque identifiant est chiffré avant d'être stocké.",
+    "back": "Retour aux connexions",
+    "connect": "Connecter",
+    "manage": "Gérer",
+    "unavailableHint": "Pas encore disponible dans cette version.",
+    "names": {
+      "aws": "AWS",
+      "github": "GitHub",
+      "ai": "Fournisseur d'IA",
+      "cloudflare": "Cloudflare",
+      "google": "Connexion Google"
+    },
+    "states": {
+      "connected": "Connecté",
+      "degraded": "À vérifier",
+      "not_configured": "Disponible",
+      "unavailable": "À venir"
+    },
+    "enables": {
+      "aws": "Services, bases de données, répartiteurs de charge, alarmes, journaux, erreurs et déploiements — la surveillance autour de laquelle OpsWatch est construit.",
+      "github": "Relie une ligne de pile au fichier dont elle provient, et indique quels commits un déploiement portait.",
+      "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré, pour Demander à OpsWatch et les investigations.",
+      "cloudflare": "Trafic, cache et événements de sécurité en périphérie, pour les zones que vous choisissez.",
+      "google": "Se connecter avec un compte Google plutôt qu'avec un mot de passe."
+    },
+    "access": {
+      "aws": "Un rôle IAM en lecture seule, des identifiants ambiants, ou des clés d'accès. Le modèle CloudFormation liste chaque action accordée.",
+      "github": "Le contenu des dépôts, en lecture seule. OpsWatch n'écrit jamais dans votre code et n'a aucun code qui le pourrait.",
+      "ai": "Votre clé d'API, utilisée uniquement pour les questions que vous posez. OpsWatch est complet sans elle.",
+      "cloudflare": "Un jeton d'API limité aux zones que vous choisissez, en lecture seule."
+    },
+    "detail": {
+      "awsConnected": "{accounts, plural, one {# compte connecté} other {# comptes connectés}}",
+      "awsFailing": "{failing} sur {accounts} ne peuvent pas être lus actuellement",
+      "githubConnected": "{repositories, plural, =0 {aucun dépôt enregistré} one {# dépôt} other {# dépôts}}",
+      "githubNoToken": "{repositories, plural, =0 {aucun dépôt enregistré} one {# dépôt} other {# dépôts}} — aucun jeton, le contenu des fichiers ne peut pas être lu",
+      "aiConnected": "{provider} · {model}",
+      "ai_untested": "{provider} · {model} — enregistré, non testé",
+      "ai_failed": "{provider} · {model} — le dernier test a échoué",
+      "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
+      "cloudflareNoZones": "vérifié, aucune zone choisie",
+      "cloudflare_untested": "enregistré, non vérifié",
+      "cloudflare_failed": "la dernière vérification a échoué"
+    },
+    "signIn": "Se connecter avec Google",
+    "signInHint": "Google est un fournisseur d'authentification, pas un système qu'OpsWatch lit. Il se configure dans l'environnement plutôt qu'ici, et la page Intégrations indique s'il est actif.",
+    "allIntegrations": "Voir toutes les intégrations"
   }
 }

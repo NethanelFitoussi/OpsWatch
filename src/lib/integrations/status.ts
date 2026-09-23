@@ -31,6 +31,7 @@ export type IntegrationStatus = {
 
 function awsStatus(db: Db): IntegrationStatus {
   const connections = listConnections(db);
+  // The Integrations card points at the list, not at the chooser: managing accounts is what it offers.
   if (connections.length === 0) return { id: 'aws', state: 'not_configured', detailKey: null, values: {}, href: '/accounts' };
 
   const failing = connections.filter((connection) => connection.status !== 'ok').length;

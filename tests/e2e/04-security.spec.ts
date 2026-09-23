@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { login, rscHeaders } from './helpers';
 
-// What the Next.js client sends when it already shows /en/accounts/new: the (app) layout is
+// What the Next.js client sends when it already shows /en/accounts/new/aws: the (app) layout is
 // mounted, so a navigation to /en/accounts only asks the server for the page segment.
-const RSC_HEADERS = rscHeaders(['(app)', 'accounts', 'new']);
+const RSC_HEADERS = rscHeaders(['(app)', 'accounts', 'new', 'aws']);
 
 test('an RSC request without a session leaks no connection data', async ({ page, playwright, baseURL }) => {
   await login(page);

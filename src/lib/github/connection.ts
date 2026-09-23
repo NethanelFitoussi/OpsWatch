@@ -3,7 +3,7 @@ import { DecryptionError, decrypt, encrypt } from '../crypto';
 import type { Db } from '../db/client';
 import { env } from '../env';
 import { credentialFor, deleteIntegration, listIntegrations, recordIntegrationTest, upsertIntegration } from '../store/repositories';
-import { getRepository, listCommits, listRepositories, verifyToken, type GithubDeps, type GithubRepository } from './api';
+import { getCommit, getRepository, listCommits, listRepositories, verifyToken, type GithubDeps, type GithubRepository } from './api';
 import type { GithubFailure } from './failures';
 
 /**
@@ -149,4 +149,17 @@ export async function fetchCommits(
   const held = heldToken(db, nowMs);
   if (!held.ok) return held;
   return listCommits(held.token, repository, window, deps);
+}
+
+/** One commit with the files it changed (REPO-4). */
+export async function fetchCommit(
+  db: Db,
+  repository: { owner: string; name: string },
+  sha: string,
+  nowMs: number,
+  deps: GithubDeps = {},
+) {
+  const held = heldToken(db, nowMs);
+  if (!held.ok) return held;
+  return getCommit(held.token, repository, sha, deps);
 }

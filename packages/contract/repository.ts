@@ -37,3 +37,29 @@ export const repositoryEvidenceSchema = z.object({
   fileUrl: z.string().optional(),
 });
 export type RepositoryEvidence = z.infer<typeof repositoryEvidenceSchema>;
+
+/**
+ * What OpsWatch knows about the repositories it can read, without any credential in it.
+ *
+ * A client needs three things before it offers a "see the code" affordance: whether a connection exists,
+ * whether it has been verified, and which repositories are recorded. A token is none of those and is never
+ * part of this shape.
+ */
+export const repositorySummarySchema = z.object({
+  id: idSchema,
+  /** `owner/name`, as every other surface names a repository. */
+  fullName: z.string(),
+  defaultBranch: z.string(),
+});
+export type RepositorySummary = z.infer<typeof repositorySummarySchema>;
+
+export const REPOSITORY_CONNECTION_STATES = ['connected', 'unverified', 'failed', 'not_connected'] as const;
+
+export const repositoryStateSchema = z.object({
+  /** `connected` only when a token has been verified. A stored token is `unverified`, which is not the same. */
+  state: z.enum(REPOSITORY_CONNECTION_STATES),
+  /** The account the token belongs to. Not a secret, and it is how a reader recognises the connection. */
+  account: z.string().optional(),
+  repositories: z.array(repositorySummarySchema).default([]),
+});
+export type RepositoryState = z.infer<typeof repositoryStateSchema>;

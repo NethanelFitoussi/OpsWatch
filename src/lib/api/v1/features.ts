@@ -37,7 +37,9 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   // GET /checkup runs the catalogue over what is already stored, and says what it could not check.
   checkup: true,
   investigations: false,
-  repository: false,
+  // `GET /deployments/{id}` carries repository evidence: the commits a deployment shipped and the files
+  // they changed (REPO-4). Gated below on a connection that has actually been verified.
+  repository: true,
   // `POST /ai/ask` answers from the evidence the deterministic engine already computed (AI-4, AI-5).
   // Still gated by `aiConfigured`, which is a tested connection rather than a stored key.
   ai: true,
@@ -55,6 +57,13 @@ export type OperatorState = {
   aiConfigured: boolean;
   /** Push credentials are configured. */
   pushConfigured: boolean;
+  /**
+   * GitHub is connected **and** at least one repository is recorded.
+   *
+   * Both halves, because either alone reads nothing: a verified token with no repository has nowhere to
+   * look, and a repository with no token cannot be read. A settings form existing is not either of them.
+   */
+  repositoryConnected: boolean;
 };
 
 const ENABLED: Record<Feature, (operator: OperatorState) => boolean> = {
@@ -74,7 +83,7 @@ const ENABLED: Record<Feature, (operator: OperatorState) => boolean> = {
   reports: (o) => o.hasConnection,
   checkup: (o) => o.hasConnection,
   investigations: (o) => o.hasConnection,
-  repository: (o) => o.hasConnection,
+  repository: (o) => o.hasConnection && o.repositoryConnected,
   search: (o) => o.hasConnection,
   ai: (o) => o.aiConfigured,
   push: (o) => o.pushConfigured,
