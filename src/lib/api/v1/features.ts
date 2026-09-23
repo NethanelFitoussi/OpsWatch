@@ -30,6 +30,9 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   synthetics: true,
   // GET /slos measures the objectives an operator defined against stored history (§19).
   slos: true,
+  // GET /cloudflare serves what the edge saw (CF-2). Gated below on a connection that is verified *and*
+  // watching at least one zone: either alone reads nothing.
+  cloudflare: true,
   // GET /deployments and /deployments/{id} serve the rows the deployments job records (DEP-1, DEP-3).
   deployments: true,
   // GET /reports summarises the rows the collector already wrote, and names the halves it cannot answer.
@@ -57,6 +60,8 @@ export type OperatorState = {
   aiConfigured: boolean;
   /** Push credentials are configured. */
   pushConfigured: boolean;
+  /** Cloudflare is verified **and** at least one zone is chosen. Either alone reads nothing. */
+  cloudflareReady: boolean;
   /**
    * GitHub is connected **and** at least one repository is recorded.
    *
@@ -79,6 +84,8 @@ const ENABLED: Record<Feature, (operator: OperatorState) => boolean> = {
   incidents: (o) => o.hasConnection,
   synthetics: (o) => o.hasConnection,
   slos: (o) => o.hasConnection,
+  // Not gated on an AWS connection: a zone belongs to the installation, not to an AWS account.
+  cloudflare: (o) => o.cloudflareReady,
   deployments: (o) => o.hasConnection,
   reports: (o) => o.hasConnection,
   checkup: (o) => o.hasConnection,

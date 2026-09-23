@@ -939,3 +939,38 @@ export const deploymentCommits = sqliteTable(
 );
 
 export type DeploymentCommitRow = typeof deploymentCommits.$inferSelect;
+
+/**
+ * One day of one Cloudflare zone, as their analytics API reports it (CF-2).
+ *
+ * Stored rather than fetched on view, for the same reason every other surface reads rows: a page must be
+ * cheap, repeatable and answerable when the provider is unreachable. The grain is a day because that is
+ * the grain `httpRequests1dGroups` gives on the plans most operators have — asking for an hourly series a
+ * free zone cannot serve would produce a chart that is empty for some and full for others.
+ *
+ * Every column is a **count Cloudflare reported**. Nothing here is derived, so a ratio shown on a page can
+ * always be recomputed from what is stored and checked.
+ */
+export const cloudflareDaily = sqliteTable(
+  'cloudflare_daily',
+  {
+    zoneId: text('zone_id').notNull(),
+    /** `YYYY-MM-DD` in UTC, as Cloudflare groups it. */
+    date: text('date').notNull(),
+    requests: integer('requests').notNull(),
+    cachedRequests: integer('cached_requests').notNull(),
+    bytes: integer('bytes').notNull(),
+    cachedBytes: integer('cached_bytes').notNull(),
+    /** Requests Cloudflare's security products acted on. */
+    threats: integer('threats').notNull(),
+    /** Unique visitors, as Cloudflare counts them. Null where the plan does not report it. */
+    uniques: integer('uniques'),
+    /** Edge responses in the 4xx and 5xx ranges, summed from the status map. */
+    clientErrors: integer('client_errors').notNull(),
+    serverErrors: integer('server_errors').notNull(),
+    fetchedAt: integer('fetched_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.zoneId, t.date] })],
+);
+
+export type CloudflareDailyRow = typeof cloudflareDaily.$inferSelect;

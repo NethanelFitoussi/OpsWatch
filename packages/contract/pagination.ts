@@ -99,6 +99,7 @@ export const ENDPOINT_PAGINATION = {
   '/infrastructure': 'bounded',
   '/synthetics': 'bounded',
   '/slos': 'bounded',
+  '/cloudflare': 'bounded',
   '/search': 'bounded',
   '/problems': 'cursor',
   '/errors': 'cursor',

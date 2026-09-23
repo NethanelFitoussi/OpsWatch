@@ -51,7 +51,7 @@ for how long, whether users were affected, why OpsWatch called it a Warning, and
 | UX-16 | The detection rule is legible | `DONE` | Measured, opens at, clears under — quoting the detector's own constants |
 | UX-17 | Recommended investigation, evidence-derived | `DONE` | Ordered by how directly the evidence points; an empty list is an answer |
 | UX-18 | Visual evidence: graphs on a problem | `DONE` | A lifecycle timeline from the events spine, always available; the measured signal charted where rollups exist. Two kinds of empty, never rendered the same |
-| CF-2 | Cloudflare dashboard | `NOT_STARTED` | Dependency-ready; the live connection exists |
+| CF-2 | Cloudflare dashboard | `DONE` | `/cloudflare` and `GET /api/v1/cloudflare`: traffic, cache, origin errors and threats per zone, from stored daily rollups |
 | UX-19 | Secondary navigation collapsed by default | `NOT_STARTED` | — |
 | UX-20 | Accounts: one card system, editable | `PARTIAL` | Provider-aware and consistent; per-provider editing is partly there |
 
@@ -71,7 +71,7 @@ Read this table first. The detailed requirement tables below it are the implemen
 | **AWS** | ✓ IAM role, ambient, access keys | ✓ encrypted, CloudFormation onboarding | ✓ regions, permission test | Every monitoring surface | ✓ | `DONE` |
 | **GitHub / Repository** | ✓ Settings → Repositories, verified | ✓ own derivation, write-only, migrated from the shared one | ✓ repositories discovered and chosen | The full chain: service → repository → deployment → commit → changed files → problems that followed | ✓ deletes the token, keeps the repositories | `PARTIAL` (live read `BLOCKED_EXTERNAL`) |
 | **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Ask OpsWatch: `POST /ai/ask` and `overview/ask`, answered from bounded evidence | ✓ deletes the key | `DONE` (live provider acceptance `BLOCKED_EXTERNAL`) |
-| **Cloudflare** | ✓ Settings → Cloudflare | ✓ encrypted, own derivation, never returned | ✓ zones discovered and chosen | Nothing yet — the analytics reads are CF-2 | ✓ deletes the token | `PARTIAL` (**live acceptance passed**) |
+| **Cloudflare** | ✓ Settings → Cloudflare | ✓ encrypted, own derivation, never returned | ✓ zones discovered and chosen | Traffic, cache effectiveness, origin errors and threats per zone | ✓ deletes the token | `DONE` (CF-3 Zero Trust still external) |
 | **Google sign-in** | ✓ environment-configured | · no stored secret: it lives in the environment | · | Sign-in, with an optional allowed domain | · unset the variables | `DONE` |
 
 ### What each one still needs
@@ -315,7 +315,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | CF-1 | Account / zone integration | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Token stored encrypted, verified through `/user/tokens/verify`, zones discovered and **chosen**. Proven end to end on the running instance against a real Cloudflare account |
-| CF-2 | Traffic, cache, security events | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The connection and the zone selection exist and are live (CF-1); the GraphQL analytics reads do not. **Dependency-ready, not blocked.** Every adaptive-dataset tile must carry the "estimated" marker when they land |
+| CF-2 | Traffic, cache, security events | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | A `cloudflare` collector job stores daily rollups from the GraphQL analytics API; the page and the endpoint read them. Proven against the real account: 519M requests, 7.35 % cache hit, 5.36 % origin 5xx, 1.15M threats |
 | CF-3 | Zero Trust sessions / identities | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs a Cloudflare account with Zero Trust |
 
 ## AI / Ask OpsWatch

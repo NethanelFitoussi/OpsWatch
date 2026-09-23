@@ -22,6 +22,7 @@ export const FEATURES = [
   'incidents',
   'synthetics',
   'slos',
+  'cloudflare',
   'deployments',
   'reports',
   'checkup',

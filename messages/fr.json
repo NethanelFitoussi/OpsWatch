@@ -10,6 +10,7 @@
       "containers": "Conteneurs",
       "databases": "Bases de données",
       "logs": "Logs",
+      "cloudflare": "Cloudflare",
       "signOut": "Se déconnecter",
       "mainNavigation": "Navigation principale",
       "overview": "Vue d'ensemble",
@@ -2314,6 +2315,48 @@
       },
       "noHistory": "La collecte historique est désactivée : il n'y a pas de série à tracer. L'activer dans Données et historique montrerait ce signal dans le temps — y compris avant l'ouverture du problème.",
       "noSeriesYet": "La collecte historique est active mais n'a encore rien stocké pour cette ressource. Le prochain cycle le fera."
+    },
+    "cloudflare": {
+      "title": "Cloudflare",
+      "description": "Ce qui a atteint votre périphérie : le trafic, la part servie depuis le cache, ce qui a été écarté, et ce que votre origine a renvoyé.",
+      "across": "Sur vos zones",
+      "acrossDescription": "{zones, plural, one {# zone} other {# zones}}, sur les quatorze derniers jours.",
+      "provenance": "Des comptes tels que Cloudflare les rapporte, stockés par OpsWatch. Chaque taux ici est le quotient de deux de ces comptes — rien n'est estimé.",
+      "requests": "Requêtes",
+      "cachedRequests": "Servies depuis le cache",
+      "bandwidth": "Bande passante",
+      "cacheHit": "Taux de cache",
+      "cacheHitHint": "Requêtes traitées sans atteindre votre origine.",
+      "cachedBytes": "Octets depuis le cache",
+      "serverErrors": "5xx de l'origine",
+      "threats": "Menaces bloquées",
+      "threatsHint": "Requêtes traitées par les produits de sécurité de Cloudflare.",
+      "requestsOverTime": "Requêtes par jour",
+      "trend": "{value} % par rapport à la veille",
+      "percent": "{value} %",
+      "noRatio": "—",
+      "empty": {
+        "not_connected": {
+          "title": "Cloudflare n'est pas connecté",
+          "body": "Connectez un jeton d'API en lecture seule et choisissez les zones à surveiller. OpsWatch montrera alors ce qui a atteint votre périphérie, la part servie depuis le cache, et ce que votre origine a renvoyé.",
+          "action": "Connecter Cloudflare"
+        },
+        "unverified": {
+          "title": "Le jeton n'a pas été vérifié",
+          "body": "Un jeton est stocké mais n'a jamais été vérifié. Vérifiez-le et OpsWatch commencera à lire les zones que vous choisissez.",
+          "action": "Vérifier le jeton"
+        },
+        "no_zones": {
+          "title": "Aucune zone n'est sélectionnée",
+          "body": "Le jeton est vérifié et ne surveille rien. Choisissez les zones à lire — qu'un jeton voie quarante zones ne met pas quarante zones sur cette page.",
+          "action": "Choisir les zones"
+        },
+        "no_data": {
+          "title": "Rien n'a encore été lu",
+          "body": "La connexion est prête et le collecteur n'a pas encore récupéré de journée. Il s'exécute toutes les six heures ; cette page se remplira au prochain passage. Ce n'est pas la même chose qu'une absence de trafic.",
+          "action": "Gérer la connexion"
+        }
+      }
     }
   },
   "Insights": {

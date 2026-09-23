@@ -4,7 +4,7 @@ import { NAV_ITEMS, isNavActive, navHref } from '@/components/nav-items';
 const item = (key: string) => NAV_ITEMS.find((i) => i.key === key)!;
 
 describe('navigation items', () => {
-  it('lists the monitoring sections first, then the guide, the settings and the accounts', () => {
+  it('lists the AWS sections first, then the edge, then the guide, the settings and the accounts', () => {
     expect(NAV_ITEMS.map((i) => i.key)).toEqual([
       'overview',
       // Errors sits directly under the overview: it is the second thing anyone looks at.
@@ -14,6 +14,8 @@ describe('navigation items', () => {
       'loadBalancers',
       'alarms',
       'logs',
+      // Instance-scoped, so it sits after the sections that carry a connection and a region.
+      'cloudflare',
       'gettingStarted',
       'settings',
       'accounts',

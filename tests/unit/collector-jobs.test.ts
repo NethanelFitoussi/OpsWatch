@@ -18,6 +18,7 @@ describe('the job catalogue', () => {
       logvolume: HOUR,
       baselines: HOUR,
       slo: HOUR,
+      cloudflare: 6 * HOUR,
       compact: 24 * HOUR,
     });
   });
@@ -34,9 +35,10 @@ describe('the job catalogue', () => {
   it('runs only the jobs that cost a fresh install nothing', () => {
     // The promise a fresh installation makes: no extra AWS request. `detect` reads what the pages already
     // fetched, `inventory` is Describe* (throttled but not billed, §9.5), `compact` touches no provider,
-    // `errors` finds no enabled log source, `metrics` finds history switched off, and `synthetics` finds no
-    // enabled check - so each is scheduled and none of them spends anything until an operator asks for it.
-    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['compact', 'detect', 'errors', 'inventory', 'metrics', 'synthetics']);
+    // `errors` finds no enabled log source, `metrics` finds history switched off, `synthetics` finds no
+    // enabled check and `cloudflare` finds no connection - so each is scheduled and none of them spends
+    // anything until an operator asks for it.
+    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['cloudflare', 'compact', 'detect', 'errors', 'inventory', 'metrics', 'synthetics']);
   });
 
   it('leaves every job that would spend money on a fresh install switched off', () => {
@@ -66,9 +68,13 @@ describe('the job catalogue', () => {
     expect(JOBS.errors.cap).toBe(1);
   });
 
-  it('scopes every data job to an environment, and compaction to the instance', () => {
-    expect(JOBS.compact.scope).toBe('instance');
-    for (const id of JOB_IDS.filter((job) => job !== 'compact')) {
+  it('scopes every AWS job to an environment, and the rest to the instance', () => {
+    // `compact` touches no provider; `cloudflare` reads zones, which belong to the installation rather
+    // than to one AWS account and region — running it per environment would fetch each zone three times
+    // for an operator with three regions.
+    const instanceWide = ['compact', 'cloudflare'];
+    for (const id of instanceWide) expect(JOBS[id as (typeof JOB_IDS)[number]].scope, id).toBe('instance');
+    for (const id of JOB_IDS.filter((job) => !instanceWide.includes(job))) {
       expect(JOBS[id].scope, id).toBe('environment');
     }
   });

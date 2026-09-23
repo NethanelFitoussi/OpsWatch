@@ -17,6 +17,7 @@ export const JOB_IDS = [
   'logvolume',
   'baselines',
   'slo',
+  'cloudflare',
   'compact',
 ] as const;
 export type JobId = (typeof JOB_IDS)[number];
@@ -68,6 +69,12 @@ export const JOBS: Record<JobId, JobSpec> = {
   logvolume: { id: 'logvolume', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },
   baselines: { id: 'baselines', everyMs: HOUR, cap: 500, scope: 'environment', freshInstall: false },
   slo: { id: 'slo', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },
+  /**
+   * What the edge saw. **Instance-scoped**, because a Cloudflare zone belongs to the installation rather
+   * than to one AWS account and region — an operator with three regions must not fetch the same zone
+   * three times. On from the start because it finds no connection on a fresh install and costs nothing.
+   */
+  cloudflare: { id: 'cloudflare', everyMs: 6 * HOUR, cap: null, scope: 'instance', freshInstall: true },
   // Retention and the backup: one instance-wide pass, touching no provider.
   compact: { id: 'compact', everyMs: 24 * HOUR, cap: null, scope: 'instance', freshInstall: true },
 };

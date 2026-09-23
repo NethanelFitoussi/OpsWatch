@@ -86,7 +86,7 @@ test('THE RULING: Get started, Add connection and Integrations never disagree ab
   // comes from one source, and comparing the attribute is how that invariant stays checkable.
   const read = async (url: string, id: string) => {
     await page.goto(url);
-    return page.locator(`li[data-integration="${id}"]`).first().getAttribute('data-state');
+    return page.locator(`main li[data-integration="${id}"]`).first().getAttribute('data-state');
   };
 
   for (const id of ['aws', 'github', 'cloudflare', 'ai']) {
@@ -100,7 +100,7 @@ test('THE RULING: Get started, Add connection and Integrations never disagree ab
 
 test('a connected integration offers management rather than setup again', async ({ page }) => {
   await page.goto('/en/getting-started');
-  const aws = page.locator('li').filter({ hasText: 'AWS' }).first();
+  const aws = page.locator('main li').filter({ hasText: 'AWS' }).first();
   await expect(aws).toContainText(/Connected|Needs attention/);
   await expect(aws.getByRole('link', { name: 'Manage' })).toBeVisible();
 });

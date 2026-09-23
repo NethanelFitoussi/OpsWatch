@@ -10,6 +10,7 @@
       "containers": "Containers",
       "databases": "Databases",
       "logs": "Logs",
+      "cloudflare": "Cloudflare",
       "signOut": "Sign out",
       "mainNavigation": "Main navigation",
       "overview": "Overview",
@@ -2314,6 +2315,48 @@
       },
       "noHistory": "Historical collection is off, so there is no series to draw. Turning it on in Data & history would show this signal over time — including what it looked like before the problem opened.",
       "noSeriesYet": "Historical collection is on but has not stored anything for this resource yet. The next cycle will."
+    },
+    "cloudflare": {
+      "title": "Cloudflare",
+      "description": "What reached your edge: traffic, how much of it Cloudflare served from cache, what it turned away, and what your origin returned.",
+      "across": "Across your zones",
+      "acrossDescription": "{zones, plural, one {# zone} other {# zones}}, over the last fourteen days.",
+      "provenance": "Counts as Cloudflare reported them, stored by OpsWatch. Every rate here is two of those counts divided — nothing is estimated.",
+      "requests": "Requests",
+      "cachedRequests": "Served from cache",
+      "bandwidth": "Bandwidth",
+      "cacheHit": "Cache hit rate",
+      "cacheHitHint": "Requests answered without reaching your origin.",
+      "cachedBytes": "Bytes from cache",
+      "serverErrors": "5xx from origin",
+      "threats": "Threats stopped",
+      "threatsHint": "Requests Cloudflare's security products acted on.",
+      "requestsOverTime": "Requests per day",
+      "trend": "{value}% vs the day before",
+      "percent": "{value}%",
+      "noRatio": "—",
+      "empty": {
+        "not_connected": {
+          "title": "Cloudflare is not connected",
+          "body": "Connect a read-only API token and choose the zones you want watched. OpsWatch will then show what reached your edge, how much was served from cache, and what your origin returned.",
+          "action": "Connect Cloudflare"
+        },
+        "unverified": {
+          "title": "The token has not been verified",
+          "body": "A token is stored but has never been checked. Verify it and OpsWatch will start reading the zones you choose.",
+          "action": "Verify the token"
+        },
+        "no_zones": {
+          "title": "No zone is selected",
+          "body": "The token is verified and watching nothing. Choose the zones you want read — a token that can see forty zones does not mean forty zones on this page.",
+          "action": "Choose zones"
+        },
+        "no_data": {
+          "title": "Nothing has been read yet",
+          "body": "The connection is ready and the collector has not fetched a day yet. It runs every six hours; this page fills in on its next pass. That is not the same as your zones having no traffic.",
+          "action": "Manage the connection"
+        }
+      }
     }
   },
   "Insights": {
