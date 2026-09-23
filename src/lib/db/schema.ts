@@ -176,6 +176,85 @@ export const events = sqliteTable('events', {
   uniqueIndex('events_dedupe').on(t.dedupeKey).where(sql`dedupe_key is not null`),
 ]);
 
+export const INTEGRATION_KINDS = ['github'] as const;
+export const INTEGRATION_STATUSES = ['configured', 'untested', 'failed'] as const;
+
+/**
+ * External providers beyond AWS (§13, §20). Stage 4's `provider_connections` becomes this table, so
+ * Cloudflare and GitHub are rows of one kind rather than two parallel designs.
+ *
+ * The credential is encrypted with a purpose-scoped key and is **write-only**: no read path returns it, and
+ * no page renders it. §13's rule that repository analysis never modifies anything starts here — the token
+ * is asked for with read scopes, and the client that uses it has no write verb.
+ */
+export const integrations = sqliteTable(
+  'integrations',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind', { enum: INTEGRATION_KINDS }).notNull(),
+    name: text('name').notNull(),
+    /** Encrypted at rest. Null while an integration is declared but not yet given a credential. */
+    credentialCiphertext: text('credential_ciphertext'),
+    status: text('status', { enum: INTEGRATION_STATUSES }).notNull().default('untested'),
+    lastTestedAt: integer('last_tested_at'),
+    lastError: text('last_error'),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('integrations_kind_name').on(t.kind, t.name)],
+);
+
+/**
+ * A repository an operator has told OpsWatch about.
+ *
+ * Recorded independently of a credential: knowing that `owner/name` exists and which branch is default is
+ * enough to build a link and to resolve a stack frame to a path. Reading the file at that path needs a
+ * token, and the page says which of the two it has (§13).
+ */
+export const repositories = sqliteTable(
+  'repositories',
+  {
+    id: text('id').primaryKey(),
+    integrationId: text('integration_id').references(() => integrations.id, { onDelete: 'set null' }),
+    owner: text('owner').notNull(),
+    name: text('name').notNull(),
+    defaultBranch: text('default_branch').notNull().default('main'),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('repositories_owner_name').on(t.owner, t.name)],
+);
+
+/**
+ * Which repository a service's code lives in (§13's `service_repositories`).
+ *
+ * **Declared by a user.** OpsWatch may suggest a match from an image or repository name, and never applies
+ * one automatically — a wrong mapping sends an operator to the wrong diff during an incident, which is worse
+ * than having no mapping at all. `source` records which it was, so a suggestion accepted by a person is
+ * distinguishable from one nobody ever looked at.
+ */
+export const SERVICE_REPOSITORY_SOURCES = ['declared', 'suggested'] as const;
+
+export const serviceRepositories = sqliteTable(
+  'service_repositories',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    serviceId: text('service_id').notNull(),
+    repositoryId: text('repository_id')
+      .notNull()
+      .references(() => repositories.id, { onDelete: 'cascade' }),
+    /** Where the service's code sits inside the repository, for a monorepo. */
+    pathPrefix: text('path_prefix'),
+    source: text('source', { enum: SERVICE_REPOSITORY_SOURCES }).notNull().default('declared'),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('service_repositories_service').on(t.connectionId, t.scope, t.serviceId)],
+);
+
+export type IntegrationRow = typeof integrations.$inferSelect;
+export type RepositoryRow = typeof repositories.$inferSelect;
+export type ServiceRepositoryRow = typeof serviceRepositories.$inferSelect;
+
 export const DEPLOYMENT_STATUSES = ['in_progress', 'completed', 'failed', 'rolled_back', 'unknown'] as const;
 
 /**
