@@ -40,7 +40,7 @@ export const MOTO_REGION = 'us-east-1';
 
 /** Creates a connection through the wizard and returns its id, on its connection page. */
 export async function createConnection(page: Page, method: 'role' | 'ambient' | 'keys', name: string, region = MOTO_REGION) {
-  await page.goto('/en/accounts/new');
+  await page.goto('/en/accounts/new/aws');
   // The radio inputs are visually hidden inside their card labels.
   await page.locator(`input[name="method"][value="${method}"]`).check({ force: true });
   await page.getByLabel('Connection name').fill(name);

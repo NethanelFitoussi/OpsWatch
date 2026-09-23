@@ -4,6 +4,7 @@ import { seenDeployments } from '../detect/deployment';
 import { listClusters, listServices } from '../monitoring/ecs';
 import { resolveTarget } from '../monitoring/target';
 import { recordDeployments } from '../store/deployments';
+import { enrichRecent } from './deployment-code';
 import { JOBS } from './jobs';
 import type { JobOutcome } from './runner';
 
@@ -53,6 +54,10 @@ export async function runDeploymentsJob(input: DeploymentsJobInput): Promise<Job
 
   const seen = seenDeployments(services, input.nowMs);
   recordDeployments(input.db, { connectionId: input.connectionId, scope: input.scope }, seen, input.nowMs);
+
+  // §J's chain, closed: service → repository → deployment → commit → changed files. It does nothing at all
+  // unless GitHub is verified and the service is mapped, so a fresh installation pays nothing for it.
+  await enrichRecent(input.db, { connectionId: input.connectionId, scope: input.scope }, input.nowMs);
 
   // Coverage is clusters read of clusters found: a cluster that could not be read leaves its services
   // uncounted rather than recorded as having none, and the run says so (§2.4).

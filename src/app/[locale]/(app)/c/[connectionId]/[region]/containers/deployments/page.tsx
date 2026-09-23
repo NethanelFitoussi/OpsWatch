@@ -1,9 +1,11 @@
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
+import { Link } from '@/i18n/navigation';
 import { SectionLayout } from '@/components/monitoring/section-layout';
 import { localizedTitle } from '@/i18n/metadata';
 import { getDb } from '@/lib/db/client';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
+import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { recentDeployments } from '@/lib/read/deployments';
 import { hasBeenRead } from '@/lib/read/health';
@@ -53,7 +55,12 @@ export default async function DeploymentsPage({ params }: Props) {
             {items.map((deployment) => (
               <li key={deployment.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3">
                 <span className="min-w-0">
-                  <span className="text-sm font-medium">{deployment.service.label ?? deployment.service.id}</span>
+                  <Link
+                    href={subsectionPath(context.scope, 'containers', 'deployments', deployment.id)}
+                    className="text-sm font-medium underline-offset-4 hover:underline"
+                  >
+                    {deployment.service.label ?? deployment.service.id}
+                  </Link>
                   <span className="ml-2 break-all text-xs text-muted-foreground">{deployment.version}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-3 text-xs">

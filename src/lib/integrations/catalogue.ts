@@ -33,16 +33,24 @@ export type IntegrationSpec = {
    * clicking a button that cannot work.
    */
   available: boolean;
+  /**
+   * Whether "add a connection" can start it.
+   *
+   * Google sign-in is deliberately `false`: it is configured in the environment, and presenting it beside
+   * AWS and GitHub as something to connect from a page would misrepresent an authentication provider as a
+   * monitoring account — and imply a button that cannot exist.
+   */
+  connectable: boolean;
 };
 
 export const INTEGRATION_SPECS: Record<IntegrationId, IntegrationSpec> = {
-  aws: { id: 'aws', href: '/accounts', credentials: 'aws-connection', available: true },
-  github: { id: 'github', href: '/settings/repositories', credentials: 'stored', available: true },
-  ai: { id: 'ai', href: '/settings/ai', credentials: 'stored', available: true },
-  cloudflare: { id: 'cloudflare', href: '/settings/cloudflare', credentials: 'stored', available: true },
+  aws: { id: 'aws', href: '/accounts/new/aws', credentials: 'aws-connection', available: true, connectable: true },
+  github: { id: 'github', href: '/settings/repositories', credentials: 'stored', available: true, connectable: true },
+  ai: { id: 'ai', href: '/settings/ai', credentials: 'stored', available: true, connectable: true },
+  cloudflare: { id: 'cloudflare', href: '/settings/cloudflare', credentials: 'stored', available: true, connectable: true },
   // Sign-in configuration belongs in the environment, not in a page: a login provider that could be
   // reconfigured from inside the application is a way to take the application over.
-  google: { id: 'google', href: '/settings/status', credentials: 'env', available: true },
+  google: { id: 'google', href: '/settings/status', credentials: 'env', available: true, connectable: false },
 };
 
 /** Four states, and "not configured" is not one of the other three (§2.6). */

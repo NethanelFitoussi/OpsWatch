@@ -35,7 +35,7 @@ const PROMISED_VALUES = [
   'parseEnvironmentId', 'permissionSchema', 'permissionsOf', 'problemDetailSchema', 'problemSummarySchema',
   'refSchema', 'refTypeSchema', 'RESERVED_LIST_PARAMS', 'REPORT_PERIODS', 'REPORT_UNAVAILABLE_REASONS', 'reportFigureSchema',
   'reportRowSchema', 'reportSchema', 'reportSectionSchema', 'reportUnavailableReasonSchema',
-  'repositoryEvidenceSchema', 'roleSchema', 'searchResponseSchema',
+  'REPOSITORY_CONNECTION_STATES', 'repositoryEvidenceSchema', 'repositoryStateSchema', 'repositorySummarySchema', 'roleSchema', 'searchResponseSchema',
   'searchResultSchema', 'seriesSchema', 'serverInfoSchema', 'serviceDetailSchema', 'serviceSummarySchema',
   'sessionListSchema', 'sessionSummarySchema', 'severitySchema', 'sloDetailSchema', 'sloSummarySchema',
   'stackFrameSchema', 'syntheticDetailSchema', 'syntheticSummarySchema', 'systemStatusSchema',

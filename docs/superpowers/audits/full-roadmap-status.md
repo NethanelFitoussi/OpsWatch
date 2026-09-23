@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 71 |
-| `PARTIAL` | 10 |
+| `DONE` | 72 |
+| `PARTIAL` | 9 |
 | `FOUNDATION_ONLY` | 3 |
 | `NOT_STARTED` | 7 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -49,7 +49,7 @@ Read this table first. The detailed requirement tables below it are the implemen
 | Integration | Connect | Credentials | Discovery | What it unlocks | Disconnect | Status |
 |---|---|---|---|---|---|---|
 | **AWS** | ✓ IAM role, ambient, access keys | ✓ encrypted, CloudFormation onboarding | ✓ regions, permission test | Every monitoring surface | ✓ | `DONE` |
-| **GitHub / Repository** | ✓ Settings → Repositories, verified | ✓ own derivation, write-only, migrated from the shared one | ✓ repositories discovered and chosen | Stack frame → file link, service → repository mapping; commits built, not surfaced | ✓ deletes the token, keeps the repositories | `PARTIAL` |
+| **GitHub / Repository** | ✓ Settings → Repositories, verified | ✓ own derivation, write-only, migrated from the shared one | ✓ repositories discovered and chosen | The full chain: service → repository → deployment → commit → changed files → problems that followed | ✓ deletes the token, keeps the repositories | `PARTIAL` (live read `BLOCKED_EXTERNAL`) |
 | **AI provider** | ✓ Settings → AI provider | ✓ encrypted, own derivation, never returned | · one connection, no discovery | Ask OpsWatch: `POST /ai/ask` and `overview/ask`, answered from bounded evidence | ✓ deletes the key | `DONE` (live provider acceptance `BLOCKED_EXTERNAL`) |
 | **Cloudflare** | ✓ Settings → Cloudflare | ✓ encrypted, own derivation, never returned | ✓ zones discovered and chosen | Nothing yet — the analytics reads are CF-2 | ✓ deletes the token | `PARTIAL` |
 | **Google sign-in** | ✓ environment-configured | · no stored secret: it lives in the environment | · | Sign-in, with an optional allowed domain | · unset the variables | `DONE` |
@@ -69,9 +69,15 @@ The client has **no write verb at all**, which is how §13's read-only promise i
 token with write permission would still only ever be used to read, and there is a test asserting the
 absence.
 
-`listCommits` and `getRepository` are built and tested against an injected transport. What remains is
-surfacing commits on a deployment (REPO-4), the lines around a stack frame (REPO-5) and organisation or
-installation discovery, which needs a GitHub App. **`BLOCKED_EXTERNAL`: a token with `Contents: Read`.**
+§J's chain is closed. The deployments job enriches each rollout with the commits between it and the one
+before — bounded by the previous deployment's start, by ten commits and by twenty files each — and stores
+the paths and counts, never file contents. The deployment detail shows what shipped and, below it, the
+problems that opened on the same service within half an hour, labelled as a **correlation with a stated
+gap**. `features.repository` flips only when a token has been verified *and* a repository is recorded:
+either alone reads nothing.
+
+What remains is the lines around a stack frame (REPO-5) and organisation or installation discovery, which
+needs a GitHub App. **`BLOCKED_EXTERNAL`: a token with `Contents: Read`.**
 The transport itself is proven — the end-to-end suite reaches real GitHub and gets a real 401 for a
 fabricated token, so the request shape, the headers and the failure mapping are verified. What is unproven
 is what a *valid* token returns.
@@ -225,7 +231,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | REPO-1 | GitHub connection | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Token sealed under its own derivation, verified through `GET /user`, repositories discovered and chosen with the branch GitHub reports, disconnect deletes the token and keeps the repositories |
 | REPO-2 | Repository storage | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | An operator can add, list and remove a repository with no credential at all |
 | REPO-3 | Service → repository mapping | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Offered on Error detail where the question arises, with the suggestion stated as a guess and never applied |
-| REPO-4 | Commits, metadata, diffs, files | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | `PARTIAL` | `listCommits` and `getRepository` are built and tested; nothing surfaces them yet, and the live read needs a token with `Contents: Read` (`BLOCKED_EXTERNAL`) |
+| REPO-4 | Commits, metadata, diffs, files | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The deployments job enriches each rollout with the commits between it and the one before, and the files they changed. Surfaced on the deployment detail, served on `GET /deployments/{id}`. Live read needs a token (`BLOCKED_EXTERNAL`) |
 | REPO-5 | Line-level code evidence | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Frame → file link on Error detail. The lines *around* a frame need a GitHub token (external) |
 | REPO-6 | Deterministic code correlation (§J) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Frame → repository path → link on Error detail, declining dependencies and unknown roots, and saying how many it placed |
 | REPO-7 | Proposed fix + patch preview (§L, §O) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Read-only against the customer repository |
@@ -309,7 +315,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | UX-6 | Accessibility pass (§V) | · | · | · | ✗ | ✗ | · | ✗ | ✗ | `NOT_STARTED` | Severity is never colour-alone today, but no audit has been run |
 | UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
 | UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | Getting-started and setup exist; not the staged wizard §D describes |
-| UX-9 | Integration centre (§E) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` lists all five with measured state, what each enables and what access it asks for. An integration this build cannot complete says so and offers no link |
+| UX-9 | Integration centre (§E) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` manages them, `/accounts/new` chooses one to add, `GET /repository` tells a client what is connected. All three read the same measured state |
 | UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
 | UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
 | UX-12 | Global search | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | §21's `search_index` |

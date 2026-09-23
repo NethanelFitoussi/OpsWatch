@@ -10,6 +10,8 @@ import { localizedTitle } from '@/i18n/metadata';
 import { Link } from '@/i18n/navigation';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { listConnections, toView } from '@/lib/connections/repository';
+import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
+import { integrationStatuses } from '@/lib/integrations/status';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
 
@@ -21,7 +23,11 @@ export default async function AccountsPage({ params }: Props) {
   await initProtectedRoute(params);
   const t = await getTranslations('Accounts');
   const format = await getFormatter();
-  const views = listConnections(getDb()).map((row) => toView(row, env().OPSWATCH_SECRET));
+  const db = getDb();
+  const views = listConnections(db).map((row) => toView(row, env().OPSWATCH_SECRET));
+  // The other systems OpsWatch is connected to. AWS is the list above; this row exists so the page stops
+  // implying that an account is the only kind of connection there is.
+  const others = integrationStatuses(db).filter((status) => status.id !== 'aws' && INTEGRATION_SPECS[status.id].connectable);
 
   return (
     <PageBody>
@@ -68,6 +74,8 @@ export default async function AccountsPage({ params }: Props) {
                   <CardHeader className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <CardTitle className="flex items-center gap-1 text-base font-semibold">
+                        {/* Which provider this connection belongs to, now that they are not all AWS. */}
+                        <Badge variant="secondary" className="shrink-0">{t('provider.aws')}</Badge>
                         <span className="truncate">{c.name}</span>
                         <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
                       </CardTitle>
@@ -101,6 +109,31 @@ export default async function AccountsPage({ params }: Props) {
           ))}
         </ul>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">{t('otherConnections')}</CardTitle>
+          <CardDescription>{t('otherConnectionsHint')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <ul className="flex flex-col gap-2">
+            {others.map((status) => (
+              <li key={status.id} className="flex flex-wrap items-baseline gap-2 text-sm">
+                <Badge variant={status.state === 'connected' ? 'default' : 'secondary'}>{t(`states.${status.state}`)}</Badge>
+                <span className="font-medium">{t(`provider.${status.id}`)}</span>
+                {status.href !== null && (
+                  <Link href={status.href} className="text-sm underline-offset-4 hover:underline">
+                    {t(status.state === 'not_configured' ? 'connectOther' : 'manageOther')}
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+          <Link href="/settings/integrations" className="text-sm font-medium underline-offset-4 hover:underline">
+            {t('allIntegrations')}
+          </Link>
+        </CardContent>
+      </Card>
     </PageBody>
   );
 }

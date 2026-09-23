@@ -901,3 +901,30 @@ export const metricBaselines = sqliteTable(
 );
 
 export type MetricBaselineRow = typeof metricBaselines.$inferSelect;
+
+/**
+ * The commits behind one deployment (REPO-4, §J).
+ *
+ * Written by the deployments job when GitHub is connected and the service is mapped to a repository, so a
+ * deployment detail is answered from stored rows rather than by calling GitHub every time somebody opens a
+ * page. A deployment with no rows here is a deployment whose commits were never fetched — which is not the
+ * same as a deployment with no commits, and the page says which.
+ */
+export const deploymentCommits = sqliteTable(
+  'deployment_commits',
+  {
+    deploymentId: text('deployment_id').notNull(),
+    sha: text('sha').notNull(),
+    repository: text('repository').notNull(),
+    /** The summary line only. A commit body is prose, and a timeline shows a line. */
+    message: text('message').notNull(),
+    author: text('author'),
+    at: integer('at').notNull(),
+    /** Changed files, as the provider reported them. Paths and counts — never file contents. */
+    files: text('files', { mode: 'json' }).$type<{ path: string; additions: number; deletions: number; status: string }[]>().notNull(),
+    fetchedAt: integer('fetched_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.deploymentId, t.sha] }), index('deployment_commits_at').on(t.deploymentId, t.at)],
+);
+
+export type DeploymentCommitRow = typeof deploymentCommits.$inferSelect;
