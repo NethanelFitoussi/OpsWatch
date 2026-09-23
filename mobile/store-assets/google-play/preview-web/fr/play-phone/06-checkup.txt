@@ -1,0 +1,29 @@
+# What is wrong with how the environment is set up — and how much of the catalogue could be checked.
+# route: /checkup
+
+
+DONNÉES DE DÉMO : fictives, elles ne viennent pas d'un vrai serveur
+Diagnostic
+
+Mis à jour à l'instant
+10 vérifications sur 12 ont été faites
+2 n’ont pas pu être faites
+Un constat porte sur la configuration et reste tant que personne ne change un réglage. Un problème est quelque chose qui casse maintenant, et disparaît quand cela s’arrête.
+CONSTATS
+
+Avertissement
+1 tâche(s) de collecte en échec : errors
+
+Avertissement
+Aucun groupe de journaux n’est activé : aucune erreur n’est collectée
+
+Avertissement
+cloudfront n’a pas pu être lu (denied)
+
+Info
+La collecte historique est désactivée : ni références, ni SLO, ni rapports de long terme
+VÉRIFICATIONS IMPOSSIBLES
+Budget d’analyse des journaux
+OpsWatch ne collecte pas encore les données que lit cette vérification.
+Version de la stack CloudFormation
+La permission nécessaire a été refusée : la réponse est inconnaissable d’ici.

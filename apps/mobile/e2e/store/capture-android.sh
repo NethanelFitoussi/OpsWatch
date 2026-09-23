@@ -98,9 +98,8 @@ shot 02-what-changed      'brief'                 'brief'
 shot 03-problems          'problems'              'Problems'
 shot 04-problem-detail    'problems/prb-checkout-5xx' 'checkout-api'
 shot 05-errors            'errors/err-checkout-currency' 'TypeError'
-shot 06-services          'services'              'Services'
-shot 07-infrastructure    'infrastructure'        'Infrastructure'
-shot 08-system-status     'system'                'collecting'
+shot 06-checkup           'checkup'               'checks ran'
+shot 07-system-status     'system'                'Collecting'
 
 say "5/5  Validating"
 cd "$(dirname "$0")/../.." && npm run --silent store:validate
