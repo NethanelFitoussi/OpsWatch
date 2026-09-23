@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 
 test('THE RULING: adding a connection asks what to connect before assuming AWS', async ({ page }) => {
   await page.goto('/en/accounts');
-  await page.getByRole('link', { name: 'Add an account' }).click();
+  await page.getByRole('link', { name: 'Add a connection' }).click();
   await expect(page).toHaveURL(/\/en\/accounts\/new$/);
 
   const main = await page.locator('main').innerText();
@@ -69,13 +69,20 @@ test('going back from a provider returns to the chooser, and then to the connect
   await expect(page).toHaveURL(/\/en\/accounts$/);
 });
 
-test('the connections list names the provider of each connection, and the others', async ({ page }) => {
+test('THE RULING: the connections list is one card system, not AWS plus a footnote', async ({ page }) => {
   await page.goto('/en/accounts');
-  const main = await page.locator('main').innerText();
-  // Each AWS connection is badged, now that they are not all AWS.
-  expect(main).toContain('AWS');
-  expect(main).toContain('Other connections');
-  expect(main).toContain('OpsWatch can read your repositories and your edge');
+  // Every provider is a card of the same kind, carrying the state the other screens carry.
+  for (const id of ['github', 'cloudflare', 'ai']) {
+    const card = page.locator(`main [data-scope="integration"][data-integration="${id}"]`).first();
+    await expect(card, id).toBeVisible();
+    await expect(card, id).toHaveAttribute('data-state', /connected|degraded|not_configured|unavailable/);
+  }
+  // An AWS account is one connection inside a provider, so it carries its own vocabulary — the result of
+  // its last permission test — under its own scope, rather than the same attribute meaning two things.
+  const aws = page.locator('main [data-scope="connection"][data-integration="aws"]').first();
+  await expect(aws).toHaveAttribute('data-state', /draft|pending|ok|degraded|failed/);
+  await expect(aws).toContainText('Account');
+  await expect(aws).toContainText('Regions');
   await expect(page.getByRole('link', { name: 'See all integrations' })).toBeVisible();
 });
 

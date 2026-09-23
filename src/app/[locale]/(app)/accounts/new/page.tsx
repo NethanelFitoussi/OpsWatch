@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import { ConnectionCard } from '@/components/connections/connection-card';
 import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { localizedTitle } from '@/i18n/metadata';
@@ -12,6 +12,7 @@ import { getDb } from '@/lib/db/client';
 import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
 import { guidePath, hasGuide } from '@/lib/integrations/guides';
 import { integrationStatuses } from '@/lib/integrations/status';
+import { INTEGRATION_TONES } from '@/lib/integrations/tone';
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -57,38 +58,34 @@ export default async function ChooseConnectionPage({ params }: Props) {
           // A card that cannot be completed says so and offers no way in. There are no dead ends here.
           const reachable = spec.available && status.href !== null;
           return (
-            <li key={status.id} data-integration={status.id} data-state={status.state}>
-              <Card className="flex h-full flex-col">
-                <CardHeader>
-                  <CardTitle className="flex flex-wrap items-center gap-2 text-base font-semibold">
-                    {t(`names.${status.id}`)}
-                    <Badge variant={status.state === 'connected' ? 'default' : 'secondary'}>{t(`states.${status.state}`)}</Badge>
-                  </CardTitle>
-                  <CardDescription>{t(`enables.${status.id}`)}</CardDescription>
-                </CardHeader>
-                <CardContent className="mt-auto flex flex-col gap-3">
-                  {/* What OpsWatch will be allowed to do, beside the button that would grant it. */}
-                  <p className="text-xs text-muted-foreground">{t(`access.${status.id}`)}</p>
-                  {status.detailKey !== null && (
-                    <p className="text-xs text-muted-foreground">{t(`detail.${status.detailKey}`, status.values)}</p>
-                  )}
-                  {reachable ? (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button asChild variant={status.state === 'connected' ? 'outline' : 'default'}>
-                        <Link href={status.href ?? '/accounts'}>{t(status.state === 'not_configured' ? 'connect' : 'manage')}</Link>
-                      </Button>
-                      {/* Somewhere to read first, for anybody who wants to know what they are agreeing to. */}
-                      {hasGuide(status.id) && (
-                        <Link href={guidePath(status.id)} className="text-sm underline-offset-4 hover:underline">
-                          {t('readGuide')}
-                        </Link>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm">{t('unavailableHint')}</p>
-                  )}
-                </CardContent>
-              </Card>
+            <li key={status.id}>
+              <ConnectionCard
+                integration={status.id}
+                state={status.state}
+                provider={t(`names.${status.id}`)}
+                tone={INTEGRATION_TONES[status.state]}
+                stateLabel={t(`states.${status.state}`)}
+                title={t(`names.${status.id}`)}
+                href={reachable ? status.href : null}
+                actionLabel={t(status.state === 'not_configured' ? 'connect' : 'manage')}
+                hint={t('unavailableHint')}
+                notes={
+                  <>
+                    <p>{t(`enables.${status.id}`)}</p>
+                    {/* What OpsWatch will be allowed to do, beside the link that would grant it. */}
+                    <p className="text-xs">{t(`access.${status.id}`)}</p>
+                    {status.detailKey !== null && <p className="text-xs">{t(`detail.${status.detailKey}`, status.values)}</p>}
+                  </>
+                }
+                secondary={
+                  // Somewhere to read first, for anybody who wants to know what they are agreeing to.
+                  hasGuide(status.id) ? (
+                    <Link href={guidePath(status.id)} className="underline-offset-4 hover:underline">
+                      {t('readGuide')}
+                    </Link>
+                  ) : undefined
+                }
+              />
             </li>
           );
         })}

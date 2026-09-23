@@ -1,9 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AppShell } from '@/components/app-shell';
+import { ConnectionCard } from '@/components/connections/connection-card';
 import { PageBody } from '@/components/page-body';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SectionHeading } from '@/components/getting-started/section-heading';
 import { localizedTitle } from '@/i18n/metadata';
 import { Link } from '@/i18n/navigation';
@@ -11,6 +9,7 @@ import { getCurrentAdminId } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
 import { GUIDED, guidePath, setupPath } from '@/lib/integrations/guides';
 import { integrationStatuses } from '@/lib/integrations/status';
+import { INTEGRATION_TONES } from '@/lib/integrations/tone';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,36 +55,34 @@ export default async function GettingStartedPage({ params }: Props) {
             {GUIDED.map((id) => {
               const status = byId.get(id);
               const state = status?.state ?? 'not_configured';
-              const connected = state === 'connected';
               return (
-                <li key={id} data-integration={id} data-state={state}>
-                  <Card className="flex h-full flex-col">
-                    <CardHeader>
-                      <CardTitle className="flex flex-wrap items-center gap-2 text-base font-semibold">
-                        {t(`hub.names.${id}`)}
-                        <Badge variant={connected ? 'default' : 'secondary'}>{t(`hub.states.${state}`)}</Badge>
-                      </CardTitle>
-                      <CardDescription>{t(`hub.unlocks.${id}`)}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="mt-auto space-y-3">
-                      {/* The measured detail, in every state rather than only when something is wrong: a
-                          badge alone tells nobody what is connected, and "Connected · 1 zone" is the
-                          sentence that makes the badge checkable. */}
-                      {status?.detailKey != null && (
-                        <p className="text-sm text-muted-foreground">{t(`hub.detail.${status.detailKey}`, status.values)}</p>
-                      )}
-                      <div className="flex flex-wrap gap-2">
-                        <Button asChild variant={connected ? 'outline' : 'default'}>
-                          <Link href={guidePath(id)}>{t('hub.readGuide')}</Link>
-                        </Button>
-                        {/* Anything already configured is managed, not set up again — including one that
-                            needs attention, where "set it up" would send somebody back to the beginning. */}
-                        <Button asChild variant="outline">
-                          <Link href={setupPath(id)}>{t(state === 'not_configured' ? 'hub.setUp' : 'hub.manage')}</Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <li key={id}>
+                  <ConnectionCard
+                    integration={id}
+                    state={state}
+                    provider={t(`hub.names.${id}`)}
+                    tone={INTEGRATION_TONES[state]}
+                    stateLabel={t(`hub.states.${state}`)}
+                    title={t(`hub.names.${id}`)}
+                    href={guidePath(id)}
+                    actionLabel={t('hub.readGuide')}
+                    notes={
+                      <>
+                        <p>{t(`hub.unlocks.${id}`)}</p>
+                        {/* The measured detail, in every state rather than only when something is wrong: a
+                            badge alone tells nobody what is connected, and "Connected · 1 zone" is the
+                            sentence that makes the badge checkable. */}
+                        {status?.detailKey != null && <p className="text-xs">{t(`hub.detail.${status.detailKey}`, status.values)}</p>}
+                      </>
+                    }
+                    secondary={
+                      // Anything already configured is managed, not set up again — including one that
+                      // needs attention, where "set it up" would send somebody back to the beginning.
+                      <Link href={setupPath(id)} className="font-medium underline-offset-4 hover:underline">
+                        {t(state === 'not_configured' ? 'hub.setUp' : 'hub.manage')}
+                      </Link>
+                    }
+                  />
                 </li>
               );
             })}

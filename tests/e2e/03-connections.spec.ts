@@ -114,7 +114,7 @@ test('copy buttons work without the async clipboard API (plain HTTP)', async ({ 
 });
 
 test('the accounts list flags access keys as meant for local testing', async ({ page }) => {
-  await expect(page).toHaveTitle('AWS accounts · OpsWatch');
+  await expect(page).toHaveTitle('Connections · OpsWatch');
   const card = page.getByRole('listitem').filter({ hasText: 'Moto keys' });
   await expect(card.getByText('For local testing', { exact: true })).toBeVisible();
   await expect(page.getByRole('listitem').filter({ hasText: 'Moto role' }).getByText('For local testing')).toHaveCount(0);
