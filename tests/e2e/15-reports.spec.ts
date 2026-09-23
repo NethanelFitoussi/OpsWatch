@@ -52,8 +52,10 @@ test('§2.6 — a half it cannot answer says which and why, and never shows zero
   // And it offers the page where that decision is made.
   await expect(page.getByRole('link', { name: 'Open Data & history' })).toBeVisible();
 
-  // Deployments and synthetics are honest about not being measured at all.
-  expect(main).toContain('does not measure this yet');
+  // Deployments and synthetics say nothing is configured to collect them, which is a sharper answer than
+  // "not measured": on a fresh instance nobody has added a check or shipped anything OpsWatch watched.
+  expect(main).toContain('Nothing is configured to collect this');
+  expect(main).toContain('This is not the same as there being none');
 });
 
 test('the period can be changed, and the report follows', async ({ page }) => {

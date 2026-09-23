@@ -25,8 +25,8 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 60 |
-| `PARTIAL` | 13 |
+| `DONE` | 62 |
+| `PARTIAL` | 11 |
 | `FOUNDATION_ONLY` | 4 |
 | `NOT_STARTED` | 13 |
 | `BLOCKED_EXTERNAL` | 4 |
@@ -125,7 +125,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 | REP-2 | Previous-period comparison | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Half-open windows; mutation-verified |
 | REP-3 | Markdown export | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Escaped; downloads with `nosniff` |
 | REP-4 | Availability / SLO in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Request-level availability and error budget from stored rollups, alongside the bucket share which still says what it is |
-| REP-5 | Deployments and synthetics in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Deployments are real; synthetics still `not_measured` (SYN-1) |
+| REP-5 | Deployments and synthetics in a report | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Both are real. With nothing configured each says `not_collected`, which is a sharper answer than `not_measured` |
 | REP-6 | Overview / logs reports | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Only the four section reports exist |
 | REP-7 | Weekly send when a notifier exists | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on ALE-4 |
 
@@ -182,7 +182,7 @@ Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| SYN-1 | Checks, status, history, failures | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Checks run from the host through the SSRF guard, with §14's status and latency rules. No `/api/v1` route yet |
+| SYN-1 | Checks, status, history, failures | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Checks run from the host through the SSRF guard, with §14's status and latency rules, and `GET /synthetics` serves them. A check that has never run reports `unknown` with no figures |
 | SYN-2 | Problem integration | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The three detectors go through the same lifecycle as every other, so a failing check opens, flaps and resolves like a failing service |
 
 ## SLO

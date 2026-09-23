@@ -26,7 +26,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   alerts: true,
   // GET /incidents and /incidents/{id} serve the rows the detect cycle opens (§16).
   incidents: true,
-  synthetics: false,
+  // GET /synthetics serves the checks this host runs and what they saw (§14).
+  synthetics: true,
   // GET /slos measures the objectives an operator defined against stored history (§19).
   slos: true,
   deployments: false,
