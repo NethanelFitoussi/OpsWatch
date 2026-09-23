@@ -45,7 +45,8 @@ test('each guide opens, and every action on it lands somewhere real', async ({ p
     // No raw message keys on the page: a missing section would render its key.
     expect(await page.locator('main').innerText(), id).not.toMatch(/GettingStarted\./);
 
-    const cta = page.getByRole('link').filter({ hasText: /Connect|Configure|Manage|Set it up/ }).first();
+    // Scoped to the page body: the rail's own "Connections" entry matches the same words.
+    const cta = page.locator('main').getByRole('link').filter({ hasText: /Connect|Configure|Manage|Set it up/ }).first();
     await cta.click();
     await expect(page, id).toHaveURL(setup);
   }
@@ -86,7 +87,7 @@ test('THE RULING: Get started, Add connection and Integrations never disagree ab
   // comes from one source, and comparing the attribute is how that invariant stays checkable.
   const read = async (url: string, id: string) => {
     await page.goto(url);
-    return page.locator(`main li[data-integration="${id}"]`).first().getAttribute('data-state');
+    return page.locator(`main [data-scope="integration"][data-integration="${id}"]`).first().getAttribute('data-state');
   };
 
   for (const id of ['aws', 'github', 'cloudflare', 'ai']) {

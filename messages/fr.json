@@ -6,7 +6,7 @@
     "nav": {
       "gettingStarted": "Premiers pas",
       "settings": "Paramètres",
-      "accounts": "Comptes",
+      "accounts": "Connexions",
       "containers": "Conteneurs",
       "databases": "Bases de données",
       "logs": "Logs",
@@ -94,16 +94,14 @@
     "failed": "Échec"
   },
   "Accounts": {
-    "title": "Comptes AWS",
-    "description": "Les comptes qu'OpsWatch peut lire, et ce que chacun lui permet de voir.",
-    "add": "Ajouter un compte",
-    "emptyTitle": "Aucun compte AWS connecté",
-    "emptyDescription": "Connectez un compte en quelques minutes. L'accès est en lecture seule et révocable à tout moment.",
+    "title": "Connexions",
+    "description": "Tout ce qu'OpsWatch peut lire, et ce que chaque connexion lui permet de voir.",
+    "add": "Ajouter une connexion",
+    "emptyTitle": "Aucune connexion pour le moment",
+    "emptyDescription": "Connectez les systèmes que vous utilisez. L'accès est en lecture seule là où le fournisseur le permet, et chaque identifiant est chiffré avant d'être stocké.",
     "emptyGuide": "Lire d'abord le guide",
     "accountId": "Compte",
-    "method": "Méthode",
     "regions": "Régions",
-    "lastTested": "Dernier test {date}",
     "neverTested": "Jamais testé",
     "localTesting": "Pour tester en local",
     "updateStack": "Mettez la stack à jour : un template plus récent est disponible",
@@ -125,11 +123,10 @@
       "not_configured": "Non connecté",
       "unavailable": "À venir"
     },
-    "otherConnections": "Autres connexions",
-    "otherConnectionsHint": "Au-delà d'AWS, OpsWatch peut lire vos dépôts et votre périphérie, et utiliser un modèle pour raconter ce qu'il a mesuré.",
     "connectOther": "Connecter",
     "manageOther": "Gérer",
-    "allIntegrations": "Voir toutes les intégrations"
+    "allIntegrations": "Voir toutes les intégrations",
+    "tested": "Testé"
   },
   "Services": {
     "ecs": "Amazon ECS",

@@ -30,7 +30,7 @@ test('rejects mismatched passwords, then creates the admin', async ({ page }) =>
   await page.getByLabel('Confirm password').fill(ADMIN.password);
   await page.getByRole('button', { name: 'Create admin account' }).click();
   await expect(page).toHaveURL(/\/en\/accounts$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'AWS accounts' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Connections' })).toBeVisible();
 });
 
 test('setup is closed once an admin exists', async ({ page }) => {

@@ -1,6 +1,6 @@
-import { ChevronRight, Cloud, Plus } from 'lucide-react';
+import { Cloud, Plus } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
-import { ConnectionStatusBadge } from '@/components/connection-status-badge';
+import { ConnectionCard } from '@/components/connections/connection-card';
 import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -10,24 +10,39 @@ import { localizedTitle } from '@/i18n/metadata';
 import { Link } from '@/i18n/navigation';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { listConnections, toView } from '@/lib/connections/repository';
-import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
-import { integrationStatuses } from '@/lib/integrations/status';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
+import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
+import { integrationStatuses } from '@/lib/integrations/status';
+import { CONNECTION_TONES, INTEGRATION_TONES } from '@/lib/integrations/tone';
 
 type Props = { params: Promise<{ locale: string }> };
 
 export const generateMetadata = localizedTitle('Accounts.title');
 
+/**
+ * Everything this installation is connected to, in one list (UX-20).
+ *
+ * An AWS account used to be a card and everything else a line of text at the bottom, which said that AWS
+ * was the product and the rest was an afterthought. They are the same card now: one provider glyph, one
+ * measured state, one way in. What still differs between them is how much is known — an AWS account has
+ * regions and a last permission test, GitHub has a repository count — and that is all that differs.
+ *
+ * **One source of truth.** The non-AWS cards read `integrationStatuses`, exactly what `/accounts/new` and
+ * `/settings/integrations` read, so the three screens cannot disagree about what is connected.
+ */
 export default async function AccountsPage({ params }: Props) {
   await initProtectedRoute(params);
   const t = await getTranslations('Accounts');
+  // The two vocabularies these cards borrow rather than restate: the result of an AWS permission test,
+  // and the measured detail of an integration. One copy of each, shared with the pages that own them.
+  const status = await getTranslations('Status');
+  const integrations = await getTranslations('Settings.integrations');
   const format = await getFormatter();
   const db = getDb();
   const views = listConnections(db).map((row) => toView(row, env().OPSWATCH_SECRET));
-  // The other systems OpsWatch is connected to. AWS is the list above; this row exists so the page stops
-  // implying that an account is the only kind of connection there is.
-  const others = integrationStatuses(db).filter((status) => status.id !== 'aws' && INTEGRATION_SPECS[status.id].connectable);
+  const others = integrationStatuses(db).filter((entry) => entry.id !== 'aws' && INTEGRATION_SPECS[entry.id].connectable);
+  const nothing = views.length === 0 && others.every((entry) => entry.state === 'not_configured');
 
   return (
     <PageBody>
@@ -44,7 +59,7 @@ export default async function AccountsPage({ params }: Props) {
         }
       />
 
-      {views.length === 0 ? (
+      {nothing && (
         <Card className="border border-dashed py-10 ring-0">
           <CardHeader className="justify-items-center text-center">
             <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -62,78 +77,67 @@ export default async function AccountsPage({ params }: Props) {
             </Button>
           </CardContent>
         </Card>
-      ) : (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {views.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/accounts/${c.id}`}
-                className="group block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              >
-                <Card className="h-full transition-shadow group-hover:shadow-md group-hover:ring-primary/40">
-                  <CardHeader className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <CardTitle className="flex items-center gap-1 text-base font-semibold">
-                        {/* Which provider this connection belongs to, now that they are not all AWS. */}
-                        <Badge variant="secondary" className="shrink-0">{t('provider.aws')}</Badge>
-                        <span className="truncate">{c.name}</span>
-                        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
-                      </CardTitle>
-                      <CardDescription>
-                        {t('accountId')} {c.awsAccountId} · {t(`methods.${c.method}`)}
-                      </CardDescription>
-                      {(c.method === 'keys' || c.templateOutdated) && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {c.method === 'keys' && (
-                            <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">
-                              {t('localTesting')}
-                            </Badge>
-                          )}
-                          {c.templateOutdated && <Badge variant="outline">{t('updateStack')}</Badge>}
-                        </div>
-                      )}
-                    </div>
-                    <ConnectionStatusBadge status={c.status} />
-                  </CardHeader>
-                  <CardContent className="mt-auto border-t pt-3 text-sm text-muted-foreground">
-                    <p>{t('regions')}: {c.regions.join(', ')}</p>
-                    <p>
-                      {c.lastTest
-                        ? t('lastTested', { date: format.relativeTime(new Date(c.lastTest.testedAt)) })
-                        : t('neverTested')}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            </li>
-          ))}
-        </ul>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">{t('otherConnections')}</CardTitle>
-          <CardDescription>{t('otherConnectionsHint')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <ul className="flex flex-col gap-2">
-            {others.map((status) => (
-              <li key={status.id} className="flex flex-wrap items-baseline gap-2 text-sm">
-                <Badge variant={status.state === 'connected' ? 'default' : 'secondary'}>{t(`states.${status.state}`)}</Badge>
-                <span className="font-medium">{t(`provider.${status.id}`)}</span>
-                {status.href !== null && (
-                  <Link href={status.href} className="text-sm underline-offset-4 hover:underline">
-                    {t(status.state === 'not_configured' ? 'connectOther' : 'manageOther')}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-          <Link href="/settings/integrations" className="text-sm font-medium underline-offset-4 hover:underline">
-            {t('allIntegrations')}
-          </Link>
-        </CardContent>
-      </Card>
+      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {views.map((c) => (
+          <li key={c.id}>
+            <ConnectionCard
+              integration="aws"
+              scope="connection"
+              state={c.status}
+              provider={t('provider.aws')}
+              tone={CONNECTION_TONES[c.status]}
+              stateLabel={status(c.status)}
+              title={c.name}
+              href={`/accounts/${c.id}`}
+              actionLabel={t('manageOther')}
+              badges={
+                (c.method === 'keys' || c.templateOutdated) && (
+                  <div className="flex flex-wrap gap-2">
+                    {c.method === 'keys' && (
+                      <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">
+                        {t('localTesting')}
+                      </Badge>
+                    )}
+                    {c.templateOutdated && <Badge variant="outline">{t('updateStack')}</Badge>}
+                  </div>
+                )
+              }
+              facts={[
+                { label: t('accountId'), value: `${c.awsAccountId} · ${t(`methods.${c.method}`)}` },
+                { label: t('regions'), value: c.regions.join(', ') },
+                {
+                  label: t('tested'),
+                  value: c.lastTest ? format.relativeTime(new Date(c.lastTest.testedAt)) : t('neverTested'),
+                },
+              ]}
+            />
+          </li>
+        ))}
+
+        {others.map((entry) => (
+          <li key={entry.id}>
+            <ConnectionCard
+              integration={entry.id}
+              state={entry.state}
+              provider={t(`provider.${entry.id}`)}
+              tone={INTEGRATION_TONES[entry.state]}
+              stateLabel={t(`states.${entry.state}`)}
+              title={t(`provider.${entry.id}`)}
+              href={entry.href}
+              actionLabel={t(entry.state === 'not_configured' ? 'connectOther' : 'manageOther')}
+              notes={entry.detailKey !== null && <p>{integrations(`detail.${entry.detailKey}`, entry.values)}</p>}
+            />
+          </li>
+        ))}
+      </ul>
+
+      <p>
+        <Link href="/settings/integrations" className="text-sm font-medium underline-offset-4 hover:underline">
+          {t('allIntegrations')}
+        </Link>
+      </p>
     </PageBody>
   );
 }

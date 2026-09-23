@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { ConnectionCard } from '@/components/connections/connection-card';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
@@ -8,6 +9,7 @@ import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
 import { guidePath, hasGuide } from '@/lib/integrations/guides';
 import { integrationStatuses } from '@/lib/integrations/status';
+import { INTEGRATION_TONES } from '@/lib/integrations/tone';
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -37,35 +39,35 @@ export default async function IntegrationsPage({ params }: Props) {
         <p className="text-sm text-muted-foreground">{t('readOnlyHint')}</p>
       </MonitoringCard>
 
-      <ul className="flex flex-col gap-3">
+      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {statuses.map((status) => (
-          <li key={status.id} data-integration={status.id} data-state={status.state}>
-            <MonitoringCard title={t(`names.${status.id}`)}>
-              <div className="flex flex-wrap items-baseline gap-2">
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tracking-wide uppercase">{t(`states.${status.state}`)}</span>
-                {status.detailKey !== null && (
-                  <span className="text-sm text-muted-foreground">{t(`detail.${status.detailKey}`, status.values)}</span>
-                )}
-              </div>
-
-              <p className="mt-2 text-sm">{t(`enables.${status.id}`)}</p>
-              {/* What OpsWatch is allowed to do with the connection, beside the button that creates it. */}
-              <p className="mt-1 text-sm text-muted-foreground">{t(`access.${status.id}`)}</p>
-
-              <p className="mt-2 flex flex-wrap gap-4">
-                {status.href !== null && (
-                  <Link href={status.href} className="text-sm font-medium underline-offset-4 hover:underline">
-                    {status.state === 'not_configured' ? t('configure') : t('manage')}
-                  </Link>
-                )}
-                {/* The three entry points complement each other: manage here, learn there, add from Accounts. */}
-                {hasGuide(status.id) && (
-                  <Link href={guidePath(status.id)} className="text-sm underline-offset-4 hover:underline">
+          <li key={status.id}>
+            <ConnectionCard
+              integration={status.id}
+              state={status.state}
+              provider={t(`names.${status.id}`)}
+              tone={INTEGRATION_TONES[status.state]}
+              stateLabel={t(`states.${status.state}`)}
+              title={t(`names.${status.id}`)}
+              href={status.href}
+              actionLabel={status.state === 'not_configured' ? t('configure') : t('manage')}
+              notes={
+                <>
+                  {status.detailKey !== null && <p>{t(`detail.${status.detailKey}`, status.values)}</p>}
+                  <p className="text-foreground">{t(`enables.${status.id}`)}</p>
+                  {/* What OpsWatch is allowed to do with the connection, beside the way to change it. */}
+                  <p className="text-xs">{t(`access.${status.id}`)}</p>
+                </>
+              }
+              secondary={
+                // The three entry points complement each other: manage here, learn there, add from Accounts.
+                hasGuide(status.id) ? (
+                  <Link href={guidePath(status.id)} className="underline-offset-4 hover:underline">
                     {t('readGuide')}
                   </Link>
-                )}
-              </p>
-            </MonitoringCard>
+                ) : undefined
+              }
+            />
           </li>
         ))}
       </ul>

@@ -6,7 +6,7 @@
     "nav": {
       "gettingStarted": "Getting started",
       "settings": "Settings",
-      "accounts": "Accounts",
+      "accounts": "Connections",
       "containers": "Containers",
       "databases": "Databases",
       "logs": "Logs",
@@ -94,16 +94,14 @@
     "failed": "Failed"
   },
   "Accounts": {
-    "title": "AWS accounts",
-    "description": "Accounts OpsWatch can read, and what each one lets it see.",
-    "add": "Add an account",
-    "emptyTitle": "No AWS account connected yet",
-    "emptyDescription": "Connect an account in a few minutes. Access is read-only and can be revoked at any time.",
+    "title": "Connections",
+    "description": "Everything OpsWatch reads from, and what each one lets it see.",
+    "add": "Add a connection",
+    "emptyTitle": "Nothing connected yet",
+    "emptyDescription": "Connect the systems you use. Access is read-only where the provider allows it, and every credential is encrypted before it is stored.",
     "emptyGuide": "Read the guide first",
     "accountId": "Account",
-    "method": "Method",
     "regions": "Regions",
-    "lastTested": "Last tested {date}",
     "neverTested": "Never tested",
     "localTesting": "For local testing",
     "updateStack": "Update the stack: a newer template is available",
@@ -125,11 +123,10 @@
       "not_configured": "Not connected",
       "unavailable": "Coming later"
     },
-    "otherConnections": "Other connections",
-    "otherConnectionsHint": "Beyond AWS, OpsWatch can read your repositories and your edge, and can use a model to narrate what it measured.",
     "connectOther": "Connect",
     "manageOther": "Manage",
-    "allIntegrations": "See all integrations"
+    "allIntegrations": "See all integrations",
+    "tested": "Tested"
   },
   "Services": {
     "ecs": "Amazon ECS",

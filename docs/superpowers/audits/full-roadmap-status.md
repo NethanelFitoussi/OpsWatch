@@ -53,7 +53,7 @@ for how long, whether users were affected, why OpsWatch called it a Warning, and
 | UX-18 | Visual evidence: graphs on a problem | `DONE` | A lifecycle timeline from the events spine, always available; the measured signal charted where rollups exist. Two kinds of empty, never rendered the same |
 | CF-2 | Cloudflare dashboard | `DONE` | `/cloudflare` and `GET /api/v1/cloudflare`: traffic, cache, origin errors and threats per zone, from stored daily rollups |
 | UX-19 | Navigation collapsed by default | `DONE` | The main rail (Overview, Errors, Containers…) starts collapsed to its icons; names stay announced and on tooltip, every entry stays clickable, one control at the foot opens it and the choice is remembered. The section menu keeps its words and gained a collapse of its own, with one icon per sub-page so collapsed it still reads. Below 1024 px the rail is a drawer and the section menu a strip, unchanged |
-| UX-20 | Accounts: one card system, editable | `PARTIAL` | Provider-aware and consistent; per-provider editing is partly there |
+| UX-20 | Accounts: one card system, editable | `PARTIAL` | One card now, shared by Connections, the chooser, Integrations and Get started: one provider glyph, one measured state, one way in, and an account's own test vocabulary kept under its own `data-scope` so "the same state everywhere" stays provable. The page is Connections, not AWS accounts. Per-provider **editing** is the half still open |
 
 ---
 
