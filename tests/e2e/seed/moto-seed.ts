@@ -27,6 +27,8 @@ export const SEED = {
   targetIp: '10.0.1.10',
   instancePrefix: 'opswatch-e2e-host',
   redisCluster: 'opswatch-e2e-cache',
+  kubeCluster: 'opswatch-e2e-eks',
+  kubeWorkload: 'checkout',
   dbInstance: 'opswatch-e2e-db',
   alarm: 'opswatch-e2e-high-cpu',
   targetTrackingAlarm: 'TargetTracking-service/opswatch-e2e/web-AlarmHigh-e2e',
@@ -217,6 +219,33 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
     // ElastiCache: one cluster, two nodes, discovered the way the product discovers them — through the
     // engine CPU metric. `0001` is comfortable and `0002` is over AWS's warning threshold, so one page
     // carries a green node and an amber one and the acceptance walk can tell them apart.
+    // Container Insights: the only way OpsWatch can see Kubernetes, so the fixture publishes exactly the
+    // dimension sets a real EKS cluster does — cluster, node, namespace, workload, pod. One pod has
+    // restarted, so the acceptance walk has a green pod and an amber one to tell apart.
+    put('ContainerInsights', 'cluster_node_count', { ClusterName: SEED.kubeCluster }, () => 2, 'Count'),
+    put('ContainerInsights', 'cluster_failed_node_count', { ClusterName: SEED.kubeCluster }, () => 0, 'Count'),
+    ...['ip-10-0-1-11', 'ip-10-0-2-12'].flatMap((NodeName, node) => {
+      const dims = { ClusterName: SEED.kubeCluster, NodeName };
+      return [
+        put('ContainerInsights', 'node_cpu_utilization', dims, (i) => (node === 0 ? 31 : 18) + (i % 3), 'Percent'),
+        put('ContainerInsights', 'node_memory_utilization', dims, () => (node === 0 ? 47 : 39), 'Percent'),
+        put('ContainerInsights', 'node_number_of_running_pods', dims, () => (node === 0 ? 2 : 1), 'Count'),
+      ];
+    }),
+    put('ContainerInsights', 'namespace_number_of_running_pods', { ClusterName: SEED.kubeCluster, Namespace: 'default' }, () => 3, 'Count'),
+    put('ContainerInsights', 'service_number_of_running_pods', { ClusterName: SEED.kubeCluster, Namespace: 'default', Service: SEED.kubeWorkload }, () => 3, 'Count'),
+    ...[
+      { PodName: 'checkout-7d9f-aaa', cpu: 22, restarts: 0 },
+      { PodName: 'checkout-7d9f-bbb', cpu: 27, restarts: 0 },
+      { PodName: 'checkout-7d9f-ccc', cpu: 24, restarts: 3 },
+    ].flatMap(({ PodName, cpu, restarts }) => {
+      const dims = { ClusterName: SEED.kubeCluster, Namespace: 'default', PodName };
+      return [
+        put('ContainerInsights', 'pod_cpu_utilization', dims, (i) => cpu + (i % 2), 'Percent'),
+        put('ContainerInsights', 'pod_memory_utilization', dims, () => 41, 'Percent'),
+        put('ContainerInsights', 'pod_number_of_container_restarts', dims, () => restarts, 'Count'),
+      ];
+    }),
     ...['0001', '0002'].flatMap((CacheNodeId, node) => {
       const dims = { CacheClusterId: SEED.redisCluster, CacheNodeId };
       const hot = node === 1;

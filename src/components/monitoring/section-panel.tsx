@@ -2,6 +2,7 @@
 
 import {
   BellRing,
+  Boxes,
   ChartColumn,
   ClipboardCheck,
   FileText,
@@ -53,6 +54,7 @@ const ICONS: Record<string, LucideIcon> = {
   sources: FolderTree,
   estate: LayoutDashboard,
   nodes: Server,
+  workloads: Boxes,
 };
 
 const PANEL_STORAGE_KEY = 'opswatch.sectionNav.collapsed';

@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { DocLink } from '@/components/docs/doc-link';
 import { HealthySummary } from '@/components/infra/healthy-summary';
 import { MetricCell } from '@/components/infra/metric-cell';
 import { ResourceMap, type MapGroup, type MapTile } from '@/components/infra/resource-map';
@@ -56,6 +57,9 @@ export async function RedisCache({ scope, range, nowMs }: { scope: MonitoringSco
       <MonitoringCard title={t('title')} description={t('noneDescription')}>
         <p className="text-sm">{t('none')}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t('noneHint')}</p>
+        <p className="mt-3">
+          <DocLink slug="redis" label={t('setUp')} />
+        </p>
       </MonitoringCard>
     );
   }

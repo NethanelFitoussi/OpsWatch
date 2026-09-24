@@ -18,7 +18,9 @@
       "loadBalancers": "Répartiteurs de charge",
       "alarms": "Alarmes",
       "instances": "Instances",
-      "redis": "Redis"
+      "redis": "Redis",
+      "kubernetes": "Kubernetes",
+      "docs": "Documentation"
     },
     "language": {
       "label": "Langue",
@@ -2357,7 +2359,8 @@
         "undersized": "La taille de l'instance ou de la tâche est en deçà de ce que la charge exige désormais.",
         "workingSet": "L'ensemble de travail ne tient plus en mémoire : la base passe par le disque.",
         "writeVolume": "Plus d'écritures sur le primaire que le réplica ne peut appliquer."
-      }
+      },
+      "historyGuide": "Comment fonctionne l'historique"
     },
     "cloudflare": {
       "title": "Cloudflare",
@@ -2473,6 +2476,48 @@
           "warn": "{cluster} : {healthy} nœuds sur {total} sains, certains demandent attention",
           "critical": "{cluster} : {healthy} nœuds sur {total} sains, certains en échec",
           "partial": "{cluster} : {healthy} nœuds sur {total} sains, le reste non évalué"
+        }
+      },
+      "kube": {
+        "failedNodes": {
+          "name": "le nombre de nœuds en échec"
+        },
+        "cluster": {
+          "nodesReady": "Aucun nœud ne se déclare en échec",
+          "failedNodes": "{count, plural, one {# nœud se déclare} other {# nœuds se déclarent}} en échec",
+          "nodeCount": "{count, plural, one {# nœud} other {# nœuds}} dans le cluster"
+        },
+        "node": {
+          "cpu": {
+            "name": "le CPU du nœud",
+            "pass": "CPU du nœud à {value} %, sous {threshold} %",
+            "warn": "CPU du nœud à {value} %, au-dessus de {threshold} %",
+            "critical": "CPU du nœud à {value} %, au-dessus de {threshold} %"
+          },
+          "memory": {
+            "name": "la mémoire du nœud",
+            "pass": "Mémoire du nœud à {value} %, sous {threshold} %",
+            "warn": "Mémoire du nœud à {value} %, au-dessus de {threshold} %",
+            "critical": "Mémoire du nœud à {value} %, au-dessus de {threshold} %"
+          }
+        },
+        "pod": {
+          "cpu": {
+            "name": "le CPU du pod",
+            "pass": "CPU du pod à {value} %, sous {threshold} %",
+            "warn": "CPU du pod à {value} %, au-dessus de {threshold} %",
+            "critical": "CPU du pod à {value} %, au-dessus de {threshold} %"
+          },
+          "memory": {
+            "name": "la mémoire du pod",
+            "pass": "Mémoire du pod à {value} %, sous {threshold} %",
+            "warn": "Mémoire du pod à {value} %, au-dessus de {threshold} %",
+            "critical": "Mémoire du pod à {value} %, au-dessus de {threshold} %"
+          },
+          "restarts": {
+            "pass": "Aucun redémarrage de conteneur sur cette fenêtre",
+            "warn": "{count, plural, one {# redémarrage de conteneur} other {# redémarrages de conteneurs}} sur cette fenêtre"
+          }
         }
       }
     },
@@ -2590,6 +2635,51 @@
         "connections": "Connexions",
         "evictions": "Évictions",
         "hitRate": "Taux de succès"
+      },
+      "setUp": "Configurer la supervision Redis"
+    },
+    "kubernetes": {
+      "title": "Kubernetes",
+      "description": "Ce que CloudWatch Container Insights peut dire à OpsWatch de vos clusters.",
+      "noneTitle": "Aucun cluster Kubernetes ne rapporte",
+      "noneDescription": "Comment OpsWatch trouve Kubernetes, et pourquoi il peut ne rien trouver.",
+      "none": "Aucun cluster ne publie de métriques Container Insights dans cette région.",
+      "noneHint": "OpsWatch lit Kubernetes via CloudWatch Container Insights, qui n'est pas activé par défaut. Si vous exécutez EKS ici sans rien voir, c'est qu'il n'a pas été activé sur le cluster — OpsWatch ne peut pas distinguer cela d'une absence de cluster, et ne prétend donc ni l'un ni l'autre.",
+      "setUp": "Configurer la supervision Kubernetes",
+      "readGuide": "Lire le guide Kubernetes",
+      "clusters": "Clusters",
+      "nodes": "Nœuds",
+      "pods": "Pods",
+      "byNamespace": "namespace",
+      "runningPods": "{count} pods",
+      "tileCpu": "CPU {value} %",
+      "tileNoCpu": "aucune lecture CPU sur cette fenêtre",
+      "tileRestarts": "{count, plural, one {# redémarrage} other {# redémarrages}} sur cette fenêtre",
+      "limitsTitle": "Ce que cette vue ne peut pas voir",
+      "limits": "Container Insights est une photographie de ce qui tourne. Elle atteint le cluster, le namespace, la charge de travail et le pod — pas les conteneurs individuels, ni les événements Kubernetes, les phases de pod, les références de propriétaire ou les limites de ressources. Le point le plus délicat : une charge de travail dont tous les pods ont échoué au démarrage ne publie rien, et ressemble donc ici à une charge de travail inexistante.",
+      "mapTitle": "Tous les pods",
+      "mapDescription": "Une tuile par pod, regroupés par namespace. La couleur vient du CPU, de la mémoire et des redémarrages de conteneurs.",
+      "truncated": "Affichage des {shown} premiers pods.",
+      "nodesTitle": "Nœuds",
+      "nodesDescription": "La charge de chaque nœud et le nombre de pods qu'il porte.",
+      "busiestTitle": "Pods les plus chargés",
+      "busiestDescription": "CPU le plus élevé sur la fenêtre.",
+      "workloadsTitle": "Charges de travail",
+      "workloadsDescription": "Combien de pods chaque charge de travail exécute actuellement. CloudWatch ne publie pas le nombre souhaité : c'est donc un décompte, jamais un rapport.",
+      "podsTitle": "Pods",
+      "podsDescription": "Les chiffres derrière chaque verdict.",
+      "noneMatching": "Rien ne correspond à cette recherche.",
+      "search": "Rechercher namespaces et noms",
+      "searchSubmit": "Rechercher",
+      "columns": {
+        "workload": "Charge de travail",
+        "namespace": "Namespace",
+        "runningPods": "Pods en cours",
+        "pod": "Pod",
+        "health": "Santé",
+        "cpu": "CPU",
+        "memory": "Mémoire",
+        "restarts": "Redémarrages"
       }
     }
   },
@@ -2719,6 +2809,10 @@
     "redis": {
       "overview": "Vue d'ensemble",
       "nodes": "Nœuds"
+    },
+    "kubernetes": {
+      "overview": "Vue d'ensemble",
+      "workloads": "Charges de travail"
     }
   },
   "Settings": {
@@ -3196,5 +3290,1094 @@
     "signInHint": "Google est un fournisseur d'authentification, pas un système qu'OpsWatch lit. Il se configure dans l'environnement plutôt qu'ici, et la page Intégrations indique s'il est actif.",
     "allIntegrations": "Voir toutes les intégrations",
     "readGuide": "Lire le guide"
+  },
+  "Docs": {
+    "title": "Documentation",
+    "description": "Comment installer OpsWatch et comment lire ce qu'il vous dit. Écrit pour quelqu'un qui sait suivre des instructions, pas pour un expert AWS.",
+    "searchLabel": "Rechercher dans la documentation",
+    "searchPlaceholder": "redis cpu, connecter github, conserver les métriques…",
+    "searchSubmit": "Rechercher",
+    "results": "{count, plural, =0 {Rien trouvé pour « {query} »} one {# guide pour « {query} »} other {# guides pour « {query} »}}",
+    "noResults": "Essayez moins de mots, ou le nom de l'élément que vous regardez.",
+    "allGuides": "Tous les guides",
+    "whatThisDoes": "À quoi ça sert",
+    "beforeYouStart": "Avant de commencer",
+    "steps": "Étapes",
+    "howToVerify": "Comment vérifier",
+    "commonProblems": "Problèmes courants",
+    "nextStep": "Étape suivante",
+    "openInApp": "Ouvrir dans OpsWatch",
+    "categories": {
+      "start": {
+        "title": "Démarrage",
+        "description": "Installer, se connecter, et apprendre à lire ce qui s'affiche."
+      },
+      "aws": {
+        "title": "AWS",
+        "description": "La connexion en lecture seule sur laquelle tout le reste repose."
+      },
+      "infrastructure": {
+        "title": "Infrastructure",
+        "description": "Ce qu'OpsWatch peut voir pour chaque type de ressource, et comment lui en montrer davantage."
+      },
+      "code": {
+        "title": "Code",
+        "description": "Du problème au commit qui l'a peut-être causé."
+      },
+      "data": {
+        "title": "Données et alertes",
+        "description": "Ce qu'OpsWatch conserve, et qui il prévient."
+      },
+      "integrations": {
+        "title": "Autres intégrations",
+        "description": "Tout ce qui dépasse AWS."
+      }
+    },
+    "guides": {
+      "ai": {
+        "title": "Connecter un fournisseur d’IA",
+        "summary": "Facultatif. Le modèle raconte des preuves déjà collectées — il ne produit jamais les faits.",
+        "what": "Avec un modèle connecté, OpsWatch peut proposer une hypothèse sur un problème et répondre dans Ask OpsWatch. Le modèle reçoit un ensemble borné de preuves mesurées par OpsWatch. Il n'interroge pas votre base, ne lit pas vos logs bruts, et rien de ce qu'il dit ne devient un fait.",
+        "flow": {
+          "0": {
+            "label": "Preuves mesurées"
+          },
+          "1": {
+            "label": "Ensemble borné"
+          },
+          "2": {
+            "label": "Votre fournisseur"
+          },
+          "3": {
+            "label": "Hypothèse",
+            "note": "signalée comme telle"
+          }
+        },
+        "before": {
+          "0": "Une clé d'API d'un fournisseur que vous utilisez déjà.",
+          "1": "Une décision sur l'envoi de preuves à un tiers. OpsWatch est complet sans cela."
+        },
+        "steps": {
+          "0": {
+            "title": "Ajouter le fournisseur",
+            "body": "Paramètres, puis Fournisseur d'IA. Choisissez le fournisseur et le modèle, et collez la clé. Elle est chiffrée avant stockage et jamais renvoyée à un navigateur."
+          },
+          "1": {
+            "title": "Tester la connexion",
+            "body": "Une clé enregistrée n'est pas une clé qui marche. Le test appelle le fournisseur et rapporte la réponse."
+          },
+          "2": {
+            "title": "L'utiliser depuis un problème",
+            "body": "L'hypothèse apparaît sous son propre titre, après les preuves mesurées, et est signalée comme hypothèse partout où elle apparaît."
+          },
+          "3": {
+            "title": "Le désactiver quand vous voulez",
+            "body": "La déconnexion supprime la clé stockée. Toutes les pages mesurées continuent exactement comme avant."
+          }
+        },
+        "verify": "Le test de connexion passe et la page Intégrations montre le fournisseur comme connecté, avec son modèle nommé.",
+        "problems": {
+          "0": {
+            "q": "Qu'est-ce qui est envoyé au fournisseur ?",
+            "a": "Un ensemble borné : le problème, ses valeurs mesurées, les déploiements et groupes d'erreurs corrélés. Pas vos logs, pas votre base, pas vos identifiants."
+          },
+          "1": {
+            "q": "Le modèle peut-il modifier un verdict ?",
+            "a": "Non. Gravités, seuils et états sont calculés par OpsWatch. Le modèle n'ajoute qu'une hypothèse signalée à côté."
+          },
+          "2": {
+            "q": "L'IA est-elle obligatoire ?",
+            "a": "Non. Elle est désactivée par défaut et tout le reste fonctionne sans."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "problems",
+            "label": "Où apparaît l'hypothèse"
+          }
+        }
+      },
+      "alerts": {
+        "title": "Alertes et notifications",
+        "summary": "Des règles transforment les problèmes en notifications, avec un délai de garde pour ne réveiller personne deux fois.",
+        "what": "Un problème est une mesure. Une règle d'alerte décide quels problèmes méritent d'être signalés, et où les envoyer.",
+        "flow": {
+          "0": {
+            "label": "Problème ouvert"
+          },
+          "1": {
+            "label": "Règle correspondante"
+          },
+          "2": {
+            "label": "Alerte"
+          },
+          "3": {
+            "label": "Notification"
+          },
+          "4": {
+            "label": "Acquittée"
+          },
+          "5": {
+            "label": "Rétablie"
+          }
+        },
+        "before": {
+          "0": "Au moins un compte connecté produisant des problèmes."
+        },
+        "steps": {
+          "0": {
+            "title": "Regarder les règles existantes",
+            "body": "Règles d'alerte. OpsWatch en fournit un jeu de départ, et une règle que vous supprimez reste supprimée même quand une version ultérieure en ajoute."
+          },
+          "1": {
+            "title": "Comprendre le délai de garde",
+            "body": "Une règle déjà déclenchée ne se redéclenchera pas pour le même sujet avant la fin du délai. Un service instable ne devient pas un téléphone instable."
+          },
+          "2": {
+            "title": "Acquitter dit qu'une personne a vu",
+            "body": "Cela arrête le bruit. Cela ne referme pas le problème — seules trois lectures saines consécutives le font."
+          },
+          "3": {
+            "title": "Choisir une destination",
+            "body": "Paramètres, puis Notifications. Un webhook envoie un corps JSON signé à une URL que vous contrôlez. La page montre ce qui sera envoyé et permet un test avant de s'y fier."
+          }
+        },
+        "verify": "Envoyez une notification de test depuis la destination configurée et vérifiez qu'elle arrive. Le journal d'audit enregistre l'envoi.",
+        "problems": {
+          "0": {
+            "q": "Que contient exactement le corps du webhook ?",
+            "a": "Le problème, sa gravité, son sujet et un lien de retour vers OpsWatch. Jamais un identifiant. La page des paramètres montre un exemple."
+          },
+          "1": {
+            "q": "Une livraison a échoué.",
+            "a": "OpsWatch réessaie avec un délai croissant et consigne l'échec. Une destination qui échoue durablement est affichée comme en échec plutôt que silencieusement ignorée."
+          },
+          "2": {
+            "q": "Comment vérifier qu'un webhook vient bien d'OpsWatch ?",
+            "a": "Chaque requête est signée avec le secret partagé affiché à la création de la destination. Vérifiez la signature avant d'agir sur le corps."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "problems",
+            "label": "Ce qui se passe après l'alerte"
+          }
+        }
+      },
+      "aws-permissions": {
+        "title": "Permissions AWS : ce qu'OpsWatch lit, et ce qu'il ne peut pas faire",
+        "summary": "Chaque action de la politique, sa raison d'être, et comment revenir en arrière.",
+        "what": "Le rôle demandé par OpsWatch ne contient que des actions de lecture. Voici la liste, groupée comme le test de permissions les groupe, afin que vous puissiez comparer les deux.",
+        "before": {
+          "0": "Un compte AWS connecté."
+        },
+        "steps": {
+          "0": {
+            "title": "Les appels Describe : ce qui existe",
+            "body": "Les actions describe d'ECS, EC2, des répartiteurs de charge et de RDS disent à OpsWatch quelles ressources vous avez. Elles renvoient de la configuration, jamais des données."
+          },
+          "1": {
+            "title": "CloudWatch : ce qu’elles font",
+            "body": "GetMetricData et ListMetrics lisent les métriques qu'AWS publie déjà. ListMetrics est aussi la façon dont OpsWatch découvre Redis et Kubernetes sans demander davantage. GetMetricData est l'appel facturé par AWS, et OpsWatch en limite la fréquence."
+          },
+          "2": {
+            "title": "Les logs : seulement quand vous le demandez",
+            "body": "Les groupes de logs sont listés pour que vous en choisissiez. Les requêtes s'exécutent quand vous les lancez, et le coût est indiqué à côté du bouton."
+          },
+          "3": {
+            "title": "Changer d'avis",
+            "body": "Mettez la pile à jour depuis la page de connexion. OpsWatch vous signale quand le modèle qu'il génère a évolué par rapport à celui que vous avez déployé."
+          }
+        },
+        "verify": "Lancez le test de permissions sur la connexion. Chaque service attendu apparaît comme autorisé ; tout le reste est nommé avec l'action exacte.",
+        "problems": {
+          "0": {
+            "q": "Je veux accorder moins que ce que demande le modèle.",
+            "a": "C'est possible. Retirez les actions non souhaitées et redéployez — le test montrera ces services comme refusés, et les pages concernées le diront au lieu de vous montrer un écran vide."
+          },
+          "1": {
+            "q": "OpsWatch stocke-t-il mes identifiants AWS ?",
+            "a": "Pour un rôle, il n'y a rien à stocker : OpsWatch l'assume à chaque fois. Pour des clés d'accès, elles sont chiffrées avec votre OPSWATCH_SECRET et jamais renvoyées à un navigateur."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "checkup",
+            "label": "Lancer un bilan"
+          }
+        }
+      },
+      "checkup": {
+        "title": "Bilan : ce qui mérite correction",
+        "summary": "Une revue de configuration, distincte des problèmes en cours.",
+        "what": "Le bilan regarde comment votre infrastructure est configurée plutôt que ce qu'elle fait. Il repère ce qui posera problème plus tard — un service à une seule tâche, une base sans sauvegardes configurées, une télémétrie désactivée.",
+        "flow": {
+          "0": {
+            "label": "Connecter AWS"
+          },
+          "1": {
+            "label": "Test de permissions"
+          },
+          "2": {
+            "label": "Bilan"
+          },
+          "3": {
+            "label": "Constats"
+          },
+          "4": {
+            "label": "Corriger, ou accepter"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté ayant passé son test de permissions."
+        },
+        "steps": {
+          "0": {
+            "title": "Ouvrir le bilan",
+            "body": "Vue d'ensemble, puis Bilan. Il lit ce qui a déjà été collecté : l'ouvrir ne coûte rien."
+          },
+          "1": {
+            "title": "Lire un constat",
+            "body": "Chacun dit ce qui a été vu, pourquoi cela compte et quoi faire. Un constat n'est pas un problème : rien ne brûle."
+          },
+          "2": {
+            "title": "Décider",
+            "body": "Certains constats sont des choix délibérés. OpsWatch n'insiste pas, et ne modifie jamais rien."
+          }
+        },
+        "verify": "Le bilan liste des constats ou dit clairement qu'il n'a rien à signaler — et indique quand il a regardé pour la dernière fois.",
+        "problems": {
+          "0": {
+            "q": "Quelle différence entre un constat, un problème, une alarme et une erreur ?",
+            "a": "Un constat porte sur la configuration. Un problème porte sur un comportement mesuré. Une alarme est une règle CloudWatch que vous avez écrite. Une erreur est une exception de votre application. Ce sont quatre choses distinctes et OpsWatch ne les mélange pas."
+          },
+          "1": {
+            "q": "OpsWatch audite-t-il mon compte Google ?",
+            "a": "Non. Google sert uniquement à se connecter à OpsWatch. Il n'y a pas d'audit Google."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "history",
+            "label": "Conserver l'historique, pour donner une base aux constats"
+          }
+        }
+      },
+      "cloudflare": {
+        "title": "Connecter Cloudflare",
+        "summary": "Trafic, cache et menaces à la périphérie, pour les zones que vous choisissez.",
+        "what": "Cloudflare voit les requêtes qui n'atteignent jamais votre origine : celles qu'il a mises en cache, celles qu'il a bloquées, celles qu'il n'a pas pu servir. Le connecter vous dit ce qui s'est passé devant AWS.",
+        "flow": {
+          "0": {
+            "label": "Jeton API",
+            "note": "lecture seule"
+          },
+          "1": {
+            "label": "Zones choisies"
+          },
+          "2": {
+            "label": "Analytique quotidienne"
+          },
+          "3": {
+            "label": "OpsWatch"
+          }
+        },
+        "before": {
+          "0": "Un compte Cloudflare avec au moins une zone.",
+          "1": "Le droit d'y créer un jeton API."
+        },
+        "steps": {
+          "0": {
+            "title": "Créer un jeton en lecture seule",
+            "body": "Dans votre tableau de bord Cloudflare, créez un jeton API avec lecture de zone et lecture analytique pour les zones voulues. N'utilisez pas la clé API globale."
+          },
+          "1": {
+            "title": "Le coller dans OpsWatch",
+            "body": "Paramètres, puis Cloudflare. Le jeton est chiffré avant stockage et n'est jamais renvoyé à un navigateur — pas même à la page où vous l'avez collé."
+          },
+          "2": {
+            "title": "Le vérifier",
+            "body": "La vérification appelle Cloudflare et liste les zones que le jeton peut réellement lire. Un jeton enregistré n'est pas un jeton qui marche, et OpsWatch montre la différence."
+          },
+          "3": {
+            "title": "Choisir des zones",
+            "body": "Un jeton vérifié qui ne surveille aucune zone ne lit rien : choisir fait partie de la connexion, pas d'une étape suivante."
+          }
+        },
+        "verify": "La page Cloudflare affiche requêtes, taux de cache, erreurs d'origine et menaces pour chaque zone choisie, avec le jour de la mesure.",
+        "problems": {
+          "0": {
+            "q": "La vérification a échoué.",
+            "a": "OpsWatch affiche le code d'erreur renvoyé par Cloudflare plutôt qu'une supposition. Les causes habituelles sont un jeton sans permission analytique ou limité à une autre zone."
+          },
+          "1": {
+            "q": "Les chiffres ont un jour de retard.",
+            "a": "Ce sont des agrégats quotidiens de l'analytique Cloudflare. OpsWatch indique le jour de chaque chiffre au lieu de laisser croire qu'il est en direct."
+          },
+          "2": {
+            "q": "Puis-je remplacer le jeton sans perdre ma sélection de zones ?",
+            "a": "Oui. Remplacer l'identifiant conserve la connexion ; seul le jeton change, et il est vérifié à nouveau."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "ai",
+            "label": "Laisser un modèle raconter ce qui a été mesuré"
+          }
+        }
+      },
+      "connect-aws": {
+        "title": "Connecter un compte AWS",
+        "summary": "Un rôle IAM en lecture seule, déployé par un modèle CloudFormation qu'OpsWatch génère pour vous.",
+        "what": "OpsWatch lit votre compte AWS via un rôle qu'il est autorisé à assumer. Le rôle est en lecture seule, le modèle qui le crée est généré pour votre compte, et vous pouvez le supprimer à tout moment.",
+        "flow": {
+          "0": {
+            "label": "OpsWatch",
+            "note": "génère un modèle"
+          },
+          "1": {
+            "label": "CloudFormation",
+            "note": "vous le déployez"
+          },
+          "2": {
+            "label": "Rôle IAM",
+            "note": "lecture seule"
+          },
+          "3": {
+            "label": "OpsWatch lit",
+            "note": "via AssumeRole"
+          }
+        },
+        "before": {
+          "0": "Le droit de déployer une pile CloudFormation dans le compte AWS.",
+          "1": "Le numéro de compte AWS, douze chiffres.",
+          "2": "Les régions qu'OpsWatch doit lire."
+        },
+        "steps": {
+          "0": {
+            "title": "Ajouter la connexion",
+            "body": "Connexions, puis Ajouter une connexion, puis AWS. Donnez-lui un nom reconnaissable, le numéro de compte et les régions."
+          },
+          "1": {
+            "title": "Choisir le rôle IAM",
+            "body": "Les clés d'accès sont proposées pour des tests locaux et signalées comme telles. Pour tout usage réel, utilisez le rôle."
+          },
+          "2": {
+            "title": "Déployer le modèle",
+            "body": "Téléchargez-le ou utilisez Launch Stack. Il crée un rôle IAM avec une politique en lecture seule, et rien d'autre. La politique de confiance nomme l'identité d'OpsWatch et un ExternalId propre à cette connexion : le rôle ne peut pas être assumé via une autre connexion."
+          },
+          "3": {
+            "title": "Coller l'ARN du rôle",
+            "body": "CloudFormation l'affiche dans les sorties de la pile. OpsWatch vérifie qu'il appartient bien au compte saisi."
+          },
+          "4": {
+            "title": "Lancer le test de permissions",
+            "body": "Il effectue une lecture inoffensive par service et vous dit exactement lesquelles ont répondu."
+          }
+        },
+        "verify": "La connexion affiche Connecté et la liste des permissions montre chaque service comme autorisé. Tout refus est nommé, avec l'action refusée.",
+        "problems": {
+          "0": {
+            "q": "Le test dit que le rôle appartient à un autre compte.",
+            "a": "L'ARN collé provient d'un numéro de compte différent de celui de la connexion. Vérifiez les douze chiffres dans l'ARN."
+          },
+          "1": {
+            "q": "Certains services sont refusés.",
+            "a": "Ce n'est pas grave et OpsWatch continue de fonctionner — il ne pourra simplement pas les lire. La liste nomme chacun pour que vous décidiez."
+          },
+          "2": {
+            "q": "OpsWatch peut-il modifier quelque chose dans mon compte ?",
+            "a": "Non. La politique ne contient que des actions de lecture. Il ne peut ni déployer, ni redimensionner, ni annuler, ni supprimer."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "aws-permissions",
+            "label": "À quoi sert chaque permission"
+          },
+          "1": {
+            "href": "reading-status",
+            "label": "Comment lire le résultat"
+          }
+        }
+      },
+      "connect-github": {
+        "title": "Connecter le code",
+        "summary": "Du problème au déploiement voisin, au commit, aux fichiers modifiés.",
+        "what": "Quand OpsWatch sait de quel dépôt un service est construit, il peut montrer ce qui a changé juste avant le début d'un problème. Il lit votre code ; il n'y écrit jamais.",
+        "flow": {
+          "0": {
+            "label": "Problème"
+          },
+          "1": {
+            "label": "Service"
+          },
+          "2": {
+            "label": "Déploiement"
+          },
+          "3": {
+            "label": "Commit"
+          },
+          "4": {
+            "label": "Fichiers modifiés"
+          },
+          "5": {
+            "label": "La ligne"
+          }
+        },
+        "before": {
+          "0": "Un compte GitHub ayant accès aux dépôts à relier.",
+          "1": "Un compte AWS connecté, pour avoir des services à associer."
+        },
+        "steps": {
+          "0": {
+            "title": "Connecter GitHub",
+            "body": "Paramètres, puis Dépôts. Collez un jeton avec un accès en lecture aux dépôts concernés. Il est chiffré avant stockage et jamais renvoyé à un navigateur."
+          },
+          "1": {
+            "title": "Choisir les dépôts",
+            "body": "La découverte liste ce que le jeton peut voir. Importez ceux que vous voulez ; les autres sont laissés de côté."
+          },
+          "2": {
+            "title": "Associer un service à un dépôt",
+            "body": "C'est le lien qui fait fonctionner la chaîne. Sans lui, OpsWatch sait qu'un déploiement a eu lieu sans savoir ce qu'il contenait."
+          },
+          "3": {
+            "title": "Vérifier l'enrichissement des déploiements",
+            "body": "Conteneurs, puis Déploiements. Un déploiement enrichi montre les commits qu'il portait et le nombre de fichiers touchés."
+          },
+          "4": {
+            "title": "Ouvrir le code depuis un problème",
+            "body": "Sur un problème avec un déploiement proche, « ce qui a changé » mène au commit et aux fichiers. Quand une erreur porte une frame de pile, le lien mène à ce fichier à ce commit."
+          }
+        },
+        "verify": "Un déploiement montre ses commits. Un problème avec un déploiement proche propose les fichiers modifiés. Les deux disent clairement quand une association manque, au lieu de ne rien montrer.",
+        "problems": {
+          "0": {
+            "q": "Un déploiement n'a pas de commits.",
+            "a": "Le service n'est pas associé à un dépôt, ou le commit déployé n'est pas dans le dépôt connu d'OpsWatch. La page du déploiement précise lequel."
+          },
+          "1": {
+            "q": "Pourquoi les liens de code pointent-ils un commit plutôt qu’une branche ?",
+            "a": "Parce que la branche bouge. Un lien vers un fichier sur main pointera ailleurs la semaine prochaine, et tout l'intérêt du lien est de montrer le code tel qu'il était au début du problème."
+          },
+          "2": {
+            "q": "Un déploiement avant un problème signifie-t-il qu'il l'a causé ?",
+            "a": "Non, et OpsWatch ne le dit jamais. Il dit qu'un déploiement a eu lieu huit minutes plus tôt. C'est une corrélation, et son interprétation vous revient."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "problems",
+            "label": "Comment enquêter sur un problème"
+          }
+        }
+      },
+      "ec2": {
+        "title": "Superviser EC2",
+        "summary": "Les instances par zone de disponibilité, colorées par le seul signal qui signifie « en panne ».",
+        "what": "OpsWatch liste vos instances et lit leurs métriques CloudWatch. Il colore une instance selon son status check AWS — et délibérément pas selon son CPU.",
+        "flow": {
+          "0": {
+            "label": "Instance EC2"
+          },
+          "1": {
+            "label": "Status check"
+          },
+          "2": {
+            "label": "CloudWatch"
+          },
+          "3": {
+            "label": "Carte des hôtes"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté avec les permissions EC2 autorisées."
+        },
+        "steps": {
+          "0": {
+            "title": "Ouvrir la carte des hôtes",
+            "body": "Instances, puis Vue d'ensemble. Chaque instance est une tuile, regroupée par zone de disponibilité."
+          },
+          "1": {
+            "title": "Comprendre la couleur",
+            "body": "Vert : le status check AWS est passé. Rouge : il a échoué. Un contour : l'instance tourne et ne publie pas de status check, donc OpsWatch ne peut rien garantir."
+          },
+          "2": {
+            "title": "Comprendre ce que le CPU n'est pas",
+            "body": "Un hôte de traitement par lots à 95 % fait son travail ; un serveur web à 95 % a peut-être un ennui. OpsWatch ne peut pas savoir lequel est le vôtre : le CPU est montré, classé et tracé — jamais transformé en verdict."
+          },
+          "3": {
+            "title": "Activer la surveillance détaillée pour des données plus fines",
+            "body": "La surveillance de base publie toutes les cinq minutes. La surveillance détaillée publie chaque minute et est facturée par AWS."
+          }
+        },
+        "verify": "La carte regroupe vos instances par zone et le résumé nomme toute zone dont quelque chose n'a pas pu être lu.",
+        "problems": {
+          "0": {
+            "q": "Toutes les instances sont des contours.",
+            "a": "Aucune métrique de status check n'arrive dans CloudWatch pour elles. Vérifiez qu'elles tournent réellement et que la connexion dispose des permissions CloudWatch."
+          },
+          "1": {
+            "q": "Une instance arrêtée apparaît comme saine.",
+            "a": "Arrêter une instance est une décision. OpsWatch indique qu'elle est arrêtée et n'en fait pas une panne."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "reading-status",
+            "label": "Pourquoi un contour n'est pas un carré rouge"
+          }
+        }
+      },
+      "ecs": {
+        "title": "Superviser ECS",
+        "summary": "Clusters, services et tâches — et comment obtenir les chiffres de CPU et de mémoire.",
+        "what": "OpsWatch lit vos clusters et services ECS via les actions describe du rôle, et leur CPU et mémoire via CloudWatch. Il colore un service selon que ses tâches tournent, son taux d'utilisation, et le déroulement de son dernier déploiement.",
+        "flow": {
+          "0": {
+            "label": "Cluster ECS"
+          },
+          "1": {
+            "label": "Service"
+          },
+          "2": {
+            "label": "Tâche"
+          },
+          "3": {
+            "label": "Métriques CloudWatch"
+          },
+          "4": {
+            "label": "OpsWatch"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté avec les permissions ECS autorisées."
+        },
+        "steps": {
+          "0": {
+            "title": "Ouvrir la vue d'ensemble ECS",
+            "body": "Conteneurs, puis Vue d'ensemble. Chaque service est une tuile, regroupée par cluster."
+          },
+          "1": {
+            "title": "Lire le verdict",
+            "body": "Un service est sain quand ses tâches tournent, que son CPU et sa mémoire sont dans la bande, et que son dernier déploiement est terminé. Un service volontairement réduit à zéro est sain, pas cassé."
+          },
+          "2": {
+            "title": "Activer Container Insights pour en voir plus",
+            "body": "Le CPU et la mémoire de base arrivent sans lui. Container Insights ajoute les décomptes de tâches et s'active par cluster.",
+            "command": "aws ecs update-cluster-settings --cluster VOTRE_CLUSTER --settings name=containerInsights,value=enabled"
+          },
+          "3": {
+            "title": "Diriger vos logs vers CloudWatch",
+            "body": "Utilisez le pilote awslogs dans votre définition de tâche pour qu'OpsWatch puisse les chercher et y trouver des erreurs."
+          }
+        },
+        "verify": "La vue d'ensemble ECS montre un verdict, les décomptes à côté, et les vérifications effectuées — dont les valeurs de CPU et de mémoire avec le seuil de comparaison.",
+        "problems": {
+          "0": {
+            "q": "CPU et mémoire sont vides.",
+            "a": "Le service ne publie pas de métriques d'utilisation. C'est normal pour certains types de lancement ; OpsWatch ne liste que les vérifications effectuées plutôt que d'inventer un zéro."
+          },
+          "1": {
+            "q": "Un service affiche 0 tâche sur 2 en cours.",
+            "a": "Rien ne sert. Regardez les événements du service dans la console AWS — les causes habituelles sont une image impossible à récupérer, un health check en échec, ou un manque de capacité."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "logs",
+            "label": "Envoyer les logs pour que les erreurs deviennent des problèmes"
+          }
+        }
+      },
+      "first-login": {
+        "title": "Première connexion",
+        "summary": "Créer l'administrateur, puis choisir comment on se connecte.",
+        "what": "La première personne qui ouvre OpsWatch crée le compte administrateur. Ensuite la page d'installation se ferme et chacun se connecte par mot de passe, ou via Google si vous le configurez.",
+        "before": {
+          "0": "OpsWatch installé et démarré.",
+          "1": "Un gestionnaire de mots de passe, de préférence : le mot de passe n'est pas récupérable."
+        },
+        "steps": {
+          "0": {
+            "title": "Créer l'administrateur",
+            "body": "Ouvrez OpsWatch et renseignez l'e-mail et le mot de passe. Cela n'arrive qu'une fois ; ensuite la page d'installation répond « introuvable »."
+          },
+          "1": {
+            "title": "Se connecter",
+            "body": "Avec l'e-mail et le mot de passe que vous venez de choisir."
+          },
+          "2": {
+            "title": "Éventuellement, activer la connexion Google",
+            "body": "Définissez l'identifiant client Google, le secret et l'URL publique dans l'environnement, puis redémarrez. La configuration de connexion vit dans l'environnement à dessein : un fournisseur d'identité modifiable depuis l'application serait un moyen de prendre l'application."
+          }
+        },
+        "verify": "Vous arrivez sur Connexions. La page Intégrations indique la connexion Google comme connectée si vous l'avez configurée, et non configurée sinon.",
+        "problems": {
+          "0": {
+            "q": "J'ai oublié le mot de passe administrateur.",
+            "a": "Il n'y a pas de réinitialisation depuis le produit. Arrêtez le conteneur, supprimez la ligne admin de la base dans le volume de données, et redémarrez."
+          },
+          "1": {
+            "q": "La connexion Google équivaut-elle à connecter Google Cloud ?",
+            "a": "Non. C'est une façon de se connecter à OpsWatch. OpsWatch ne lit rien chez Google."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "connect-aws",
+            "label": "Connecter votre premier compte AWS"
+          }
+        }
+      },
+      "history": {
+        "title": "Conserver l'historique et construire des références",
+        "summary": "Désactivé par défaut, parce que cela coûte. Voici ce que son activation apporte.",
+        "what": "OpsWatch répond à la plupart des questions avec ce qu'AWS conserve déjà. La collecte historique sert aux questions qui demandent hier : graphiques sur un problème, références, rapports et objectifs.",
+        "flow": {
+          "0": {
+            "label": "CloudWatch"
+          },
+          "1": {
+            "label": "Collecteur",
+            "note": "à votre rythme"
+          },
+          "2": {
+            "label": "Agrégats"
+          },
+          "3": {
+            "label": "Votre volume de données"
+          },
+          "4": {
+            "label": "Graphiques, références, SLO"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté.",
+          "1": "Une idée du volume d'appels CloudWatch que vous acceptez de payer."
+        },
+        "steps": {
+          "0": {
+            "title": "Comprendre pourquoi c'est désactivé",
+            "body": "Chaque cycle de collecte est un appel CloudWatch facturé. OpsWatch ne dépensera pas votre argent par défaut : la collecte est désactivée et chaque page qui s'en servirait le dit."
+          },
+          "1": {
+            "title": "Activer",
+            "body": "Paramètres, puis Données et historique. Choisissez un intervalle. La page indique ce que chaque intervalle coûte en appels par jour."
+          },
+          "2": {
+            "title": "Choisir la rétention",
+            "body": "Les points anciens sont agrégés plutôt que conservés bruts : la base grossit lentement et de façon prévisible."
+          },
+          "3": {
+            "title": "Attendre une référence",
+            "body": "Les références demandent assez d'historique pour avoir du sens. Tant qu'il n'y en a pas assez, OpsWatch le dit plutôt que de comparer à un chiffre inventé."
+          },
+          "4": {
+            "title": "Sauvegarder",
+            "body": "Tout vit dans le volume de données. Faites-en un instantané, et gardez votre OPSWATCH_SECRET avec — sans le secret, les identifiants stockés sont illisibles."
+          }
+        },
+        "verify": "Le détail d'un problème affiche un graphique du signal mesuré au lieu de la phrase expliquant que l'historique est désactivé.",
+        "problems": {
+          "0": {
+            "q": "Où les données sont-elles stockées ?",
+            "a": "Dans SQLite, dans le volume de données du conteneur, sur votre machine. Rien n'est envoyé ailleurs."
+          },
+          "1": {
+            "q": "Je l'ai activé et les graphiques restent vides.",
+            "a": "Ils se remplissent à partir de l'activation. OpsWatch ne remplit pas le passé, car cela signifierait payer pour relire une fenêtre que vous n'avez pas demandée."
+          },
+          "2": {
+            "q": "Comment faire pour qu’OpsWatch conserve des statistiques ?",
+            "a": "C'est ce guide. Activez la collecte historique ; références, rapports et objectifs en découlent."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "alerts",
+            "label": "Être prévenu quand quelque chose change"
+          }
+        }
+      },
+      "install": {
+        "title": "Installer OpsWatch",
+        "summary": "Un conteneur, un volume de données, sur une machine que vous contrôlez.",
+        "what": "OpsWatch s'exécute dans un seul conteneur avec un volume de données. Tout ce qu'il sait — vos connexions, vos problèmes, votre historique — vit dans ce volume, sur votre machine, et rien n'est envoyé ailleurs.",
+        "flow": {
+          "0": {
+            "label": "Docker",
+            "note": "un conteneur"
+          },
+          "1": {
+            "label": "Volume de données",
+            "note": "SQLite, secrets chiffrés"
+          },
+          "2": {
+            "label": "Votre navigateur",
+            "note": "localhost:3111"
+          }
+        },
+        "before": {
+          "0": "Une machine avec Docker et Docker Compose.",
+          "1": "Un port libre. Les exemples utilisent 3111.",
+          "2": "Une dizaine de minutes."
+        },
+        "steps": {
+          "0": {
+            "title": "Récupérer le fichier compose",
+            "body": "Clonez le dépôt, ou copiez-en docker-compose.yml.",
+            "command": "git clone https://github.com/NethanelFitoussi/OpsWatch.git && cd OpsWatch"
+          },
+          "1": {
+            "title": "Définir le secret",
+            "body": "OPSWATCH_SECRET chiffre chaque identifiant stocké par OpsWatch. Générez-le et conservez-le : sans lui, les identifiants stockés ne peuvent plus être déchiffrés et tout sera à reconnecter.",
+            "command": "openssl rand -hex 32"
+          },
+          "2": {
+            "title": "Démarrer",
+            "body": "Le premier démarrage crée la base et applique toutes les migrations.",
+            "command": "docker compose up -d"
+          },
+          "3": {
+            "title": "Ouvrir",
+            "body": "L'écoute est limitée à localhost. Pour y accéder depuis ailleurs, placez-le derrière un proxy inverse HTTPS et définissez OPSWATCH_PUBLIC_URL — créez d'abord votre compte administrateur.",
+            "command": "http://127.0.0.1:3111"
+          }
+        },
+        "verify": "La page de connexion s'affiche et vous propose de créer un administrateur. Si vous la voyez, le conteneur tourne et la base est prête.",
+        "problems": {
+          "0": {
+            "q": "La page ne se charge pas.",
+            "a": "Vérifiez la santé du conteneur avec docker compose ps, puis lisez docker compose logs opswatch. Un OPSWATCH_SECRET manquant en est la cause habituelle."
+          },
+          "1": {
+            "q": "Puis-je le déplacer sur une autre machine ?",
+            "a": "Oui. Copiez le volume de données et réutilisez le même OPSWATCH_SECRET. Sans ce secret, les identifiants stockés sont illisibles."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "first-login",
+            "label": "Créer votre compte"
+          }
+        }
+      },
+      "kubernetes": {
+        "title": "Superviser Kubernetes sur EKS",
+        "summary": "Container Insights est toute l'histoire — ce qu'il apporte, et où il s'arrête exactement.",
+        "what": "OpsWatch lit Kubernetes via CloudWatch Container Insights. Cela ne demande aucune permission au-delà de celles de votre rôle, et ce n'est pas activé par défaut : tant que vous ne l'activez pas, OpsWatch ne voit pas votre cluster et le dira plutôt que d'afficher une page vide rassurante.",
+        "flow": {
+          "0": {
+            "label": "Cluster EKS"
+          },
+          "1": {
+            "label": "Container Insights",
+            "note": "à activer"
+          },
+          "2": {
+            "label": "CloudWatch"
+          },
+          "3": {
+            "label": "OpsWatch"
+          }
+        },
+        "before": {
+          "0": "Un cluster EKS et le droit d'y ajouter un add-on.",
+          "1": "Un compte AWS connecté avec les permissions CloudWatch autorisées.",
+          "2": "Container Insights est facturé par AWS comme métriques personnalisées. Vérifiez le coût pour la taille de votre cluster avant de l'activer partout."
+        },
+        "steps": {
+          "0": {
+            "title": "Activer Container Insights sur le cluster",
+            "body": "Le plus simple est l'add-on EKS CloudWatch Observability, qui installe l'agent pour vous.",
+            "command": "aws eks create-addon --cluster-name VOTRE_CLUSTER --addon-name amazon-cloudwatch-observability"
+          },
+          "1": {
+            "title": "Attendre l'arrivée des métriques",
+            "body": "Les premiers points arrivent en quelques minutes. OpsWatch trouve les clusters par leur métrique de nombre de nœuds : rien n'apparaît tant qu'elle n'est pas publiée."
+          },
+          "2": {
+            "title": "Ouvrir la section Kubernetes",
+            "body": "Chaque pod est une tuile, regroupée par namespace. Les nœuds et la santé du cluster sont à côté."
+          },
+          "3": {
+            "title": "Lire la limite",
+            "body": "La page porte une carte disant ce que cette vue ne peut pas voir. Elle vaut une lecture."
+          }
+        },
+        "verify": "La section Kubernetes montre votre cluster, ses nœuds, et une tuile par pod en cours. Si elle indique toujours qu'aucun cluster ne rapporte, les métriques n'arrivent pas encore dans CloudWatch.",
+        "problems": {
+          "0": {
+            "q": "Il dit qu'aucun cluster ne rapporte, alors que j'en ai un.",
+            "a": "Container Insights n'y est pas activé, ou l'agent ne peut pas publier. OpsWatch ne peut pas distinguer cela d'une absence de cluster, et ne prétend donc ni l'un ni l'autre."
+          },
+          "1": {
+            "q": "Pourquoi ne vois-je pas les conteneurs, seulement les pods ?",
+            "a": "Container Insights agrège au pod. L'état par conteneur vit dans le kubelet et demanderait quelque chose tournant dans votre cluster pour être lu."
+          },
+          "2": {
+            "q": "Une charge de travail que je sais cassée n'apparaît pas.",
+            "a": "C'est la limite la plus délicate de la lecture de Kubernetes depuis CloudWatch. Une charge dont tous les pods ont échoué au démarrage ne publie aucune métrique de pod : elle ressemble ici à une charge inexistante. Les événements et les phases de pod ne sont pas dans CloudWatch."
+          },
+          "3": {
+            "q": "Un agent OpsWatch dans le cluster résoudrait-il cela ?",
+            "a": "Oui : événements, phases de pod, références de propriétaire et état par conteneur demandent tous quelque chose dans le cluster. OpsWatch n'en fournit pas. C'est un vrai produit avec sa propre frontière de confiance — quelque chose qui tourne chez vous, détient un identifiant et envoie des données — et nous ne prétendrons pas qu'il existe."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "reading-status",
+            "label": "Pourquoi une télémétrie absente n'est jamais verte"
+          }
+        }
+      },
+      "logs": {
+        "title": "Envoyer les logs pour qu'OpsWatch puisse les lire",
+        "summary": "CloudWatch Logs en entrée, recherche et regroupement des erreurs en sortie.",
+        "what": "OpsWatch lit les logs depuis CloudWatch Logs. Il les cherche quand vous le demandez, et regroupe les exceptions en erreurs qui peuvent devenir des problèmes.",
+        "flow": {
+          "0": {
+            "label": "Votre application"
+          },
+          "1": {
+            "label": "CloudWatch Logs"
+          },
+          "2": {
+            "label": "OpsWatch"
+          },
+          "3": {
+            "label": "Recherche, erreurs, problèmes"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté avec les permissions logs autorisées."
+        },
+        "steps": {
+          "0": {
+            "title": "Envoyer vos logs vers CloudWatch",
+            "body": "Sur ECS, utilisez le pilote awslogs dans la définition de conteneur. Sur EC2, installez l'agent CloudWatch. Sur Lambda, c'est automatique."
+          },
+          "1": {
+            "title": "Choisir les groupes de logs",
+            "body": "Logs, puis Sources. OpsWatch liste ce qu'il voit et vous activez chaque groupe. Rien n'est interrogé avant."
+          },
+          "2": {
+            "title": "Chercher",
+            "body": "Logs, puis Recherche. Les requêtes sont des requêtes Logs Insights et AWS facture les données parcourues — l'estimation est à côté du bouton."
+          },
+          "3": {
+            "title": "Laisser les erreurs se regrouper",
+            "body": "OpsWatch empreinte les exceptions par leur type, leur message normalisé et les frames qui comptent — jamais par numéro de ligne, pour qu'une ligne vide ajoutée au-dessus ne coupe pas un groupe en deux."
+          }
+        },
+        "verify": "La page Erreurs liste des groupes avec un décompte et une date de première apparition, et une recherche renvoie des lignes de vos groupes choisis.",
+        "problems": {
+          "0": {
+            "q": "Aucun groupe de logs n'est listé.",
+            "a": "Soit les permissions logs sont refusées, soit rien n'écrit dans CloudWatch Logs dans cette région."
+          },
+          "1": {
+            "q": "Les requêtes semblent coûteuses.",
+            "a": "Elles sont facturées aux données parcourues. Réduisez la fenêtre et le nombre de groupes ; OpsWatch affiche l'estimation avant l'exécution."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "connect-github",
+            "label": "Transformer une erreur en ligne de code"
+          }
+        }
+      },
+      "problems": {
+        "title": "Les problèmes, de l'ouverture à la résolution",
+        "summary": "Ce qu'est un problème, en quoi il diffère d'une alarme, et comment il se referme.",
+        "what": "Un problème est quelque chose qu'OpsWatch a mesuré et jugé digne de votre attention. Il s'ouvre, il peut revenir, et il ne se referme que lorsque la mesure le dit.",
+        "flow": {
+          "0": {
+            "label": "La règle se déclenche"
+          },
+          "1": {
+            "label": "Le problème ouvre"
+          },
+          "2": {
+            "label": "Preuves et corrélations"
+          },
+          "3": {
+            "label": "Trois lectures saines"
+          },
+          "4": {
+            "label": "Résolu"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté avec quelque chose qui tourne dedans."
+        },
+        "steps": {
+          "0": {
+            "title": "Lisez la première ligne",
+            "body": "Quoi, quelle gravité, depuis combien de temps, et où. Si cette ligne ne répond pas à ces quatre questions, dites-le-nous."
+          },
+          "1": {
+            "title": "Lisez ce que cela a touché",
+            "body": "OpsWatch écrit le plus souvent « impact utilisateur non établi ». C'est la réponse honnête : il mesure votre infrastructure, pas vos utilisateurs."
+          },
+          "2": {
+            "title": "Lisez pourquoi il s'est ouvert",
+            "body": "La valeur mesurée, le seuil franchi, et la valeur sous laquelle elle doit revenir."
+          },
+          "3": {
+            "title": "Suivez « à vérifier »",
+            "body": "Chaque suggestion porte la preuve qui l'a produite — un déploiement huit minutes plus tôt, un groupe d'erreurs apparu à proximité. Une liste vide est aussi une réponse."
+          },
+          "4": {
+            "title": "Laissez-le se refermer",
+            "body": "Un problème se résout après trois lectures saines consécutives sur au moins quinze minutes. Une minute de calme ne referme rien."
+          }
+        },
+        "verify": "Ouvrez un problème. Vous devez y voir le verdict, l'impact, la règle, ce qu'il faut vérifier, les causes possibles, et une chronologie de son ouverture et de ses retours.",
+        "problems": {
+          "0": {
+            "q": "Quelle différence entre un problème et une alarme ?",
+            "a": "Une alarme est une règle CloudWatch que vous avez écrite. Un problème est une règle qu'OpsWatch a appliquée. Une alarme en état ALARM devient un problème, et OpsWatch n'inventera pas de causes pour elle — la règle est la vôtre, pas la nôtre."
+          },
+          "1": {
+            "q": "Quelle différence entre acquitter et résoudre ?",
+            "a": "Acquitter dit qu'une personne a vu. Résoudre est une mesure, et seule la mesure peut le faire."
+          },
+          "2": {
+            "q": "Il affiche « Causes possibles ». Sont-ce des conclusions ?",
+            "a": "Non. Cette carte est la seule chose de la page qu'OpsWatch n'a pas mesurée. Elle le dit avec ses propres mots."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "connect-github",
+            "label": "Connecter le code, pour qu'un problème pointe un commit"
+          }
+        }
+      },
+      "reading-status": {
+        "title": "Vert, orange, rouge — et les deux qui ne sont ni l’un ni l’autre",
+        "summary": "Ce que signifie chaque couleur, et pourquoi OpsWatch refuse un vert qu'il n'a pas mérité.",
+        "what": "Chaque ressource affichée par OpsWatch a l'un de cinq états. Trois sont des verdicts. Deux sont des aveux, et ce sont eux qui rendent les trois autres dignes de confiance.",
+        "flow": {
+          "0": {
+            "label": "A-t-elle été lue ?",
+            "note": "non → Non évalué"
+          },
+          "1": {
+            "label": "Récemment ?",
+            "note": "non → Lecture ancienne"
+          },
+          "2": {
+            "label": "Les vérifications passent ?",
+            "note": "Sain, À surveiller, Critique"
+          }
+        },
+        "before": {
+          "0": "Rien. C'est le guide à lire en premier."
+        },
+        "steps": {
+          "0": {
+            "title": "Sain veut dire vérifié",
+            "body": "Le vert dit que quelqu'un a regardé, récemment, et que chaque vérification effectuée est passée. Il ne veut jamais dire « aucun problème enregistré ». L'absence de problème est une absence de preuve, pas une preuve de bonne santé."
+          },
+          "1": {
+            "title": "À surveiller et Critique sont mesurés",
+            "body": "L'orange et le rouge viennent d'une règle avec un chiffre. La page du problème cite ce chiffre et le seuil franchi, pour que vous puissiez ne pas être d'accord."
+          },
+          "2": {
+            "title": "Non évalué veut dire que personne n'a regardé",
+            "body": "Un contour vide. OpsWatch a trouvé la ressource et n'en a aucune lecture — souvent parce que la télémétrie nécessaire n'est pas activée."
+          },
+          "3": {
+            "title": "Lecture ancienne veut dire que nous avons regardé, il y a longtemps",
+            "body": "Même couleur, autre phrase. La dernière lecture est trop ancienne pour valoir ce qui se passe maintenant."
+          }
+        },
+        "verify": "Ouvrez n'importe quelle vue d'ensemble d'infrastructure. À côté du verdict figurent les décomptes — combien sont sains, combien ne sont pas évalués — et la liste des vérifications réellement effectuées, avec l'âge de la lecture.",
+        "problems": {
+          "0": {
+            "q": "Tout indique Non évalué.",
+            "a": "La télémétrie dont OpsWatch a besoin n'arrive pas dans CloudWatch. Chaque section indique le signal manquant et renvoie au guide correspondant."
+          },
+          "1": {
+            "q": "Pourquoi une ressource très chargée reste-t-elle verte ?",
+            "a": "Parce que chargée ne veut pas dire en panne. OpsWatch ne colore qu'à partir de signaux qui signifient vraiment un ennui — un status check en échec, un moteur saturé, des tâches qui ne tournent pas. Un CPU élevé est montré, pas jugé."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "problems",
+            "label": "Comment fonctionne un problème"
+          }
+        }
+      },
+      "redis": {
+        "title": "Superviser Redis sur ElastiCache",
+        "summary": "CPU moteur, mémoire, évictions et taux de succès — et lesquels signifient vraiment un ennui.",
+        "what": "OpsWatch trouve vos nœuds Redis grâce aux métriques qu'ils publient dans CloudWatch. Aucune permission ElastiCache, aucune pile à redéployer. Il juge deux signaux et en montre plusieurs autres sans les juger.",
+        "flow": {
+          "0": {
+            "label": "Nœud ElastiCache"
+          },
+          "1": {
+            "label": "Métriques CloudWatch"
+          },
+          "2": {
+            "label": "OpsWatch"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté avec les permissions CloudWatch autorisées.",
+          "1": "Au moins un nœud Redis ElastiCache actif depuis assez longtemps pour publier des métriques."
+        },
+        "steps": {
+          "0": {
+            "title": "Ouvrir la section Redis",
+            "body": "Chaque nœud est une tuile, regroupée par cluster. Rien à configurer : si les nœuds publient, ils sont là."
+          },
+          "1": {
+            "title": "Le CPU moteur est celui qui compte",
+            "body": "Redis exécute ses commandes sur un seul thread. Un nœud à quatre cœurs peut afficher 25 % de CPU avec un moteur totalement saturé : c'est pourquoi OpsWatch juge le CPU moteur et non le CPU. AWS suggère d'alarmer vers 90 % ; OpsWatch avertit à 75 %."
+          },
+          "2": {
+            "title": "La mémoire parle de la suite",
+            "body": "À l'approche de 100 %, Redis commence à évincer des clés, et au-delà les écritures échouent. OpsWatch avertit à 85 % et devient critique à 95 %."
+          },
+          "3": {
+            "title": "Les évictions sont un symptôme, pas une panne",
+            "body": "Un cache plein qui évince fait son travail. OpsWatch avertit pour que vous le sachiez, sans en faire un échec."
+          },
+          "4": {
+            "title": "Taux de succès et connexions sont montrés, pas jugés",
+            "body": "Un cache qui ne garde que les clés chaudes peut avoir un faible taux de succès à juste titre, et OpsWatch ne peut pas lire votre limite de connexions sans l'API ElastiCache. Deux chiffres utiles, aucun verdict."
+          }
+        },
+        "verify": "La section Redis montre votre cluster avec une tuile par nœud, et le tableau affiche CPU moteur, mémoire, connexions, évictions et taux de succès. Un cache inactif n'affiche aucun taux de succès plutôt que zéro pour cent.",
+        "problems": {
+          "0": {
+            "q": "Aucun nœud Redis ne publie de métriques.",
+            "a": "OpsWatch trouve Redis par sa métrique de CPU moteur. Un cluster qui vient de démarrer, ou dont la version du moteur est trop ancienne pour la publier, n'apparaîtra pas."
+          },
+          "1": {
+            "q": "Le CPU moteur est haut mais le CPU est bas. Lequel se trompe ?",
+            "a": "Aucun. C'est la forme normale d'un Redis saturé sur un nœud multicœur, et c'est précisément la raison d'être de la métrique moteur."
+          },
+          "2": {
+            "q": "Pourquoi ne vois-je pas le type de nœud ou la réplication ?",
+            "a": "Cela vient de l'API ElastiCache, absente du rôle. OpsWatch lit ce que vos nœuds font, pas ce qu'ils sont."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "alerts",
+            "label": "Être prévenu quand un cache se remplit"
+          }
+        }
+      }
+    }
   }
 }
