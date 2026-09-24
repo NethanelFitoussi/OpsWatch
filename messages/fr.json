@@ -80,9 +80,9 @@
   },
   "Shell": {
     "openMenu": "Ouvrir le menu",
-    "account": "Compte AWS",
+    "account": "Connexion",
     "region": "Région",
-    "noAccounts": "Aucun compte AWS connecté",
+    "noAccounts": "Aucune connexion",
     "manageAccounts": "Gérer les comptes",
     "notMonitorable": "Réussissez le test des permissions pour surveiller ce compte",
     "rail": {
@@ -1079,14 +1079,14 @@
   "NotFound": {
     "title": "Page introuvable",
     "description": "Cette page n'existe pas, ou la connexion qu'elle affichait a été supprimée.",
-    "accounts": "Aller aux comptes AWS",
+    "accounts": "Aller aux connexions",
     "guide": "Ouvrir le guide"
   },
   "ErrorPage": {
     "title": "Une erreur est survenue",
     "description": "OpsWatch n'a pas pu afficher cette page. Réessayez, et consultez les logs du serveur si l'erreur persiste.",
     "retry": "Réessayer",
-    "accounts": "Aller aux comptes AWS"
+    "accounts": "Aller aux connexions"
   },
   "Monitoring": {
     "client": {
@@ -2105,7 +2105,7 @@
       "title": "Alertes",
       "description": "Déclenchées à partir des problèmes détectés, selon des règles visibles et modifiables.",
       "inAppOnly": "Les alertes restent dans cette instance. OpsWatch n’envoie ni e-mail, ni message Slack, ni webhook : l’installer ne surprend la boîte de personne.",
-      "active": "Alertes",
+      "active": "En cours",
       "none": "Aucune alerte déclenchée.",
       "noneHint": "C’est un constat mesuré : le collecteur a lu cet environnement et rien ne correspond à une règle.",
       "waiting": "OpsWatch n’a pas encore lu cet environnement : il ne peut pas dire si quelque chose déclencherait une alerte.",
@@ -2430,10 +2430,10 @@
           "failed": "Le dernier déploiement a échoué"
         },
         "cluster": {
-          "pass": "{cluster} : {healthy} services sur {total} sains",
-          "partial": "{cluster} : {healthy} services sur {total} sains, le reste non évalué",
-          "warning": "{cluster} : {healthy} services sur {total} sains, certains demandent attention",
-          "critical": "{cluster} : {healthy} services sur {total} sains, certains sont en échec",
+          "pass": "{cluster} : {healthy, plural, one {# service sain} other {# services sains}} sur {total}",
+          "partial": "{cluster} : {healthy, plural, one {# service sain} other {# services sains}} sur {total}, le reste non évalué",
+          "warning": "{cluster} : {healthy, plural, one {# service sain} other {# services sains}} sur {total}, certains demandent attention",
+          "critical": "{cluster} : {healthy, plural, one {# service sain} other {# services sains}} sur {total}, certains en échec",
           "stale": "{cluster} : la dernière lecture est trop ancienne pour valoir maintenant"
         }
       },
@@ -2449,9 +2449,9 @@
           "failed": "Status check AWS en échec"
         },
         "zone": {
-          "pass": "{zone} : {healthy} instances sur {total} saines",
-          "partial": "{zone} : {healthy} instances sur {total} saines, le reste non évalué",
-          "critical": "{zone} : {healthy} instances sur {total} saines, certaines en échec"
+          "pass": "{zone} : {healthy, plural, one {# instance saine} other {# instances saines}} sur {total}",
+          "partial": "{zone} : {healthy, plural, one {# instance saine} other {# instances saines}} sur {total}, le reste non évalué",
+          "critical": "{zone} : {healthy, plural, one {# instance saine} other {# instances saines}} sur {total}, certaines en échec"
         }
       },
       "redis": {
@@ -2472,10 +2472,10 @@
           "warn": "{count} clés évincées — le cache est plein"
         },
         "cluster": {
-          "pass": "{cluster} : {healthy} nœuds sur {total} sains",
-          "warn": "{cluster} : {healthy} nœuds sur {total} sains, certains demandent attention",
-          "critical": "{cluster} : {healthy} nœuds sur {total} sains, certains en échec",
-          "partial": "{cluster} : {healthy} nœuds sur {total} sains, le reste non évalué"
+          "pass": "{cluster} : {healthy, plural, one {# nœud sain} other {# nœuds sains}} sur {total}",
+          "warn": "{cluster} : {healthy, plural, one {# nœud sain} other {# nœuds sains}} sur {total}, certains demandent attention",
+          "critical": "{cluster} : {healthy, plural, one {# nœud sain} other {# nœuds sains}} sur {total}, certains en échec",
+          "partial": "{cluster} : {healthy, plural, one {# nœud sain} other {# nœuds sains}} sur {total}, le reste non évalué"
         }
       },
       "kube": {
@@ -2573,7 +2573,8 @@
         "minutes": "Dernière lecture il y a {value} min — trop ancienne pour valoir maintenant",
         "hours": "Dernière lecture il y a {value} h — trop ancienne pour valoir maintenant",
         "days": "Dernière lecture il y a {value} j — trop ancienne pour valoir maintenant"
-      }
+      },
+      "health": "Santé"
     },
     "ec2": {
       "title": "Vue d'ensemble EC2",

@@ -30,7 +30,8 @@ export async function HealthSummary({ health, scope, nowMs }: { health: Health; 
 
   return (
     <>
-      <MonitoringCard title={t('title')} description={t('description')}>
+      {/* The page header above already names the page and explains it; the verdict is the heading here. */}
+      <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
         <p className={cn('text-lg font-medium', STATUS_CLASS[health.status])}>{t(`status.${health.status}`)}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t(`statusHint.${health.status}`)}</p>
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">

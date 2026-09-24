@@ -33,8 +33,8 @@ export default async function BriefPage({ params }: Props) {
 
   if (!hasBeenRead(db, query)) {
     return (
-      <SectionLayout context={context} section="overview" subsection="brief">
-        <MonitoringCard title={t('title')} description={t('description')}>
+      <SectionLayout context={context} section="overview" subsection="brief" description={t('description')}>
+        <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
           <p className="text-sm">{t('waiting')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('waitingHint')}</p>
         </MonitoringCard>
@@ -51,8 +51,8 @@ export default async function BriefPage({ params }: Props) {
   const resolved = brief.changes.filter((change) => change.direction === 'resolved').length;
 
   return (
-    <SectionLayout context={context} section="overview" subsection="brief">
-      <MonitoringCard title={t('title')} description={t('description')}>
+    <SectionLayout context={context} section="overview" subsection="brief" description={t('description')}>
+      <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
         <p className="text-lg font-medium">{t(`summary.${brief.status}`)}</p>
         <p className="mt-1 text-sm text-muted-foreground">
           {t('period', { from: format.dateTime(new Date(brief.period.from), { dateStyle: 'medium', timeStyle: 'short' }) })}

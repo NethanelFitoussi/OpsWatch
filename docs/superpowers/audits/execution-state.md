@@ -29,15 +29,15 @@ In order. Tick as they land.
 - [x] Navigation collapsed by default — the main rail, not the inner section menu (corrected mid-flight)
 - [x] Accounts: one card language across providers
 - [x] Accounts: editable per provider
-- [ ] Full-site visual QA on the running product, and fixes
-- [ ] Visual polish and text reduction
+- [x] Full-site visual QA on the running product, and fixes — 41 routes swept and reviewed as images
+- [x] Visual polish and text reduction — every page says its own name once; held by a ruling test
 - [x] Visual infrastructure: patterns extracted and written down before any code
 - [x] INF-1..3 evaluated health, primitives, ECS estate
 - [x] INF-4 EC2 host map
 - [x] INF-5 Redis, discovered through CloudWatch
 - [x] INF-6 Kubernetes / EKS — Container Insights, cluster → namespace → workload → pod, boundary stated
 - [x] DOC-1 categorised documentation — 17 guides, 6 categories, EN and FR, searchable, contextual links
-- [ ] Phase C full visual QA across every section, EN/FR, desktop and narrow
+- [x] Phase C full visual QA across every section, EN/FR, desktop and narrow
 - [ ] Resume the remaining roadmap queue
 
 ## Standing constraints

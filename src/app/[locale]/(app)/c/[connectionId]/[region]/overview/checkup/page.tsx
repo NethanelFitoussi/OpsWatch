@@ -35,8 +35,8 @@ export default async function CheckupPage({ params }: Props) {
   );
 
   return (
-    <SectionLayout context={context} section="overview" subsection="checkup">
-      <MonitoringCard title={t('title')} description={t('description')}>
+    <SectionLayout context={context} section="overview" subsection="checkup" description={t('description')}>
+      <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
         <p className="text-sm">
           {t('coverage', { ran: checkup.coverage.ran, total: checkup.coverage.total, notRun: checkup.coverage.notRun })}
         </p>

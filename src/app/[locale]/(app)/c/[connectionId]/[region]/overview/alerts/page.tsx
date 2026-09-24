@@ -39,8 +39,8 @@ export default async function AlertsPage({ params }: Props) {
   const read = hasBeenRead(db, query);
 
   return (
-    <SectionLayout context={context} section="overview" subsection="alerts">
-      <MonitoringCard title={t('title')} description={t('description')}>
+    <SectionLayout context={context} section="overview" subsection="alerts" description={t('description')}>
+      <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
         {/* §15's promise, on the page rather than in documentation. */}
         <p className="text-sm text-muted-foreground">{t('inAppOnly')}</p>
       </MonitoringCard>

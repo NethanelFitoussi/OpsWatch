@@ -80,9 +80,9 @@
   },
   "Shell": {
     "openMenu": "Open menu",
-    "account": "AWS account",
+    "account": "Connection",
     "region": "Region",
-    "noAccounts": "No AWS account connected",
+    "noAccounts": "No connection yet",
     "manageAccounts": "Manage accounts",
     "notMonitorable": "Pass the permission test to monitor this account",
     "rail": {
@@ -1079,14 +1079,14 @@
   "NotFound": {
     "title": "Page not found",
     "description": "This page does not exist, or the connection it showed has been removed.",
-    "accounts": "Go to AWS accounts",
+    "accounts": "Go to connections",
     "guide": "Open the getting started guide"
   },
   "ErrorPage": {
     "title": "Something went wrong",
     "description": "OpsWatch could not display this page. Try again, and check the server logs if it keeps failing.",
     "retry": "Try again",
-    "accounts": "Go to AWS accounts"
+    "accounts": "Go to connections"
   },
   "Monitoring": {
     "client": {
@@ -2105,7 +2105,7 @@
       "title": "Alerts",
       "description": "Raised from the problems OpsWatch finds, by rules you can see and change.",
       "inAppOnly": "Alerts stay inside this instance. OpsWatch sends no email, no Slack message and no webhook — installing it never surprises anybody’s inbox.",
-      "active": "Alerts",
+      "active": "Firing now",
       "none": "No alert has been raised.",
       "noneHint": "That is a measured statement: the collector has read this environment and nothing matched a rule.",
       "waiting": "OpsWatch has not read this environment yet, so it cannot say whether anything would alert.",
@@ -2573,7 +2573,8 @@
         "minutes": "Last read {value} min ago — too long ago to stand for now",
         "hours": "Last read {value} h ago — too long ago to stand for now",
         "days": "Last read {value} d ago — too long ago to stand for now"
-      }
+      },
+      "health": "Health"
     },
     "ec2": {
       "title": "EC2 overview",

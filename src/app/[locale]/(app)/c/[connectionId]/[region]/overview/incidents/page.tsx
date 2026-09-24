@@ -37,8 +37,8 @@ export default async function IncidentsPage({ params }: Props) {
   const read = hasBeenRead(db, query);
 
   return (
-    <SectionLayout context={context} section="overview" subsection="incidents">
-      <MonitoringCard title={t('title')} description={t('description')}>
+    <SectionLayout context={context} section="overview" subsection="incidents" description={t('description')}>
+      <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
         {incidents.length === 0 ? (
           <>
             <p className="text-sm">{read ? t('none') : t('waiting')}</p>

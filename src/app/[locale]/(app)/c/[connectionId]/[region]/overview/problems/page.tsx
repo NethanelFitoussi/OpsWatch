@@ -35,7 +35,7 @@ export default async function ProblemsPage({ params }: Props) {
   const firstRun = lastRunOf(db, 'detect', query);
 
   return (
-    <SectionLayout context={context} section="overview" subsection="problems">
+    <SectionLayout context={context} section="overview" subsection="problems" description={t('description')}>
       <ProblemTable
         problems={page.items}
         nowMs={nowMs}
