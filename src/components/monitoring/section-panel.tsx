@@ -7,6 +7,7 @@ import {
   FileText,
   FolderTree,
   HeartPulse,
+  LayoutDashboard,
   LayoutList,
   Lightbulb,
   PanelLeftClose,
@@ -49,6 +50,7 @@ const ICONS: Record<string, LucideIcon> = {
   ask: Sparkles,
   deployments: Rocket,
   sources: FolderTree,
+  estate: LayoutDashboard,
 };
 
 const PANEL_STORAGE_KEY = 'opswatch.sectionNav.collapsed';

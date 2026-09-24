@@ -24,13 +24,19 @@ test('Problems, Health and the brief are all real pages', async ({ page }) => {
   }
 });
 
-test('Health never reports production healthy on a reading it has not taken', async ({ page }) => {
+test('THE RULING: Health never reports production healthy on a reading it has not taken', async ({ page }) => {
   await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/overview/health`);
   const main = await page.locator('main').innerText();
-  // Exactly one of: it has read and reached a verdict, or it has not read and says so.
-  const verdict = /Healthy|Degraded|Critical/.test(main);
-  const cannot = /Cannot be determined|has not finished its first check/.test(main);
-  expect(verdict !== cannot).toBe(true);
+  // A verdict and an unread family can both be on the page — that is the honest combination, and saying
+  // so per family is the point of the page. What may never happen is the two together in the one shape
+  // that would be a lie: an overall "Healthy" while something was never read.
+  const gaps = /Cannot be determined|has not finished its first check/.test(main);
+  const headline = page.locator('main h2, main p').filter({ hasText: /^(Healthy|Degraded|Critical|Unknown)$/ }).first();
+  if (gaps && (await headline.count()) > 0) {
+    await expect(headline).not.toHaveText('Healthy');
+  }
+  // And it always reaches one of the two: a page that says neither has told the reader nothing.
+  expect(/Healthy|Degraded|Critical|Cannot be determined|has not finished its first check/.test(main)).toBe(true);
 });
 
 test('GET /api/v1/health and /brief answer the shapes every client parses', async ({ page }) => {

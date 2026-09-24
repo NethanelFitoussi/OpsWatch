@@ -51,7 +51,7 @@ export default async function AuditPage({ params, searchParams }: Props) {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('when')}</TableHead>
-                  <TableHead>{t('action')}</TableHead>
+                  <TableHead>{t('actionColumn')}</TableHead>
                   <TableHead>{t('actor')}</TableHead>
                   <TableHead>{t('result')}</TableHead>
                   <TableHead>{t('from')}</TableHead>

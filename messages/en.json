@@ -2398,6 +2398,94 @@
           "action": "Manage the connection"
         }
       }
+    },
+    "checks": {
+      "ecs": {
+        "tasks": {
+          "zero": "Scaled to zero tasks on purpose",
+          "pass": "{running} of {desired} tasks running",
+          "short": "Only {running} of {desired} tasks running",
+          "none": "No tasks running, {desired} wanted"
+        },
+        "cpu": {
+          "name": "CPU",
+          "pass": "CPU at {value}%, under {threshold}%",
+          "warn": "CPU at {value}%, over {threshold}%",
+          "critical": "CPU at {value}%, over {threshold}%"
+        },
+        "memory": {
+          "name": "memory",
+          "pass": "Memory at {value}%, under {threshold}%",
+          "warn": "Memory at {value}%, over {threshold}%",
+          "critical": "Memory at {value}%, over {threshold}%"
+        },
+        "rollout": {
+          "completed": "Last deployment completed",
+          "inProgress": "A deployment is rolling out",
+          "failed": "The last deployment failed"
+        },
+        "cluster": {
+          "pass": "{cluster}: {healthy} of {total} services healthy",
+          "partial": "{cluster}: {healthy} of {total} services healthy, the rest not evaluated",
+          "warning": "{cluster}: {healthy} of {total} services healthy, some need attention",
+          "critical": "{cluster}: {healthy} of {total} services healthy, some are failing",
+          "stale": "{cluster}: the last reading is too old to stand for now"
+        }
+      }
+    },
+    "ecsOverview": {
+      "title": "ECS overview",
+      "description": "Every service OpsWatch can read, and whether it is healthy.",
+      "noClusters": "No ECS cluster in this region.",
+      "services": "Services",
+      "tasksRunning": "Tasks running",
+      "ofDesired": "{running} of {desired}",
+      "tileDetail": "{running} of {desired} tasks running",
+      "mapTitle": "Every service",
+      "mapDescription": "One tile per service. Colour is what OpsWatch measured; an outline is something it could not read.",
+      "byCluster": "cluster",
+      "hottestTitle": "Busiest services",
+      "hottestDescription": "Highest CPU over the window, so the shape above has a name.",
+      "unreadableTitle": "Clusters OpsWatch could not read"
+    },
+    "estate": {
+      "nothingHere": "Nothing here to evaluate.",
+      "ofTotal": "{count, plural, one {# resource} other {# resources}}",
+      "notEvaluated": "Not evaluated",
+      "notEvaluatedHint": "OpsWatch has not read this yet, so it can say neither that it is healthy nor that it is not.",
+      "unread": "OpsWatch could not read {signal}, so it is not calling this healthy.",
+      "groupedBy": "Grouped by {dimension}",
+      "state": {
+        "healthy": "Healthy",
+        "warning": "Needs attention",
+        "critical": "Critical",
+        "unknown": "Not evaluated",
+        "stale": "Reading is old"
+      },
+      "countOf": {
+        "healthy": "{count} healthy",
+        "warning": "{count} need attention",
+        "critical": "{count} critical",
+        "unknown": "{count} not evaluated",
+        "stale": "{count} with an old reading"
+      },
+      "verdict": {
+        "healthy": "Everything checked here passed.",
+        "warning": "Something here needs attention.",
+        "critical": "Something here is failing.",
+        "unknown": "OpsWatch could not check everything here.",
+        "stale": "These answers are from an old reading."
+      },
+      "evaluated": {
+        "minutes": "Checked {value} min ago",
+        "hours": "Checked {value} h ago",
+        "days": "Checked {value} d ago"
+      },
+      "staleSince": {
+        "minutes": "Last read {value} min ago — too long ago to stand for now",
+        "hours": "Last read {value} h ago — too long ago to stand for now",
+        "days": "Last read {value} d ago — too long ago to stand for now"
+      }
     }
   },
   "Insights": {
@@ -2491,6 +2579,7 @@
       "ask": "Ask OpsWatch"
     },
     "containers": {
+      "overview": "Overview",
       "services": "Services",
       "report": "Report",
       "deployments": "Deployments"
@@ -2730,6 +2819,18 @@
       "empty": "Nothing has been recorded yet.",
       "truncated": "Showing the most recent {limit}.",
       "when": "When",
+      "actionColumn": "Action",
+      "actor": "Who",
+      "result": "Result",
+      "from": "From",
+      "system": "OpsWatch itself",
+      "user": "User {id}",
+      "notRecorded": "not recorded",
+      "results": {
+        "ok": "Succeeded",
+        "denied": "Refused",
+        "failed": "Failed"
+      },
       "action": {
         "sign_in": "Signed in",
         "sign_out": "Signed out",
@@ -2758,17 +2859,6 @@
         "incident_dismiss": "Incident dismissed",
         "export_download": "Export downloaded",
         "retention_purge": "Retention pass ran"
-      },
-      "actor": "Who",
-      "result": "Result",
-      "from": "From",
-      "system": "OpsWatch itself",
-      "user": "User {id}",
-      "notRecorded": "not recorded",
-      "results": {
-        "ok": "Succeeded",
-        "denied": "Refused",
-        "failed": "Failed"
       }
     },
     "ai": {

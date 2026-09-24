@@ -55,6 +55,24 @@ for how long, whether users were affected, why OpsWatch called it a Warning, and
 | UX-19 | Navigation collapsed by default | `DONE` | The main rail (Overview, Errors, Containers…) starts collapsed to its icons; names stay announced and on tooltip, every entry stays clickable, one control at the foot opens it and the choice is remembered. The section menu keeps its words and gained a collapse of its own, with one icon per sub-page so collapsed it still reads. Below 1024 px the rail is a drawer and the section menu a strip, unchanged |
 | UX-20 | Connections: one card system, editable | `DONE` | One card, shared by Connections, the chooser, Integrations and Get started, with an account's own test vocabulary under its own `data-scope`. Editing is an edit everywhere: AWS keeps its id while its name and regions change (and says which regions the last test never covered); GitHub, Cloudflare and AI already replaced token, selection and model in place. Only the AWS account and credential method are fixed — changing either is a different connection, not an edit |
 
+
+## Visual infrastructure (added 2026-09-24)
+
+Patterns extracted from real observability products before any of it was built:
+`docs/superpowers/specs/visual-infrastructure-patterns.md`. The governing rule is that **green is earned**
+— a resource is healthy when somebody looked, recently, and the checks that ran passed. Everything else is
+`unknown` or `stale`, never green and never red.
+
+| ID | Requirement | Status | Notes |
+|---|---|---|---|
+| INF-1 | An evaluated-health model green cannot be faked in | `DONE` | Five states; no checks means `unknown`, a signal OpsWatch could not read blocks green without becoming a failure, and a reading older than three detect cycles is `stale`. Six mutations, six caught |
+| INF-2 | Reusable visual primitives | `DONE` | `ResourceMap` (grouped tiles, colour = evaluated state), `StatusBar` (segments with their counts), `MetricCell` (value with a bar only where a ceiling exists), `HealthySummary` (the checks that ran, and when) |
+| INF-3 | ECS opens on a verdict | `DONE` | `/containers/overview`, the section default: the verdict in words, the counts beside it, every service as a tile, the evidence behind the word, and the busiest services ranked. Judged against the detector's own thresholds so a tile and a problem cannot disagree |
+| INF-4 | EC2 explorer and host map | `NOT_STARTED` | — |
+| INF-5 | Redis / ElastiCache as a first-class resource | `NOT_STARTED` | — |
+| INF-6 | Kubernetes / EKS, with an honest account of what CloudWatch alone can see | `NOT_STARTED` | — |
+| DOC-1 | Categorised documentation for non-experts | `NOT_STARTED` | — |
+
 ---
 
 ## Integrations and connections — the product-level view
