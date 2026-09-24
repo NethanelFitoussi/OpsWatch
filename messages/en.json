@@ -2900,6 +2900,30 @@
         "memory": "Memory",
         "restarts": "Restarts"
       }
+    },
+    "workspace": {
+      "pastTitle": "Has this happened before?",
+      "pastHint": "Earlier occurrences of the same fault that OpsWatch opened and later resolved.",
+      "noPast": "No earlier occurrence of this fault is recorded.",
+      "recordedSince": "OpsWatch has been recording problems since {when}.",
+      "recordedNothing": "OpsWatch has not recorded any problem yet, so there is nothing to compare this with.",
+      "lasted": "stayed open {duration}",
+      "wasAcknowledged": "acknowledged",
+      "typical": "It has usually taken about {duration} to clear.",
+      "logsTitle": "The logs behind it",
+      "logsHint": "Only the log groups OpsWatch is already reading for this service.",
+      "openLogs": "{count, plural, one {Search this log group} other {Search these # log groups}} over the last {range}",
+      "noLogGroups": "No log group is switched on for this service, so OpsWatch does not know where it writes. Turn one on under Errors, then Sources.",
+      "errorsTitle": "Errors on this service since it opened",
+      "errorsNotCollected": "No log group is switched on for this service, so no error has been read. That is not the same as there being none.",
+      "errorsNone": "No error group has been seen on this service since this problem opened.",
+      "errorSeen": "Last seen {when}",
+      "ranges": {
+        "1h": "hour",
+        "3h": "3 hours",
+        "12h": "12 hours",
+        "24h": "24 hours"
+      }
     }
   },
   "Insights": {

@@ -272,7 +272,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | INV-2 | Cross-signal correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Any two facts in the events spine sharing a subject or service, within §7's window, with the measured Δt |
 | INV-3 | Observed fact vs correlation vs hypothesis | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Three headed groups, not badges on one list. Only a hypothesis carries a confidence, and five catalogue entries are declared unevaluated |
 | INV-4 | Probable-cause evidence chain | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Four of §5's eight hypotheses evaluated. `traffic_surge` joined them with §8's baselines; the rest need PI digests, Cloudflare or the dependency map, and are named in `NOT_EVALUATED` rather than omitted |
-| INV-5 | Investigation workspace (§R) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | — |
+| INV-5 | Investigation workspace (§R) | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Beside the problem, without leaving it: earlier resolved occurrences of the same dedupe key with how long each stayed open and the median, the error groups on the same service since it opened, and a link into the Logs search with the groups OpsWatch already reads pre-selected. `null` (nothing being read) and `[]` (nothing found) stay different sentences, and "first time" is never said without how far back the record goes |
 
 ## Deployments
 

@@ -102,6 +102,7 @@ const SERVER_ONLY_MODULES = [
   'lib/read/environments.ts',
   'lib/read/problems.ts',
   'lib/read/health.ts',
+  'lib/read/workspace.ts',
   'lib/read/brief.ts',
   'lib/read/system.ts',
   'lib/read/errors.ts',

@@ -522,3 +522,30 @@ export function worstSubjectsInWindow(
       severity: (['critical', 'warning', 'info'] as const)[Number(row.severity) - 1] ?? 'info',
     }));
 }
+
+/**
+ * Earlier, already-resolved occurrences of the same fault (INV-5).
+ *
+ * Keyed on the dedupe key rather than on kind-and-subject, because the key is what the engine itself
+ * treats as one identity — two detectors that happen to share a subject are not the same fault recurring.
+ * Strictly earlier, so a problem never lists itself as its own precedent.
+ */
+export function pastOccurrences(db: Db, filter: { key: string; before: number }, limit: number): ProblemRow[] {
+  return db
+    .select()
+    .from(problems)
+    .where(and(eq(problems.key, filter.key), isNotNull(problems.resolvedAt), lt(problems.firstSeenAt, filter.before)))
+    .orderBy(desc(problems.firstSeenAt))
+    .limit(limit)
+    .all();
+}
+
+/**
+ * When the earliest problem this installation recorded was first seen, or null when it has recorded none.
+ *
+ * It is what makes "this has not happened before" mean anything. On an instance that started yesterday it
+ * means nothing at all, and a page that said it without this would be implying a clean record.
+ */
+export function earliestProblemAt(db: Db): number | null {
+  return db.select({ at: problems.firstSeenAt }).from(problems).orderBy(asc(problems.firstSeenAt)).limit(1).get()?.at ?? null;
+}

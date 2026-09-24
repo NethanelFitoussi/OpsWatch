@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getFormatter, getTranslations } from 'next-intl/server';
 import type { Evidence } from '@opswatch/contract';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 
@@ -19,6 +19,10 @@ export async function InvestigationTimeline({
   locale: string;
 }) {
   const t = await getTranslations({ locale, namespace: 'Monitoring.investigation' });
+  const format = await getFormatter({ locale });
+  // The band promises "with the time it recorded them", and without this it kept none of that promise:
+  // two facts of the same kind rendered as two identical lines with nothing to tell them apart.
+  const when = (at: number) => format.dateTime(new Date(at), { dateStyle: 'medium', timeStyle: 'short' });
   const facts = timeline.filter((item) => item.kind === 'fact');
   const correlations = timeline.filter((item) => item.kind === 'correlation');
   const hypotheses = timeline.filter((item) => item.kind === 'hypothesis');
@@ -44,7 +48,12 @@ export async function InvestigationTimeline({
         ) : (
           <ul className="mt-1 divide-y">
             {facts.map((item) => (
-              <li key={item.id} className="py-2 text-sm">{item.title}</li>
+              <li key={item.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
+                <span className="min-w-0">{item.title}</span>
+                <time dateTime={new Date(item.at).toISOString()} className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  {when(item.at)}
+                </time>
+              </li>
             ))}
           </ul>
         )}
@@ -59,7 +68,12 @@ export async function InvestigationTimeline({
         ) : (
           <ul className="mt-1 divide-y">
             {correlations.map((item) => (
-              <li key={item.id} className="py-2 text-sm">{item.title}</li>
+              <li key={item.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
+                <span className="min-w-0">{item.title}</span>
+                <time dateTime={new Date(item.at).toISOString()} className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  {when(item.at)}
+                </time>
+              </li>
             ))}
           </ul>
         )}

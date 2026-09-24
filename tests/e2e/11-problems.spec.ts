@@ -273,3 +273,83 @@ test('THE RULING: a page says its own name once', async ({ page }) => {
     await expect(repeats, subsection).toHaveCount(0);
   }
 });
+
+/**
+ * The investigation workspace (INV-5, §R).
+ *
+ * The two questions the problem page could not answer: has this happened before, and where do I read the
+ * actual log lines. Both are answered from rows that already exist, and both carry the shape of what is
+ * missing when it is missing.
+ */
+test('THE RULING: the facts band shows the time it promises, so two facts are not one line twice', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  test.skip((await first.count()) === 0, 'no problem in this environment to read');
+  await first.click();
+
+  const facts = page.locator('main section[aria-labelledby="band-facts"]');
+  await expect(facts).toContainText('with the time it recorded them');
+  const rows = facts.getByRole('listitem');
+  if ((await rows.count()) > 0) {
+    // A `<time>` per fact: the band said it would, and without one two "A problem opened" rows were
+    // indistinguishable.
+    await expect(facts.locator('time')).toHaveCount(await rows.count());
+  }
+});
+
+test('THE RULING: "first time" is never said without how far back the record goes', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  test.skip((await first.count()) === 0, 'no problem in this environment to read');
+  await first.click();
+
+  const main = page.locator('main');
+  await expect(main.getByRole('heading', { name: 'Has this happened before?' })).toBeVisible();
+  const body = await main.innerText();
+  if (body.includes('No earlier occurrence of this fault is recorded')) {
+    // On an instance that started yesterday, "this has not happened before" means nothing at all.
+    expect(body).toMatch(/OpsWatch has been recording problems since|has not recorded any problem yet/);
+  } else {
+    expect(body).toContain('stayed open');
+  }
+});
+
+test('THE RULING: nothing being read and nothing being found are different sentences', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  test.skip((await first.count()) === 0, 'no problem in this environment to read');
+  await first.click();
+
+  const main = page.locator('main');
+  await expect(main.getByRole('heading', { name: 'The logs behind it' })).toBeVisible();
+  const body = await main.innerText();
+  // Exactly one of the two, and the "not collected" one says it is not the same as there being none.
+  const notCollected = body.includes('so no error has been read');
+  const none = body.includes('No error group has been seen on this service');
+  expect(notCollected !== none).toBe(true);
+  if (notCollected) expect(body).toContain('That is not the same as there being none');
+});
+
+test('the workspace links into the logs with the groups OpsWatch already reads, or says why it cannot', async ({ page }) => {
+  await page.goto(problemsUrl());
+  const first = page.locator('main a[href*="/overview/problems/"]').first();
+  test.skip((await first.count()) === 0, 'no problem in this environment to read');
+  await first.click();
+
+  const main = page.locator('main');
+  const link = main.locator('a[href*="/logs/search?"]');
+  if ((await link.count()) === 0) {
+    // Offering to search a log group nobody selected would be spending somebody's bill on a guess.
+    await expect(main).toContainText('OpsWatch does not know where it writes');
+    return;
+  }
+  const href = (await link.first().getAttribute('href')) as string;
+  const params = new URL(href, 'https://example.com').searchParams;
+  expect(params.getAll('group').length).toBeGreaterThan(0);
+  expect(['1h', '3h', '12h', '24h']).toContain(params.get('range'));
+
+  await link.first().click();
+  // It lands on a search with those groups already ticked, and nothing has been run.
+  await expect(page).toHaveURL(/\/logs\/search\?/);
+  await expect(page.getByText('Nothing has been searched yet.')).toBeVisible();
+});

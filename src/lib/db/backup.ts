@@ -44,8 +44,7 @@ export function backupName(nowMs: number, reason: BackupReason): string {
 }
 
 /** Why a backup was taken. It is in the filename, so a directory listing explains itself. */
-const BACKUP_REASONS = ['migration', 'manual'] as const;
-export type BackupReason = (typeof BACKUP_REASONS)[number];
+export type BackupReason = 'migration' | 'manual';
 
 export type Backup = { name: string; bytes: number; createdAt: number };
 

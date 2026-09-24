@@ -2900,6 +2900,30 @@
         "memory": "Mémoire",
         "restarts": "Redémarrages"
       }
+    },
+    "workspace": {
+      "pastTitle": "Est-ce déjà arrivé ?",
+      "pastHint": "Occurrences antérieures du même défaut qu’OpsWatch a ouvertes puis résolues.",
+      "noPast": "Aucune occurrence antérieure de ce défaut n’est enregistrée.",
+      "recordedSince": "OpsWatch enregistre les problèmes depuis le {when}.",
+      "recordedNothing": "OpsWatch n’a encore enregistré aucun problème ; il n’y a donc rien à comparer.",
+      "lasted": "ouvert pendant {duration}",
+      "wasAcknowledged": "acquitté",
+      "typical": "Il a généralement fallu environ {duration} pour que cela se résolve.",
+      "logsTitle": "Les journaux derrière",
+      "logsHint": "Seulement les groupes de journaux qu’OpsWatch lit déjà pour ce service.",
+      "openLogs": "{count, plural, one {Chercher dans ce groupe de journaux} other {Chercher dans ces # groupes de journaux}} sur {range}",
+      "noLogGroups": "Aucun groupe de journaux n’est activé pour ce service ; OpsWatch ignore où il écrit. Activez-en un dans Erreurs, puis Sources.",
+      "errorsTitle": "Erreurs sur ce service depuis l’ouverture",
+      "errorsNotCollected": "Aucun groupe de journaux n’est activé pour ce service, donc aucune erreur n’a été lue. Ce n’est pas la même chose que l’absence d’erreur.",
+      "errorsNone": "Aucun groupe d’erreurs n’a été vu sur ce service depuis l’ouverture de ce problème.",
+      "errorSeen": "Vu pour la dernière fois le {when}",
+      "ranges": {
+        "1h": "la dernière heure",
+        "3h": "les 3 dernières heures",
+        "12h": "les 12 dernières heures",
+        "24h": "les 24 dernières heures"
+      }
     }
   },
   "Insights": {
