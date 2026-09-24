@@ -24,6 +24,13 @@ export function openApiDocument(): ReturnType<typeof createDocument> {
     components: {
       securitySchemes: {
         bearer: { type: 'http', scheme: 'bearer', description: 'A token from POST /auth/login. Non-browser clients only.' },
+        signature: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-opswatch-signature',
+          description:
+            'HMAC-SHA256 over "v1:<x-opswatch-timestamp>:<body>" with the integration secret, sent beside x-opswatch-integration. Used only by an OpsWatch Forwarder.',
+        },
         session: { type: 'apiKey', in: 'cookie', name: 'opswatch_session', description: 'The browser session cookie.' },
       },
     },
@@ -92,8 +99,10 @@ function operation(route: ApiRouteSpec) {
   return {
     operationId: route.operationId,
     summary: route.summary,
-    // An empty list means "no credential needed"; the other routes accept either credential.
-    security: route.auth === 'none' ? [] : [{ bearer: [] }, { session: [] }],
+    // An empty list means "no credential needed"; a session route accepts either credential; a signed
+    // route accepts neither, and saying so is what stops a client from trying a token against it.
+    security:
+      route.auth === 'none' ? [] : route.auth === 'signature' ? [{ signature: [] }] : [{ bearer: [] }, { session: [] }],
     ...pathParameters(route),
     ...(route.request ? { requestBody: { content: { 'application/json': { schema: route.request } } } } : {}),
     responses: {

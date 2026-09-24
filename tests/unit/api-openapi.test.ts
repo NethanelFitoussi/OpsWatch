@@ -51,11 +51,12 @@ describe('the generated OpenAPI document', () => {
   });
 
   it('marks the unauthenticated endpoints and requires a credential everywhere else', () => {
+    // Three kinds, and a signed route accepts neither credential — saying so is what stops a generated
+    // client from trying a bearer token against an endpoint that only ever answers a forwarder.
+    const expected = { none: [], signature: [{ signature: [] }], session: [{ bearer: [] }, { session: [] }] };
     for (const route of API_ROUTES) {
       const operation = (document.paths?.[`${API_PREFIX}${route.path}`] as Record<string, { security?: unknown[] }>)[route.method];
-      expect(operation.security, route.operationId).toEqual(
-        route.auth === 'none' ? [] : [{ bearer: [] }, { session: [] }],
-      );
+      expect(operation.security, route.operationId).toEqual(expected[route.auth]);
     }
   });
 

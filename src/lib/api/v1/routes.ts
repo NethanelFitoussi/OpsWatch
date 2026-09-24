@@ -5,6 +5,8 @@ import {
   type ApiErrorCode,
   authSessionSchema,
   environmentListSchema,
+  ingestAcceptedSchema,
+  ingestLogsRequestSchema,
   loginRequestSchema,
   alertSummarySchema,
   deploymentDetailSchema,
@@ -49,8 +51,12 @@ export type ApiRouteSpec = {
    */
   pathParams?: Record<string, string>;
   operationId: string;
-  /** `none` is unauthenticated; `session` needs the browser cookie or a bearer token. */
-  auth: 'none' | 'session';
+  /**
+   * `none` is unauthenticated; `session` needs the browser cookie or a bearer token; `signature` is
+   * authenticated by an HMAC over the request, which is how a Lambda in somebody else's AWS account
+   * proves who it is when there is nobody to sign in as.
+   */
+  auth: 'none' | 'session' | 'signature';
   summary: string;
   request?: z.ZodType;
   response?: z.ZodType;
@@ -85,6 +91,18 @@ export const API_ROUTES: ApiRouteSpec[] = [
     response: openApiDocumentSchema,
     status: 200,
     errors: [],
+  },
+  {
+    method: 'post',
+    path: '/ingest/aws/logs',
+    operationId: 'ingestAwsLogs',
+    auth: 'signature',
+    summary:
+      'Where an OpsWatch Forwarder delivers CloudWatch log records. Signed with the integration’s own secret, not a session. Queued, never processed inside the request.',
+    request: ingestLogsRequestSchema,
+    response: ingestAcceptedSchema,
+    status: 202,
+    errors: ['unauthorized', 'invalid_request', 'rate_limited'],
   },
   {
     method: 'post',
