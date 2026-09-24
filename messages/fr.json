@@ -17,7 +17,8 @@
       "errors": "Erreurs",
       "loadBalancers": "Répartiteurs de charge",
       "alarms": "Alarmes",
-      "instances": "Instances"
+      "instances": "Instances",
+      "redis": "Redis"
     },
     "language": {
       "label": "Langue",
@@ -2449,6 +2450,30 @@
           "partial": "{zone} : {healthy} instances sur {total} saines, le reste non évalué",
           "critical": "{zone} : {healthy} instances sur {total} saines, certaines en échec"
         }
+      },
+      "redis": {
+        "engineCpu": {
+          "name": "le CPU moteur",
+          "pass": "CPU moteur à {value} %, sous {threshold} %",
+          "warn": "CPU moteur à {value} %, au-dessus de {threshold} %",
+          "critical": "CPU moteur à {value} %, au-dessus de {threshold} %"
+        },
+        "memory": {
+          "name": "l'usage mémoire",
+          "pass": "Mémoire à {value} %, sous {threshold} %",
+          "warn": "Mémoire à {value} %, au-dessus de {threshold} %",
+          "critical": "Mémoire à {value} %, au-dessus de {threshold} %"
+        },
+        "evictions": {
+          "pass": "Aucune clé évincée",
+          "warn": "{count} clés évincées — le cache est plein"
+        },
+        "cluster": {
+          "pass": "{cluster} : {healthy} nœuds sur {total} sains",
+          "warn": "{cluster} : {healthy} nœuds sur {total} sains, certains demandent attention",
+          "critical": "{cluster} : {healthy} nœuds sur {total} sains, certains en échec",
+          "partial": "{cluster} : {healthy} nœuds sur {total} sains, le reste non évalué"
+        }
       }
     },
     "ecsOverview": {
@@ -2533,6 +2558,38 @@
         "type": "Type",
         "zone": "Zone",
         "cpu": "CPU"
+      }
+    },
+    "redis": {
+      "title": "Vue d'ensemble Redis",
+      "description": "Chaque nœud Redis ElastiCache qu'OpsWatch peut mesurer, regroupé par cluster.",
+      "none": "Aucun nœud Redis ne publie de métriques dans cette région.",
+      "noneDescription": "Ce qu'OpsWatch cherche, et pourquoi il peut ne rien trouver.",
+      "noneHint": "OpsWatch trouve Redis grâce à la métrique de CPU moteur que chaque nœud publie dans CloudWatch. Un cluster qui vient de démarrer, ou dont la version du moteur est trop ancienne pour la publier, n'apparaîtra pas ici.",
+      "noneMatching": "Aucun nœud ne correspond à cette recherche.",
+      "clusters": "Clusters",
+      "nodes": "Nœuds",
+      "byCluster": "cluster",
+      "tileDetail": "CPU moteur {value} %",
+      "noEngineCpu": "aucune lecture de CPU moteur sur cette fenêtre",
+      "limitsTitle": "Ce que cette vue ne peut pas voir",
+      "limits": "OpsWatch lit Redis via CloudWatch, sans aucune permission au-delà de celles que votre rôle possède déjà. Il sait donc ce que fait chaque nœud, mais pas ce qu'il est : ni version du moteur, ni type de nœud, ni point de terminaison, ni topologie de réplication, et aucun moyen de distinguer un cluster inactif d'un cluster inexistant. Cela nécessite l'API ElastiCache.",
+      "mapTitle": "Tous les nœuds",
+      "mapDescription": "Une tuile par nœud. La couleur vient du CPU moteur et de la mémoire, selon les seuils d'AWS, plus les évictions.",
+      "hottestTitle": "Nœuds les plus chargés",
+      "hottestDescription": "CPU moteur le plus élevé sur la fenêtre — celui qui sature en premier, Redis exécutant ses commandes sur un seul thread.",
+      "nodesTitle": "Nœuds",
+      "nodesDescription": "Les chiffres derrière chaque verdict, et ceux qu'OpsWatch affiche sans juger.",
+      "search": "Rechercher des nœuds",
+      "searchSubmit": "Rechercher",
+      "columns": {
+        "node": "Nœud",
+        "health": "Santé",
+        "engineCpu": "CPU moteur",
+        "memory": "Mémoire",
+        "connections": "Connexions",
+        "evictions": "Évictions",
+        "hitRate": "Taux de succès"
       }
     }
   },
@@ -2658,6 +2715,10 @@
     "instances": {
       "overview": "Vue d'ensemble",
       "list": "Instances"
+    },
+    "redis": {
+      "overview": "Vue d'ensemble",
+      "nodes": "Nœuds"
     }
   },
   "Settings": {

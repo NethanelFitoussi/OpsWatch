@@ -1,7 +1,7 @@
 import { isOneOf } from '@/lib/type-guards';
 import { defaultSubsection, isSubsectionOf } from './sections';
 
-export const MONITORING_SECTIONS = ['overview', 'errors', 'containers', 'instances', 'databases', 'load-balancers', 'alarms', 'logs'] as const;
+export const MONITORING_SECTIONS = ['overview', 'errors', 'containers', 'instances', 'databases', 'redis', 'load-balancers', 'alarms', 'logs'] as const;
 export type MonitoringSection = (typeof MONITORING_SECTIONS)[number];
 export type ScopeRef = { connectionId: string; region: string };
 export type ParsedMonitoringPath = ScopeRef & { section: MonitoringSection | null; subsection: string | null; segments: string[] };

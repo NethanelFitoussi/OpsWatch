@@ -17,7 +17,8 @@
       "errors": "Errors",
       "loadBalancers": "Load balancers",
       "alarms": "Alarms",
-      "instances": "Instances"
+      "instances": "Instances",
+      "redis": "Redis"
     },
     "language": {
       "label": "Language",
@@ -2449,6 +2450,30 @@
           "partial": "{zone}: {healthy} of {total} instances healthy, the rest not evaluated",
           "critical": "{zone}: {healthy} of {total} instances healthy, some are failing"
         }
+      },
+      "redis": {
+        "engineCpu": {
+          "name": "the engine CPU",
+          "pass": "Engine CPU at {value}%, under {threshold}%",
+          "warn": "Engine CPU at {value}%, over {threshold}%",
+          "critical": "Engine CPU at {value}%, over {threshold}%"
+        },
+        "memory": {
+          "name": "memory usage",
+          "pass": "Memory at {value}%, under {threshold}%",
+          "warn": "Memory at {value}%, over {threshold}%",
+          "critical": "Memory at {value}%, over {threshold}%"
+        },
+        "evictions": {
+          "pass": "No keys evicted",
+          "warn": "{count} keys evicted — the cache is full"
+        },
+        "cluster": {
+          "pass": "{cluster}: {healthy} of {total} nodes healthy",
+          "warn": "{cluster}: {healthy} of {total} nodes healthy, some need attention",
+          "critical": "{cluster}: {healthy} of {total} nodes healthy, some are failing",
+          "partial": "{cluster}: {healthy} of {total} nodes healthy, the rest not evaluated"
+        }
       }
     },
     "ecsOverview": {
@@ -2533,6 +2558,38 @@
         "type": "Type",
         "zone": "Zone",
         "cpu": "CPU"
+      }
+    },
+    "redis": {
+      "title": "Redis overview",
+      "description": "Every ElastiCache Redis node OpsWatch can measure, grouped by cluster.",
+      "none": "No Redis node is publishing metrics in this region.",
+      "noneDescription": "What OpsWatch looks for, and why it may find nothing.",
+      "noneHint": "OpsWatch finds Redis through the engine CPU metric each node publishes to CloudWatch. A cluster that has just started, or one on an engine version old enough not to publish it, will not appear here.",
+      "noneMatching": "No node matches that search.",
+      "clusters": "Clusters",
+      "nodes": "Nodes",
+      "byCluster": "cluster",
+      "tileDetail": "engine CPU {value}%",
+      "noEngineCpu": "no engine CPU reading in this window",
+      "limitsTitle": "What this view cannot see",
+      "limits": "OpsWatch reads Redis through CloudWatch, which needs no permission beyond the ones your role already has. That means it knows what each node is doing and not what it is: no engine version, node type, endpoint or replication topology, and no way to tell an idle cluster from one that does not exist. Those need the ElastiCache API.",
+      "mapTitle": "Every node",
+      "mapDescription": "One tile per node. Colour is engine CPU and memory against AWS’s own thresholds, plus evictions.",
+      "hottestTitle": "Busiest nodes",
+      "hottestDescription": "Highest engine CPU over the window — the one that saturates first, because Redis runs commands on a single thread.",
+      "nodesTitle": "Nodes",
+      "nodesDescription": "The numbers behind each verdict, and the ones OpsWatch shows without judging.",
+      "search": "Search nodes",
+      "searchSubmit": "Search",
+      "columns": {
+        "node": "Node",
+        "health": "Health",
+        "engineCpu": "Engine CPU",
+        "memory": "Memory",
+        "connections": "Connections",
+        "evictions": "Evictions",
+        "hitRate": "Hit rate"
       }
     }
   },
@@ -2658,6 +2715,10 @@
     "instances": {
       "overview": "Overview",
       "list": "Instances"
+    },
+    "redis": {
+      "overview": "Overview",
+      "nodes": "Nodes"
     }
   },
   "Settings": {

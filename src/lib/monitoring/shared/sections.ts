@@ -9,6 +9,7 @@ export const SUBSECTIONS = {
   errors: ['groups', 'sources'],
   containers: ['overview', 'services', 'deployments', 'report'],
   instances: ['overview', 'list'],
+  redis: ['overview', 'nodes'],
   databases: ['instances', 'queries', 'report'],
   'load-balancers': ['list', 'objectives', 'report'],
   alarms: ['list', 'report'],
@@ -76,8 +77,10 @@ export const SUBSECTION_ICONS: Record<
   | 'deployments'
   | 'sources'
   | 'estate'
+  | 'nodes'
 > = {
   overview: 'estate',
+  nodes: 'nodes',
   groups: 'list',
   sources: 'sources',
   problems: 'problems',

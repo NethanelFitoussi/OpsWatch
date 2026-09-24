@@ -13,6 +13,8 @@ describe('navigation items', () => {
       // EC2 sits beside the containers it often runs: both are "where the code is".
       'instances',
       'databases',
+      // Redis sits beside the databases: both are state somebody's code depends on.
+      'redis',
       'loadBalancers',
       'alarms',
       'logs',

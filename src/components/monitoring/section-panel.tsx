@@ -16,6 +16,7 @@ import {
   Rocket,
   Route,
   Search,
+  Server,
   Siren,
   Sparkles,
   Sunrise,
@@ -51,6 +52,7 @@ const ICONS: Record<string, LucideIcon> = {
   deployments: Rocket,
   sources: FolderTree,
   estate: LayoutDashboard,
+  nodes: Server,
 };
 
 const PANEL_STORAGE_KEY = 'opswatch.sectionNav.collapsed';

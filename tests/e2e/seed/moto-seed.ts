@@ -26,6 +26,7 @@ export const SEED = {
   targetGroup: 'opswatch-e2e-web',
   targetIp: '10.0.1.10',
   instancePrefix: 'opswatch-e2e-host',
+  redisCluster: 'opswatch-e2e-cache',
   dbInstance: 'opswatch-e2e-db',
   alarm: 'opswatch-e2e-high-cpu',
   targetTrackingAlarm: 'TargetTracking-service/opswatch-e2e/web-AlarmHigh-e2e',
@@ -213,6 +214,22 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
     put('AWS/ApplicationELB', 'TargetResponseTime', tg, () => 0.12, 'Seconds'),
     put('AWS/ApplicationELB', 'HealthyHostCount', tg, () => 1, 'Count'),
     put('AWS/ApplicationELB', 'UnHealthyHostCount', tg, () => 0, 'Count'),
+    // ElastiCache: one cluster, two nodes, discovered the way the product discovers them — through the
+    // engine CPU metric. `0001` is comfortable and `0002` is over AWS's warning threshold, so one page
+    // carries a green node and an amber one and the acceptance walk can tell them apart.
+    ...['0001', '0002'].flatMap((CacheNodeId, node) => {
+      const dims = { CacheClusterId: SEED.redisCluster, CacheNodeId };
+      const hot = node === 1;
+      return [
+        put('AWS/ElastiCache', 'EngineCPUUtilization', dims, (i) => (hot ? 82 : 21) + (i % 3), 'Percent'),
+        put('AWS/ElastiCache', 'CPUUtilization', dims, (i) => (hot ? 28 : 8) + (i % 2), 'Percent'),
+        put('AWS/ElastiCache', 'DatabaseMemoryUsagePercentage', dims, () => (hot ? 62 : 31), 'Percent'),
+        put('AWS/ElastiCache', 'CurrConnections', dims, () => (hot ? 240 : 30), 'Count'),
+        put('AWS/ElastiCache', 'Evictions', dims, () => 0, 'Count'),
+        put('AWS/ElastiCache', 'CacheHits', dims, () => (hot ? 900 : 400), 'Count'),
+        put('AWS/ElastiCache', 'CacheMisses', dims, () => (hot ? 100 : 100), 'Count'),
+      ];
+    }),
   ]);
 
   // Alarms (fact 9).

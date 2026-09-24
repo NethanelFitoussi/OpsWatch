@@ -1,9 +1,9 @@
-import { BookOpen, Bug, Cloud, Globe, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bug, Cloud, Database, Globe, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
 import { defaultSubsection } from '@/lib/monitoring/shared/sections';
 import { parseMonitoringPath, subsectionPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
-type NavKey = 'overview' | 'errors' | 'containers' | 'instances' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'cloudflare' | 'gettingStarted' | 'settings' | 'accounts';
+type NavKey = 'overview' | 'errors' | 'containers' | 'instances' | 'redis' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'cloudflare' | 'gettingStarted' | 'settings' | 'accounts';
 export type NavItem = {
   key: NavKey;
   /** A Lucide icon, or the AWS service icon of a section about that service. */
@@ -17,6 +17,7 @@ export const SECTION_NAV_KEY: Record<MonitoringSection, NavKey> = {
   containers: 'containers',
   instances: 'instances',
   databases: 'databases',
+  redis: 'redis',
   'load-balancers': 'loadBalancers',
   alarms: 'alarms',
   logs: 'logs',
@@ -28,6 +29,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'containers', kind: 'monitoring', section: 'containers', icon: 'ecs' },
   { key: 'instances', kind: 'monitoring', section: 'instances', icon: 'ec2' },
   { key: 'databases', kind: 'monitoring', section: 'databases', icon: 'rds' },
+  { key: 'redis', kind: 'monitoring', section: 'redis', icon: Database },
   { key: 'loadBalancers', kind: 'monitoring', section: 'load-balancers', icon: 'elb' },
   { key: 'alarms', kind: 'monitoring', section: 'alarms', icon: 'alarm' },
   { key: 'logs', kind: 'monitoring', section: 'logs', icon: 'logs' },
