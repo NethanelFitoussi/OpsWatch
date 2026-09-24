@@ -48,7 +48,7 @@ test.beforeEach(async ({ page }) => {
   connectionId = await ensureMonitoringConnection(page);
 });
 
-test('THE RULING: Alarms and Logs render clean at both widths, in English and French', async ({ page }) => {
+test('THE RULING: Alarms, Logs and the reports render clean at both widths, in English and French', async ({ page }) => {
   const long = encodeURIComponent('opswatch-e2e-payments-business-transactions-failed-across-all-regions-critical');
   const pages = [
     ['alarms', `/c/${connectionId}/${MOTO_REGION}/alarms/list`],
@@ -58,6 +58,9 @@ test('THE RULING: Alarms and Logs render clean at both widths, in English and Fr
     ['an alarm that is gone', `/c/${connectionId}/${MOTO_REGION}/alarms/list/does-not-exist`],
     ['logs', `/c/${connectionId}/${MOTO_REGION}/logs/search`],
     ['logs with a search restored from a link', `/c/${connectionId}/${MOTO_REGION}/logs/search?group=%2Fecs%2Fopswatch-web&q=gateway&level=error&limit=500&range=24h`],
+    ['the estate report', `/c/${connectionId}/${MOTO_REGION}/overview/report`],
+    ['the logs report', `/c/${connectionId}/${MOTO_REGION}/logs/report`],
+    ['a section report', `/c/${connectionId}/${MOTO_REGION}/containers/report`],
     ['the searching-logs guide', '/docs/searching-logs'],
     ['the alarms guide', '/docs/alarms'],
   ] as const;

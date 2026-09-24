@@ -13,7 +13,7 @@ type Props = { params: Promise<MonitoringParams>; searchParams: Promise<{ period
 
 export const generateMetadata = localizedTitle('Monitoring.report.title');
 
-/** The containers report (§19): stored rollups only, and every figure against the period before. */
+/** The logs report (§19): stored rollups only, and every figure against the period before. */
 export default async function ReportPage({ params, searchParams }: Props) {
   const context = await initMonitoringRoute(params);
   const asked = (await searchParams).period;
@@ -24,17 +24,17 @@ export default async function ReportPage({ params, searchParams }: Props) {
 
   const report = readReport(
     getDb(),
-    { connectionId: context.scope.connectionId, scope: context.scope.region, section: 'containers', period },
+    { connectionId: context.scope.connectionId, scope: context.scope.region, section: 'logs', period },
     { nowMs: pageNow(), familyLabel: (family) => families(family) },
   );
 
   return (
-    <SectionLayout context={context} section="containers" subsection="report">
+    <SectionLayout context={context} section="logs" subsection="report">
       <ReportView
         report={report}
         locale={context.locale}
-        basePath={subsectionPath(context.scope, 'containers', 'report')}
-        exportHref={`/api/v1/reports?env=${context.scope.connectionId}:${context.scope.region}&section=containers&period=${period}&format=markdown&locale=${context.locale}`}
+        basePath={subsectionPath(context.scope, 'logs', 'report')}
+        exportHref={`/api/v1/reports?env=${context.scope.connectionId}:${context.scope.region}&section=logs&period=${period}&format=markdown&locale=${context.locale}`}
       />
     </SectionLayout>
   );

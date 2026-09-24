@@ -5,7 +5,7 @@ import type { MonitoringSection } from './paths';
  * These segments are URL vocabulary and are never translated; `Sections.<section>.<segment>` holds their labels.
  */
 export const SUBSECTIONS = {
-  overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup', 'ask'],
+  overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup', 'report', 'ask'],
   errors: ['groups', 'sources'],
   containers: ['overview', 'services', 'deployments', 'report'],
   instances: ['overview', 'list'],
@@ -16,7 +16,7 @@ export const SUBSECTIONS = {
   alarms: ['list', 'report'],
   // Task 22 moves 'volume' to the front when the Logs dashboard exists; until then 'search' stays the default
   // so `/logs` never redirects to a page that does not exist yet.
-  logs: ['search', 'volume', 'endpoints'],
+  logs: ['search', 'volume', 'endpoints', 'report'],
 } as const satisfies Record<MonitoringSection, readonly [string, ...string[]]>;
 
 export type Subsection = (typeof SUBSECTIONS)[MonitoringSection][number];

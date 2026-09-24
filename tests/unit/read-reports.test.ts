@@ -4,8 +4,10 @@ import {
   DEFAULT_AVAILABILITY_OBJECTIVE,
   PERIOD_MS,
   REPORT_ROW_LIMIT,
+  REPORT_SECTIONS,
   SECTION_FAMILY,
   figure,
+  isReportSection,
   readReport,
   windowsFor,
 } from '@/lib/read/reports';
@@ -15,6 +17,7 @@ import { opswatchDbProvider } from '@/lib/history/opswatch-db';
 import { insertProblem, updateProblem } from '@/lib/store/problems';
 import { recordDeployments } from '@/lib/store/deployments';
 import { recordError, upsertLogSource } from '@/lib/store/errors';
+import { BYTES_PER_GB, recordBudgetStop, recordScan } from '@/lib/store/logs-budget';
 import { recordRun, upsertCheck } from '@/lib/store/synthetics';
 import { upsertSloDefinition } from '@/lib/store/slos';
 import { createTestDb } from '../helpers/db';
@@ -89,7 +92,10 @@ describe('the problems section, which needs no history switch', () => {
     expect(section?.unavailable).toBeNull();
     expect(section?.figures.find((f) => f.id === 'opened')).toMatchObject({ value: 3, previous: 1, delta: 2 });
     expect(section?.figures.find((f) => f.id === 'resolved')).toMatchObject({ value: 1 });
-    expect(section?.figures.find((f) => f.id === 'opened.warning')).toMatchObject({ value: 1, severity: 'warning' });
+    expect(section?.figures.find((f) => f.id === 'openedWarning')).toMatchObject({ value: 1, severity: 'warning' });
+    // THE RULING: no figure id carries a dot. An id becomes a message key, next-intl reads a dot as a path
+    // separator, and `figure.opened.critical` printed its own key path onto four report pages.
+    expect(section?.figures.map((f) => f.id).filter((id) => id.includes('.'))).toEqual([]);
   });
 
   it('scopes itself to its own section, so a database report does not count container problems', () => {
@@ -163,7 +169,7 @@ describe('§2.6 — a section that cannot be answered says which and why', () =>
   });
 
   it('a section nobody reports on is `not_measured` rather than a fabricated empty report', () => {
-    const report = readReport(createTestDb(), { ...query, section: 'logs' }, context);
+    const report = readReport(createTestDb(), { ...query, section: 'instances' }, context);
     expect(sectionOf(report, 'problems')?.unavailable).toBe('not_measured');
   });
 });
@@ -441,5 +447,113 @@ describe('§14 — what the checks saw, in a report (REP-5)', () => {
     run(db, one.id, NOW - 120_000, true);
 
     expect(sectionOf(readReport(db, day, context), 'synthetics')?.rows[0]).toMatchObject({ value: 50, severity: 'warning' });
+  });
+});
+
+describe('REP-6 — the estate-wide report', () => {
+  const overview = { ...env, section: 'overview', period: '7d' as const };
+
+  it('THE RULING: it counts every problem, not the ones that happen to belong to a family', () => {
+    const db = createTestDb();
+    // A detector nobody has put in a family yet. The section report for each family would miss it, and an
+    // estate-wide report that also missed it would be the one place an operator could never find it.
+    open(db, NOW - DAY, { kind: 'ecs_cpu_high' });
+    open(db, NOW - DAY, { kind: 'some_future_detector' });
+
+    const figures = sectionOf(readReport(db, overview, context), 'problems')?.figures ?? [];
+    expect(figures.find((one) => one.id === 'opened')?.value).toBe(2);
+    // And the containers report still counts only its own.
+    const containers = sectionOf(readReport(db, { ...overview, section: 'containers' }, context), 'problems')?.figures ?? [];
+    expect(containers.find((one) => one.id === 'opened')?.value).toBe(1);
+  });
+
+  it('breaks the period down by family, against the period before', () => {
+    const db = createTestDb();
+    open(db, NOW - DAY, { kind: kindsOfFamily('ecs')[0] });
+    open(db, NOW - DAY, { kind: kindsOfFamily('ecs')[0], key: 'second'.padEnd(32, 'x') });
+    open(db, NOW - 8 * DAY, { kind: kindsOfFamily('rds')[0] });
+
+    const rows = sectionOf(readReport(db, overview, context), 'families')?.rows ?? [];
+    expect(rows.map((row) => row.id)).toEqual([...PROBLEM_FAMILIES]);
+    expect(rows.find((row) => row.id === 'ecs')).toMatchObject({ value: 2, previous: 0, delta: 2 });
+    // Opened in the previous window only: this period is a measured zero and the change is negative.
+    expect(rows.find((row) => row.id === 'rds')).toMatchObject({ value: 0, previous: 1, delta: -1 });
+  });
+
+  it('names a family in the reader’s words when the caller gives them, and by its id when it does not', () => {
+    const db = createTestDb();
+    const labelled = sectionOf(readReport(db, overview, { ...context, familyLabel: (family) => `«${family}»` }), 'families');
+    expect(labelled?.rows.find((row) => row.id === 'alb')?.label).toBe('«alb»');
+    // The API answer keeps the ids, which is what a client can actually join on.
+    expect(sectionOf(readReport(db, overview, context), 'families')?.rows.find((row) => row.id === 'alb')?.label).toBe('alb');
+  });
+
+  it('THE RULING: it refuses to average four families into one availability figure', () => {
+    // Availability is measured per family. A single estate number would be a figure nobody could act on
+    // and nobody measured, so the section states that instead.
+    expect(sectionOf(readReport(createTestDb(), overview, context), 'availability')?.unavailable).toBe('not_measured');
+  });
+
+  it('is a valid report, exactly as a section report is', () => {
+    expect(() => reportSchema.parse(readReport(createTestDb(), overview, context))).not.toThrow();
+  });
+});
+
+describe('REP-6 — the logs report', () => {
+  const logs = { ...env, section: 'logs', period: '7d' as const };
+
+  it('the sections a report may be asked for are a closed list', () => {
+    // The API validates against exactly this, so an unknown value is a stated error rather than a report
+    // about nothing, and adding a report means adding it here.
+    expect([...REPORT_SECTIONS]).toEqual(['overview', 'containers', 'databases', 'load-balancers', 'alarms', 'logs']);
+    expect(isReportSection('overview')).toBe(true);
+    expect(isReportSection('instances')).toBe(false);
+  });
+
+  it('reports on what was read out of logs rather than on an infrastructure family', () => {
+    const report = readReport(createTestDb(), logs, context);
+    expect(report.sections.map((section) => section.id)).toEqual(['errors', 'logSources', 'logsSpend']);
+  });
+
+  it('THE RULING: no usage recorded is `not_collected`, never a spend of zero gigabytes', () => {
+    // Zero GB scanned is a claim about a week nobody looked at. "Nothing was recorded" is the fact.
+    expect(sectionOf(readReport(createTestDb(), logs, context), 'logsSpend')?.unavailable).toBe('not_collected');
+  });
+
+  it('counts what was scanned, against the period before', () => {
+    const db = createTestDb();
+    recordScan(db, NOW - 2 * DAY, 3 * BYTES_PER_GB);
+    recordScan(db, NOW - 9 * DAY, BYTES_PER_GB);
+
+    const figures = sectionOf(readReport(db, logs, context), 'logsSpend')?.figures ?? [];
+    expect(figures.find((one) => one.id === 'gbScanned')).toMatchObject({ value: 3, previous: 1, delta: 2 });
+    expect(figures.find((one) => one.id === 'queriesRun')).toMatchObject({ value: 1, previous: 1 });
+  });
+
+  it('THE RULING: a day the budget stopped collection is reported, because that day only looks quiet', () => {
+    const db = createTestDb();
+    recordScan(db, NOW - 2 * DAY, BYTES_PER_GB);
+    recordBudgetStop(db, NOW - 2 * DAY);
+
+    const stops = (sectionOf(readReport(db, logs, context), 'logsSpend')?.figures ?? []).find((one) => one.id === 'budgetStops');
+    // Errors went uncollected for the rest of that day, and a quiet errors section then is not a calm one.
+    expect(stops).toMatchObject({ value: 1, severity: 'warning' });
+  });
+
+  it('says which log groups are being read, and does not pretend that is a period figure', () => {
+    const db = createTestDb();
+    upsertLogSource(db, { ...env, logGroup: '/ecs/web', serviceId: null, enabled: true, format: 'json', fieldMap: {} });
+
+    const section = sectionOf(readReport(db, logs, context), 'logSources');
+    expect(section?.figures[0]).toMatchObject({ id: 'enabledSources', value: 1, previous: null, delta: null });
+    expect(section?.rows.map((row) => row.label)).toEqual(['/ecs/web']);
+  });
+
+  it('says `not_collected` when nothing is switched on, rather than listing nothing', () => {
+    expect(sectionOf(readReport(createTestDb(), logs, context), 'logSources')?.unavailable).toBe('not_collected');
+  });
+
+  it('is a valid report, exactly as a section report is', () => {
+    expect(() => reportSchema.parse(readReport(createTestDb(), logs, context))).not.toThrow();
   });
 });

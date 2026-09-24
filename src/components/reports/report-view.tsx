@@ -12,6 +12,15 @@ import { Link } from '@/i18n/navigation';
  * from "OpsWatch was not collecting the data that would have shown it".
  */
 
+/**
+ * Sections whose numbers need a sentence beside them to be read correctly.
+ *
+ * A closed list rather than a lookup with a fallback: next-intl renders a missing message as its key path,
+ * so `t('sectionNote.problems')` on a section with no note would print `Monitoring.report.sectionNote.problems`
+ * to an operator.
+ */
+const NOTED_SECTIONS = ['families', 'logsSpend', 'logSources'] as const;
+
 /** A change, signed and coloured by whether more of this thing is worse. */
 function Delta({ delta, notMeasured }: { delta: number | null; notMeasured: string }) {
   if (delta === null) return <span className="text-muted-foreground">{notMeasured}</span>;
@@ -99,6 +108,10 @@ export async function ReportView({
         </table>
         {/* §19 asks for this sentence wherever the bucket approximation is shown, rather than in a footnote. */}
         {section.id === 'availability' && <p className="mt-2 text-xs text-muted-foreground">{t('approximation')}</p>}
+        {/* And the same treatment for the sections whose figures mean something other than they look. */}
+        {(NOTED_SECTIONS as readonly string[]).includes(section.id) && (
+          <p className="mt-2 text-xs text-muted-foreground">{t(`sectionNote.${section.id}`)}</p>
+        )}
       </div>
     );
   };

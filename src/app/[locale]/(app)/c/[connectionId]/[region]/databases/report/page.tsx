@@ -1,6 +1,7 @@
 import { REPORT_PERIODS, type ReportPeriod } from '@opswatch/contract';
 import { ReportView } from '@/components/reports/report-view';
 import { SectionLayout } from '@/components/monitoring/section-layout';
+import { getTranslations } from 'next-intl/server';
 import { localizedTitle } from '@/i18n/metadata';
 import { getDb } from '@/lib/db/client';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
@@ -18,11 +19,13 @@ export default async function ReportPage({ params, searchParams }: Props) {
   const asked = (await searchParams).period;
   // An unknown period falls back to the default rather than 404ing: the parameter is a view, not an identity.
   const period: ReportPeriod = (REPORT_PERIODS as readonly string[]).includes(asked ?? '') ? (asked as ReportPeriod) : '7d';
+  // A family reads as the words the rest of the product uses for it, not as the detector id.
+  const families = await getTranslations({ locale: context.locale, namespace: 'Monitoring.health.family' });
 
   const report = readReport(
     getDb(),
     { connectionId: context.scope.connectionId, scope: context.scope.region, section: 'databases', period },
-    { nowMs: pageNow() },
+    { nowMs: pageNow(), familyLabel: (family) => families(family) },
   );
 
   return (

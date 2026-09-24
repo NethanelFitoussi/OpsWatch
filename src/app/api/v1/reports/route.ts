@@ -7,7 +7,7 @@ import { resolveEnvironment } from '@/lib/api/v1/environment';
 import { apiRoute } from '@/lib/api/v1/handler';
 import { resolveLocale } from '@/i18n/routing';
 import { reportMarkdown } from '@/lib/read/report-markdown';
-import { SECTION_FAMILY, readReport } from '@/lib/read/reports';
+import { isReportSection, readReport } from '@/lib/read/reports';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,11 +53,13 @@ export const GET = apiRoute({
 
     // Closed lists, both of them: an unknown value is a stated error, never a report about nothing.
     const section = url.searchParams.get('section') ?? '';
-    if (!(section in SECTION_FAMILY)) return apiFailure('invalid_request');
+    if (!isReportSection(section)) return apiFailure('invalid_request');
 
     const asked = url.searchParams.get('period') ?? '7d';
     if (!(REPORT_PERIODS as readonly string[]).includes(asked)) return apiFailure('invalid_request');
 
+    // The machine-readable answer keeps the raw family ids: a client that wants words has the catalogue,
+    // and a label in an API payload is a string nobody can join on.
     const report = readReport(
       db,
       { connectionId: environment.connectionId, scope: environment.scope, section, period: asked as ReportPeriod },

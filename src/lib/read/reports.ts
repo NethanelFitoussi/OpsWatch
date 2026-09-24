@@ -2,11 +2,12 @@ import 'server-only';
 import type { Report, ReportFigure, ReportPeriod, ReportRow, ReportSection, ReportUnavailableReason } from '@opswatch/contract';
 import { PROBLEM_SEVERITIES, type ProblemSeverity } from '../db/schema';
 import type { Db } from '../db/client';
-import { kindsOfFamily, type ProblemFamily } from '../detect/family';
+import { PROBLEM_FAMILIES, kindsOfFamily, type ProblemFamily } from '../detect/family';
 import { albBucket, evaluateSlo, type Bucket } from '../detect/slo';
 import { readHistorySettings } from '../history/settings';
 import { countDeployments, listDeployments } from '../store/deployments';
 import { countOccurrences, enabledLogSources, recentErrorGroups } from '../store/errors';
+import { BYTES_PER_GB, usageBetween } from '../store/logs-budget';
 import { listChecks, runsBetween } from '../store/synthetics';
 import { listHistorySubjects, readHistoryRange } from '../store/history';
 import { objectiveFor } from '../store/slos';
@@ -53,7 +54,14 @@ export const SECTION_FAMILY: Record<string, ProblemFamily> = {
 };
 
 export type ReportQuery = { connectionId: string; scope: string; section: string; period: ReportPeriod };
-export type ReportContext = { nowMs: number };
+export type ReportContext = {
+  nowMs: number;
+  /**
+   * How a detector family is named for a reader. Optional, and the id itself when it is not given: a read
+   * module has no locale of its own, and a report exported by a machine is entitled to the raw ids.
+   */
+  familyLabel?: (family: ProblemFamily) => string;
+};
 
 /**
  * The two windows a report compares. The previous one is the same length immediately before, so "against the
@@ -88,8 +96,10 @@ function unavailableSection(id: string, reason: ReportUnavailableReason): Report
  * This section needs no history switch: `detect` runs on data the pages already fetched, so an installation
  * that has been running at all has these numbers. It is the half of a report that is real today.
  */
-function problemsSection(db: Db, query: ReportQuery, family: ProblemFamily, windows: ReturnType<typeof windowsFor>): ReportSection {
-  const kinds = kindsOfFamily(family);
+function problemsSection(db: Db, query: ReportQuery, family: ProblemFamily | null, windows: ReturnType<typeof windowsFor>): ReportSection {
+  // `undefined` rather than every kind concatenated: the store reads it as "no kind filter", and an
+  // estate-wide report must count a problem from a detector nobody has thought to add to a family yet.
+  const kinds = family === null ? undefined : kindsOfFamily(family);
   const filter = { connectionId: query.connectionId, scope: query.scope, kinds };
   const now = countProblemsInWindow(db, filter, windows.period);
   const before = countProblemsInWindow(db, filter, windows.previous);
@@ -99,7 +109,13 @@ function problemsSection(db: Db, query: ReportQuery, family: ProblemFamily, wind
     figure('opened', total(now.opened), total(before.opened)),
     figure('resolved', total(now.resolved), total(before.resolved)),
     // Per severity, because "14 opened" reads very differently when all fourteen were critical.
-    ...PROBLEM_SEVERITIES.map((severity) => figure(`opened.${severity}`, now.opened[severity], before.opened[severity], severity)),
+    //
+    // `openedCritical`, not `opened.critical`: a figure id becomes a message key, and next-intl reads a dot
+    // as a path separator — so `figure.opened.critical` looked for a child of the string `figure.opened`,
+    // found nothing, and printed `Monitoring.report.figure.opened.critical` onto four report pages.
+    ...PROBLEM_SEVERITIES.map((severity) =>
+      figure(`opened${severity[0].toUpperCase()}${severity.slice(1)}`, now.opened[severity], before.opened[severity], severity),
+    ),
   ];
 
   const previousBySubject = new Map(
@@ -364,15 +380,118 @@ function syntheticsSection(db: Db, query: ReportQuery, windows: ReturnType<typeo
   };
 }
 
+/**
+ * How each family fared, side by side (the Overview report).
+ *
+ * One row per family rather than one figure per family, so the reader sees the same shape they see
+ * everywhere else: this period, the one before, and the difference. A family with nothing in either window
+ * is still listed at zero — that is a measured zero, because `detect` ran over all of them.
+ */
+function familiesSection(db: Db, query: ReportQuery, windows: ReturnType<typeof windowsFor>, context: ReportContext): ReportSection {
+  const rows: ReportRow[] = PROBLEM_FAMILIES.map((family) => {
+    const filter = { connectionId: query.connectionId, scope: query.scope, kinds: kindsOfFamily(family) };
+    const total = (counts: Record<ProblemSeverity, number>) => PROBLEM_SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
+    const now = total(countProblemsInWindow(db, filter, windows.period).opened);
+    const before = total(countProblemsInWindow(db, filter, windows.previous).opened);
+    return { id: family, label: context.familyLabel?.(family) ?? family, value: now, previous: before, delta: now - before };
+  });
+  return { id: 'families', figures: [], rows, unavailable: null };
+}
+
+/**
+ * What searching logs cost, and what that cost stopped (the Logs report).
+ *
+ * **Instance-wide.** `logs_usage` is keyed by the UTC day and nothing else, because the budget it exists
+ * for belongs to the installation rather than to one environment. Splitting it per environment here would
+ * be inventing a split the data does not hold, so the figure is reported as what it is.
+ *
+ * `stoppedDays` is the figure that matters most and is the easiest to miss: on a day the hard stop was
+ * reached, error collection did not run for the rest of it. Errors look quiet on such a day, and quiet is
+ * exactly what an operator must not read as calm.
+ */
+function logsSpendSection(db: Db, windows: ReturnType<typeof windowsFor>): ReportSection {
+  const now = usageBetween(db, windows.period);
+  const before = usageBetween(db, windows.previous);
+  // Nothing recorded in either window means no query has ever run, not a spend of zero gigabytes.
+  if (now.days === 0 && before.days === 0) return unavailableSection('logsSpend', 'not_collected');
+
+  const gb = (bytes: number) => Math.round((bytes / BYTES_PER_GB) * 1000) / 1000;
+  return {
+    id: 'logsSpend',
+    figures: [
+      figure('gbScanned', gb(now.bytesScanned), gb(before.bytesScanned)),
+      figure('queriesRun', now.queries, before.queries),
+      figure('budgetStops', now.stoppedDays, before.stoppedDays, now.stoppedDays > 0 ? 'warning' : undefined),
+    ],
+    rows: [],
+    unavailable: null,
+  };
+}
+
+/**
+ * Which log groups OpsWatch is reading errors out of.
+ *
+ * Not a period figure and it does not pretend to be one: `previous` is null everywhere, so no delta is
+ * shown. It is here because the first question a quiet errors section raises is "was anything even being
+ * read", and this is the section that answers it.
+ */
+function logSourcesSection(db: Db, query: ReportQuery): ReportSection {
+  const sources = enabledLogSources(db, query.connectionId, query.scope);
+  if (sources.length === 0) return unavailableSection('logSources', 'not_collected');
+  return {
+    id: 'logSources',
+    figures: [figure('enabledSources', sources.length, null)],
+    rows: sources.slice(0, REPORT_ROW_LIMIT).map((source) => ({
+      id: source.logGroup,
+      label: source.logGroup,
+      value: null,
+      previous: null,
+      delta: null,
+    })),
+    unavailable: null,
+  };
+}
+
+/** The sections a report may be asked for. A closed list: an unknown one is refused, never reported on. */
+export const REPORT_SECTIONS = ['overview', 'containers', 'databases', 'load-balancers', 'alarms', 'logs'] as const;
+export type ReportSectionId = (typeof REPORT_SECTIONS)[number];
+
+export function isReportSection(value: string): value is ReportSectionId {
+  return (REPORT_SECTIONS as readonly string[]).includes(value);
+}
+
 export function readReport(db: Db, query: ReportQuery, context: ReportContext): Report {
-  const family = SECTION_FAMILY[query.section];
+  const family = SECTION_FAMILY[query.section] ?? null;
   const windows = windowsFor(query.period, context.nowMs);
+  const sections: ReportSection[] = [];
 
-  const sections: ReportSection[] = family === undefined
-    ? [unavailableSection('problems', 'not_measured')]
-    : [problemsSection(db, query, family, windows), errorsSection(db, query, windows)];
+  // A section nobody reports on gets a stated reason rather than an estate-wide report under the wrong
+  // name. `overview` genuinely has no family and is still a real report, so the guard is the closed list
+  // of sections rather than the absence of a family.
+  if (!isReportSection(query.section)) {
+    return {
+      generatedAt: context.nowMs,
+      section: query.section,
+      period: { id: query.period, ...windows.period },
+      previousPeriod: windows.previous,
+      sections: [unavailableSection('problems', 'not_measured')],
+    };
+  }
 
-  if (family !== undefined) sections.push(availabilitySection(db, query, family, windows));
+  if (query.section === 'logs') {
+    // A logs report is about what was read out of logs and what reading them cost — not about one
+    // infrastructure family, which it has none of.
+    sections.push(errorsSection(db, query, windows), logSourcesSection(db, query), logsSpendSection(db, windows));
+    return { generatedAt: context.nowMs, section: query.section, period: { id: query.period, ...windows.period }, previousPeriod: windows.previous, sections };
+  }
+
+  // `overview` reports on the whole estate: every problem, whatever family its detector belongs to.
+  sections.push(problemsSection(db, query, family, windows));
+  if (query.section === 'overview') sections.push(familiesSection(db, query, windows, context));
+  sections.push(errorsSection(db, query, windows));
+  // Availability is measured per family, so the estate-wide report has no single number to give and says so
+  // rather than averaging four families into one figure nobody could act on.
+  sections.push(family === null ? unavailableSection('availability', 'not_measured') : availabilitySection(db, query, family, windows));
   sections.push(deploymentsSection(db, query, windows));
   sections.push(syntheticsSection(db, query, windows));
 

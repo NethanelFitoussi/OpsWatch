@@ -261,7 +261,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | REP-3 | Markdown export | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Escaped; downloads with `nosniff` |
 | REP-4 | Availability / SLO in a report | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Request-level availability and error budget from stored rollups, alongside the bucket share which still says what it is |
 | REP-5 | Deployments and synthetics in a report | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Both are real. With nothing configured each says `not_collected`, which is a sharper answer than `not_measured` |
-| REP-6 | Overview / logs reports | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Only the four section reports exist |
+| REP-6 | Overview / logs reports | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Overview counts every problem whatever family its detector belongs to, and refuses to average four families into one availability figure. Logs reports error groups, the log groups being read, and what searching cost — including the days the budget stopped collection |
 | REP-7 | Weekly send when a notifier exists | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on ALE-4 |
 
 ## Investigation / correlation

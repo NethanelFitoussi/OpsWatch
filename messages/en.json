@@ -1942,14 +1942,14 @@
         "errors": "Errors",
         "availability": "Availability",
         "deployments": "Deployments",
-        "synthetics": "Synthetics"
+        "synthetics": "Synthetics",
+        "families": "By family",
+        "logsSpend": "What searching logs cost",
+        "logSources": "Log groups being read"
       },
       "figure": {
         "opened": "Opened",
         "resolved": "Resolved",
-        "opened.critical": "Opened, critical",
-        "opened.warning": "Opened, warning",
-        "opened.info": "Opened, info",
         "occurrences": "Occurrences",
         "groups": "Error groups",
         "healthyShare": "Intervals with nothing affected (%)",
@@ -1960,7 +1960,14 @@
         "errorBudget": "Error budget left (%)",
         "syntheticUptime": "Checks that passed (%)",
         "syntheticFailures": "Failed checks",
-        "syntheticRuns": "Checks run"
+        "syntheticRuns": "Checks run",
+        "gbScanned": "GB scanned",
+        "queriesRun": "Queries run",
+        "budgetStops": "Days the budget stopped collection",
+        "enabledSources": "Log groups switched on",
+        "openedCritical": "Opened, critical",
+        "openedWarning": "Opened, warning",
+        "openedInfo": "Opened, info"
       },
       "columns": {
         "name": "Name",
@@ -1977,7 +1984,12 @@
       "turnOnHistory": "Open Data & history",
       "approximation": "Measured over stored 5-minute intervals, not per request: a read-only AWS account gives no request histogram. Intervals OpsWatch could not measure are left out rather than counted as healthy.",
       "notMeasured": "Not measured",
-      "export": "Export as Markdown"
+      "export": "Export as Markdown",
+      "sectionNote": {
+        "families": "Problems opened in each family, against the period before.",
+        "logsSpend": "Across this whole OpsWatch installation, not only this environment: the daily budget belongs to the installation. On a day the budget stopped, error collection did not run for the rest of it — so a quiet errors section on such a day is not a calm one.",
+        "logSources": "What OpsWatch reads errors out of. Not a figure about this period, so there is nothing to compare it with."
+      }
     },
     "checkup": {
       "title": "Checkup",
@@ -2978,7 +2990,8 @@
       "incidents": "Incidents",
       "synthetics": "Synthetics",
       "alerts": "Alerts",
-      "ask": "Ask OpsWatch"
+      "ask": "Ask OpsWatch",
+      "report": "Report"
     },
     "containers": {
       "overview": "Overview",
@@ -3003,7 +3016,8 @@
     "logs": {
       "search": "Search",
       "volume": "Volume",
-      "endpoints": "Endpoints"
+      "endpoints": "Endpoints",
+      "report": "Report"
     },
     "errors": {
       "groups": "Error groups",

@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   connectionId = await ensureMonitoringConnection(page);
 });
 
-const SECTIONS = ['containers', 'databases', 'load-balancers', 'alarms'] as const;
+const SECTIONS = ['containers', 'databases', 'load-balancers', 'alarms', 'overview', 'logs'] as const;
 
 test('the section menu links to Report instead of disabling it', async ({ page }) => {
   for (const section of SECTIONS) {
@@ -121,4 +121,58 @@ test('§19 — the report exports as Markdown, and downloads rather than renders
   expect(markdown).toContain('# Report');
   expect(markdown).toContain('## Availability');
   expect(markdown).toContain('Historical collection is off');
+});
+
+/**
+ * REP-6 — the two reports that are not about one infrastructure family.
+ *
+ * Overview summarises the whole estate; Logs reports on what was read out of logs and what reading them
+ * cost. Both are the same object as a section report, so everything above applies to them too — what is
+ * tested here is what only they do.
+ */
+test('THE RULING: the estate report counts every problem, and refuses to average availability', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'overview', 'report'));
+  const main = page.locator('main');
+  await expect(main.getByRole('heading', { name: 'Problems' })).toBeVisible();
+
+  // A family breakdown, in the words the rest of the product uses — not detector ids.
+  await expect(main.getByRole('heading', { name: 'By family' })).toBeVisible();
+  for (const family of ['Containers', 'Databases', 'Load balancers', 'Alarms']) {
+    await expect(main.getByRole('rowheader', { name: family })).toBeVisible();
+  }
+
+  // Availability is measured per family, so there is no estate number and the page says so rather than
+  // averaging four families into one figure nobody could act on.
+  await expect(main).toContainText('does not measure this yet');
+});
+
+test('the logs report says what searching cost and what that cost stopped', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'logs', 'report'));
+  const main = page.locator('main');
+  await expect(main.getByRole('heading', { name: 'What searching logs cost' })).toBeVisible();
+  await expect(main.getByRole('heading', { name: 'Log groups being read' })).toBeVisible();
+
+  // The figure is instance-wide, and the page says which figure it is rather than implying a split the
+  // data does not hold.
+  const text = await main.innerText();
+  if (text.includes('GB scanned')) {
+    expect(text).toContain('Across this whole OpsWatch installation');
+  } else {
+    // Nothing recorded is `not_collected` — never a spend of zero gigabytes over a week nobody looked at.
+    expect(text).toContain('Nothing is configured to collect this');
+  }
+});
+
+test('both new reports export as Markdown through the same endpoint', async ({ page }) => {
+  for (const section of ['overview', 'logs'] as const) {
+    const response = await page.request.get(`/api/v1/reports?env=${connectionId}:${MOTO_REGION}&section=${section}&period=7d`);
+    expect(response.status(), section).toBe(200);
+    const report = reportSchema.parse(await response.json());
+    expect(report.section, section).toBe(section);
+    expect(report.sections.length, section).toBeGreaterThan(0);
+
+    const markdown = await page.request.get(`/api/v1/reports?env=${connectionId}:${MOTO_REGION}&section=${section}&period=7d&format=markdown`);
+    expect(markdown.headers()['content-type'], section).toContain('text/markdown');
+    expect(markdown.headers()['content-disposition'], section).toContain('attachment');
+  }
 });

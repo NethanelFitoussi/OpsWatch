@@ -19,7 +19,8 @@ describe('the sub-section catalogue', () => {
       // D2's order, with one deviation recorded there: the brief is the section default once Task 17
       // builds it. Until then the default has to be a page that exists, so Problems leads.
       // Ask OpsWatch sits last: §2.2 puts the deterministic surfaces first and the assistant after them.
-      overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup', 'ask'],
+      // REP-6's estate-wide report sits just before it, after every measured surface it summarises.
+      overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup', 'report', 'ask'],
       // Errors is its own section (D2), with the log sources it reads from beside the groups.
       errors: ['groups', 'sources'],
       // DEP-3's deployment history sits with the services it shipped to.
@@ -32,7 +33,7 @@ describe('the sub-section catalogue', () => {
       'load-balancers': ['list', 'objectives', 'report'],
       alarms: ['list', 'report'],
       // Task 22 moves 'volume' to the front when the Logs dashboard exists; until then 'search' is the default.
-      logs: ['search', 'volume', 'endpoints'],
+      logs: ['search', 'volume', 'endpoints', 'report'],
     });
   });
   it('covers every section and gives each one a default', () => {

@@ -1,5 +1,5 @@
 import 'server-only';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, gte, lt, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { logsUsage, type LogsUsageRow } from '../db/schema';
 
@@ -85,4 +85,33 @@ export function budgetState(db: Db, nowMs: number, budgetGbPerDay: number): Budg
 /** Yesterday's spend, which Settings shows so an operator can see what this actually costs. */
 export function usageForDay(db: Db, dayMs: number): LogsUsageRow | null {
   return db.select().from(logsUsage).where(eq(logsUsage.day, dayOf(dayMs))).get() ?? null;
+}
+
+/**
+ * What Logs Insights scanned over a window, for §19's logs report.
+ *
+ * **Instance-wide, not per environment.** `logs_usage` is keyed by UTC day and nothing else, because the
+ * budget it exists for is a property of the installation: one OpsWatch, one daily cap, whatever it is
+ * looking at. A report that split this per environment would be inventing a split the table does not hold,
+ * so the report says which figure it is instead.
+ *
+ * Half-open `[from, to)` over whole days, matching every other window in a report, so two consecutive
+ * reports never count the same day twice.
+ */
+export function usageBetween(
+  db: Db,
+  window: { from: number; to: number },
+): { bytesScanned: number; queries: number; days: number; stoppedDays: number } {
+  const rows = db
+    .select()
+    .from(logsUsage)
+    .where(and(gte(logsUsage.day, dayOf(window.from)), lt(logsUsage.day, window.to)))
+    .all();
+  return {
+    bytesScanned: rows.reduce((total, row) => total + row.bytesScanned, 0),
+    queries: rows.reduce((total, row) => total + row.queries, 0),
+    days: rows.length,
+    // A day the budget stopped is the fact worth reporting: it is the day errors went uncollected.
+    stoppedDays: rows.filter((row) => row.stoppedAt !== null).length,
+  };
 }
