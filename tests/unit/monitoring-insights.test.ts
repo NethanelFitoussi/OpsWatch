@@ -146,6 +146,13 @@ const alarm = (overrides: Partial<AlarmSummary> = {}): AlarmSummary => ({
   threshold: 80,
   comparison: 'GreaterThanThreshold',
   targetTracking: false,
+  description: null,
+  statistic: 'Average',
+  period: 300,
+  evaluationPeriods: 1,
+  datapointsToAlarm: null,
+  unit: null,
+  treatMissingData: 'missing',
   ...overrides,
 });
 

@@ -60,8 +60,11 @@ export const STATE_FILL = {
   healthy: 'bg-emerald-500',
   warning: 'bg-amber-500',
   critical: 'bg-red-600',
-  unknown: 'bg-muted-foreground/30',
-  stale: 'bg-muted-foreground/30',
+  // Neutral, never a hue — but the two must be told apart in a legend, and a bar segment must be visible
+  // against the bar's own track. `/30` over `bg-muted` was indistinguishable from an empty bar, which read
+  // as "we counted three of four" rather than as "one of these was never evaluated".
+  unknown: 'bg-muted-foreground/45',
+  stale: 'bg-muted-foreground/75',
 } as const;
 
 /** Short status text, where the word carries the state rather than a shape. */

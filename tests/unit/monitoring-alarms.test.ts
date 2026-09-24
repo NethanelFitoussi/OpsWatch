@@ -63,6 +63,15 @@ describe('listAlarms', () => {
       threshold: 10,
       comparison: 'GreaterThanOrEqualToThreshold',
       targetTracking: false,
+      // The rest of the condition, which DescribeAlarms already returns: without it a reader cannot tell
+      // "over 10 once" from "over 10 for fifteen minutes", and those are different alarms.
+      description: null,
+      statistic: null,
+      period: null,
+      evaluationPeriods: null,
+      datapointsToAlarm: null,
+      unit: null,
+      treatMissingData: null,
     });
   });
 
@@ -80,8 +89,8 @@ describe('listAlarms', () => {
 
 describe('alarm filters', () => {
   it('parses the query string', () => {
-    expect(parseAlarmFilter({ state: 'bogus', tt: 'yes', q: '  web ' })).toEqual({ state: 'all', showTargetTracking: false, search: 'web' });
-    expect(parseAlarmFilter({ state: 'ALARM', tt: '1' })).toEqual({ state: 'ALARM', showTargetTracking: true, search: '' });
+    expect(parseAlarmFilter({ state: 'bogus', tt: 'yes', q: '  web ' })).toEqual({ service: 'all', recent: false, state: 'all', showTargetTracking: false, search: 'web' });
+    expect(parseAlarmFilter({ state: 'ALARM', tt: '1' })).toEqual({ service: 'all', recent: false, state: 'ALARM', showTargetTracking: true, search: '' });
     expect(parseAlarmFilter({ q: 'x'.repeat(150) }).search).toHaveLength(100);
   });
 
@@ -90,9 +99,9 @@ describe('alarm filters', () => {
     const result = await listAlarms(target, deps);
     const alarms = result.ok ? result.data : [];
     const names = (filter: Parameters<typeof filterAlarms>[1]) => filterAlarms(alarms, filter).map((a) => a.name);
-    expect(names({ state: 'all', showTargetTracking: false, search: '' })).toEqual(['site-down', 'api-5xx']);
-    expect(names({ state: 'all', showTargetTracking: true, search: '' })).toHaveLength(3);
-    expect(names({ state: 'ALARM', showTargetTracking: false, search: '' })).toEqual(['site-down']);
-    expect(names({ state: 'all', showTargetTracking: false, search: 'API' })).toEqual(['api-5xx']);
+    expect(names({ service: 'all', recent: false, state: 'all', showTargetTracking: false, search: '' })).toEqual(['site-down', 'api-5xx']);
+    expect(names({ service: 'all', recent: false, state: 'all', showTargetTracking: true, search: '' })).toHaveLength(3);
+    expect(names({ service: 'all', recent: false, state: 'ALARM', showTargetTracking: false, search: '' })).toEqual(['site-down']);
+    expect(names({ service: 'all', recent: false, state: 'all', showTargetTracking: false, search: 'API' })).toEqual(['api-5xx']);
   });
 });

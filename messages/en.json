@@ -1292,7 +1292,9 @@
         },
         "showTargetTracking": "Show target-tracking alarms",
         "search": "Search by name",
-        "apply": "Apply"
+        "apply": "Apply",
+        "searchPlaceholder": "Name, metric or resource",
+        "recent": "Changed in the last hour"
       },
       "columns": {
         "state": "State",
@@ -1306,7 +1308,100 @@
       "metricMath": "Metric math",
       "empty": "No alarm matches these filters.",
       "hiddenTargetTracking": "{count, plural, one {# target-tracking alarm is hidden.} other {# target-tracking alarms are hidden.}}",
-      "showHidden": "Show them"
+      "showHidden": "Show them",
+      "services": {
+        "ecs": "ECS",
+        "ec2": "EC2",
+        "rds": "Databases",
+        "redis": "Redis",
+        "alb": "Load balancers",
+        "lambda": "Lambda",
+        "sqs": "Queues",
+        "dynamodb": "DynamoDB",
+        "other": "Other"
+      },
+      "rowTitle": "{metric} on {resource}",
+      "reported": "AWS reported",
+      "forWindow": "for {minutes} min",
+      "neverChanged": "AWS has reported no change",
+      "inGroup": "{count, plural, one {# alarm} other {# alarms}}",
+      "noneDescription": "What OpsWatch reads, and why there may be nothing here.",
+      "none": "This account has no CloudWatch alarm in this region.",
+      "noMatchTitle": "Nothing matches those filters",
+      "noMatch": "There are alarms here, but none of them matches what you asked for.",
+      "clearFilters": "Clear the filters",
+      "readGuide": "Alarms and problems",
+      "vsProblems": "A CloudWatch alarm is a rule you wrote in AWS. An OpsWatch problem is something OpsWatch measured and opened itself. They are different things and neither replaces the other.",
+      "detail": {
+        "title": "Alarm",
+        "description": "What this alarm watches, and where it stands.",
+        "whatIsThis": "What this is",
+        "watches": "It watches {metric} on {resource}.",
+        "compositeWhat": "A composite alarm: a rule over other alarms rather than over a metric.",
+        "whyTitle": "Why AWS says so",
+        "whyHint": "CloudWatch writes one sentence for a machine. This is what it means.",
+        "reason": {
+          "crossed": "AWS saw {value} against a threshold of {comparison} {threshold}.",
+          "within": "AWS saw the measurement back inside the threshold.",
+          "no_data": "AWS received no datapoints, so it could not decide."
+        },
+        "reasonUnknown": "AWS gave a reason OpsWatch does not recognise, so it is shown below exactly as written rather than paraphrased.",
+        "rawReason": "What AWS actually wrote",
+        "noReason": "AWS gave no reason.",
+        "changedAt": "State last changed {when}.",
+        "conditionTitle": "The condition",
+        "conditionHint": "Everything the alarm was configured with. A blank field is one AWS did not report.",
+        "metric": "Metric",
+        "namespace": "Namespace",
+        "service": "Service",
+        "resource": "Resource",
+        "statistic": "Statistic",
+        "period": "Period",
+        "evaluationPeriods": "Datapoints to alarm",
+        "window": "Must hold for",
+        "missingData": "When data is missing",
+        "seconds": "{value} s",
+        "ofPeriods": "{datapoints} of {periods}",
+        "notReported": "AWS did not report it",
+        "historyTitle": "State history",
+        "historyUnavailable": "OpsWatch cannot show the state transitions of this alarm. Reading them needs the cloudwatch:DescribeAlarmHistory permission, which the read-only role does not ask for. It would take a new template version and every installation redeploying its stack, so it is not granted for this one page.",
+        "relatedTitle": "Related in OpsWatch",
+        "relatedHint": "Only links OpsWatch can prove.",
+        "noProblem": "No OpsWatch problem is open for this alarm.",
+        "openProblem": "Open the problem this alarm raised",
+        "goneTitle": "That alarm is not here",
+        "gone": "AWS no longer reports an alarm called {name} in this region. It may have been deleted or renamed.",
+        "backToList": "All alarms",
+        "watchesOnly": "It watches {metric}. The alarm names no resource, so OpsWatch cannot say what it covers.",
+        "noResourceFact": "The alarm names none",
+        "crossedNoValue": "AWS saw the measurement cross a threshold of {comparison} {threshold}.",
+        "crossedNoThreshold": "AWS saw {value}, which crossed the alarm’s threshold."
+      },
+      "metricNames": {
+        "cpu": "CPU utilization",
+        "memory": "Memory utilization",
+        "engineCpu": "Redis engine CPU",
+        "freeableMemory": "Freeable memory",
+        "freeStorage": "Free storage",
+        "connections": "Connections",
+        "readLatency": "Read latency",
+        "writeLatency": "Write latency",
+        "replicaLag": "Replica lag",
+        "evictions": "Evictions",
+        "requests": "Requests",
+        "target5xx": "Target 5xx errors",
+        "elb5xx": "Load balancer 5xx errors",
+        "responseTime": "Response time",
+        "unhealthyHosts": "Unhealthy targets",
+        "healthyHosts": "Healthy targets",
+        "runningTasks": "Running tasks",
+        "desiredTasks": "Desired tasks",
+        "statusCheck": "Instance status check",
+        "throttles": "Throttles",
+        "duration": "Duration",
+        "queueDepth": "Messages waiting",
+        "queueAge": "Age of the oldest message"
+      }
     },
     "metrics": {
       "cpu": "CPU utilization",
@@ -3436,6 +3531,73 @@
           "0": {
             "href": "problems",
             "label": "Where the hypothesis appears"
+          }
+        }
+      },
+      "alarms": {
+        "title": "Alarms, and how they differ from problems",
+        "summary": "A CloudWatch alarm is your rule. An OpsWatch problem is what OpsWatch measured. Both matter.",
+        "what": "OpsWatch reads every CloudWatch alarm in the account and region you are looking at, and shows what each one watches rather than what it is called. It never changes an alarm, and it never treats one as a problem of its own.",
+        "flow": {
+          "0": {
+            "label": "You write an alarm",
+            "note": "in AWS"
+          },
+          "1": {
+            "label": "AWS evaluates it"
+          },
+          "2": {
+            "label": "OpsWatch reads the state"
+          },
+          "3": {
+            "label": "An ALARM opens a problem"
+          }
+        },
+        "before": {
+          "0": "A connected AWS account whose permission test passes.",
+          "1": "At least one CloudWatch alarm. OpsWatch creates none."
+        },
+        "steps": {
+          "0": {
+            "title": "Read the summary first",
+            "body": "The bar at the top counts every alarm by state. In alarm, OK, and insufficient data are three separate counts — an alarm AWS could not evaluate is never added to OK."
+          },
+          "1": {
+            "title": "Narrow by state, then by service",
+            "body": "The state tabs and the service chips are links, so a filtered view can be shared and the back button works. Services come from the alarm’s namespace, never from its name."
+          },
+          "2": {
+            "title": "Read a row",
+            "body": "Each row leads with what is watched and where — “CPU on redis-prod” — and keeps the AWS alarm name underneath, because that is what your runbook and the console say."
+          },
+          "3": {
+            "title": "Open one",
+            "body": "The detail page explains the condition in full: metric, statistic, threshold, period, how many datapoints must breach, and what AWS does when data is missing."
+          }
+        },
+        "verify": "The counts at the top add up to the number of alarms you have, and every row names a metric and a resource rather than only an alarm name.",
+        "problems": {
+          "0": {
+            "q": "What is the difference between an alarm and a problem?",
+            "a": "An alarm is a rule somebody wrote in AWS: a threshold on a metric. A problem is something OpsWatch decided was worth your attention, using its own detectors and evidence. An alarm in ALARM state does open a problem — but OpsWatch will never invent causes for it, because the rule is yours and it never saw your reasoning."
+          },
+          "1": {
+            "q": "Why can I not see the alarm’s history?",
+            "a": "Reading state transitions needs cloudwatch:DescribeAlarmHistory, which the read-only role does not ask for. Adding it would mean a new template version and every installation redeploying, so it is not granted for one page."
+          },
+          "2": {
+            "q": "Why are some alarms hidden?",
+            "a": "Target-tracking alarms fire as part of normal autoscaling. Counting them would make every scaling estate look permanently alarmed, so they are excluded until you ask for them."
+          },
+          "3": {
+            "q": "The value shown is not the current value.",
+            "a": "It is the datapoint AWS quoted when it last changed the state, which may be hours old. OpsWatch labels it as what AWS reported and does not pay for a second metric call to guess at “now”."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "problems",
+            "label": "How a problem works"
           }
         }
       },

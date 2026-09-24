@@ -100,7 +100,15 @@ test('the seeded alarms and log events are readable', async () => {
   const cw = new CloudWatchClient(config);
   const { MetricAlarms } = await cw.send(new DescribeAlarmsCommand({ AlarmTypes: ['MetricAlarm', 'CompositeAlarm'] }));
   const states = Object.fromEntries((MetricAlarms ?? []).map((a) => [a.AlarmName, a.StateValue]));
-  expect(states).toEqual({ [SEED.alarm]: 'ALARM', [SEED.targetTrackingAlarm]: 'ALARM', [SEED.okAlarm]: 'OK' });
+  expect(states).toEqual({
+    [SEED.alarm]: 'ALARM',
+    [SEED.targetTrackingAlarm]: 'ALARM',
+    [SEED.okAlarm]: 'OK',
+    // All three CloudWatch states are seeded, because a page that folds the third into OK passes every
+    // test written against the first two.
+    [SEED.unknownAlarm]: 'INSUFFICIENT_DATA',
+    [SEED.longAlarm]: 'ALARM',
+  });
 
   const logs = new CloudWatchLogsClient(config);
   const nowSeconds = Math.floor(Date.now() / 1000);

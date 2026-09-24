@@ -37,6 +37,7 @@ export const DOCS: readonly DocGuide[] = [
 
   { slug: 'connect-aws', category: 'aws', keywords: ['aws', 'cloudformation', 'iam', 'role', 'trust policy', 'external id', 'permissions', 'regions', 'account'], appHref: '/accounts/new/aws' },
   { slug: 'aws-permissions', category: 'aws', keywords: ['aws permissions', 'iam policy', 'read only', 'permission test', 'denied', 'access', 'update permissions'] },
+  { slug: 'alarms', category: 'aws', keywords: ['alarm', 'cloudwatch alarm', 'alarms', 'insufficient data', 'in alarm', 'alarm vs problem', 'threshold', 'target tracking'] },
   { slug: 'checkup', category: 'aws', keywords: ['checkup', 'audit', 'findings', 'review', 'configuration'] },
 
   { slug: 'ecs', category: 'infrastructure', keywords: ['ecs', 'fargate', 'cluster', 'service', 'task', 'container', 'ecs logs', 'ecs memory', 'container insights'] },

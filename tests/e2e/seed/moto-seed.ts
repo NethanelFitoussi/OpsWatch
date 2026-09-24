@@ -33,6 +33,8 @@ export const SEED = {
   alarm: 'opswatch-e2e-high-cpu',
   targetTrackingAlarm: 'TargetTracking-service/opswatch-e2e/web-AlarmHigh-e2e',
   okAlarm: 'opswatch-e2e-db-connections',
+  unknownAlarm: 'opswatch-e2e-cache-engine-cpu',
+  longAlarm: 'opswatch-e2e-payments-business-transactions-failed-across-all-regions-critical',
   /** One datapoint per minute for the 30 whole minutes before the seed ran. */
   datapoints: 30,
 } as const;
@@ -282,6 +284,43 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
   await cw.send(new SetAlarmStateCommand({ AlarmName: SEED.alarm, StateValue: 'ALARM', StateReason: 'Seeded for end-to-end tests' }));
   await cw.send(new SetAlarmStateCommand({ AlarmName: SEED.targetTrackingAlarm, StateValue: 'ALARM', StateReason: 'Seeded for end-to-end tests' }));
   await cw.send(new SetAlarmStateCommand({ AlarmName: SEED.okAlarm, StateValue: 'OK', StateReason: 'Seeded for end-to-end tests' }));
+
+  // The third alarm state, which is the one a dashboard is most tempted to fold into OK. Left at its
+  // default so AWS reports INSUFFICIENT_DATA rather than a state somebody set.
+  await alarm(SEED.unknownAlarm, 'AWS/ElastiCache', 'EngineCPUUtilization', { CacheClusterId: SEED.redisCluster }, 90);
+  // moto starts an alarm at OK; AWS leaves one INSUFFICIENT_DATA until a datapoint arrives, and it is
+  // that state the product must never fold into OK.
+  await cw.send(
+    new SetAlarmStateCommand({
+      AlarmName: SEED.unknownAlarm,
+      StateValue: 'INSUFFICIENT_DATA',
+      StateReason: 'Insufficient Data: 3 datapoints were unknown.',
+    }),
+  );
+  // An alarm with no dimension AWS recognises as a resource, and a name long enough to break a layout.
+  await cw.send(
+    new PutMetricAlarmCommand({
+      AlarmName: SEED.longAlarm,
+      Namespace: 'Acme/Custom',
+      MetricName: 'BusinessTransactionsFailedPerMinuteAcrossAllRegions',
+      Statistic: 'Sum',
+      Period: 300,
+      EvaluationPeriods: 2,
+      DatapointsToAlarm: 2,
+      Threshold: 5,
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      AlarmDescription: 'Raised by the payments team when more than five business transactions fail in ten minutes.',
+      TreatMissingData: 'notBreaching',
+    }),
+  );
+  await cw.send(
+    new SetAlarmStateCommand({
+      AlarmName: SEED.longAlarm,
+      StateValue: 'ALARM',
+      // The shape CloudWatch actually writes, so the parser is exercised against the real sentence.
+      StateReason: 'Threshold Crossed: 2 datapoints [83.0 (24/09/25 12:00:00), 91.5 (24/09/25 12:05:00)] were greater than or equal to the threshold (5.0).',
+    }),
+  );
 
   // Logs (fact 10): events within the last few minutes, oldest first.
   await logs.send(new CreateLogGroupCommand({ logGroupName: SEED.logGroup }));

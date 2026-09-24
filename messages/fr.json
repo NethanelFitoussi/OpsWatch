@@ -1105,8 +1105,8 @@
         }
       },
       "refresh": {
-        "pause": "Suspendre l'actualisation automatique",
-        "resume": "Reprendre l'actualisation automatique",
+        "pause": "Suspendre l’actualisation",
+        "resume": "Reprendre l’actualisation",
         "every": "Actualisé toutes les {minutes} min",
         "everySeconds": "Actualisé toutes les {seconds} s",
         "off": "Actualisation automatique désactivée",
@@ -1292,7 +1292,9 @@
         },
         "showTargetTracking": "Afficher les alarmes de suivi de cible",
         "search": "Rechercher par nom",
-        "apply": "Appliquer"
+        "apply": "Appliquer",
+        "searchPlaceholder": "Nom, métrique ou ressource",
+        "recent": "Modifiées dans la dernière heure"
       },
       "columns": {
         "state": "État",
@@ -1306,7 +1308,100 @@
       "metricMath": "Calcul de métriques",
       "empty": "Aucune alarme ne correspond à ces filtres.",
       "hiddenTargetTracking": "{count, plural, one {# alarme de suivi de cible est masquée.} other {# alarmes de suivi de cible sont masquées.}}",
-      "showHidden": "Les afficher"
+      "showHidden": "Les afficher",
+      "services": {
+        "ecs": "ECS",
+        "ec2": "EC2",
+        "rds": "Bases de données",
+        "redis": "Redis",
+        "alb": "Répartiteurs de charge",
+        "lambda": "Lambda",
+        "sqs": "Files d'attente",
+        "dynamodb": "DynamoDB",
+        "other": "Autres"
+      },
+      "rowTitle": "{metric} sur {resource}",
+      "reported": "AWS a relevé",
+      "forWindow": "pendant {minutes} min",
+      "neverChanged": "AWS n'a signalé aucun changement",
+      "inGroup": "{count, plural, one {# alarme} other {# alarmes}}",
+      "noneDescription": "Ce qu'OpsWatch lit, et pourquoi il peut n'y avoir rien ici.",
+      "none": "Ce compte n'a aucune alarme CloudWatch dans cette région.",
+      "noMatchTitle": "Aucun résultat pour ces filtres",
+      "noMatch": "Il y a des alarmes ici, mais aucune ne correspond à votre demande.",
+      "clearFilters": "Effacer les filtres",
+      "readGuide": "Alarmes et problèmes",
+      "vsProblems": "Une alarme CloudWatch est une règle que vous avez écrite dans AWS. Un problème OpsWatch est quelque chose qu'OpsWatch a mesuré et ouvert lui-même. Ce sont deux choses différentes et aucune ne remplace l'autre.",
+      "detail": {
+        "title": "Alarme",
+        "description": "Ce que cette alarme surveille, et où elle en est.",
+        "whatIsThis": "De quoi s'agit-il",
+        "watches": "Elle surveille {metric} sur {resource}.",
+        "compositeWhat": "Une alarme composite : une règle portant sur d'autres alarmes plutôt que sur une métrique.",
+        "whyTitle": "Pourquoi AWS le dit",
+        "whyHint": "CloudWatch écrit une phrase destinée à une machine. Voici ce qu'elle signifie.",
+        "reason": {
+          "crossed": "AWS a relevé {value} face à un seuil de {comparison} {threshold}.",
+          "within": "AWS a vu la mesure revenir sous le seuil.",
+          "no_data": "AWS n'a reçu aucun point de mesure et n'a donc pas pu décider."
+        },
+        "reasonUnknown": "AWS a donné une raison qu'OpsWatch ne reconnaît pas : elle est affichée ci-dessous telle quelle, sans paraphrase.",
+        "rawReason": "Ce qu'AWS a réellement écrit",
+        "noReason": "AWS n'a donné aucune raison.",
+        "changedAt": "Dernier changement d'état {when}.",
+        "conditionTitle": "La condition",
+        "conditionHint": "Tout ce avec quoi l'alarme a été configurée. Un champ vide est un champ qu'AWS n'a pas renseigné.",
+        "metric": "Métrique",
+        "namespace": "Espace de noms",
+        "service": "Service",
+        "resource": "Ressource",
+        "statistic": "Statistique",
+        "period": "Période",
+        "evaluationPeriods": "Points déclenchant l'alarme",
+        "window": "Doit durer",
+        "missingData": "En cas de données manquantes",
+        "seconds": "{value} s",
+        "ofPeriods": "{datapoints} sur {periods}",
+        "notReported": "AWS ne l'a pas renseigné",
+        "historyTitle": "Historique des états",
+        "historyUnavailable": "OpsWatch ne peut pas afficher les changements d'état de cette alarme. Les lire nécessite la permission cloudwatch:DescribeAlarmHistory, que le rôle en lecture seule ne demande pas. Cela imposerait une nouvelle version du modèle et un redéploiement de chaque installation : elle n'est pas accordée pour cette seule page.",
+        "relatedTitle": "Liens dans OpsWatch",
+        "relatedHint": "Uniquement les liens qu'OpsWatch peut prouver.",
+        "noProblem": "Aucun problème OpsWatch n'est ouvert pour cette alarme.",
+        "openProblem": "Ouvrir le problème soulevé par cette alarme",
+        "goneTitle": "Cette alarme n'est pas ici",
+        "gone": "AWS ne signale plus d'alarme nommée {name} dans cette région. Elle a peut-être été supprimée ou renommée.",
+        "backToList": "Toutes les alarmes",
+        "watchesOnly": "Elle surveille {metric}. L’alarme ne nomme aucune ressource, OpsWatch ne peut donc pas dire ce qu’elle couvre.",
+        "noResourceFact": "L’alarme n’en nomme aucune",
+        "crossedNoValue": "AWS a vu la mesure franchir un seuil de {comparison} {threshold}.",
+        "crossedNoThreshold": "AWS a vu {value}, ce qui a franchi le seuil de l’alarme."
+      },
+      "metricNames": {
+        "cpu": "Utilisation CPU",
+        "memory": "Utilisation mémoire",
+        "engineCpu": "CPU du moteur Redis",
+        "freeableMemory": "Mémoire libérable",
+        "freeStorage": "Stockage libre",
+        "connections": "Connexions",
+        "readLatency": "Latence en lecture",
+        "writeLatency": "Latence en écriture",
+        "replicaLag": "Retard du réplica",
+        "evictions": "Évictions",
+        "requests": "Requêtes",
+        "target5xx": "Erreurs 5xx des cibles",
+        "elb5xx": "Erreurs 5xx du répartiteur",
+        "responseTime": "Temps de réponse",
+        "unhealthyHosts": "Cibles en échec",
+        "healthyHosts": "Cibles saines",
+        "runningTasks": "Tâches en cours",
+        "desiredTasks": "Tâches souhaitées",
+        "statusCheck": "Contrôle d’état de l’instance",
+        "throttles": "Limitations",
+        "duration": "Durée",
+        "queueDepth": "Messages en attente",
+        "queueAge": "Âge du plus ancien message"
+      }
     },
     "metrics": {
       "cpu": "Utilisation CPU",
@@ -3436,6 +3531,73 @@
           "0": {
             "href": "problems",
             "label": "Où apparaît l'hypothèse"
+          }
+        }
+      },
+      "alarms": {
+        "title": "Les alarmes, et en quoi elles diffèrent des problèmes",
+        "summary": "Une alarme CloudWatch est votre règle. Un problème OpsWatch est ce qu'OpsWatch a mesuré. Les deux comptent.",
+        "what": "OpsWatch lit chaque alarme CloudWatch du compte et de la région affichés, et montre ce que chacune surveille plutôt que son nom. Il ne modifie jamais une alarme et n'en fait jamais un problème à lui.",
+        "flow": {
+          "0": {
+            "label": "Vous écrivez une alarme",
+            "note": "dans AWS"
+          },
+          "1": {
+            "label": "AWS l'évalue"
+          },
+          "2": {
+            "label": "OpsWatch lit l'état"
+          },
+          "3": {
+            "label": "Un ALARM ouvre un problème"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté dont le test de permissions passe.",
+          "1": "Au moins une alarme CloudWatch. OpsWatch n'en crée aucune."
+        },
+        "steps": {
+          "0": {
+            "title": "Lisez d'abord le résumé",
+            "body": "La barre du haut compte chaque alarme par état. En alarme, OK et données insuffisantes sont trois décomptes distincts — une alarme qu'AWS n'a pas pu évaluer n'est jamais ajoutée à OK."
+          },
+          "1": {
+            "title": "Filtrez par état, puis par service",
+            "body": "Les onglets d'état et les puces de service sont des liens : une vue filtrée se partage et le bouton retour fonctionne. Les services viennent de l'espace de noms de l'alarme, jamais de son nom."
+          },
+          "2": {
+            "title": "Lisez une ligne",
+            "body": "Chaque ligne commence par ce qui est surveillé et où — « CPU sur redis-prod » — et garde le nom AWS en dessous, car c'est lui que citent votre runbook et la console."
+          },
+          "3": {
+            "title": "Ouvrez-en une",
+            "body": "La page de détail explique toute la condition : métrique, statistique, seuil, période, nombre de points devant dépasser, et ce qu'AWS fait en l'absence de données."
+          }
+        },
+        "verify": "Les décomptes du haut correspondent au nombre d'alarmes que vous avez, et chaque ligne nomme une métrique et une ressource plutôt qu'un simple nom d'alarme.",
+        "problems": {
+          "0": {
+            "q": "Quelle différence entre une alarme et un problème ?",
+            "a": "Une alarme est une règle écrite dans AWS : un seuil sur une métrique. Un problème est quelque chose qu'OpsWatch a jugé digne de votre attention, via ses propres détecteurs. Une alarme en état ALARM ouvre bien un problème — mais OpsWatch n'inventera jamais de causes pour elle, car la règle est la vôtre et il n'a jamais vu votre raisonnement."
+          },
+          "1": {
+            "q": "Pourquoi ne puis-je pas voir l'historique de l'alarme ?",
+            "a": "Lire les changements d'état nécessite cloudwatch:DescribeAlarmHistory, que le rôle en lecture seule ne demande pas. L'ajouter imposerait une nouvelle version du modèle et un redéploiement partout : ce n'est pas accordé pour une seule page."
+          },
+          "2": {
+            "q": "Pourquoi certaines alarmes sont-elles masquées ?",
+            "a": "Les alarmes de target tracking se déclenchent dans le cadre de l'autoscaling normal. Les compter ferait paraître en alarme permanente toute infrastructure qui met à l'échelle : elles sont exclues jusqu'à ce que vous les demandiez."
+          },
+          "3": {
+            "q": "La valeur affichée n'est pas la valeur actuelle.",
+            "a": "C'est le point de mesure cité par AWS lors du dernier changement d'état, parfois vieux de plusieurs heures. OpsWatch l'annonce comme ce qu'AWS a relevé et ne paie pas un second appel de métrique pour deviner « maintenant »."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "problems",
+            "label": "Comment fonctionne un problème"
           }
         }
       },

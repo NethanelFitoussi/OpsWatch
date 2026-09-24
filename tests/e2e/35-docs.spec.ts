@@ -13,7 +13,7 @@ test('the rail reaches the documentation, and every category has guides', async 
     await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
   }
   // Seventeen guides, each a card with a link.
-  await expect(page.locator('main a[href*="/docs/"]')).toHaveCount(17);
+  await expect(page.locator('main a[href*="/docs/"]')).toHaveCount(18);
 });
 
 test('THE RULING: search finds a guide from words the guide does not use', async ({ page }) => {
@@ -45,7 +45,7 @@ test('THE RULING: every guide renders its prose, in English and in French', asyn
   for (const locale of ['en', 'fr'] as const) {
     await page.goto(`/${locale}/docs`);
     const links = await page.locator('main a[href*="/docs/"]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('href') ?? ''));
-    expect(links.length, locale).toBe(17);
+    expect(links.length, locale).toBe(18);
     for (const href of links) {
       await page.goto(href);
       const body = await page.locator('main').innerText();
