@@ -234,7 +234,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | LOG-1 | Search | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Non-v1 route; `features.logs` still false |
 | LOG-2 | Volume and retention | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Costs nothing against the budget, and says so |
 | LOG-3 | Endpoints / slow routes | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Runs on a button, not on load; field names validated, never escaped; shows real lines when the mapping matches nothing |
-| LOG-4 | Single log entry endpoint | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Mobile asks for `GET /logs/{id}`; deep links currently open the surrounding search |
+| LOG-4 | Single log entry endpoint | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs `logs:GetLogRecord`, which the role's policy does not grant — fetching one event by its `@ptr` is the only way CloudWatch offers. Adding it means a new template version and every existing installation redeploying its stack, so it is bundled with AWS-5 rather than shipped on its own. Mobile's deep link opens the surrounding search until then |
 | LOG-5 | `features.logs` on `/api/v1` | ✗ | ✗ | ✓ | · | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Logs are served by the older non-v1 route; no v1 endpoint exists |
 
 ## Historical data
