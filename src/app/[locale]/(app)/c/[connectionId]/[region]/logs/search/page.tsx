@@ -4,9 +4,13 @@ import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { LOGS_MAX_GROUPS, LOGS_MAX_QUERY_LENGTH, LOGS_MAX_ROWS } from '@/lib/monitoring/logs';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
+import { requireAdmin } from '@/lib/auth/current';
+import { getDb } from '@/lib/db/client';
 import { LOGS_TIME_RANGES, type LogsTimeRange } from '@/lib/monitoring/shared/logs-queries';
 import { LOG_LEVELS, SEARCH_TEXT_MAX, parseRowLimit } from '@/lib/monitoring/shared/logs-search';
+import { fieldsOf, listSavedSearches } from '@/lib/store/saved-searches';
 import { isOneOf } from '@/lib/type-guards';
+import { deleteSearchAction, duplicateSearchAction, saveSearchAction } from './actions';
 import { LogGroupPicker } from './log-group-picker';
 import { LogsExplorer } from './logs-explorer';
 import { LogsSelectionProvider } from './logs-selection';
@@ -35,11 +39,18 @@ export default async function LogsPage({ params, searchParams }: Props) {
   const levelParam = first(sp.level);
   const t = await getTranslations('Monitoring.logs');
 
+  // Saved searches are this person's, read with their own id: the store filters every statement on it.
+  const adminId = await requireAdmin(context.locale);
+  const scope = { connectionId: context.scope.connectionId, scope: context.scope.region };
+  const savedRows = listSavedSearches(getDb(), adminId, scope).map((row) => ({ id: row.id, ...fieldsOf(row) }));
   return (
     <SectionLayout context={context} section="logs" subsection="search" autoRefresh={false}>
       {/* The picker and the search share one selection, so a ticked group reaches the search at once. */}
       <LogsSelectionProvider initial={groups} max={LOGS_MAX_GROUPS}>
         <LogsExplorer
+          // A saved search loads by navigating to the URL it was saved from; remounting on that navigation
+          // is what makes the loaded search replace the one on screen rather than sit under it.
+          key={`${first(sp.q) ?? ''}|${levelParam ?? ''}|${first(sp.limit) ?? ''}|${range}`}
           connectionId={context.scope.connectionId}
           region={context.scope.region}
           range={range}
@@ -48,6 +59,15 @@ export default async function LogsPage({ params, searchParams }: Props) {
             text: first(sp.q)?.slice(0, SEARCH_TEXT_MAX) ?? '',
             level: isOneOf(LOG_LEVELS, levelParam) ? levelParam : null,
             limit: Math.min(parseRowLimit(first(sp.limit)), LOGS_MAX_ROWS),
+          }}
+          saved={{
+            rows: savedRows,
+            basePath: `/c/${context.scope.connectionId}/${context.scope.region}/logs/search`,
+            actions: {
+              save: saveSearchAction.bind(null, context.locale, context.scope.connectionId, context.scope.region),
+              duplicate: duplicateSearchAction.bind(null, context.locale, context.scope.connectionId, context.scope.region),
+              remove: deleteSearchAction.bind(null, context.locale, context.scope.connectionId, context.scope.region),
+            },
           }}
           groupPicker={
             <SuspenseCard key={search} title={t('picker.title')} variant="table" rows={6}>
