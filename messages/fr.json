@@ -2959,7 +2959,9 @@
       "cloudflare": "Cloudflare",
       "cloudflareHint": "Lire le trafic, le cache et les événements de sécurité en périphérie pour les zones que vous choisissez.",
       "audit": "Journal d’audit",
-      "auditHint": "Qui a fait quoi, et quand. Les entrées ne font que s’ajouter."
+      "auditHint": "Qui a fait quoi, et quand. Les entrées ne font que s’ajouter.",
+      "notifications": "Notifications",
+      "notificationsHint": "Où une alerte peut être envoyée. Rien ne quitte cette instance tant que vous n'ajoutez pas de destination."
     },
     "repositories": {
       "title": "Dépôts",
@@ -3066,7 +3068,9 @@
         "alert_acknowledge": "Alerte acquittée",
         "incident_dismiss": "Incident écarté",
         "export_download": "Export téléchargé",
-        "retention_purge": "Passe de rétention exécutée"
+        "retention_purge": "Passe de rétention exécutée",
+        "notify_update": "Destination de notification modifiée",
+        "notify_test": "Destination de notification testée"
       }
     },
     "ai": {
@@ -3225,6 +3229,43 @@
         "unreachable": "Cloudflare n'a pas pu être joint.",
         "bad_response": "Cloudflare a répondu quelque chose qu'OpsWatch n'a pas su lire.",
         "timeout": "Cloudflare n'a pas répondu à temps."
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Où OpsWatch peut envoyer une alerte. Rien ne quitte cette instance tant que vous n'ajoutez pas de destination.",
+      "whatIsSent": "Ce qu'OpsWatch envoie",
+      "whatIsSentHint": "L'alerte, le problème derrière elle et un lien de retour. Jamais un identifiant, jamais une ligne de log.",
+      "signatureHeader": "HMAC-SHA256 sur l'horodatage et le corps exact, avec le secret de signature.",
+      "timestampHeader": "Le moment de l'envoi, en millisecondes. Il est inclus dans la signature : une requête capturée ne peut pas être rejouée indéfiniment.",
+      "readGuide": "Comment fonctionnent les alertes et notifications",
+      "addTitle": "Ajouter un webhook",
+      "addHint": "HTTPS uniquement. Le corps est signé, pas chiffré — en HTTP simple, toute personne sur le chemin pourrait lire l'alerte.",
+      "name": "Nom",
+      "url": "URL",
+      "urlHint": "Une URL HTTPS que vous contrôlez. Les identifiants dans l'URL sont refusés.",
+      "create": "Ajouter la destination",
+      "secretTitle": "Votre secret de signature",
+      "secretHint": "Copiez-le maintenant. OpsWatch le stocke chiffré et ne l'affichera plus — une page capable de le relire serait une page capable de le divulguer.",
+      "listTitle": "Destinations",
+      "none": "Aucune destination : aucune alerte ne quitte cette instance.",
+      "enabled": "Activée",
+      "disabled": "Désactivée",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "delete": "Supprimer",
+      "test": "Envoyer un test",
+      "testOk": "Livré.",
+      "neverSent": "Rien envoyé pour le moment.",
+      "lastOk": "Dernière livraison réussie {when}.",
+      "lastFailed": "Dernière livraison échouée {when}, {failures, plural, one {# échec} other {# échecs}} de suite.",
+      "errors": {
+        "name_invalid": "Donnez un nom à la destination.",
+        "url_invalid": "Saisissez une URL HTTPS, sans nom d'utilisateur ni mot de passe.",
+        "not_found": "Cette destination n'existe plus.",
+        "http": "Le destinataire a répondu par une erreur.",
+        "timeout": "Le destinataire n'a pas répondu à temps.",
+        "network": "OpsWatch n'a pas pu joindre cette URL."
       }
     }
   },

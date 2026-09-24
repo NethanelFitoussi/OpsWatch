@@ -21,6 +21,7 @@ const MORE_SETTINGS = [
   { key: 'repositories', href: '/settings/repositories' },
   { key: 'ai', href: '/settings/ai' },
   { key: 'cloudflare', href: '/settings/cloudflare' },
+  { key: 'notifications', href: '/settings/notifications' },
   { key: 'audit', href: '/settings/audit' },
   { key: 'status', href: '/settings/status' },
 ] as const;

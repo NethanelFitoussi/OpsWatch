@@ -272,6 +272,50 @@ export const ALERT_STATUSES = ['firing', 'acknowledged', 'resolved'] as const;
  * `suppressedCount` records the fires that happened inside the cooldown, so the silence is **visible**
  * rather than merely quiet.
  */
+/** §15's delivery: where an alert is sent, and what happened when it was. */
+export const NOTIFY_KINDS = ['webhook'] as const;
+export const NOTIFY_RESULTS = ['ok', 'failed'] as const;
+
+/**
+ * A place OpsWatch may send an alert.
+ *
+ * The signing secret is encrypted like every other credential and is shown to the operator exactly once,
+ * when the destination is created. A secret a page can re-read is a secret a page can leak.
+ */
+export const notifyDestinations = sqliteTable('notify_destinations', {
+  id: text('id').primaryKey(),
+  kind: text('kind', { enum: NOTIFY_KINDS }).notNull(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  secretCiphertext: text('secret_ciphertext').notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at').notNull(),
+  /** What happened last time, so a destination that has quietly stopped working is visible. */
+  lastResult: text('last_result', { enum: NOTIFY_RESULTS }),
+  lastAttemptAt: integer('last_attempt_at'),
+  lastError: text('last_error'),
+  consecutiveFailures: integer('consecutive_failures').notNull().default(0),
+});
+
+/**
+ * One attempt to deliver one alert, kept so a retry has somewhere to stand and a failure is not silent.
+ *
+ * `nextAttemptAt` is the whole retry policy: the notify job picks up anything due, and a delivery that
+ * has exhausted its attempts stays in the table as a failure rather than disappearing.
+ */
+export const notifyDeliveries = sqliteTable('notify_deliveries', {
+  id: text('id').primaryKey(),
+  destinationId: text('destination_id').notNull().references(() => notifyDestinations.id, { onDelete: 'cascade' }),
+  alertId: text('alert_id').notNull(),
+  payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  attempts: integer('attempts').notNull().default(0),
+  status: text('status', { enum: ['pending', 'ok', 'failed'] }).notNull().default('pending'),
+  lastError: text('last_error'),
+  createdAt: integer('created_at').notNull(),
+  nextAttemptAt: integer('next_attempt_at'),
+  deliveredAt: integer('delivered_at'),
+});
+
 export const alerts = sqliteTable(
   'alerts',
   {
@@ -302,6 +346,8 @@ export const alerts = sqliteTable(
 
 export type AlertRuleRow = typeof alertRules.$inferSelect;
 export type AlertRow = typeof alerts.$inferSelect;
+export type NotifyDestinationRow = typeof notifyDestinations.$inferSelect;
+export type NotifyDeliveryRow = typeof notifyDeliveries.$inferSelect;
 
 export const SYNTHETIC_METHODS = ['GET', 'HEAD', 'POST'] as const;
 
