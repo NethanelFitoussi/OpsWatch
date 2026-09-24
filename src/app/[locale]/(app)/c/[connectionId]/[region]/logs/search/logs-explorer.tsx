@@ -3,6 +3,7 @@
 import { Loader2, Search, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { DocLink } from '@/components/docs/doc-link';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -379,38 +380,26 @@ export function LogsExplorer({
 
           {/* Optional, and absent entirely when nobody has configured a provider. */}
           {propose !== null && <AiAssist groups={groups} propose={propose} onUse={useProposal} />}
+
+          <p className="text-xs text-muted-foreground">
+            {t('logs.search.billed')} <DocLink slug="searching-logs" label={t('logs.search.readGuide')} />
+          </p>
         </form>
       </MonitoringCard>
 
-      {/* `min-w-0` on both columns: a grid item defaults to min-content width, and one unbreakable log group
-          name in the picker was widening the whole page to 539px inside a 360px viewport. */}
+      {/*
+       * Three items rather than two columns, placed explicitly.
+       *
+       * On a wide screen it reads as a sidebar and a results pane. On a phone, where the grid collapses to
+       * one column, DOM order decides what you scroll past — and the log lines are what the page is for, so
+       * they come straight after the log-group picker rather than under the facets and the saved searches.
+       *
+       * `min-w-0` on each: a grid item defaults to min-content width, and one unbreakable log group name
+       * was widening the whole page to 539px inside a 360px viewport.
+       */}
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
-        <div className="min-w-0 space-y-6">
-          {groupPicker}
-          {results !== null && (
-            <MonitoringCard title={t('logs.facets.card')}>
-              <LogsFacets
-                levels={levelCounts(results.rows)}
-                streams={facetOf(results.rows, '@logStream')}
-                filter={facetFilter}
-                population={population}
-                onChange={setFacetFilter}
-              />
-            </MonitoringCard>
-          )}
-          <MonitoringCard title={t('logs.saved.title')} description={t('logs.saved.hint')}>
-            {/* The search as it stands right now, so saving stores what is on screen rather than what was
-                last run. */}
-            <SavedSearches
-              rows={saved.rows}
-              basePath={saved.basePath}
-              actions={saved.actions}
-              current={{ name: '', text, level, limit, range, logGroups: groups, query: advanced ? advancedQuery : null }}
-            />
-          </MonitoringCard>
-        </div>
-
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">{groupPicker}</div>
+        <div className="min-w-0 space-y-6 lg:col-start-2 lg:row-start-1 lg:row-span-2">
           <MonitoringCard title={t('logs.results.label')}>
             <div className="space-y-4">
               <div className="text-sm text-muted-foreground">
@@ -457,6 +446,30 @@ export function LogsExplorer({
               {results !== null && results.rows.length > 0 && population === 'aggregated' && <Aggregated results={results} />}
               {results !== null && shown.length > 0 && population !== 'aggregated' && <LogsRows rows={shown} fields={results.fields} />}
             </div>
+          </MonitoringCard>
+        </div>
+
+        <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-2">
+          {results !== null && (
+            <MonitoringCard title={t('logs.facets.card')}>
+              <LogsFacets
+                levels={levelCounts(results.rows)}
+                streams={facetOf(results.rows, '@logStream')}
+                filter={facetFilter}
+                population={population}
+                onChange={setFacetFilter}
+              />
+            </MonitoringCard>
+          )}
+          <MonitoringCard title={t('logs.saved.title')} description={t('logs.saved.hint')}>
+            {/* The search as it stands right now, so saving stores what is on screen rather than what was
+                last run. */}
+            <SavedSearches
+              rows={saved.rows}
+              basePath={saved.basePath}
+              actions={saved.actions}
+              current={{ name: '', text, level, limit, range, logGroups: groups, query: advanced ? advancedQuery : null }}
+            />
           </MonitoringCard>
         </div>
       </div>

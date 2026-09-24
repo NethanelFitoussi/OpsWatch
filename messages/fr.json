@@ -1178,7 +1178,9 @@
           "limit": "Lignes",
           "advanced": "La requête qu’OpsWatch va exécuter",
           "advancedOff": "Construite à partir de la recherche ci-dessus. Cliquez dedans pour la modifier vous-même.",
-          "advancedOn": "Vous modifiez la requête. Le champ de recherche ci-dessus ne la change plus."
+          "advancedOn": "Vous modifiez la requête. Le champ de recherche ci-dessus ne la change plus.",
+          "billed": "AWS facture les données analysées par une recherche : moins de groupes et une période plus courte coûtent moins cher.",
+          "readGuide": "Rechercher dans vos journaux"
         },
         "levels": {
           "error": "Erreur",
@@ -4477,8 +4479,8 @@
             "body": "Logs, puis Sources. OpsWatch liste ce qu'il voit et vous activez chaque groupe. Rien n'est interrogé avant."
           },
           "2": {
-            "title": "Chercher",
-            "body": "Logs, puis Recherche. Les requêtes sont des requêtes Logs Insights et AWS facture les données parcourues — l'estimation est à côté du bouton."
+            "title": "Rechercher",
+            "body": "Journaux, puis Recherche. Tapez ce que vous cherchez — OpsWatch écrit la requête et vous la montre. AWS facture les données analysées : moins de groupes et une période plus courte coûtent moins cher."
           },
           "3": {
             "title": "Laisser les erreurs se regrouper",
@@ -4498,6 +4500,10 @@
         },
         "next": {
           "0": {
+            "href": "searching-logs",
+            "label": "Chercher ce que vous venez d’envoyer"
+          },
+          "1": {
             "href": "connect-github",
             "label": "Transformer une erreur en ligne de code"
           }
@@ -4688,6 +4694,94 @@
           "0": {
             "href": "alerts",
             "label": "Être prévenu quand un cache se remplit"
+          }
+        }
+      },
+      "searching-logs": {
+        "title": "Rechercher dans vos journaux",
+        "summary": "Tapez ce que vous cherchez. OpsWatch écrit la requête et vous la montre.",
+        "what": "La page Recherche regarde dans les groupes de journaux que vous choisissez et affiche les lignes qui correspondent. Vous n’avez pas besoin de connaître un langage de requête : vous tapez des mots, choisissez un niveau et une période, et OpsWatch construit la requête CloudWatch Logs Insights pour vous — en vous montrant exactement ce qu’il a construit.",
+        "flow": {
+          "0": {
+            "label": "Choisir des groupes de journaux"
+          },
+          "1": {
+            "label": "Taper ce que vous cherchez"
+          },
+          "2": {
+            "label": "OpsWatch construit la requête",
+            "note": "et l’affiche"
+          },
+          "3": {
+            "label": "Vous lancez la recherche"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté dont le test de permissions réussit.",
+          "1": "Au moins un groupe de journaux contenant quelque chose. Si vous n’en avez aucun, lisez d’abord « Envoyer les journaux pour qu’OpsWatch puisse les lire ».",
+          "2": "Sachez qu’AWS facture les données analysées par une recherche. Moins de groupes et une période plus courte coûtent moins cher."
+        },
+        "steps": {
+          "0": {
+            "title": "Choisir les groupes de journaux",
+            "body": "La liste de gauche est bornée et défile toute seule : elle ne repousse jamais les journaux hors de l’écran. Tapez dans le champ au-dessus pour filtrer ceux déjà chargés ; si rien ne correspond, un bouton apparaît pour en demander d’autres à AWS. Le compteur indique combien sont cochés, et Effacer les décoche tous."
+          },
+          "1": {
+            "title": "Taper ce que vous cherchez",
+            "body": "Des mots simples, pas une requête : « timeout », « 500 », le nom d’un client. La casse est ignorée. Laissez le champ vide pour tout voir sur la période. Vous pouvez aussi restreindre par niveau, choisir jusqu’où remonter et combien de lignes récupérer."
+          },
+          "2": {
+            "title": "Regarder la requête avant de la lancer",
+            "body": "Ouvrez « La requête qu’OpsWatch va exécuter » pour voir exactement ce qui sera envoyé à AWS. C’est la requête elle-même, pas sa description : vous pouvez la copier dans un ticket, ou cliquer dedans pour la modifier si vous connaissez Logs Insights."
+          },
+          "3": {
+            "title": "Lire les résultats",
+            "body": "Une ligne par enregistrement. L’heure à gauche, le niveau à côté quand la ligne en annonce un, et le message occupe le reste. Cliquez sur une ligne pour la déplier et voir tous ses champs, avec un bouton pour copier le message et un autre pour copier l’enregistrement entier."
+          },
+          "4": {
+            "title": "Affiner sans relancer",
+            "body": "Le panneau de gauche compte les niveaux et les flux présents dans ce qui est revenu. Cliquer dessus filtre les lignes affichées : aucune seconde requête n’est lancée, c’est donc gratuit et immédiat."
+          },
+          "5": {
+            "title": "Enregistrer une recherche que vous referez",
+            "body": "Donnez-lui un nom et cliquez sur Enregistrer. Vos recherches enregistrées n’appartiennent qu’à vous : personne d’autre ne les voit, rien ne s’exécute tout seul et rien ne quitte cette installation. En charger une est une navigation ordinaire : le bouton Retour l’annule et la barre d’adresse contient un lien à coller dans un ticket."
+          }
+        },
+        "verify": "Une recherche sur un groupe que vous savez actif renvoie des lignes dont l’heure est dans la période choisie, et la frise au-dessus porte des barres là où sont ces lignes.",
+        "problems": {
+          "0": {
+            "q": "Il dit que la recherche s’est exécutée et que rien ne correspond.",
+            "a": "C’est exactement ce que cela veut dire, et ce n’est pas la même chose que « rien n’a été journalisé ». La recherche a atteint AWS, AWS a cherché, et aucune ligne de ces groupes sur cette période ne contenait ce que vous demandiez. Essayez un mot plus court, une période plus large ou plus de groupes."
+          },
+          "1": {
+            "q": "Pourquoi « affichage de 100 lignes sur 4 213 » ?",
+            "a": "Vous avez demandé 100 lignes et 4 213 correspondent. Tout ce qui est calculé à partir de ces lignes — le décompte, la frise, les niveaux, les flux — décrit alors les cent récupérées et non l’ensemble, et la page le dit. Augmentez le nombre de lignes ou affinez la recherche."
+          },
+          "2": {
+            "q": "Certaines lignes n’ont pas de niveau.",
+            "a": "Beaucoup de lignes ne disent pas leur niveau. OpsWatch les laisse vides et les compte dans leur propre groupe. Les colorer en « info » reviendrait à inventer une gravité que personne n’a écrite."
+          },
+          "3": {
+            "q": "Rien n’est listé à gauche.",
+            "a": "Soit rien n’écrit dans CloudWatch Logs dans cette région, soit les permissions sur les journaux sont refusées. OpsWatch ne sait pas distinguer un groupe vide d’un groupe qu’il n’a pas le droit de lire, et il ne devine pas. Vérifiez le test de permissions du compte."
+          },
+          "4": {
+            "q": "La recherche est lente ou coûteuse.",
+            "a": "AWS facture Logs Insights selon les données analysées, et une requête sur une journée d’un groupe actif en analyse beaucoup. Réduisez d’abord la période, puis les groupes. La note sous le sélecteur dit la même chose."
+          },
+          "5": {
+            "q": "L’assistant peut-il chercher à ma place ?",
+            "a": "Si un fournisseur d’IA est configuré, vous pouvez décrire ce que vous voulez et il remplira le formulaire. Il propose ; il n’exécute pas. Vous voyez les cinq valeurs choisies et la requête qu’elles construisent, et la recherche ne démarre que lorsque vous la lancez. Il ne peut choisir que parmi les groupes que vous avez déjà cochés, et il ne voit jamais une seule ligne de journal."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "logs",
+            "label": "Envoyer plus de journaux vers CloudWatch"
+          },
+          "1": {
+            "href": "connect-github",
+            "label": "Relier une erreur à une ligne de code"
           }
         }
       }

@@ -1178,7 +1178,9 @@
           "limit": "Lines",
           "advanced": "The query OpsWatch will run",
           "advancedOff": "Built from the search above. Click inside to edit it yourself.",
-          "advancedOn": "You are editing the query. The search box above no longer changes it."
+          "advancedOn": "You are editing the query. The search box above no longer changes it.",
+          "billed": "AWS bills for the data a search scans, so fewer log groups and a shorter range cost less.",
+          "readGuide": "Searching your logs"
         },
         "levels": {
           "error": "Error",
@@ -4478,7 +4480,7 @@
           },
           "2": {
             "title": "Search",
-            "body": "Logs, then Search. Queries are Logs Insights queries and AWS bills for the data they scan — the estimate is beside the button."
+            "body": "Logs, then Search. Type what you are looking for — OpsWatch writes the query and shows it. AWS bills for the data a search scans, so fewer groups and a shorter range cost less."
           },
           "3": {
             "title": "Let errors group themselves",
@@ -4498,6 +4500,10 @@
         },
         "next": {
           "0": {
+            "href": "searching-logs",
+            "label": "Search what you just sent"
+          },
+          "1": {
             "href": "connect-github",
             "label": "Turn an error into a line of code"
           }
@@ -4688,6 +4694,94 @@
           "0": {
             "href": "alerts",
             "label": "Be told when a cache fills up"
+          }
+        }
+      },
+      "searching-logs": {
+        "title": "Searching your logs",
+        "summary": "Type what you are looking for. OpsWatch writes the query and shows it to you.",
+        "what": "The Search page looks inside the log groups you choose and shows the lines that match. You do not need to know a query language: you type words, pick a level and a time range, and OpsWatch builds the CloudWatch Logs Insights query for you — and shows you exactly what it built.",
+        "flow": {
+          "0": {
+            "label": "Pick log groups"
+          },
+          "1": {
+            "label": "Type what you are looking for"
+          },
+          "2": {
+            "label": "OpsWatch builds the query",
+            "note": "and shows it"
+          },
+          "3": {
+            "label": "You press Search"
+          }
+        },
+        "before": {
+          "0": "A connected AWS account whose permission test passes.",
+          "1": "At least one log group with something in it. If you have none, read “Send logs so OpsWatch can read them” first.",
+          "2": "Be aware that AWS bills for the data a search scans. Fewer log groups and a shorter range cost less."
+        },
+        "steps": {
+          "0": {
+            "title": "Choose the log groups",
+            "body": "The list on the left is bounded and scrolls on its own, so it never pushes the logs off the screen. Type in the box above it to filter the ones already loaded; if nothing matches, a button appears to ask AWS for more. The count under the box says how many you have ticked, and Clear unticks them all."
+          },
+          "1": {
+            "title": "Type what you are looking for",
+            "body": "Plain words, not a query: “timeout”, “500”, the name of a customer. Matching ignores capitals. Leave it empty to see everything in the range. You can also narrow by level, choose how far back to look, and choose how many lines to fetch."
+          },
+          "2": {
+            "title": "Look at the query before you run it",
+            "body": "Open “The query OpsWatch will run” to see exactly what will be sent to AWS. This is the query itself, not a description of it — you can copy it into a ticket, or click inside it to edit it by hand if you know Logs Insights."
+          },
+          "3": {
+            "title": "Read the results",
+            "body": "One line per record. The time is on the left, the level beside it when the line announces one, and the message fills the rest. Click a line to expand it and see every field, with a button to copy the message and a button to copy the whole record."
+          },
+          "4": {
+            "title": "Narrow without searching again",
+            "body": "The panel on the left counts the levels and the log streams in what came back. Clicking one filters the lines on screen — it does not run a second query, so it costs nothing and is instant."
+          },
+          "5": {
+            "title": "Save a search you will run again",
+            "body": "Give it a name and press Save. Saved searches are yours alone: nobody else sees them, nothing runs on its own, and nothing leaves this installation. Loading one is an ordinary navigation, so the browser’s back button undoes it and the address bar holds a link you can paste into a ticket."
+          }
+        },
+        "verify": "A search over a log group you know is busy returns lines with times in the range you chose, and the timeline above them has bars where those lines are.",
+        "problems": {
+          "0": {
+            "q": "It says the search ran and nothing matched.",
+            "a": "That is exactly what it means, and it is not the same as “nothing was logged”. The search reached AWS, AWS looked, and no line in those groups and that range contained what you asked for. Try a shorter word, a wider range, or more log groups."
+          },
+          "1": {
+            "q": "Why does it say “showing 100 of 4,213”?",
+            "a": "You asked for 100 lines and 4,213 matched. Everything drawn from those lines — the count, the timeline, the level and stream counts — then describes the hundred you fetched rather than all of them, and the page says so. Raise the line count or narrow the search to close the gap."
+          },
+          "2": {
+            "q": "Some lines have no level.",
+            "a": "Plenty of log lines do not say what level they are. OpsWatch leaves those blank and counts them as their own group. Colouring them “info” would be inventing a severity nobody wrote."
+          },
+          "3": {
+            "q": "Nothing is listed on the left at all.",
+            "a": "Either nothing is writing to CloudWatch Logs in this region, or the logs permissions are denied. OpsWatch cannot tell an empty log group from one it was not allowed to read, so it does not guess. Check the account’s permission test."
+          },
+          "4": {
+            "q": "Searching feels slow or expensive.",
+            "a": "AWS bills Logs Insights by the data it scans, and a query over a day of a busy group scans a lot. Narrow the time range first, then the log groups. The note under the picker says the same thing."
+          },
+          "5": {
+            "q": "Can the assistant search for me?",
+            "a": "If an AI provider is configured, you can describe what you want and it will fill in the form. It proposes; it does not run. You see the five values it chose and the query they build, and the search starts only when you press Search. It can only choose from the log groups you already ticked, and it never sees a single log line."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "logs",
+            "label": "Send more logs to CloudWatch"
+          },
+          "1": {
+            "href": "connect-github",
+            "label": "Turn an error into a line of code"
           }
         }
       }
