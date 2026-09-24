@@ -39,14 +39,3 @@ export function ingestEventId(input: {
 /** The minute a record was received in, UTC, which is the bucket its traffic is counted in. */
 export const MINUTE_MS = 60_000;
 export const minuteOf = (atMs: number) => Math.floor(atMs / MINUTE_MS) * MINUTE_MS;
-
-/**
- * The name OpsWatch gives its own subscription filters.
- *
- * It carries the connection id, so two OpsWatch instances watching the same AWS account do not fight over
- * one filter — and so OpsWatch can tell its own filter from another vendor's without a tag, which
- * subscription filters do not support.
- */
-export const OPSWATCH_FILTER_PREFIX = 'OpsWatch-';
-export const filterNameFor = (connectionId: string) => `${OPSWATCH_FILTER_PREFIX}${connectionId}`;
-export const isOpsWatchFilter = (name: string) => name.startsWith(OPSWATCH_FILTER_PREFIX);

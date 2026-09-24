@@ -1,7 +1,8 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { INGEST_LIMITS, ingestLogsRequestSchema } from '@opswatch/contract';
-import { filterNameFor, ingestEventId, isOpsWatchFilter, minuteOf } from '@/lib/ingest/identity';
+import { ingestEventId, minuteOf } from '@/lib/ingest/identity';
+import { filterNameFor, isOpsWatchFilter } from '@/lib/monitoring/shared/filter-name';
 import { INGEST_RATE_PER_MINUTE, timestampIsFresh, verifyRequest } from '@/lib/ingest/verify';
 import { readBody } from '@/lib/ingest/decompress';
 import { sign } from '@/lib/notify/payload';

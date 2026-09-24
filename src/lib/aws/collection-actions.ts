@@ -16,7 +16,6 @@ import { IAM_POLICY_VERSION } from './actions';
  * | `logs:PutSubscriptionFilter` | To start forwarding a log group the operator ticked. |
  * | `logs:DeleteSubscriptionFilter` | To stop. A feature that can only be switched on is not optional. |
  * | `lambda:GetFunctionConfiguration` | To read the forwarder's version from AWS rather than believe what a browser said it is. |
- * | `cloudformation:DescribeStacks` | To confirm the collection stack exists and is not mid-failure. |
  * | `sqs:GetQueueAttributes` | To report the dead-letter queue's depth. A DLQ nobody can see is a silence. |
  *
  * Every one of them is scoped to a resource except the log-group actions, which AWS only accepts against
@@ -35,16 +34,19 @@ export const COLLECTION_WRITE_ACTIONS = [
 export const COLLECTION_READ_ACTIONS = [
   'logs:DescribeSubscriptionFilters',
   'lambda:GetFunctionConfiguration',
-  'cloudformation:DescribeStacks',
   'sqs:GetQueueAttributes',
 ] as const;
 
 /**
  * The policy attached to the existing read-only role while managed collection is on.
  *
- * Four statements rather than one, because four different resources are being named. A single statement
+ * Three statements rather than one, because three different resources are being named. A single statement
  * with every action against `*` would be shorter and would grant `DeleteSubscriptionFilter` on a resource
  * that has no subscription filters.
+ *
+ * `cloudformation:DescribeStacks` was considered and dropped: the function existing, with its version in
+ * its own environment, is what OpsWatch actually needs to verify, and a stack status adds a permission
+ * for something already answered.
  */
 export function collectionPolicyDocument() {
   return {
@@ -63,12 +65,6 @@ export function collectionPolicyDocument() {
         Effect: 'Allow' as const,
         Action: ['lambda:GetFunctionConfiguration'],
         Resource: { 'Fn::GetAtt': ['OpsWatchForwarder', 'Arn'] },
-      },
-      {
-        Sid: 'ReadOwnStack',
-        Effect: 'Allow' as const,
-        Action: ['cloudformation:DescribeStacks'],
-        Resource: { Ref: 'AWS::StackId' },
       },
       {
         Sid: 'ReadDeadLetterQueue',
