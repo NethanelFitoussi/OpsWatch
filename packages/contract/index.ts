@@ -47,3 +47,4 @@ export * from './repository';
 export * from './ai';
 export * from './notifications';
 export * from './preferences';
+export * from './ingest';
