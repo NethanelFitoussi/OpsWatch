@@ -27,10 +27,21 @@ import { minuteOf, MINUTE_MS } from '../ingest/identity';
  * forwarder write into the other's data, and the `where` is what makes that structural.
  */
 
+/**
+ * The stored row, or undefined.
+ *
+ * The difference from `readCollection` matters: "nobody has ever touched this feature" and "somebody
+ * turned it off" are the same three switches and two different facts, and a caller that has to write
+ * needs to know which it is before it creates a row for a connection that may not exist.
+ */
+export function findCollection(db: Db, connectionId: string): AwsCollectionRow | undefined {
+  return db.select().from(awsCollection).where(eq(awsCollection.connectionId, connectionId)).get();
+}
+
 /** What an instance with no row has: everything off. Returned, never written. */
 export function readCollection(db: Db, connectionId: string, nowMs = 0): AwsCollectionRow {
   return (
-    db.select().from(awsCollection).where(eq(awsCollection.connectionId, connectionId)).get() ?? {
+    findCollection(db, connectionId) ?? {
       connectionId,
       managed: false,
       realtimeLogs: false,
@@ -88,7 +99,7 @@ export function listForwardedGroups(db: Db, connectionId: string, region?: strin
   return db.select().from(awsForwardedGroups).where(and(...where)).orderBy(asc(awsForwardedGroups.logGroup)).all();
 }
 
-export function findForwardedGroup(db: Db, connectionId: string, region: string, logGroup: string): AwsForwardedGroupRow | undefined {
+function findForwardedGroup(db: Db, connectionId: string, region: string, logGroup: string): AwsForwardedGroupRow | undefined {
   return db
     .select()
     .from(awsForwardedGroups)
@@ -258,8 +269,14 @@ export function readIngestTraffic(db: Db, connectionId: string, sinceMs: number)
   };
 }
 
-/** How many requests this integration made in the current minute, for the rate limit. */
-export function requestsThisMinute(db: Db, connectionId: string, nowMs: number): number {
+/**
+ * How many **records** this integration accounted for in the current minute.
+ *
+ * Accepted, refused and repeated together, because all three cost something and a client that is only
+ * ever refused is still a client making this instance work. Records rather than requests: records are
+ * what reach the disk.
+ */
+export function recordsThisMinute(db: Db, connectionId: string, nowMs: number): number {
   const rows = db
     .select()
     .from(ingestStats)

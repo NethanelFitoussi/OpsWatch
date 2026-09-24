@@ -4,6 +4,7 @@ import { redirect as nextRedirect } from 'next/navigation';
 import { redirect } from '@/i18n/navigation';
 import { resolveLocale, type AppLocale } from '@/i18n/routing';
 import { requireAdmin } from '@/lib/auth/current';
+import { disableManagedCollection } from '@/lib/aws/collection';
 import { awsErrorCode } from '@/lib/aws/errors';
 import { quickCreateUrl } from '@/lib/aws/template';
 import { uploadTemplate } from '@/lib/aws/template-upload';
@@ -152,6 +153,10 @@ export async function launchStackAction(requestedLocale: string, id: string): Pr
 
 export async function deleteConnectionAction(requestedLocale: string, id: string): Promise<void> {
   const locale = await authorize(requestedLocale);
+  // Forwarding is stopped **before** the connection goes, while OpsWatch can still assume the role that
+  // removes the subscriptions. Afterwards there is no credential left to do it with, and the filters
+  // would keep invoking a Lambda that delivers to an integration which no longer exists.
+  await disableManagedCollection(getDb(), id, Date.now());
   deleteConnection(getDb(), id);
   credentialResolver.forget(id);
   redirect({ href: '/accounts', locale });

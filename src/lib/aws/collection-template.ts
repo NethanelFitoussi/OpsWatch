@@ -23,9 +23,21 @@ import { resourcePrefix, roleNameFor } from './template';
  * deploy time, and an operator can read every line of what they are about to run in their own account.
  */
 
-export const COLLECTION_STACK_SUFFIX = '-collection';
+const COLLECTION_STACK_SUFFIX = '-collection';
 export const collectionStackNameFor = (connectionId: string) => `${resourcePrefix(connectionId)}${COLLECTION_STACK_SUFFIX}`;
-export const forwarderNameFor = (connectionId: string) => `${resourcePrefix(connectionId)}-forwarder`;
+const forwarderNameFor = (connectionId: string) => `${resourcePrefix(connectionId)}-forwarder`;
+
+/**
+ * The dead-letter queue's URL, derived rather than asked for.
+ *
+ * The template names the queue `${AWS::StackName}-dlq`, and the stack name comes from the connection id —
+ * so OpsWatch can find the queue from what it already knows instead of making an operator copy a second
+ * output back. SQS URLs are `https://sqs.<region>.amazonaws.com/<account>/<name>`, which is documented and
+ * stable.
+ */
+export function deadLetterQueueUrl(connectionId: string, region: string, awsAccountId: string): string {
+  return `https://sqs.${region}.amazonaws.com/${awsAccountId}/${collectionStackNameFor(connectionId)}-dlq`;
+}
 
 /** Tags on every resource, so an audit can find what OpsWatch made without guessing from names. */
 export function ownershipTags(connectionId: string, component: string): { Key: string; Value: string }[] {

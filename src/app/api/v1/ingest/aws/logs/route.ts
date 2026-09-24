@@ -13,7 +13,7 @@ import {
   listForwardedGroups,
   readCollection,
   recordIngestStat,
-  requestsThisMinute,
+  recordsThisMinute,
   storeIngestEvents,
 } from '@/lib/store/collection';
 import { SIGNATURE_HEADER, TIMESTAMP_HEADER } from '@/lib/notify/payload';
@@ -103,8 +103,8 @@ export const POST = publicApiRoute({
     if (!verified.ok) return refusal(verified.reason);
 
     // Per integration, and therefore only knowable now. An authenticated client is still a client that
-    // can be wrong, and an unbounded one can fill a disk.
-    if (requestsThisMinute(db, connection.id, nowMs) >= INGEST_RATE_PER_MINUTE) return refusal('rate_limited');
+    // can be wrong, and records are what reach the disk — so the bound counts records rather than calls.
+    if (recordsThisMinute(db, connection.id, nowMs) >= INGEST_RATE_PER_MINUTE) return refusal('rate_limited');
 
     let parsed;
     try {

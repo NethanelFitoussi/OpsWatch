@@ -1,8 +1,9 @@
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
-import { COLLECTION_TEMPLATE_VERSION, COLLECTION_WRITE_ACTIONS, collectionPolicyDocument } from '@/lib/aws/collection-actions';
+import { COLLECTION_READ_ACTIONS, COLLECTION_TEMPLATE_VERSION, COLLECTION_WRITE_ACTIONS, collectionPolicyDocument } from '@/lib/aws/collection-actions';
 import {
   MAX_INLINE_CODE_BYTES,
+  deadLetterQueueUrl,
   buildCollectionTemplate,
   collectionStackNameFor,
   deleteCollectionCommand,
@@ -152,6 +153,32 @@ describe('the forwarder’s code travels inside the template', () => {
   it('refuses to render rather than produce a template AWS will reject', () => {
     const tooBig = () => buildCollectionTemplate({ ...INPUT, readFile: () => 'x'.repeat(MAX_INLINE_CODE_BYTES + 1) });
     expect(tooBig).toThrow(/over CloudFormation/);
+  });
+});
+
+describe('THE RULING: the policy grants exactly what is listed and nothing more', () => {
+  it('contains every action the catalogue names, and no action it does not', () => {
+    const granted = collectionPolicyDocument().Statement.flatMap((statement) => statement.Action);
+    // The list in `collection-actions.ts` is the documentation of why each permission exists. A grant
+    // that is not on it is a grant nobody wrote a reason for.
+    expect([...granted].sort()).toEqual([...COLLECTION_READ_ACTIONS, ...COLLECTION_WRITE_ACTIONS].sort());
+  });
+
+  it('grants exactly two actions that change anything', () => {
+    expect([...COLLECTION_WRITE_ACTIONS]).toEqual(['logs:PutSubscriptionFilter', 'logs:DeleteSubscriptionFilter']);
+  });
+});
+
+describe('finding the dead-letter queue', () => {
+  it('derives it from what OpsWatch already knows, rather than asking for a second output', () => {
+    // The template names it `${AWS::StackName}-dlq`, and the stack name comes from the connection id.
+    expect(deadLetterQueueUrl('abc123def456', 'eu-west-1', '123456789012')).toBe(
+      'https://sqs.eu-west-1.amazonaws.com/123456789012/opswatch-abc123def456-collection-dlq',
+    );
+  });
+
+  it('matches the name the template actually gives the queue', () => {
+    expect(resources.OpsWatchForwarderDlq.Properties.QueueName).toEqual({ 'Fn::Sub': '${AWS::StackName}-dlq' });
   });
 });
 

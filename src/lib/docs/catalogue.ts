@@ -59,6 +59,12 @@ export const DOCS: readonly DocGuide[] = [
     appHref: '/logs/search',
   },
 
+  {
+    slug: 'push-collection',
+    category: 'aws',
+    keywords: ['forwarder', 'push', 'real-time logs', 'lambda', 'subscription filter', 'managed collection', 'streaming', 'live logs', 'ingest', 'send logs to opswatch'],
+  },
+
   { slug: 'connect-github', category: 'code', keywords: ['github', 'connect github', 'repository', 'commit', 'code', 'deployment', 'map service', 'changed files'] },
 
   { slug: 'history', category: 'data', keywords: ['history', 'historical data', 'save metrics', 'retain', 'retention', 'statistics', 'baseline', 'cost', 'storage', 'backup'] },

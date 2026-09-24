@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEGRADED_REJECT_SHARE, forwarderState, type ForwarderFactsInput } from '@/lib/monitoring/shared/forwarder-state';
+import { DEGRADED_REJECT_SHARE, FORWARDER_STATES, forwarderState, type ForwarderFactsInput } from '@/lib/monitoring/shared/forwarder-state';
 
 const facts = (over: Partial<ForwarderFactsInput> = {}): ForwarderFactsInput => ({
   managed: true,
@@ -9,6 +9,12 @@ const facts = (over: Partial<ForwarderFactsInput> = {}): ForwarderFactsInput => 
   rejected: 0,
   deadLetters: 0,
   ...over,
+});
+
+describe('the states a forwarder can be in', () => {
+  it('are a closed list, every one of which the page has a word for', () => {
+    expect([...FORWARDER_STATES]).toEqual(['not_installed', 'inactive', 'healthy', 'degraded', 'error', 'unknown']);
+  });
 });
 
 describe('THE RULING: a forwarder nobody is sending to is not unhealthy', () => {

@@ -242,8 +242,9 @@ describe('THE RULING: an authenticated caller is still bounded', () => {
   it('rate limits per integration, and says how long to wait', async () => {
     const id = ready();
     const { recordIngestStat } = await import('@/lib/store/collection');
-    // Fill this minute's budget without sending a thousand requests.
-    recordIngestStat(state.db, id, REGION, Date.now(), { events: 1_000 });
+    // Fill this minute's budget without actually sending a hundred thousand records.
+    const { INGEST_RATE_PER_MINUTE } = await import('@/lib/ingest/verify');
+    recordIngestStat(state.db, id, REGION, Date.now(), { events: INGEST_RATE_PER_MINUTE });
     const response = await post(id, batch());
     expect(response.status).toBe(429);
     expect(response.headers.get('retry-after')).toBe('60');

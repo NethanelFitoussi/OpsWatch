@@ -79,10 +79,15 @@ export function verifyRequest(input: {
 }
 
 /**
- * How many requests one integration may make in a minute.
+ * How many **records** one integration may deliver in a minute.
  *
- * Generous, because a busy account legitimately delivers often, and bounded, because an authenticated
- * client is still a client that can be wrong. A batch is up to a thousand records, so this is a million
- * records a minute before anything is refused.
+ * Records, not requests, because records are what reach the disk: the bound exists so an authenticated
+ * forwarder that has gone wrong — or a log group nobody expected to be this busy — cannot fill a
+ * self-hoster's volume before anybody notices.
+ *
+ * A hundred thousand a minute is roughly 1,600 lines a second from one AWS account, which is far above
+ * what a normal estate produces and far below what would matter to a disk. A forwarder that reaches it is
+ * told to wait, retries with backoff, and the refusals show up on the forwarder card as a degraded state
+ * rather than as silence.
  */
-export const INGEST_RATE_PER_MINUTE = 1_000;
+export const INGEST_RATE_PER_MINUTE = 100_000;

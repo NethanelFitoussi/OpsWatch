@@ -10,6 +10,7 @@ import { resolveTarget } from '../monitoring/target';
 import {
   deleteForwardedGroup,
   deleteIngestEvents,
+  findCollection,
   listForwardedGroups,
   newIngestSecret,
   readCollection,
@@ -84,6 +85,10 @@ export type DisableOutcome = {
  */
 export async function disableManagedCollection(db: Db, connectionId: string, nowMs: number): Promise<DisableOutcome> {
   const outcome: DisableOutcome = { removed: [], failed: [] };
+  // Nobody ever touched the feature for this connection, so there is nothing to turn off — and writing a
+  // row here would create settings for a connection that may be on its way out.
+  if (findCollection(db, connectionId) === undefined) return outcome;
+
   for (const group of listForwardedGroups(db, connectionId)) {
     const stopped = await stopForwarding(db, connectionId, group.region, group.logGroup, nowMs);
     (stopped.ok ? outcome.removed : outcome.failed).push(group.logGroup);

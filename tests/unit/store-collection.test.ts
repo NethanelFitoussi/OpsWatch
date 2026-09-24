@@ -11,7 +11,7 @@ import {
   readCollection,
   readIngestTraffic,
   recordIngestStat,
-  requestsThisMinute,
+  recordsThisMinute,
   storeIngestEvents,
   sweepIngestEvents,
   upsertForwardedGroup,
@@ -165,10 +165,12 @@ describe('the traffic behind forwarder health', () => {
     expect(readIngestTraffic(db, one, NOW).lastEventAt).toBeNull();
   });
 
-  it('counts everything an integration did this minute, for the rate limit', () => {
+  it('counts every record an integration accounted for this minute, for the rate limit', () => {
     const { db, one } = withAccounts();
+    // Accepted, refused and repeated together: all three cost something, and a client that is only ever
+    // refused is still a client making this instance work.
     recordIngestStat(db, one, 'eu-west-1', NOW, { events: 4, rejected: 1, duplicates: 2 });
-    expect(requestsThisMinute(db, one, NOW)).toBe(7);
-    expect(requestsThisMinute(db, one, NOW + MINUTE)).toBe(0);
+    expect(recordsThisMinute(db, one, NOW)).toBe(7);
+    expect(recordsThisMinute(db, one, NOW + MINUTE)).toBe(0);
   });
 });
