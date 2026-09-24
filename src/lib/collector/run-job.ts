@@ -8,6 +8,7 @@ import { runDeploymentsJob } from './deployments-job';
 import { runDetectJob } from './detect';
 import { runDigestJob } from './digest-job';
 import { runErrorsJob } from './errors-job';
+import { runIngestJob } from './ingest-job';
 import { runMetricsJob } from './metrics-job';
 import { runNotifyJob } from './notify-job';
 import { runSyntheticsJob } from './synthetics-job';
@@ -32,6 +33,8 @@ export const runJob: JobRun = async (job, nowMs) => {
   if (job.id === 'notify') return runNotifyJob(db, env().OPSWATCH_SECRET, nowMs);
   // Also instance-scoped, and with the weekly summary off — the default — it reads one row and stops.
   if (job.id === 'digest') return runDigestJob({ db, nowMs });
+  // Also instance-scoped: the ingestion queue is one table for every integration.
+  if (job.id === 'ingest') return runIngestJob({ db, nowMs });
 
   if (job.connectionId === null || job.scope === null) return { covered: 0, total: 0 };
   const scoped = { db, connectionId: job.connectionId, scope: job.scope, nowMs };

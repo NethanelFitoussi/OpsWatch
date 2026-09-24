@@ -9,6 +9,7 @@ import { resolveTarget } from '../monitoring/target';
 import { enabledLogSources, recordError } from '../store/errors';
 import { budgetState, recordBudgetStop, recordScan } from '../store/logs-budget';
 import { runErrorDetectCycle } from './errors-detect';
+import { isForwarded } from './ingest-job';
 import type { JobOutcome } from './runner';
 
 /**
@@ -73,6 +74,9 @@ export async function runErrorsJob(input: ErrorsJobInput): Promise<JobOutcome> {
 
   let covered = 0;
   for (const source of sources) {
+    // A group whose lines already arrive by push is not queried as well: that would be the same lines
+    // twice, with the second copy billed per gigabyte scanned.
+    if (isForwarded(input.db, input.connectionId, input.scope, source.logGroup)) continue;
     // Re-checked between sources: one busy group can exhaust the day's budget on its own.
     if (budgetState(input.db, input.nowMs, input.budgetGbPerDay).exhausted) {
       recordBudgetStop(input.db, input.nowMs);

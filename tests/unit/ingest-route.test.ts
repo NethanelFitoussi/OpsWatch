@@ -79,7 +79,7 @@ function post(
     ...options.headers,
   };
   if (integration !== null) headers['x-opswatch-integration'] = integration;
-  return POST(new NextRequest('http://localhost/api/v1/ingest/aws/logs', { method: 'POST', headers, body }), {
+  return POST(new NextRequest('http://localhost/api/v1/ingest/aws/logs', { method: 'POST', headers, body: body as BodyInit }), {
     params: Promise.resolve({} as Record<string, never>),
   });
 }
