@@ -38,6 +38,7 @@ In order. Tick as they land.
 - [x] INF-6 Kubernetes / EKS — Container Insights, cluster → namespace → workload → pod, boundary stated
 - [x] DOC-1 categorised documentation — 17 guides, 6 categories, EN and FR, searchable, contextual links
 - [x] Phase C full visual QA across every section, EN/FR, desktop and narrow
+- [x] ALE-4 webhook delivery — the documentation described it, so it had to exist
 - [ ] Resume the remaining roadmap queue
 
 ## Standing constraints

@@ -18,6 +18,7 @@ export const JOB_IDS = [
   'baselines',
   'slo',
   'cloudflare',
+  'notify',
   'compact',
 ] as const;
 export type JobId = (typeof JOB_IDS)[number];
@@ -75,6 +76,10 @@ export const JOBS: Record<JobId, JobSpec> = {
    * three times. On from the start because it finds no connection on a fresh install and costs nothing.
    */
   cloudflare: { id: 'cloudflare', everyMs: 6 * HOUR, cap: null, scope: 'instance', freshInstall: true },
+  // §15's delivery: sends what the alert cycle queued and retries what failed. Instance-wide, because a
+  // destination belongs to the installation rather than to one environment. On from the start and free
+  // until somebody creates a destination — with none, it has nothing to send.
+  notify: { id: 'notify', everyMs: MINUTE, cap: null, scope: 'instance', freshInstall: true },
   // Retention and the backup: one instance-wide pass, touching no provider.
   compact: { id: 'compact', everyMs: 24 * HOUR, cap: null, scope: 'instance', freshInstall: true },
 };

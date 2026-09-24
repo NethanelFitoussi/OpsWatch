@@ -2959,7 +2959,9 @@
       "cloudflare": "Cloudflare",
       "cloudflareHint": "Read traffic, cache and security events at the edge for the zones you choose.",
       "audit": "Audit log",
-      "auditHint": "Who did what, and when. Entries are only ever added."
+      "auditHint": "Who did what, and when. Entries are only ever added.",
+      "notifications": "Notifications",
+      "notificationsHint": "Where an alert may be sent. Nothing leaves this instance until you add a destination."
     },
     "repositories": {
       "title": "Repositories",
@@ -3066,7 +3068,9 @@
         "alert_acknowledge": "Alert acknowledged",
         "incident_dismiss": "Incident dismissed",
         "export_download": "Export downloaded",
-        "retention_purge": "Retention pass ran"
+        "retention_purge": "Retention pass ran",
+        "notify_update": "Notification destination changed",
+        "notify_test": "Notification destination tested"
       }
     },
     "ai": {
@@ -3225,6 +3229,43 @@
         "unreachable": "Cloudflare could not be reached.",
         "bad_response": "Cloudflare answered with something OpsWatch could not read.",
         "timeout": "Cloudflare did not answer in time."
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Where OpsWatch may send an alert. Nothing leaves this instance until you add a destination.",
+      "whatIsSent": "What OpsWatch sends",
+      "whatIsSentHint": "The alert, the problem behind it and a link back. Never a credential, never a log line.",
+      "signatureHeader": "HMAC-SHA256 over the timestamp and the exact body, using the signing secret.",
+      "timestampHeader": "When OpsWatch sent it, in milliseconds. It is inside the signature, so a captured request cannot be replayed for ever.",
+      "readGuide": "How alerts and notifications work",
+      "addTitle": "Add a webhook",
+      "addHint": "HTTPS only. The body is signed, not encrypted — over plain HTTP anybody on the path could read the alert.",
+      "name": "Name",
+      "url": "URL",
+      "urlHint": "An HTTPS URL you control. Credentials in the URL are refused.",
+      "create": "Add destination",
+      "secretTitle": "Your signing secret",
+      "secretHint": "Copy it now. OpsWatch stores it encrypted and will not show it again — a page that could read it back is a page that could leak it.",
+      "listTitle": "Destinations",
+      "none": "No destination yet, so no alert leaves this instance.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete",
+      "test": "Send a test",
+      "testOk": "Delivered.",
+      "neverSent": "Nothing sent yet.",
+      "lastOk": "Last delivery succeeded {when}.",
+      "lastFailed": "Last delivery failed {when}, {failures, plural, one {# failure} other {# failures}} in a row.",
+      "errors": {
+        "name_invalid": "Give the destination a name.",
+        "url_invalid": "Enter an HTTPS URL, with no username or password in it.",
+        "not_found": "That destination no longer exists.",
+        "http": "The receiver answered with an error.",
+        "timeout": "The receiver did not answer in time.",
+        "network": "OpsWatch could not reach that URL."
       }
     }
   },

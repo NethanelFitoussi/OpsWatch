@@ -188,7 +188,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | AWS-9 | ALB / ELB | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 | AWS-10 | Alarms | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 | AWS-11 | CloudWatch metrics | ✓ | · | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | — |
-| AWS-12 | ElastiCache / Redis | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Depends on AWS-5. Until the stack is updated the page must show "update your stack", not an empty grid |
+| AWS-12 | ElastiCache / Redis | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Delivered without AWS-5: discovered through `cloudwatch:ListMetrics`, which the role already grants, so no stack needs updating. See INF-5 |
 | AWS-13 | CloudTrail | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | Not in any spec section; no IAM action requested |
 | AWS-14 | CloudFront | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Mobile's `family.unavailable` example names it; no collector reads it |
 
@@ -301,7 +301,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | ALE-1 | Alert model and rules | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Rules and alerts, §15.1's install set created visibly, `/api/v1/alerts` and a page |
 | ALE-2 | Alert lifecycle, acknowledge | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Fire, suppress, refire, acknowledge and resolve, with rules that can be turned off — every change audited |
 | ALE-3 | Notification preferences | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Stored per user and served on `/api/v1/me/preferences`. No web UI, because the web has no notifications to prefer yet |
-| ALE-4 | Delivery (email / Slack / webhook) | ✗ | ✗ | ✗ | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | Deliberately last: §15 promises nothing leaves the instance until a notifier exists, and email needs a new runtime dependency |
+| ALE-4 | Delivery (webhook) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | Signed webhooks: HTTPS only, HMAC-SHA256 over the timestamp and the exact bytes sent, a secret shown once and never re-readable, four attempts on a backoff and then a visible failure. §15 holds — with no destination, nothing leaves the instance. **Email and Slack remain**: both need a new runtime dependency or an outbound integration, and neither is dependency-ready here |
 | ALE-5 | Push notifications | ✗ | ✗ | ✓ | · | ✓ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs an EAS project and APNs/FCM credentials |
 | ALE-6 | Deduplication / noise control | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | One alert per rule and subject, a 30-minute cooldown, and the suppressed count shown so the quiet is visible |
 

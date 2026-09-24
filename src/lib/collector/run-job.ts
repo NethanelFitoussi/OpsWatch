@@ -8,6 +8,7 @@ import { runDeploymentsJob } from './deployments-job';
 import { runDetectJob } from './detect';
 import { runErrorsJob } from './errors-job';
 import { runMetricsJob } from './metrics-job';
+import { runNotifyJob } from './notify-job';
 import { runSyntheticsJob } from './synthetics-job';
 import type { JobRun } from './runner';
 
@@ -26,6 +27,8 @@ export const runJob: JobRun = async (job, nowMs) => {
   if (job.id === 'compact') return runCompactJob({ db, nowMs });
   // Also instance-scoped: a zone belongs to the installation, not to an AWS account and region.
   if (job.id === 'cloudflare') return runCloudflareJob({ db, nowMs });
+  // Also instance-scoped: a destination belongs to the installation, and with none this is free.
+  if (job.id === 'notify') return runNotifyJob(db, env().OPSWATCH_SECRET, nowMs);
 
   if (job.connectionId === null || job.scope === null) return { covered: 0, total: 0 };
   const scoped = { db, connectionId: job.connectionId, scope: job.scope, nowMs };

@@ -37,6 +37,8 @@ export const AUDIT_ACTIONS = [
   'ai_test',
   'cloudflare_update',
   'cloudflare_test',
+  'notify_update',
+  'notify_test',
   'synthetic_update',
   'alert_rule_update',
   'slo_update',
