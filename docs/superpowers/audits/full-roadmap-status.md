@@ -252,6 +252,18 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | HIS-9 | Vector / semantic provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | Same reason; §Q says semantic *may* improve matching, deterministic first |
 | HIS-10 | Backup / restore / export / migration | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | A Backup & restore settings area: where the data lives and whether that survives a restart, a backup on demand, the newest three kept, a download, and the restore procedure. `VACUUM INTO` rather than a file copy, because WAL. One automatic backup before any migration that changes the schema. **No restore button** — a running process cannot safely write over its own open database, and the page gives the procedure instead |
 
+## AWS collection (push)
+
+| ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| PUSH-1 | Optional push path beside the pull default | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Connecting an account forwards nothing and never will. Three independent switches per connection, never collapsed into one |
+| PUSH-2 | Collection CloudFormation stack | ✓ | · | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | A **separate** stack, so enabling never updates the one holding the role every install depends on, and disabling is one delete with no orphans. Forwarder code inline at 3.3 kB — no bucket, no artifact |
+| PUSH-3 | Signed ingestion endpoint | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Reuses the outbound webhook signature scheme. Freshness both directions, bounded decompression, per-integration record limit, account/region/log-group checked against the integration the signature identified |
+| PUSH-4 | Queue and drain | ✓ | · | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | A table drained by a collector job, like `notify_deliveries`. A pushed line and a pulled line become the same error group, and a forwarded group is no longer billed through Logs Insights |
+| PUSH-5 | Subscription management | ✓ | · | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Reads what is on a log group every time and refuses to replace another vendor's, naming whose it is. The only write calls OpsWatch makes into an AWS account |
+| PUSH-6 | Forwarder health and verification | ✓ | · | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Verified against AWS rather than against a form. A forwarder nobody is sending to is `inactive`, not `degraded` |
+| PUSH-7 | Metric streams over Firehose | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | Deliberately: the envelope carries a `source` discriminator so it can be added as a second source without reshaping ingestion, the queue or the screens |
+
 ## Reports
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
