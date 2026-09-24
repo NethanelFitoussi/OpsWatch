@@ -31,6 +31,14 @@ In order. Tick as they land.
 - [x] Accounts: editable per provider
 - [ ] Full-site visual QA on the running product, and fixes
 - [ ] Visual polish and text reduction
+- [x] Visual infrastructure: patterns extracted and written down before any code
+- [x] INF-1..3 evaluated health, primitives, ECS estate
+- [x] INF-4 EC2 host map
+- [x] INF-5 Redis, discovered through CloudWatch
+- [ ] INF-6 Kubernetes / EKS — **investigate first**: what Container Insights gives without an in-cluster
+      agent, and state plainly where an optional collector would be required
+- [ ] DOC-1 categorised documentation for non-experts (Phase B; the largest remaining piece)
+- [ ] Phase C full visual QA across every section, EN/FR, desktop and narrow
 - [ ] Resume the remaining roadmap queue
 
 ## Standing constraints
