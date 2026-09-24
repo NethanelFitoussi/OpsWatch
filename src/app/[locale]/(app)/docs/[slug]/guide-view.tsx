@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { ApiReference } from '@/components/docs/api-reference';
 import { DocBody, DocCallout, DocFlow, DocNext, DocProblem, DocSection, DocStep } from '@/components/docs/blocks';
 import { docPath, findGuide, type DocGuide } from '@/lib/docs/catalogue';
 
@@ -71,6 +72,9 @@ export async function GuideView({ guide }: { guide: DocGuide }) {
           </ol>
         </DocSection>
       )}
+
+      {/* Generated from the code, so it cannot describe an endpoint that is not there. */}
+      {guide.reference === 'api' && <ApiReference />}
 
       <DocSection title={common('howToVerify')}>
         <DocCallout kind="tip">{t('verify')}</DocCallout>

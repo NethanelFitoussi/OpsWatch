@@ -4966,6 +4966,112 @@
             "label": "Décider combien d’historique conserver"
           }
         }
+      },
+      "api": {
+        "title": "Utiliser l’API",
+        "summary": "Tout ce que montrent les pages, en JSON. Un jeton, une enveloppe, des curseurs pour les listes.",
+        "what": "OpsWatch expose une API HTTP principalement en lecture sur /api/v1. Ce sont les mêmes données que les pages affichent, dans les mêmes formes : un script écrit contre elle ne peut donc pas contredire ce que vous regardez. Il n’y a pas de clé d’API séparée : vous vous connectez avec votre compte et obtenez un jeton.",
+        "before": {
+          "0": "Un compte OpsWatch. L’API donne exactement ce que votre compte peut voir, et rien de plus.",
+          "1": "L’adresse de votre installation et un moyen de faire une requête HTTP — curl, un script, peu importe."
+        },
+        "steps": {
+          "0": {
+            "title": "Obtenir un jeton",
+            "body": "Envoyez votre adresse et votre mot de passe en POST sur /api/v1/auth/login. La réponse contient un jeton. Renvoyez-le dans un en-tête authorization sur tout le reste. C’est une session comme une autre : vous la voyez et pouvez la révoquer dans vos sessions."
+          },
+          "1": {
+            "title": "Trouver l’identifiant de votre environnement",
+            "body": "GET /api/v1/environments les liste. La plupart des points de terminaison attendent env=<connectionId>:<region>, la même paire que dans la barre d’adresse quand vous regardez une page."
+          },
+          "2": {
+            "title": "Lire quelque chose",
+            "body": "GET /api/v1/problems?env=… répond les mêmes problèmes que la page Problèmes. Le corps est l’objet lui-même : il n’y a rien à déballer."
+          },
+          "3": {
+            "title": "Parcourir une liste",
+            "body": "Passez limit puis, après le premier appel, le nextCursor reçu. Quand nextCursor vaut null, il n’y a plus rien. N’en déduisez pas un numéro de page : c’est une position, pas un indice."
+          },
+          "4": {
+            "title": "Gérer un échec une seule fois",
+            "body": "Tout échec est { \"error\": \"<code>\" } avec le statut HTTP correspondant. Écrivez la gestion une fois et elle vaut pour tous les points de terminaison, y compris ceux ajoutés après votre script."
+          }
+        },
+        "verify": "GET /api/v1/server répond sans aucune authentification : c’est le moyen le plus rapide de vérifier l’adresse. Ensuite GET /api/v1/me avec votre jeton vous dit qui vous êtes.",
+        "problems": {
+          "0": {
+            "q": "Y a-t-il une clé d’API à mettre dans un fichier de configuration ?",
+            "a": "Non, et c’est délibéré. Un jeton appartient à un compte, expire, apparaît dans la liste de ses sessions et peut y être révoqué. Une clé d’API dans un fichier n’appartient à personne et survit à tout le monde."
+          },
+          "1": {
+            "q": "Je reçois 401 sur tout.",
+            "a": "Soit le jeton n’a pas été envoyé en authorization: Bearer <token>, soit il a expiré. Les sessions roulent sur 12 heures. Reconnectez-vous."
+          },
+          "2": {
+            "q": "Je reçois 403 forbidden_origin depuis un navigateur.",
+            "a": "Une requête de navigateur vient d’une origine que cette installation ne sert pas. Aucun point de terminaison ne porte d’en-tête CORS, à dessein : en ajouter un donnerait votre cookie de session à une page d’une autre origine. Appelez l’API depuis un script ou depuis les pages de cette installation."
+          },
+          "3": {
+            "q": "Puis-je écrire via l’API ?",
+            "a": "Seulement le peu que les pages permettent : acquitter une alerte, écarter un incident, changer vos préférences, révoquer une session. OpsWatch observe votre infrastructure en lecture seule, et l’API n’est pas un contournement."
+          },
+          "4": {
+            "q": "Un point de terminaison peut-il changer sous mes pieds ?",
+            "a": "Le contrat est additif. Un champ est ajouté, jamais supprimé ni renommé, et une valeur inconnue venant d’un serveur plus récent est conçue pour rester lisible plutôt que fatale. Si cela devait casser un jour, c’est la version dans le chemin qui changerait."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "alerts",
+            "label": "Envoyer les alertes quelque part plutôt que d’interroger"
+          }
+        }
+      }
+    },
+    "api": {
+      "conventionsTitle": "Le comportement commun à tous les points de terminaison",
+      "envelope": "Le corps est l’objet",
+      "envelopeBody": "Un succès renvoie l’objet lui-même. Il n’y a pas d’enveloppe { \"data\": … } à déballer, et une liste est { \"items\": [...], \"nextCursor\": … }.",
+      "auth": "Une authentification, deux formes",
+      "authBody": "Un navigateur utilise le cookie de session qu’il a déjà. Tout le reste appelle /auth/login puis renvoie le jeton dans `authorization: Bearer <token>`. Il n’y a pas de clé d’API séparée.",
+      "paging": "Des curseurs, pas des numéros de page",
+      "pagingBody": "Une liste accepte `limit` et `cursor`, et répond avec `nextCursor`. Renvoyez-le pour continuer ; `null` signifie qu’il n’y a plus rien. Un numéro de page sauterait ou répéterait des lignes à mesure que la liste change.",
+      "time": "Les dates sont en millisecondes epoch",
+      "timeBody": "Chaque horodatage est un nombre de millisecondes depuis 1970 en UTC. Une valeur non mesurée vaut null, jamais zéro.",
+      "environment": "La plupart des points de terminaison demandent un environnement",
+      "environmentBody": "Passez `env=<connectionId>:<region>`. Les environnements disponibles sont listés par GET /environments.",
+      "example": "# Sign in once, keep the token.\nTOKEN=$(curl -sS -X POST https://opswatch.example.com/api/v1/auth/login \\\n  -H 'content-type: application/json' \\\n  -d '{\"email\":\"you@example.com\",\"password\":\"…\"}' | jq -r .token)\n\n# Then call anything with it.\ncurl -sS https://opswatch.example.com/api/v1/problems?env=6d293fe0d4b3:eu-west-1 \\\n  -H \"authorization: Bearer $TOKEN\"",
+      "errorsTitle": "À quoi ressemble un échec",
+      "errorsBody": "Tout échec de tout point de terminaison répond { \"error\": \"<code>\" }, parfois avec `action` et `code` qui nomment l’appel AWS sous-jacent. Gérez cette forme une seule fois. Un code inconnu venant d’un serveur plus récent reste lisible : c’est pourquoi c’est une chaîne et non une énumération.",
+      "endpointsTitle": "Tous les points de terminaison",
+      "endpointsBody": "{count} au total, générés à partir de la liste même contre laquelle les routes sont testées — cette page ne peut donc pas en décrire un qui n’existe pas, ni en oublier un qui existe. Les codes sous chaque résumé sont les échecs au-delà de ceux que tous partagent.",
+      "openapi": "La version lisible par une machine :",
+      "authNone": "Sans session",
+      "authSession": "Session requise",
+      "columns": {
+        "code": "Code",
+        "status": "HTTP",
+        "meaning": "Signification",
+        "endpoint": "Point de terminaison",
+        "auth": "Authentification",
+        "what": "Ce qu’il répond"
+      },
+      "errorMeanings": {
+        "invalid_request": "Un paramètre manque, est mal formé ou ne fait pas partie des valeurs acceptées.",
+        "invalid_cursor": "Le `cursor` n’a pas été émis par ce serveur. Reprenez la liste sans curseur.",
+        "invalid_credentials": "L’adresse ou le mot de passe était faux. La même réponse pour les deux, à dessein.",
+        "unauthorized": "Aucune authentification présentée, ou celle présentée a expiré.",
+        "forbidden": "L’authentification est valide mais n’autorise pas cette action.",
+        "forbidden_origin": "Une requête de navigateur vient d’une origine que cette installation ne sert pas.",
+        "not_found": "Objet inexistant, ou invisible pour l’appelant. Les deux répondent pareil.",
+        "method_not_allowed": "Ce chemin existe avec une autre méthode.",
+        "conflict": "L’objet a changé pendant la requête, ou existe déjà.",
+        "rate_limited": "Trop de tentatives. `Retry-After` indique combien de temps attendre.",
+        "internal_error": "OpsWatch a échoué. Tous les points de terminaison peuvent répondre cela, il n’est donc pas listé sur chacun.",
+        "aws_denied": "AWS a refusé l’appel. `action` nomme la permission attendue.",
+        "aws_throttled": "AWS limite le débit de ce compte.",
+        "aws_error": "AWS a répondu par une erreur. `code` porte la sienne.",
+        "unavailable": "Une dépendance nécessaire à ce point de terminaison est indisponible."
       }
     }
   },

@@ -184,3 +184,46 @@ test('the OpenAPI document describes every route the server implements', async (
     expect(Object.keys(document.paths[v1(path)])).toContain(method);
   }
 });
+
+/**
+ * API-8 — the API, documented for a person rather than for a parser (§Z).
+ *
+ * The acceptance criterion is that the reference cannot drift: it is generated from the same catalogue
+ * the route files are tested against, so it can neither describe an endpoint that is not there nor omit
+ * one that is.
+ */
+test('THE RULING: the reference lists exactly the endpoints the API has', async ({ page }) => {
+  await login(page);
+  const document = await (await page.request.get('/api/v1/openapi.json')).json();
+  const expected = Object.entries((document as { paths: Record<string, Record<string, unknown>> }).paths).flatMap(
+    // The document's paths already carry the prefix, so the reference prints exactly what it says.
+    ([path, methods]) => Object.keys(methods).map((method) => `${method.toUpperCase()} ${path}`),
+  );
+
+  await page.goto('/en/docs/api');
+  const rows = await page.locator('main table').last().getByRole('rowheader').allInnerTexts();
+  const listed = rows.map((row) => row.replace(/\s+/g, ' ').trim());
+  expect(listed.slice().sort()).toEqual(expected.slice().sort());
+});
+
+test('the API guide explains the envelope, the token and the cursor, and links the machine-readable version', async ({ page }) => {
+  await login(page);
+  await page.goto('/en/docs/api');
+  const main = page.locator('main');
+  await expect(main).toContainText('There is no { "data": … } wrapper');
+  await expect(main).toContainText('authorization: Bearer');
+  await expect(main).toContainText('Cursors, not page numbers');
+  // Every code the build can answer, with the status it carries.
+  await expect(main).toContainText('invalid_cursor');
+  await expect(main).toContainText('forbidden_origin');
+  await expect(main.getByRole('link', { name: '/api/v1/openapi.json' })).toBeVisible();
+});
+
+test('the API reference renders at 360px without horizontal overflow', async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/en/docs/api');
+  await expect(page.locator('main')).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});

@@ -359,7 +359,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | API-5 | List filtering | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Honoured or 400; never silently dropped |
 | API-6 | Capability flags | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
 | API-7 | Auth: cookie + bearer, audience-scoped | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
-| API-8 | Public API documentation | ✗ | ✗ | · | ✗ | · | ✗ | ✗ | ✗ | `NOT_STARTED` | The OpenAPI document is served; no prose guide (§Z) |
+| API-8 | Public API documentation | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Guide 21, "Using the API", with the endpoint reference **generated from `API_ROUTES`** — the same catalogue the route files are tested against, so it can neither describe an endpoint that is not there nor omit one that is. The conventions (no wrapper, bearer token, cursors, epoch milliseconds, `env=`) and every error code the build can answer, with its status |
 
 ## UX
 

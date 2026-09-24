@@ -4966,6 +4966,112 @@
             "label": "Decide how much history to keep"
           }
         }
+      },
+      "api": {
+        "title": "Using the API",
+        "summary": "Everything the pages show, as JSON. One token, one envelope, cursors for lists.",
+        "what": "OpsWatch has a read-mostly HTTP API at /api/v1. It is the same data the pages render, in the same shapes, so a script you write against it cannot disagree with what you are looking at. There is no separate API key: you sign in with your own account and get a token.",
+        "before": {
+          "0": "An OpsWatch account. The API gives you exactly what your account can see, and nothing more.",
+          "1": "The address of your instance, and a way to make an HTTP request — curl, a script, anything."
+        },
+        "steps": {
+          "0": {
+            "title": "Get a token",
+            "body": "POST your email and password to /api/v1/auth/login. The answer carries a bearer token. Send it as an authorization header on everything else. It is a session like any other, so you can see it and revoke it under your own sessions."
+          },
+          "1": {
+            "title": "Find your environment id",
+            "body": "GET /api/v1/environments lists them. Most endpoints want env=<connectionId>:<region>, which is the same pair in the address bar when you are looking at a page."
+          },
+          "2": {
+            "title": "Read something",
+            "body": "GET /api/v1/problems?env=… answers the same problems the Problems page shows. The body is the object itself: there is nothing to unwrap."
+          },
+          "3": {
+            "title": "Page through a list",
+            "body": "Pass limit and, after the first call, the nextCursor you were given. When nextCursor is null there is no more. Do not build a page number from it — it is a position, not an index."
+          },
+          "4": {
+            "title": "Handle a failure once",
+            "body": "Every failure is { \"error\": \"<code>\" } with an HTTP status to match. Write the handling once and it works for every endpoint, including ones added after your script was written."
+          }
+        },
+        "verify": "GET /api/v1/server answers without any credential at all, which makes it the quickest way to check you have the right address. Then GET /api/v1/me with your token answers who you are.",
+        "problems": {
+          "0": {
+            "q": "Is there an API key I can put in a config file?",
+            "a": "No, and deliberately. A token belongs to an account, expires, appears in that account’s session list and can be revoked from it. An API key that lives in a file belongs to nobody and outlives everyone."
+          },
+          "1": {
+            "q": "I get 401 on everything.",
+            "a": "Either the token was not sent as authorization: Bearer <token>, or it has expired. Sessions roll over 12 hours. Sign in again."
+          },
+          "2": {
+            "q": "I get 403 forbidden_origin from a browser.",
+            "a": "A browser request arrived from an origin this instance does not serve. There is no CORS header on any endpoint on purpose: adding one would hand a page on another origin your session cookie. Call the API from a script or from this instance’s own pages."
+          },
+          "3": {
+            "q": "Can I write through the API?",
+            "a": "Only the few things the pages let you do: acknowledging an alert, dismissing an incident, changing your own preferences, revoking a session. OpsWatch is a read-only observer of your infrastructure, and the API is not a way around that."
+          },
+          "4": {
+            "q": "Will an endpoint change under me?",
+            "a": "The contract is additive. A field is added, never removed or renamed, and an unknown value from a newer server is designed to be readable rather than fatal. If that ever has to break, the version in the path is what changes."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "alerts",
+            "label": "Send alerts somewhere instead of polling"
+          }
+        }
+      }
+    },
+    "api": {
+      "conventionsTitle": "How every endpoint behaves",
+      "envelope": "The body is the object",
+      "envelopeBody": "A success returns the object itself. There is no { \"data\": … } wrapper to unwrap, and a list is { \"items\": [...], \"nextCursor\": … }.",
+      "auth": "One credential, two forms",
+      "authBody": "A browser uses the session cookie it already has. Anything else posts to /auth/login and sends the token back as `authorization: Bearer <token>`. There is no separate API key.",
+      "paging": "Cursors, not page numbers",
+      "pagingBody": "A list takes `limit` and `cursor`, and answers with `nextCursor`. Pass it back to continue; `null` means there is no more. A page number would skip or repeat rows as the list changes underneath you.",
+      "time": "Times are epoch milliseconds",
+      "timeBody": "Every timestamp is a number of milliseconds since 1970 in UTC. A value that was not measured is null, never zero.",
+      "environment": "Most endpoints need an environment",
+      "environmentBody": "Pass `env=<connectionId>:<region>`. The environments you can use are listed by GET /environments.",
+      "example": "# Sign in once, keep the token.\nTOKEN=$(curl -sS -X POST https://opswatch.example.com/api/v1/auth/login \\\n  -H 'content-type: application/json' \\\n  -d '{\"email\":\"you@example.com\",\"password\":\"…\"}' | jq -r .token)\n\n# Then call anything with it.\ncurl -sS https://opswatch.example.com/api/v1/problems?env=6d293fe0d4b3:eu-west-1 \\\n  -H \"authorization: Bearer $TOKEN\"",
+      "errorsTitle": "What a failure looks like",
+      "errorsBody": "Every failure of every endpoint answers { \"error\": \"<code>\" }, sometimes with `action` and `code` naming the AWS call behind it. Handle the shape once. An unknown code from a newer server is still readable, which is why it is a string rather than an enum.",
+      "endpointsTitle": "Every endpoint",
+      "endpointsBody": "{count} of them, generated from the same list the routes are tested against — so this cannot describe one that is not there, or miss one that is. The codes under each summary are the failures beyond the ones every endpoint shares.",
+      "openapi": "The machine-readable version of all of this:",
+      "authNone": "No sign-in",
+      "authSession": "Signed in",
+      "columns": {
+        "code": "Code",
+        "status": "HTTP",
+        "meaning": "What it means",
+        "endpoint": "Endpoint",
+        "auth": "Auth",
+        "what": "What it answers"
+      },
+      "errorMeanings": {
+        "invalid_request": "A parameter is missing, malformed, or not one of the values this endpoint accepts.",
+        "invalid_cursor": "The `cursor` was not one this server issued. Start the list again without one.",
+        "invalid_credentials": "The email or password was wrong. The same answer for both, on purpose.",
+        "unauthorized": "No credential was presented, or the one presented has expired.",
+        "forbidden": "The credential is valid but is not allowed to do this.",
+        "forbidden_origin": "A browser request arrived from an origin this instance does not serve.",
+        "not_found": "No such object, or none the caller is allowed to see. The two answer the same.",
+        "method_not_allowed": "That path exists with a different method.",
+        "conflict": "The object changed underneath the request, or already exists.",
+        "rate_limited": "Too many attempts. `Retry-After` says how long to wait.",
+        "internal_error": "OpsWatch failed. Every endpoint can answer this, so it is not listed on each one.",
+        "aws_denied": "AWS refused the call. `action` names the permission it wanted.",
+        "aws_throttled": "AWS is rate limiting this account.",
+        "aws_error": "AWS answered with an error. `code` carries its own.",
+        "unavailable": "A dependency this endpoint needs is not available right now."
       }
     }
   },

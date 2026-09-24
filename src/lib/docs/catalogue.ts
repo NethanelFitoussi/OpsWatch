@@ -27,6 +27,13 @@ export type DocGuide = {
   keywords: readonly string[];
   /** Where in the product this guide is about, so a guide can offer the thing it just explained. */
   appHref?: string;
+  /**
+   * A block generated from the code rather than written as prose.
+   *
+   * The API surface is the one thing a hand-written guide cannot keep up with: a second description of it
+   * drifts from the first. Naming it here keeps the structure in this file, where the rest of it lives.
+   */
+  reference?: 'api';
 };
 
 export const DOCS: readonly DocGuide[] = [
@@ -65,6 +72,12 @@ export const DOCS: readonly DocGuide[] = [
 
   { slug: 'cloudflare', category: 'integrations', keywords: ['cloudflare', 'zone', 'api token', 'cache', 'threats', 'edge', 'traffic'] },
   { slug: 'ai', category: 'integrations', keywords: ['ai', 'openai', 'anthropic', 'model', 'api key', 'ask opswatch', 'hypothesis'] },
+  {
+    slug: 'api',
+    category: 'integrations',
+    keywords: ['api', 'rest', 'openapi', 'token', 'bearer', 'integrate', 'script', 'curl', 'endpoints', 'pagination', 'cursor', 'automation'],
+    reference: 'api',
+  },
 ] as const;
 
 export const DOC_SLUGS: readonly string[] = DOCS.map((guide) => guide.slug);
