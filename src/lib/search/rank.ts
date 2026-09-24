@@ -10,21 +10,19 @@
  */
 
 /** Only kinds with something real behind them. A kind with no backing capability is not offered. */
-const RESULT_KINDS = [
-  'connection',
-  'problem',
-  'error',
-  'alert',
-  'incident',
-  'deployment',
-  'repository',
-  'synthetic',
-  'objective',
-  'doc',
-  'page',
-  'sectionSearch',
-] as const;
-type ResultKind = (typeof RESULT_KINDS)[number];
+type ResultKind =
+  | 'connection'
+  | 'problem'
+  | 'error'
+  | 'alert'
+  | 'incident'
+  | 'deployment'
+  | 'repository'
+  | 'synthetic'
+  | 'objective'
+  | 'doc'
+  | 'page'
+  | 'sectionSearch';
 
 export type SearchCandidate = {
   kind: ResultKind;

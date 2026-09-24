@@ -81,7 +81,8 @@ test('the section menu sits at the far left of the content, and collapsing it on
 
 test('a page fills the width of the screen, with no centred column and no horizontal scrollbar', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1000 });
-  await page.goto(`/en/c/${connectionId}/us-east-1/alarms/list`);
+  // Databases rather than Alarms: the alarms page is a list of explaining rows now, not a table.
+  await page.goto(`/en/c/${connectionId}/us-east-1/databases/instances`);
   const width = (locator: ReturnType<typeof page.locator>) => locator.evaluate((el) => el.getBoundingClientRect().width);
   expect((await width(page.locator('main'))) + (await width(page.locator('aside')))).toBeGreaterThanOrEqual(1919);
   // The table takes the width it gains instead of stopping at a maximum.

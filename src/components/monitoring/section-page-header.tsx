@@ -51,7 +51,7 @@ export async function SectionPageHeader({
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title ?? subsectionLabel}</h1>
           {description && <p className="text-muted-foreground">{description}</p>}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <RegionSelector regions={context.connection.regions} current={context.scope.region} />
           {range && <TimeRangeSelector current={range} ranges={ranges} />}
           {autoRefresh && <AutoRefresh intervalMs={context.settings.refreshIntervalMs} />}

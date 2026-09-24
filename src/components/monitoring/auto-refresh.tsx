@@ -59,7 +59,9 @@ export function AutoRefresh({ intervalMs }: { intervalMs: number }) {
     intervalMs % 60_000 === 0 ? t('refresh.every', { minutes: intervalMs / 60_000 }) : t('refresh.everySeconds', { seconds: intervalMs / 1000 });
 
   return (
-    <div className="flex items-center gap-2">
+    // Wrapping rather than overflowing: the label is longer in some locales than the whole header is
+    // wide at 360px, and a button that runs off its card is worse than one on its own line.
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       <Button variant="outline" size="sm" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>
         {paused ? <Play className="size-4" aria-hidden /> : <Pause className="size-4" aria-hidden />}
         {paused ? t('refresh.resume') : t('refresh.pause')}
