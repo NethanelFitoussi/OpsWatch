@@ -26,6 +26,7 @@ export const CLIENT_NAMESPACES = [
   'Monitoring.incidents',
   'Monitoring.alerts',
   'Settings',
+  'Search',
 ] as const;
 
 type Tree = { [key: string]: unknown };

@@ -14,8 +14,19 @@ type Step = { title: string; body?: string; command?: string };
 type Problem = { q: string; a: string };
 type NextLink = { href: string; label: string };
 
-/** Message objects arrive as keyed maps, because the catalogue's type has no arrays. */
-function listOf<T>(value: unknown): T[] {
+/**
+ * Message objects arrive as keyed maps, because the catalogue's type has no arrays.
+ *
+ * A guide that has no diagram simply has no `flow`, and asking for one is not an error worth logging —
+ * so the absence is read as an empty list rather than allowed to raise a missing-message.
+ */
+function listOf<T>(read: () => unknown): T[] {
+  let value: unknown;
+  try {
+    value = read();
+  } catch {
+    return [];
+  }
   if (typeof value !== 'object' || value === null) return [];
   return Object.keys(value as Record<string, T>)
     .sort((a, b) => Number(a) - Number(b))
@@ -26,11 +37,11 @@ export async function GuideView({ guide }: { guide: DocGuide }) {
   const t = await getTranslations(`Docs.guides.${guide.slug}`);
   const common = await getTranslations('Docs');
 
-  const before = listOf<string>(t.raw('before'));
-  const steps = listOf<Step>(t.raw('steps'));
-  const problems = listOf<Problem>(t.raw('problems'));
-  const next = listOf<NextLink>(t.raw('next'));
-  const flow = listOf<{ label: string; note?: string }>(t.raw('flow'));
+  const before = listOf<string>(() => t.raw('before'));
+  const steps = listOf<Step>(() => t.raw('steps'));
+  const problems = listOf<Problem>(() => t.raw('problems'));
+  const next = listOf<NextLink>(() => t.raw('next'));
+  const flow = listOf<{ label: string; note?: string }>(() => t.raw('flow'));
 
   return (
     <DocBody>

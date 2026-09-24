@@ -46,7 +46,7 @@ test('the node table shows what is judged and what is only shown', async ({ page
   await expect(hot).toContainText('90%');
 
   await page.getByLabel('Search nodes').fill('0001');
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.locator('main tbody tr')).toHaveCount(1);
 });
 

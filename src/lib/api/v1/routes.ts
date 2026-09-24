@@ -13,6 +13,7 @@ import {
   briefSchema,
   checkupSchema,
   cloudflareOverviewSchema,
+  globalSearchResponseSchema,
   incidentDetailSchema,
   incidentSummarySchema,
   errorDetailSchema,
@@ -227,6 +228,17 @@ export const API_ROUTES: ApiRouteSpec[] = [
     response: cloudflareOverviewSchema,
     status: 200,
     errors: ['unauthorized'],
+  },
+  {
+    method: 'get',
+    path: '/search',
+    operationId: 'search',
+    auth: 'session',
+    summary:
+      'Finds what OpsWatch holds — problems, errors, alerts, incidents, deployments, repositories, checks, objectives, connections and its own documentation. Live infrastructure is not indexed; a result of kind `sectionSearch` carries the query into the section that can ask AWS for it.',
+    response: globalSearchResponseSchema,
+    status: 200,
+    errors: ['unauthorized', 'invalid_request', 'not_found'],
   },
   {
     method: 'get',

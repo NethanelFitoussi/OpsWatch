@@ -4421,5 +4421,35 @@
         }
       }
     }
+  },
+  "Search": {
+    "title": "Rechercher dans OpsWatch",
+    "open": "Rechercher",
+    "placeholder": "Un service, un problème, un guide…",
+    "results": "Résultats",
+    "noResults": "Rien trouvé. Essayez le nom de la ressource, ou moins de mots.",
+    "hint": "Flèches pour naviguer, Entrée pour ouvrir, Échap pour fermer. Appuyez sur / depuis n’importe où.",
+    "inSection": "Rechercher dans {section}",
+    "kinds": {
+      "connection": "Connexion",
+      "problem": "Problème",
+      "error": "Erreur",
+      "alert": "Alerte",
+      "incident": "Incident",
+      "deployment": "Déploiement",
+      "repository": "Dépôt",
+      "synthetic": "Contrôle synthétique",
+      "objective": "Objectif",
+      "doc": "Documentation",
+      "page": "Page",
+      "sectionSearch": "Recherche"
+    },
+    "sections": {
+      "containers": "les services ECS",
+      "instances": "les instances EC2",
+      "redis": "les nœuds Redis",
+      "kubernetes": "les charges Kubernetes",
+      "logs": "les logs"
+    }
   }
 }

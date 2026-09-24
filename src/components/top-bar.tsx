@@ -4,6 +4,9 @@ import { Menu } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { usePathname } from '@/i18n/navigation';
+import { parseMonitoringPath } from '@/lib/monitoring/shared/paths';
+import { CommandPalette } from './search/command-palette';
 import { BrandLink } from './brand-link';
 import { ConnectionSwitcher, type ShellConnection } from './connection-switcher';
 import { LocaleSwitcher } from './locale-switcher';
@@ -13,6 +16,10 @@ import { ThemeToggle } from './theme-toggle';
 export function TopBar({ signedIn, connections }: { signedIn: boolean; connections?: ShellConnection[] }) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
+  // Search is scoped to the environment the operator is in: a result's context is meaningless without
+  // one, and there is nothing to search before a connection exists.
+  const selection = parseMonitoringPath(usePathname());
+  const environment = selection === null ? null : `${selection.connectionId}:${selection.region}`;
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
@@ -31,6 +38,7 @@ export function TopBar({ signedIn, connections }: { signedIn: boolean; connectio
         <BrandLink className="shrink-0 md:hidden" labelClassName="sr-only sm:not-sr-only" />
         {connections && <ConnectionSwitcher connections={connections} />}
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <CommandPalette environment={environment} />
           <LocaleSwitcher />
           <ThemeToggle />
         </div>

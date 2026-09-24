@@ -376,7 +376,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | UX-9 | Integration centre (§E) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` manages them, `/accounts/new` chooses one to add, `GET /repository` tells a client what is connected. All three read the same measured state |
 | UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
 | UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
-| UX-12 | Global search | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `NOT_STARTED` | §21's `search_index` |
+| UX-12 | Global search | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/` or Ctrl-K from anywhere: a combobox over a listbox, arrows moving `aria-activedescendant` so the caret never leaves the input. Searches what OpsWatch holds — problems, errors, alerts, incidents, deployments, repositories, checks, objectives, connections, its own docs. Live infrastructure is **not** indexed and is offered as a jump that carries the query into the section which can ask AWS, always ranked last |
 | UX-13 | Audit log (§21) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Append-only, admin-only, with sign-ins and every administrator write path recorded through one helper — including refusals and crashes |
 
 ## Mobile dependencies on this server

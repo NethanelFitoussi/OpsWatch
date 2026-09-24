@@ -40,7 +40,7 @@ In order. Tick as they land.
 - [x] Phase C full visual QA across every section, EN/FR, desktop and narrow
 - [x] ALE-4 webhook delivery — the documentation described it, so it had to exist
 - [ ] Resume the remaining roadmap queue. Next by value, all dependency-ready:
-      UX-12 global search · REP-6 overview and logs reports · REP-7 weekly send (ALE-4 unblocked it) ·
+      REP-6 overview and logs reports · REP-7 weekly send (ALE-4 unblocked it) ·
       HIS-10 backup/restore/export · INV-5 investigation workspace · API-8 public API guide ·
       UX-6 accessibility pass.
       Found blocked while surveying: **LOG-4** needs `logs:GetLogRecord`, which the role does not grant —
