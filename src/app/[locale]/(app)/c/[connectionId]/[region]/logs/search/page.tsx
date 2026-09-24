@@ -4,13 +4,14 @@ import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { LOGS_MAX_GROUPS, LOGS_MAX_QUERY_LENGTH, LOGS_MAX_ROWS } from '@/lib/monitoring/logs';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
+import { aiIsReady } from '@/lib/ai/connection';
 import { requireAdmin } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
 import { LOGS_TIME_RANGES, type LogsTimeRange } from '@/lib/monitoring/shared/logs-queries';
 import { LOG_LEVELS, SEARCH_TEXT_MAX, parseRowLimit } from '@/lib/monitoring/shared/logs-search';
 import { fieldsOf, listSavedSearches } from '@/lib/store/saved-searches';
 import { isOneOf } from '@/lib/type-guards';
-import { deleteSearchAction, duplicateSearchAction, saveSearchAction } from './actions';
+import { deleteSearchAction, duplicateSearchAction, proposeSearchAction, saveSearchAction } from './actions';
 import { LogGroupPicker } from './log-group-picker';
 import { LogsExplorer } from './logs-explorer';
 import { LogsSelectionProvider } from './logs-selection';
@@ -60,6 +61,9 @@ export default async function LogsPage({ params, searchParams }: Props) {
             level: isOneOf(LOG_LEVELS, levelParam) ? levelParam : null,
             limit: Math.min(parseRowLimit(first(sp.limit)), LOGS_MAX_ROWS),
           }}
+          // Absent unless somebody configured a provider and the test passed: a button that can only fail
+          // is worse than no button.
+          propose={aiIsReady(getDb()) ? proposeSearchAction.bind(null, context.locale, context.scope.connectionId, context.scope.region) : null}
           saved={{
             rows: savedRows,
             basePath: `/c/${context.scope.connectionId}/${context.scope.region}/logs/search`,

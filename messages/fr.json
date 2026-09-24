@@ -1242,6 +1242,36 @@
             "too_many_saved": "Vous avez atteint la limite de recherches enregistrées. Supprimez-en une d’abord.",
             "not_found": "Cette recherche enregistrée n’existe plus."
           }
+        },
+        "ai": {
+          "title": "Demander de l’aide pour construire cette recherche",
+          "label": "Décrivez ce que vous cherchez",
+          "placeholder": "erreurs de paiement du dernier jour",
+          "ask": "Proposer une recherche",
+          "neverRuns": "Rien n’est recherché tant que vous n’avez pas cliqué sur Lancer la recherche.",
+          "understood": "Ce qu’OpsWatch a compris",
+          "theQuery": "La requête que ces valeurs construisent",
+          "noText": "Aucun filtre de texte",
+          "use": "Utiliser cette recherche",
+          "by": "Proposé par {model}. Une suggestion, pas une mesure.",
+          "errors": {
+            "invalid_request": "Décrivez ce que vous cherchez, en une ou deux phrases.",
+            "no_groups": "Choisissez d’abord au moins un groupe de journaux. L’assistant ne peut que restreindre votre sélection.",
+            "not_json": "L’assistant n’a pas répondu par une recherche qu’OpsWatch sait lire. Rien n’a été modifié.",
+            "unknown_shape": "L’assistant a répondu quelque chose qu’OpsWatch n’accepte pas ; la proposition a été refusée plutôt qu’appliquée à moitié.",
+            "text_too_long": "L’assistant a demandé un terme de recherche trop long.",
+            "unknown_level": "L’assistant a demandé un niveau qu’OpsWatch ne reconnaît pas.",
+            "unknown_range": "L’assistant a demandé une période qu’OpsWatch ne peut pas chercher.",
+            "unknown_limit": "L’assistant a demandé un nombre de lignes qui ne fait pas partie des choix.",
+            "unknown_group": "L’assistant a nommé un groupe de journaux que vous n’avez pas sélectionné ; la proposition a été refusée.",
+            "not_configured": "Aucun fournisseur d’IA n’est configuré.",
+            "unauthorized": "Le fournisseur d’IA a refusé la clé. Vérifiez-la dans les paramètres.",
+            "rate_limited": "Le fournisseur d’IA limite les appels d’OpsWatch. Réessayez bientôt.",
+            "unreachable": "Le fournisseur d’IA est injoignable.",
+            "refused_endpoint": "Ce point de terminaison d’IA a été refusé car il pointe à l’intérieur de ce réseau.",
+            "bad_response": "Le fournisseur d’IA a répondu quelque chose qu’OpsWatch n’a pas pu lire.",
+            "timeout": "Le fournisseur d’IA n’a pas répondu à temps."
+          }
         }
       },
       "facets": {

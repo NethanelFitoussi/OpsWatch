@@ -138,3 +138,25 @@ test('saving needs a session, and an anonymous post changes nothing', async ({ p
   await expect(page.getByRole('link', { name: 'Injected' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Mine' })).toBeVisible();
 });
+
+/**
+ * The optional assistant that fills in the search box.
+ *
+ * Only the absent case can be exercised here. Reaching the positive path in the browser would mean
+ * pointing the provider at a stub inside this network, which `safeFetch` refuses on purpose — and
+ * weakening that guard to make a test pass would be trading a real protection for a green tick. The
+ * proposal path is proved instead in `tests/unit/ai-log-query.test.ts`, including what happens when a
+ * model names a log group nobody selected, answers with prose, or tries to hand over query text.
+ */
+test('THE RULING: with no AI provider configured, the search page offers no assistant at all', async ({ page }) => {
+  await page.goto(logs());
+  // Not a disabled control and not an upsell: a button that can only fail is worse than no button.
+  await expect(page.getByText('Ask for help building this search')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Propose a search' })).toHaveCount(0);
+
+  // And the page is entirely usable without one.
+  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await page.getByLabel('Find in logs').fill('gateway');
+  await page.getByRole('button', { name: 'Search logs' }).click();
+  await expect(page.getByRole('list', { name: 'Log lines' })).toBeVisible({ timeout: 15_000 });
+});

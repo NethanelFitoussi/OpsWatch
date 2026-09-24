@@ -2,11 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { resolveLocale } from '@/i18n/routing';
+import { proposeLogSearch } from '@/lib/ai/log-query';
+import type { AiFailure } from '@/lib/ai/failures';
 import { requireAdmin } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
 import type { ActionState } from '@/lib/forms/action-state';
 import { formString, formStrings } from '@/lib/forms/form-data';
 import { LOGS_MAX_GROUPS, LOGS_MAX_QUERY_LENGTH } from '@/lib/monitoring/logs';
+import type { ProposalError, ProposedSearch } from '@/lib/monitoring/shared/ai-query';
 import { SAVED_SEARCH_NAME_MAX, duplicateName, normaliseSavedSearch, type SavedSearchError } from '@/lib/monitoring/shared/saved-search';
 import {
   createSavedSearch,
@@ -123,4 +126,33 @@ export async function deleteSearchAction(
   if (!deleteSavedSearch(getDb(), adminId, formString(formData, 'id'))) return { error: 'not_found' };
   refresh(locale, connectionId, region);
   return { deleted: true };
+}
+
+/**
+ * Asking the optional assistant to fill in the search box.
+ *
+ * It returns a **proposal**. Nothing is sent to CloudWatch here, and the only thing that starts a query is
+ * still somebody pressing the button that has always started one. The page shows what OpsWatch understood
+ * — the five fields and the exact query they build — so the proposal can be read before it is used.
+ *
+ * The log groups the model may choose from are the ones already selected in this browser. They are passed
+ * in and checked again on the way back: a model naming anything else is refused, not honoured.
+ */
+export type ProposeState = ActionState<
+  AiFailure | ProposalError | 'invalid_request' | 'no_groups',
+  { proposal?: ProposedSearch; model?: string; request?: string }
+>;
+
+export async function proposeSearchAction(
+  locale: string,
+  connectionId: string,
+  region: string,
+  _prev: ProposeState,
+  formData: FormData,
+): Promise<ProposeState> {
+  await requireAdmin(resolveLocale(locale));
+  const request = formString(formData, 'request').trim();
+  const result = await proposeLogSearch(getDb(), { request, groups: formStrings(formData, 'group') });
+  if (!result.ok) return { error: result.error, request };
+  return { proposal: result.value.value, model: result.model, request };
 }
