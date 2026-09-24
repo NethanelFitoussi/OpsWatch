@@ -1135,7 +1135,9 @@
           "empty": "No log group name contains this text.",
           "noMatch": "No loaded log group contains this text.",
           "limit": "Showing the first {count} groups. Search AWS to look beyond them.",
-          "max": "You can query up to {count} log groups at a time."
+          "max": "You can query up to {count} log groups at a time.",
+          "selected": "{count} of {total} selected",
+          "clear": "Clear"
         },
         "examples": {
           "label": "Examples",
@@ -1146,7 +1148,7 @@
         },
         "status": {
           "running": "Running… {seconds} s",
-          "complete": "{rows, plural, one {# row} other {# rows}} · {records, plural, one {# record scanned} other {# records scanned}}",
+          "complete": "Done · {records, plural, one {# record scanned} other {# records scanned}}",
           "stopped": "Query stopped.",
           "timeout": "The query was stopped after 60 seconds.",
           "failed": "The query ended with status {status}."
@@ -1161,8 +1163,58 @@
           "generic": "The query could not be run. Please try again."
         },
         "results": {
-          "label": "Query results",
-          "empty": "The query returned no rows."
+          "label": "Log lines",
+          "all": "{count, plural, one {# line} other {# lines}} matched.",
+          "sample": "Showing {shown} of {matched} matching lines. Raise the line count or narrow the search to see more.",
+          "aggregated": "This query aggregates records rather than listing them, so there are no log lines to expand."
+        },
+        "search": {
+          "title": "Search your logs",
+          "label": "Find in logs",
+          "placeholder": "timeout, 500, user-service…",
+          "clear": "Clear the search text",
+          "run": "Search logs",
+          "anyLevel": "Any level",
+          "limit": "Lines",
+          "advanced": "The query OpsWatch will run",
+          "advancedOff": "Built from the search above. Click inside to edit it yourself.",
+          "advancedOn": "You are editing the query. The search box above no longer changes it."
+        },
+        "levels": {
+          "error": "Error",
+          "warn": "Warning",
+          "info": "Info",
+          "debug": "Debug"
+        },
+        "facets": {
+          "card": "What came back",
+          "title": "Narrow these results",
+          "level": "Level",
+          "stream": "Log stream",
+          "noLevel": "No level",
+          "ofAll": "Counted over every matching line.",
+          "ofSample": "Counted over the lines fetched, not over everything that matched.",
+          "narrowed": "Showing {shown} of {total} lines.",
+          "clear": "Show them all"
+        },
+        "timeline": {
+          "alt": "When the {count, plural, one {# line} other {# lines}} shown happened.",
+          "bucket": "{count, plural, one {# line} other {# lines}}, {from} to {to}",
+          "complete": "Every matching line, over the range searched.",
+          "sample": "Only the lines fetched, so this is the shape of the newest ones rather than of all the traffic."
+        },
+        "rows": {
+          "noMessage": "This record has no @message field.",
+          "copyMessage": "Copy this message",
+          "copyRow": "Copy every field of this record",
+          "message": "Message",
+          "record": "Record"
+        },
+        "empty": {
+          "not_run": "Nothing has been searched yet. Choose your log groups and press Search.",
+          "no_groups": "No log group is selected, so there is nothing to search.",
+          "failed": "The search could not run, so whether anything matches is unknown.",
+          "no_match": "The search ran and nothing matched. That is not the same as nothing having been logged."
         }
       },
       "facets": {

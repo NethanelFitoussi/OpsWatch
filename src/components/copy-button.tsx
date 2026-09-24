@@ -11,7 +11,7 @@ type CopyStatus = 'idle' | 'copied' | 'failed';
 const ICONS = { idle: Copy, copied: Check, failed: X } as const;
 const LABELS = { idle: 'copy', copied: 'copied', failed: 'copyFailed' } as const;
 
-export function CopyButton({ value, label }: { value: string; label?: string }) {
+export function CopyButton({ value, label, text }: { value: string; label?: string; text?: string }) {
   const t = useTranslations('Common.actions');
   const [status, setStatus] = useState<CopyStatus>('idle');
 
@@ -29,7 +29,8 @@ export function CopyButton({ value, label }: { value: string; label?: string }) 
   return (
     <Button type="button" variant="outline" size="sm" onClick={copy} aria-label={label ?? t('copy')}>
       <Icon className="size-4" aria-hidden />
-      <span aria-live="polite">{t(LABELS[status])}</span>
+      {/* A page with two copy buttons side by side needs two different words on them, not two aria-labels. */}
+      <span aria-live="polite">{status === 'idle' && text !== undefined ? text : t(LABELS[status])}</span>
     </Button>
   );
 }

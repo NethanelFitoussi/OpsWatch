@@ -9,6 +9,8 @@ type LogsSelection = {
   /** The cap the query API enforces: the picker stops there instead of letting the server silently drop groups. */
   max: number;
   toggle: (name: string, checked: boolean) => void;
+  /** Unticks everything at once. A selection of twenty is otherwise twenty clicks to undo. */
+  clear: () => void;
 };
 
 const LogsSelectionContext = createContext<LogsSelection | null>(null);
@@ -37,20 +39,20 @@ export function LogsSelectionProvider({ initial, max, children }: { initial: str
     setSelected(initialKey === '' ? [] : initialKey.split('\n'));
   }, [initialKey]);
 
-  const value = useMemo<LogsSelection>(
-    () => ({
+  const value = useMemo<LogsSelection>(() => {
+    const apply = (next: string[]) => {
+      setSelected(next);
+      applied.current = next.join('\n');
+      const search = withGroups(window.location.search, next);
+      window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`);
+    };
+    return {
       selected,
       max,
-      toggle: (name, checked) => {
-        const next = toggleGroup(selected, name, checked, max);
-        setSelected(next);
-        applied.current = next.join('\n');
-        const search = withGroups(window.location.search, next);
-        window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`);
-      },
-    }),
-    [max, selected],
-  );
+      toggle: (name, checked) => apply(toggleGroup(selected, name, checked, max)),
+      clear: () => apply([]),
+    };
+  }, [max, selected]);
 
   return <LogsSelectionContext value={value}>{children}</LogsSelectionContext>;
 }

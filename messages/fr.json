@@ -1135,7 +1135,9 @@
           "empty": "Aucun nom de groupe de journaux ne contient ce texte.",
           "noMatch": "Aucun groupe chargé ne contient ce texte.",
           "limit": "Affichage des {count} premiers groupes. Recherchez dans AWS pour aller au-delà.",
-          "max": "Vous pouvez interroger au maximum {count} groupes de journaux à la fois."
+          "max": "Vous pouvez interroger au maximum {count} groupes de journaux à la fois.",
+          "selected": "{count} sélectionnés sur {total}",
+          "clear": "Effacer"
         },
         "examples": {
           "label": "Exemples",
@@ -1146,7 +1148,7 @@
         },
         "status": {
           "running": "En cours… {seconds} s",
-          "complete": "{rows, plural, one {# ligne} other {# lignes}} · {records, plural, one {# enregistrement analysé} other {# enregistrements analysés}}",
+          "complete": "Terminé · {records, plural, one {# enregistrement analysé} other {# enregistrements analysés}}",
           "stopped": "Requête arrêtée.",
           "timeout": "La requête a été arrêtée après 60 secondes.",
           "failed": "La requête s'est terminée avec le statut {status}."
@@ -1161,8 +1163,58 @@
           "generic": "La requête n'a pas pu être lancée. Veuillez réessayer."
         },
         "results": {
-          "label": "Résultats de la requête",
-          "empty": "La requête n'a renvoyé aucune ligne."
+          "label": "Lignes de journal",
+          "all": "{count, plural, one {# ligne correspond} other {# lignes correspondent}}.",
+          "sample": "Affichage de {shown} lignes sur {matched} correspondantes. Augmentez le nombre de lignes ou affinez la recherche.",
+          "aggregated": "Cette requête agrège les enregistrements au lieu de les lister ; il n’y a donc pas de ligne à déplier."
+        },
+        "search": {
+          "title": "Rechercher dans vos journaux",
+          "label": "Chercher dans les journaux",
+          "placeholder": "timeout, 500, user-service…",
+          "clear": "Effacer le texte recherché",
+          "run": "Lancer la recherche",
+          "anyLevel": "Tous les niveaux",
+          "limit": "Lignes",
+          "advanced": "La requête qu’OpsWatch va exécuter",
+          "advancedOff": "Construite à partir de la recherche ci-dessus. Cliquez dedans pour la modifier vous-même.",
+          "advancedOn": "Vous modifiez la requête. Le champ de recherche ci-dessus ne la change plus."
+        },
+        "levels": {
+          "error": "Erreur",
+          "warn": "Avertissement",
+          "info": "Info",
+          "debug": "Débogage"
+        },
+        "facets": {
+          "card": "Ce qui est revenu",
+          "title": "Affiner ces résultats",
+          "level": "Niveau",
+          "stream": "Flux de journal",
+          "noLevel": "Sans niveau",
+          "ofAll": "Compté sur toutes les lignes correspondantes.",
+          "ofSample": "Compté sur les lignes récupérées, pas sur tout ce qui correspond.",
+          "narrowed": "Affichage de {shown} lignes sur {total}.",
+          "clear": "Tout afficher"
+        },
+        "timeline": {
+          "alt": "Quand se sont produites les {count, plural, one {# ligne affichée} other {# lignes affichées}}.",
+          "bucket": "{count, plural, one {# ligne} other {# lignes}}, de {from} à {to}",
+          "complete": "Toutes les lignes correspondantes, sur la période recherchée.",
+          "sample": "Seulement les lignes récupérées : c’est la forme des plus récentes, pas celle de tout le trafic."
+        },
+        "rows": {
+          "noMessage": "Cet enregistrement n’a pas de champ @message.",
+          "copyMessage": "Copier ce message",
+          "copyRow": "Copier tous les champs de cet enregistrement",
+          "message": "Message",
+          "record": "Enregistrement"
+        },
+        "empty": {
+          "not_run": "Aucune recherche n’a encore été lancée. Choisissez vos groupes de journaux puis cliquez sur Rechercher.",
+          "no_groups": "Aucun groupe de journaux n’est sélectionné, il n’y a donc rien à chercher.",
+          "failed": "La recherche n’a pas pu s’exécuter : on ignore donc si quelque chose correspond.",
+          "no_match": "La recherche s’est exécutée et rien ne correspond. Ce n’est pas la même chose que l’absence de journaux."
         }
       },
       "facets": {
