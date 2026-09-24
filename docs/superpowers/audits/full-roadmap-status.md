@@ -250,7 +250,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | HIS-7 | Filesystem / export provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | The interface allows it; nobody wrote one |
 | HIS-8 | Elasticsearch / OpenSearch provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | §C: a basic install must not require one |
 | HIS-9 | Vector / semantic provider | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `INTENTIONALLY_DEFERRED` | Same reason; §Q says semantic *may* improve matching, deterministic first |
-| HIS-10 | Backup / restore / export / migration | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `NOT_STARTED` | §F lists Backup/Export as a settings area |
+| HIS-10 | Backup / restore / export / migration | ✓ | ✓ | · | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | A Backup & restore settings area: where the data lives and whether that survives a restart, a backup on demand, the newest three kept, a download, and the restore procedure. `VACUUM INTO` rather than a file copy, because WAL. One automatic backup before any migration that changes the schema. **No restore button** — a running process cannot safely write over its own open database, and the page gives the procedure instead |
 
 ## Reports
 
@@ -374,7 +374,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
 | UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Get started is a hub that asks what to connect, with a full guide per integration — what it unlocks, what it needs, what OpsWatch may do, steps, verification, failures, disconnect. Three entry points, one measured state, enforced by a `data-state` invariant |
 | UX-9 | Integration centre (§E) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` manages them, `/accounts/new` chooses one to add, `GET /repository` tells a client what is connected. All three read the same measured state |
-| UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, and a link list. Users & Access, Security, Backup absent |
+| UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, Backup & restore, and a link list. Users & Access and Security absent |
 | UX-11 | Demo mode | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | `serverInfo.demo` is hardcoded false |
 | UX-12 | Global search | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/` or Ctrl-K from anywhere: a combobox over a listbox, arrows moving `aria-activedescendant` so the caret never leaves the input. Searches what OpsWatch holds — problems, errors, alerts, incidents, deployments, repositories, checks, objectives, connections, its own docs. Live infrastructure is **not** indexed and is offered as a jump that carries the query into the section which can ask AWS, always ranked last |
 | UX-13 | Audit log (§21) | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Append-only, admin-only, with sign-ins and every administrator write path recorded through one helper — including refusals and crashes |

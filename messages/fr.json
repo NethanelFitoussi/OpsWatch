@@ -3181,7 +3181,9 @@
       "audit": "Journal d’audit",
       "auditHint": "Qui a fait quoi, et quand. Les entrées ne font que s’ajouter.",
       "notifications": "Notifications",
-      "notificationsHint": "Où une alerte peut être envoyée. Rien ne quitte cette instance tant que vous n'ajoutez pas de destination."
+      "notificationsHint": "Où une alerte peut être envoyée. Rien ne quitte cette instance tant que vous n'ajoutez pas de destination.",
+      "backup": "Sauvegarde et restauration",
+      "backupHint": "Où vivent vos données, une copie à télécharger et la marche à suivre pour la remettre."
     },
     "repositories": {
       "title": "Dépôts",
@@ -3509,6 +3511,42 @@
           "6": "Samedi"
         }
       }
+    },
+    "backup": {
+      "title": "Sauvegarde et restauration",
+      "description": "Où vivent vos données, comment en prendre une copie et comment la remettre en place.",
+      "whereTitle": "Où vivent vos données",
+      "whereHint": "Un seul fichier SQLite. Tout ce que sait OpsWatch s’y trouve.",
+      "dataDir": "Répertoire",
+      "filesystem": "Système de fichiers",
+      "unknownFilesystem": "Illisible",
+      "persistence": "Survit à un redémarrage",
+      "persistent": "Oui — ce répertoire est sur un stockage persistant.",
+      "disposable": "Non — ce répertoire est éphémère, et tout y sera perdu au prochain redémarrage.",
+      "createTitle": "Prendre une sauvegarde maintenant",
+      "createHint": "Écrite à côté de la base. OpsWatch en prend aussi une automatiquement avant toute mise à jour qui change le schéma, et conserve les {keep} plus récentes.",
+      "createNow": "Sauvegarder maintenant",
+      "created": "Écrit : {name}",
+      "sensitive": "Une sauvegarde, c’est toute la base : chaque connexion, chaque identifiant chiffré, chaque session. Traitez ce fichier comme un accès à cette installation.",
+      "secretWarning": "Elle est inutile seule. Les identifiants qu’elle contient sont chiffrés avec OPSWATCH_SECRET, qui n’y figure volontairement pas : conservez aussi cette valeur en lieu sûr, sinon la restauration donnera une installation incapable d’atteindre AWS.",
+      "listTitle": "Sauvegardes sur le disque",
+      "none": "Aucune sauvegarde n’a encore été prise.",
+      "download": "Télécharger",
+      "restoreTitle": "Remettre une sauvegarde en place",
+      "restoreHint": "OpsWatch ne le fait pas pour vous. Un processus en cours ne peut pas écraser sans risque la base qu’il a ouverte, et une restauration à moitié réussie est pire qu’une restauration jamais lancée.",
+      "restore": {
+        "0": "Arrêtez OpsWatch. Rien ne doit écrire dans la base pendant que vous la remplacez.",
+        "1": "Copiez la sauvegarde par-dessus opswatch.sqlite dans le répertoire de données.",
+        "2": "Supprimez les fichiers -wal et -shm à côté. Ils appartiennent à la base que vous venez de remplacer, et les laisser corrompt celle que vous restaurez.",
+        "3": "Redémarrez OpsWatch. Il appliquera les migrations que la sauvegarde n’a pas vues, en prenant d’abord une nouvelle sauvegarde."
+      },
+      "restoreWal": "Vérifiez qu’OPSWATCH_SECRET a la même valeur qu’au moment de la sauvegarde. Avec une autre, OpsWatch démarre mais aucun identifiant stocké ne se déchiffre.",
+      "migrationTitle": "Avant une mise à jour",
+      "migration": "Quand une nouvelle version doit changer la base, OpsWatch copie d’abord le fichier et conserve les {keep} copies les plus récentes. La copie est faite par SQLite lui-même plutôt qu’octet par octet, elle est donc cohérente même si la base est utilisée.",
+      "errors": {
+        "failed": "La sauvegarde n’a pas pu être écrite. Vérifiez que le répertoire de données a de la place et est accessible en écriture."
+      },
+      "readGuide": "Sauvegarder, et remettre une sauvegarde en place"
     }
   },
   "Api": {
@@ -4826,6 +4864,82 @@
           "1": {
             "href": "connect-github",
             "label": "Relier une erreur à une ligne de code"
+          }
+        }
+      },
+      "backup": {
+        "title": "Sauvegarder, et remettre une sauvegarde en place",
+        "summary": "Tout ce que sait OpsWatch tient dans un fichier. Copiez-le ailleurs.",
+        "what": "OpsWatch garde tout dans un unique fichier SQLite : vos connexions, vos réglages, l’historique collecté et les problèmes trouvés. Sauvegarder, c’est prendre une copie de ce fichier. OpsWatch en prend une automatiquement avant toute mise à jour qui change la base, et vous pouvez en prendre une quand vous voulez.",
+        "flow": {
+          "0": {
+            "label": "Un fichier SQLite"
+          },
+          "1": {
+            "label": "OpsWatch le copie",
+            "note": "avant une mise à jour"
+          },
+          "2": {
+            "label": "Vous téléchargez une copie"
+          },
+          "3": {
+            "label": "Vous la remettez vous-même"
+          }
+        },
+        "before": {
+          "0": "L’accès aux paramètres, donc une session d’administrateur.",
+          "1": "Un endroit où garder la copie qui ne soit pas le disque de l’original.",
+          "2": "La valeur d’OPSWATCH_SECRET de votre fichier .env. Elle sera nécessaire pour exploiter la sauvegarde."
+        },
+        "steps": {
+          "0": {
+            "title": "Vérifiez que vos données sont sur un stockage persistant",
+            "body": "Paramètres, puis Sauvegarde et restauration. La première carte indique le répertoire de la base et s’il survit à un redémarrage. S’il est éphémère, corrigez cela d’abord : sauvegarder des données sur le point de disparaître n’est pas le problème que vous avez."
+          },
+          "1": {
+            "title": "Prenez une sauvegarde",
+            "body": "Cliquez sur Sauvegarder maintenant. Le fichier est écrit à côté de la base, et OpsWatch conserve les trois plus récentes. Il est produit par SQLite lui-même plutôt qu’octet par octet, il est donc cohérent même si la base est utilisée."
+          },
+          "2": {
+            "title": "Téléchargez-la et mettez-la ailleurs",
+            "body": "Cliquez sur Télécharger à côté d’une sauvegarde. Une copie sur le même disque que l’original ne protège pas de la panne de ce disque."
+          },
+          "3": {
+            "title": "Gardez OPSWATCH_SECRET avec elle — mais séparément",
+            "body": "Les identifiants qu’elle contient sont chiffrés avec cette valeur, absente du fichier à dessein. Sans elle, une installation restaurée démarre mais n’atteint pas AWS. Avec elle, qui a les deux a votre installation. Conservez le secret en lieu sûr, ailleurs que la sauvegarde."
+          },
+          "4": {
+            "title": "Remettre une sauvegarde",
+            "body": "Arrêtez OpsWatch. Copiez la sauvegarde par-dessus opswatch.sqlite dans le répertoire de données. Supprimez les fichiers -wal et -shm à côté. Redémarrez. La page vous donne les commandes exactes."
+          }
+        },
+        "verify": "La page Sauvegarde et restauration liste le fichier avec une taille et une heure, et le téléchargement donne un fichier que votre ordinateur reconnaît comme une base de données.",
+        "problems": {
+          "0": {
+            "q": "Pourquoi OpsWatch ne restaure-t-il pas à ma place ?",
+            "a": "Un processus en cours ne peut pas écraser sans risque la base qu’il a ouverte. Un bouton de restauration réussirait parfois à moitié, ce qui est pire que rien : une partie des anciennes données, une partie des nouvelles, et aucun moyen de les distinguer. Arrêter OpsWatch d’abord rend l’opération ennuyeuse, et c’est ce qu’on attend d’une restauration."
+          },
+          "1": {
+            "q": "Pourquoi supprimer les fichiers -wal et -shm ?",
+            "a": "Ce sont le journal d’écriture de la base que vous venez de remplacer. Laissés à côté du fichier restauré, SQLite tentera de les lui appliquer et le corrompra. Les supprimer n’est pas optionnel."
+          },
+          "2": {
+            "q": "J’ai restauré une sauvegarde et rien n’atteint AWS.",
+            "a": "OPSWATCH_SECRET diffère de la valeur en vigueur lors de la sauvegarde. Chaque identifiant stocké est chiffré avec elle ; avec une autre, aucun ne se déchiffre. Remettez la valeur d’origine, ou reconnectez chaque compte."
+          },
+          "3": {
+            "q": "La sauvegarde a échoué.",
+            "a": "Presque toujours, le répertoire de données est plein ou en lecture seule. La page indique lequel c’est. OpsWatch ne refuse jamais de démarrer parce qu’une sauvegarde a échoué — une mise à jour dont vous avez besoin passe avant une copie que vous pouvez reprendre — vérifiez donc ici plutôt que d’attendre qu’on vous le dise."
+          },
+          "4": {
+            "q": "À quelle fréquence en prendre une ?",
+            "a": "OpsWatch en prend une avant chaque mise à jour qui change la base, ce qui couvre le risque qu’il voit. Le risque qu’il ne voit pas, c’est le disque, et celui-là vous appartient : emportez une copie hors de la machine aussi souvent que perdre cet historique vous gênerait."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "history",
+            "label": "Décider combien d’historique conserver"
           }
         }
       }

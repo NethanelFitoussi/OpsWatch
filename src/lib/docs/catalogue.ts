@@ -55,7 +55,13 @@ export const DOCS: readonly DocGuide[] = [
   { slug: 'connect-github', category: 'code', keywords: ['github', 'connect github', 'repository', 'commit', 'code', 'deployment', 'map service', 'changed files'] },
 
   { slug: 'history', category: 'data', keywords: ['history', 'historical data', 'save metrics', 'retain', 'retention', 'statistics', 'baseline', 'cost', 'storage', 'backup'] },
-  { slug: 'alerts', category: 'data', keywords: ['alerts', 'notifications', 'rules', 'cooldown', 'acknowledge', 'webhook', 'configure alerts'] },
+  { slug: 'alerts', category: 'data', keywords: ['alerts', 'notifications', 'rules', 'cooldown', 'acknowledge', 'webhook', 'configure alerts', 'weekly summary', 'digest'] },
+  {
+    slug: 'backup',
+    category: 'data',
+    keywords: ['backup', 'restore', 'export', 'sqlite', 'database file', 'migrate', 'move to another server', 'disaster recovery', 'snapshot'],
+    appHref: '/settings/backup',
+  },
 
   { slug: 'cloudflare', category: 'integrations', keywords: ['cloudflare', 'zone', 'api token', 'cache', 'threats', 'edge', 'traffic'] },
   { slug: 'ai', category: 'integrations', keywords: ['ai', 'openai', 'anthropic', 'model', 'api key', 'ask opswatch', 'hypothesis'] },

@@ -3181,7 +3181,9 @@
       "audit": "Audit log",
       "auditHint": "Who did what, and when. Entries are only ever added.",
       "notifications": "Notifications",
-      "notificationsHint": "Where an alert may be sent. Nothing leaves this instance until you add a destination."
+      "notificationsHint": "Where an alert may be sent. Nothing leaves this instance until you add a destination.",
+      "backup": "Backup & restore",
+      "backupHint": "Where your data lives, a copy you can download, and what to do to put one back."
     },
     "repositories": {
       "title": "Repositories",
@@ -3509,6 +3511,42 @@
           "6": "Saturday"
         }
       }
+    },
+    "backup": {
+      "title": "Backup & restore",
+      "description": "Where your data lives, how to take a copy of it, and how to put one back.",
+      "whereTitle": "Where your data lives",
+      "whereHint": "One SQLite file. Everything OpsWatch knows is in it.",
+      "dataDir": "Directory",
+      "filesystem": "Filesystem",
+      "unknownFilesystem": "Could not be read",
+      "persistence": "Survives a restart",
+      "persistent": "Yes — this directory is on persistent storage.",
+      "disposable": "No — this directory is disposable, and everything here is lost on the next restart.",
+      "createTitle": "Take a backup now",
+      "createHint": "Written beside the database. OpsWatch also takes one automatically before any upgrade that changes the schema, and keeps the newest {keep}.",
+      "createNow": "Back up now",
+      "created": "Written: {name}",
+      "sensitive": "A backup is the whole database — every connection, every encrypted credential, every session. Treat the file as you would treat access to this instance.",
+      "secretWarning": "It is useless on its own. The credentials inside are encrypted with OPSWATCH_SECRET, which is deliberately not in the file: keep that value somewhere safe too, or a restore will start with an instance that cannot reach AWS.",
+      "listTitle": "Backups on disk",
+      "none": "No backup has been taken yet.",
+      "download": "Download",
+      "restoreTitle": "Putting one back",
+      "restoreHint": "OpsWatch does not do this for you. A running process cannot safely write over the database it has open, and a restore that half-succeeds is worse than one that never ran.",
+      "restore": {
+        "0": "Stop OpsWatch. Nothing must be writing to the database while you replace it.",
+        "1": "Copy the backup over opswatch.sqlite in the data directory.",
+        "2": "Delete the -wal and -shm files beside it. They belong to the database you just replaced, and leaving them behind corrupts the one you restored.",
+        "3": "Start OpsWatch. It will apply any migrations the backup has not seen, taking a fresh backup first."
+      },
+      "restoreWal": "Make sure OPSWATCH_SECRET is the same value it was when the backup was taken. With a different one, OpsWatch starts but every stored credential fails to decrypt.",
+      "migrationTitle": "Before an upgrade",
+      "migration": "When a new version needs to change the database, OpsWatch copies the file first and keeps the newest {keep} copies. The copy is made by SQLite itself rather than by copying bytes, so it is consistent even though the database is in use.",
+      "errors": {
+        "failed": "The backup could not be written. Check that the data directory has room and is writable."
+      },
+      "readGuide": "Backing up, and putting a backup back"
     }
   },
   "Api": {
@@ -4826,6 +4864,82 @@
           "1": {
             "href": "connect-github",
             "label": "Turn an error into a line of code"
+          }
+        }
+      },
+      "backup": {
+        "title": "Backing up, and putting a backup back",
+        "summary": "Everything OpsWatch knows is one file. Copy it somewhere else.",
+        "what": "OpsWatch keeps everything in a single SQLite file: your connections, your settings, the history it has collected and the problems it has found. Backing up means taking a copy of that file. OpsWatch takes one automatically before any upgrade that changes the database, and you can take one whenever you like.",
+        "flow": {
+          "0": {
+            "label": "One SQLite file"
+          },
+          "1": {
+            "label": "OpsWatch copies it",
+            "note": "before an upgrade"
+          },
+          "2": {
+            "label": "You download a copy"
+          },
+          "3": {
+            "label": "You put it back yourself"
+          }
+        },
+        "before": {
+          "0": "Access to Settings, which means being signed in as the administrator.",
+          "1": "Somewhere to keep the copy that is not the same disk as the original.",
+          "2": "The value of OPSWATCH_SECRET from your .env file. You will need it to use the backup."
+        },
+        "steps": {
+          "0": {
+            "title": "Check your data is on persistent storage",
+            "body": "Settings, then Backup & restore. The top card says which directory the database is in and whether that directory survives a restart. If it says the directory is disposable, stop and fix that first — a backup of data that is about to vanish is not the problem you have."
+          },
+          "1": {
+            "title": "Take a backup",
+            "body": "Press Back up now. The file is written next to the database, and OpsWatch keeps the newest three. It is made by SQLite itself rather than by copying bytes, so it is a consistent file even though the database is in use."
+          },
+          "2": {
+            "title": "Download it and put it somewhere else",
+            "body": "Press Download beside a backup. A copy that lives on the same disk as the original is not a backup of that disk failing."
+          },
+          "3": {
+            "title": "Keep OPSWATCH_SECRET with it — separately",
+            "body": "The credentials inside are encrypted with that value, and it is deliberately not in the file. Without it, a restored instance starts but cannot reach AWS. With it, whoever has both has your instance. Keep the secret somewhere safe that is not the same place as the backup."
+          },
+          "4": {
+            "title": "Putting one back",
+            "body": "Stop OpsWatch. Copy the backup over opswatch.sqlite in the data directory. Delete the -wal and -shm files beside it. Start OpsWatch. The page gives you the exact commands."
+          }
+        },
+        "verify": "The Backup & restore page lists the file with a size and a time, and downloading it gives a file your computer recognises as a database.",
+        "problems": {
+          "0": {
+            "q": "Why does OpsWatch not restore for me?",
+            "a": "A running process cannot safely write over the database it has open. A restore button would sometimes half-succeed, which leaves you worse off than no restore at all: some of the old data, some of the new, and no way to tell which is which. Stopping OpsWatch first makes the operation boring, and boring is what you want from a restore."
+          },
+          "1": {
+            "q": "Why delete the -wal and -shm files?",
+            "a": "They are the write-ahead log of the database you just replaced. Left beside the restored file, SQLite will try to apply them to it and corrupt it. Deleting them is not optional."
+          },
+          "2": {
+            "q": "I restored a backup and nothing can reach AWS.",
+            "a": "OPSWATCH_SECRET is different from the value in use when the backup was taken. Every stored credential is encrypted with it, so with a different one they all fail to decrypt. Put the original value back, or reconnect each account."
+          },
+          "3": {
+            "q": "The backup failed.",
+            "a": "Almost always the data directory is full or read-only. The page says which directory it is. OpsWatch never refuses to start because a backup failed — an upgrade you need is more important than a copy you can take afterwards — so check here rather than waiting to be told."
+          },
+          "4": {
+            "q": "How often should I take one?",
+            "a": "OpsWatch takes one before every upgrade that changes the database, which covers the risk it can see. The risk it cannot see is the disk, and that one is yours: take a copy off the machine as often as losing that much history would bother you."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "history",
+            "label": "Decide how much history to keep"
           }
         }
       }

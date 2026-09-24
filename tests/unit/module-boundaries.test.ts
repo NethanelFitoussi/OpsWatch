@@ -89,6 +89,7 @@ const SERVER_ONLY_MODULES = [
   'lib/store/logs-budget.ts',
   'lib/store/saved-searches.ts',
   'lib/store/digest-settings.ts',
+  'lib/db/backup.ts',
   'lib/ai/log-query.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',

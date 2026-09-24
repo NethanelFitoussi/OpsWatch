@@ -61,6 +61,7 @@ test('THE RULING: Alarms, Logs and the reports render clean at both widths, in E
     ['the estate report', `/c/${connectionId}/${MOTO_REGION}/overview/report`],
     ['the logs report', `/c/${connectionId}/${MOTO_REGION}/logs/report`],
     ['a section report', `/c/${connectionId}/${MOTO_REGION}/containers/report`],
+    ['backup and restore', '/settings/backup'],
     ['the searching-logs guide', '/docs/searching-logs'],
     ['the alarms guide', '/docs/alarms'],
   ] as const;
