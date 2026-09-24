@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateEc2Instance } from '@/lib/monitoring/ec2-health';
 import { evaluateEcsService } from '@/lib/monitoring/ecs-health';
-import { ECS_UTILIZATION_LEVELS } from '@/lib/monitoring/insights';
+import { ECS_UTILIZATION_LEVELS, REDIS_ENGINE_CPU_LEVELS, REDIS_MEMORY_LEVELS } from '@/lib/monitoring/insights';
+import { evaluateRedisNode, hitRate } from '@/lib/monitoring/redis-health';
 import { FRESH_FOR_MS, evaluate, hasGaps, rollUp, type ResourceCheck } from '@/lib/monitoring/shared/evaluated-health';
 
 /**
@@ -179,5 +180,48 @@ describe('a check that ran and could not decide', () => {
   it('still loses to something known to be wrong', () => {
     expect(evaluate({ checks: [{ id: 'x.partial', outcome: 'unknown' }, { id: 'x.fail', outcome: 'fail' }], evaluatedAt: NOW, nowMs: NOW }).state).toBe('critical');
     expect(evaluate({ checks: [{ id: 'x.partial', outcome: 'unknown' }, { id: 'x.warn', outcome: 'warn' }], evaluatedAt: NOW, nowMs: NOW }).state).toBe('warning');
+  });
+});
+
+describe('what OpsWatch checks about a Redis node', () => {
+  const ok = { engineCpu: 20, memoryPercent: 30, evictions: 0, metricsUnavailable: false };
+
+  it('judges the engine CPU, which is the one that saturates first', () => {
+    // Redis runs its commands on a single thread: a four-core node can sit at 25% CPU with a completely
+    // saturated engine, which is why the verdict rests on this metric and not on CPUUtilization.
+    expect(evaluateRedisNode(ok, NOW).state).toBe('healthy');
+    expect(evaluateRedisNode({ ...ok, engineCpu: REDIS_ENGINE_CPU_LEVELS.warning.threshold }, NOW).state).toBe('warning');
+    expect(evaluateRedisNode({ ...ok, engineCpu: REDIS_ENGINE_CPU_LEVELS.critical?.threshold ?? 90 }, NOW).state).toBe('critical');
+  });
+
+  it('judges memory against AWS’s own thresholds', () => {
+    expect(evaluateRedisNode({ ...ok, memoryPercent: REDIS_MEMORY_LEVELS.warning.threshold }, NOW).state).toBe('warning');
+    expect(evaluateRedisNode({ ...ok, memoryPercent: REDIS_MEMORY_LEVELS.critical?.threshold ?? 95 }, NOW).state).toBe('critical');
+  });
+
+  it('THE RULING: evictions warn, because a full cache evicting keys is a cache doing its job', () => {
+    const evaluation = evaluateRedisNode({ ...ok, evictions: 42 }, NOW);
+    expect(evaluation.state).toBe('warning');
+    expect(evaluation.checks.map((check) => check.id)).toContain('redis.evictions.warn');
+  });
+
+  it('THE RULING: a node with no engine CPU reading is unknown, not healthy', () => {
+    const evaluation = evaluateRedisNode({ ...ok, engineCpu: null }, NOW);
+    expect(evaluation.state).toBe('unknown');
+    expect(evaluation.unread).toEqual(['redis.engineCpu']);
+  });
+});
+
+describe('the Redis hit rate', () => {
+  it('THE RULING: no requests is not a zero per cent hit rate', () => {
+    // 0% on an idle cache looks like a catastrophe and means nothing happened (§2.4).
+    expect(hitRate(0, 0)).toBeNull();
+    expect(hitRate(null, 5)).toBeNull();
+    expect(hitRate(5, null)).toBeNull();
+  });
+
+  it('is the share of requests that were answered from the cache', () => {
+    expect(hitRate(900, 100)).toBe(90);
+    expect(hitRate(0, 100)).toBe(0);
   });
 });

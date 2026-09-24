@@ -25,6 +25,7 @@ describe('the sub-section catalogue', () => {
       // DEP-3's deployment history sits with the services it shipped to.
       containers: ['overview', 'services', 'deployments', 'report'],
       instances: ['overview', 'list'],
+      redis: ['overview', 'nodes'],
       databases: ['instances', 'queries', 'report'],
       // §19's objectives sit with the load balancers they are measured on, between the list and the report.
       'load-balancers': ['list', 'objectives', 'report'],

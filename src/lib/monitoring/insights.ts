@@ -46,6 +46,23 @@ export const ECS_UTILIZATION_LEVELS: Levels = { warning: { threshold: 85, clearA
 export const RDS_CPU_LEVELS: Levels = { warning: { threshold: 80, clearAt: 75 }, critical: { threshold: 95, clearAt: 90 } };
 export const FREEABLE_MEMORY_LEVELS: Levels = { warning: { threshold: 5, clearAt: 10 } };
 /** Milliseconds: the clearing margin is 5 % of the threshold, since "5 points below" is meaningless here. */
+/**
+ * Redis, from AWS's own guidance rather than from taste.
+ *
+ * `EngineCPUUtilization` is the one that matters and the one operators miss: Redis runs its commands on a
+ * single thread, so a four-core node can sit at 25 % CPU with a completely saturated engine. AWS's
+ * ElastiCache best-practice guidance is to alarm on it around 90 %; 75 % is the earlier warning.
+ *
+ * `DatabaseMemoryUsagePercentage` approaching 100 % is AWS's stated trigger for eviction and, past it,
+ * for failed writes. 85 % gives room to act, 95 % does not.
+ *
+ * Nothing else here is judged. Hit rate depends entirely on the workload — a cache deliberately holding
+ * only hot keys can run a low one correctly — and `CurrConnections` has no ceiling OpsWatch can read
+ * without the ElastiCache API. Both are shown and neither is a verdict.
+ */
+export const REDIS_ENGINE_CPU_LEVELS: Levels = { warning: { threshold: 75, clearAt: 70 }, critical: { threshold: 90, clearAt: 85 } };
+export const REDIS_MEMORY_LEVELS: Levels = { warning: { threshold: 85, clearAt: 80 }, critical: { threshold: 95, clearAt: 90 } };
+
 export const REPLICA_LAG_LEVELS: Levels = { warning: { threshold: 1000, clearAt: 950 } };
 export const ALB_5XX_RATE_LEVELS = { warning: { threshold: 1, clearAt: 0.95 }, critical: { threshold: 5, clearAt: 4.75 } } as const;
 export const ALB_MIN_REQUESTS = 100;

@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 export function MetricCell({
   value,
   max,
+  warnAt,
+  failAt,
   suffix,
   missing,
   className,
@@ -18,6 +20,14 @@ export function MetricCell({
   value: number | null;
   /** The ceiling the bar is a fraction of. Omit it and no bar is drawn. */
   max?: number;
+  /**
+   * The thresholds that colour the bar, where the metric has real ones — the same constants the detector
+   * judges it by. Without them the bar is drawn in a neutral tone, because **magnitude is not severity**:
+   * a bar that turns amber at some generic fraction once showed 83 % engine CPU in green beside a verdict
+   * of "needs attention", which is the picture arguing with the words.
+   */
+  warnAt?: number;
+  failAt?: number;
   suffix?: string;
   /** What to render when the value was not measured — never a zero. */
   missing: string;
@@ -35,7 +45,16 @@ export function MetricCell({
       {share !== null && (
         <span className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-muted" aria-hidden>
           <span
-            className={cn('block h-full', share >= 0.95 ? STATE_FILL.critical : share >= 0.85 ? STATE_FILL.warning : STATE_FILL.healthy)}
+            className={cn(
+              'block h-full',
+              failAt !== undefined && value >= failAt
+                ? STATE_FILL.critical
+                : warnAt !== undefined && value >= warnAt
+                  ? STATE_FILL.warning
+                  : warnAt === undefined && failAt === undefined
+                    ? 'bg-primary/60'
+                    : STATE_FILL.healthy,
+            )}
             style={{ width: `${share * 100}%` }}
           />
         </span>

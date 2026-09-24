@@ -8,6 +8,7 @@ import { StatusBar } from '@/components/infra/status-bar';
 import { Link } from '@/i18n/navigation';
 import type { MonitoringScope } from '@/lib/monitoring/call';
 import { listClusters, listServices, serviceUtilizationQueries, type EcsService } from '@/lib/monitoring/ecs';
+import { ECS_UTILIZATION_LEVELS } from '@/lib/monitoring/insights';
 import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/lib/monitoring/metrics';
 import type { MonitoringFailure } from '@/lib/monitoring/result';
 import { evaluateEcsService } from '@/lib/monitoring/ecs-health';
@@ -204,7 +205,14 @@ export async function EcsEstate({ scope, range, nowMs }: { scope: MonitoringScop
                 >
                   {entry.service.name}
                 </Link>
-                <MetricCell value={entry.cpu === null ? null : Math.round(entry.cpu)} max={100} suffix="%" missing={NO_VALUE} />
+                <MetricCell
+                  value={entry.cpu === null ? null : Math.round(entry.cpu)}
+                  max={100}
+                  warnAt={ECS_UTILIZATION_LEVELS.warning.threshold}
+                  failAt={ECS_UTILIZATION_LEVELS.critical?.threshold}
+                  suffix="%"
+                  missing={NO_VALUE}
+                />
               </li>
             ))}
           </ul>
