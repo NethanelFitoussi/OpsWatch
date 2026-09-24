@@ -26,6 +26,7 @@ describe('the sub-section catalogue', () => {
       containers: ['overview', 'services', 'deployments', 'report'],
       instances: ['overview', 'list'],
       redis: ['overview', 'nodes'],
+      kubernetes: ['overview', 'workloads'],
       databases: ['instances', 'queries', 'report'],
       // §19's objectives sit with the load balancers they are measured on, between the list and the report.
       'load-balancers': ['list', 'objectives', 'report'],

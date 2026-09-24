@@ -35,9 +35,8 @@ In order. Tick as they land.
 - [x] INF-1..3 evaluated health, primitives, ECS estate
 - [x] INF-4 EC2 host map
 - [x] INF-5 Redis, discovered through CloudWatch
-- [ ] INF-6 Kubernetes / EKS — **investigate first**: what Container Insights gives without an in-cluster
-      agent, and state plainly where an optional collector would be required
-- [ ] DOC-1 categorised documentation for non-experts (Phase B; the largest remaining piece)
+- [x] INF-6 Kubernetes / EKS — Container Insights, cluster → namespace → workload → pod, boundary stated
+- [x] DOC-1 categorised documentation — 17 guides, 6 categories, EN and FR, searchable, contextual links
 - [ ] Phase C full visual QA across every section, EN/FR, desktop and narrow
 - [ ] Resume the remaining roadmap queue
 

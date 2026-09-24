@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormatter, useTranslations } from 'next-intl';
+import { DocLink } from '@/components/docs/doc-link';
 import { MetricChart } from '@/components/monitoring/metric-chart';
 import type { LifecycleMark, ProblemSeries } from '@/lib/read/diagnosis';
 import { TONE_DOT } from '@/lib/ui/tones';
@@ -73,7 +74,13 @@ export function ProblemChart({ series, historyEnabled }: { series: ProblemSeries
 
   // Two different emptinesses, told apart. Only one of them is something the operator can change.
   if (series.length === 0) {
-    return <p className="text-sm text-muted-foreground">{historyEnabled ? t('noSeriesYet') : t('noHistory')}</p>;
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">{historyEnabled ? t('noSeriesYet') : t('noHistory')}</p>
+        {/* An honest empty state that leaves the reader stuck is still a dead end. */}
+        {!historyEnabled && <DocLink slug="history" label={t('historyGuide')} />}
+      </div>
+    );
   }
 
   return (

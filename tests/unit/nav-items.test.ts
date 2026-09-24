@@ -12,6 +12,8 @@ describe('navigation items', () => {
       'containers',
       // EC2 sits beside the containers it often runs: both are "where the code is".
       'instances',
+      // Kubernetes beside the other compute, because that is what an operator is comparing it with.
+      'kubernetes',
       'databases',
       // Redis sits beside the databases: both are state somebody's code depends on.
       'redis',
@@ -21,6 +23,8 @@ describe('navigation items', () => {
       // Instance-scoped, so it sits after the sections that carry a connection and a region.
       'cloudflare',
       'gettingStarted',
+      // The documentation sits beside the guided setup: one walks you through, the other explains.
+      'docs',
       'settings',
       'accounts',
     ]);

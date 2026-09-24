@@ -209,3 +209,58 @@ not in *how they look*:
 
 Then ECS, EC2, Redis/ElastiCache and Kubernetes are each a question of which data OpsWatch can truthfully
 obtain — answered per service, before any of them is designed.
+
+---
+
+## Kubernetes: what OpsWatch can truthfully see, and where the boundary is
+
+Written before the Kubernetes work, because the honest answer determines the design.
+
+### What the role already grants
+
+`eks:*` is **not** in the read-only policy. Neither is anything else Kubernetes-specific. What *is* granted
+is `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData` and the CloudWatch Logs group — and **CloudWatch
+Container Insights**, when an operator enables it on their EKS cluster, publishes a structured metric set
+to the `ContainerInsights` namespace with these dimension sets:
+
+| Dimensions | What it describes |
+|---|---|
+| `ClusterName` | the cluster: node count, failed node count |
+| `ClusterName, NodeName` | each node: CPU, memory, filesystem, running pods |
+| `ClusterName, Namespace` | each namespace: running pods |
+| `ClusterName, Namespace, Service` | each workload: running pods |
+| `ClusterName, Namespace, PodName` | each pod: CPU, memory, container restarts, network |
+
+So the hierarchy OpsWatch can walk **with no new permission and no stack to redeploy** is:
+
+> Cluster → Namespace → Workload → Pod
+
+which is four of the five levels the brief asks for.
+
+### Where the boundary actually falls
+
+**Container** is the level CloudWatch does not reach. Container Insights aggregates to the pod; per-
+container CPU, memory, state and restart reason live in the kubelet and reach CloudWatch only through
+enhanced observability or an agent that reads them. OpsWatch therefore stops at the pod and says so,
+rather than inventing a container row per pod.
+
+Also outside: Kubernetes **events** (`FailedScheduling`, `OOMKilled`, image pull failures), pod **phase**
+and **condition** (`Pending`, `CrashLoopBackOff`), **owner references** (which ReplicaSet, which
+Deployment), **resource requests and limits**, and anything about objects that are not running — a
+Deployment whose every pod failed to schedule publishes no pod metrics at all, so it is invisible here.
+
+That last one is the sharpest edge, and the page has to say it: **a workload with no running pods looks
+the same as a workload that does not exist.** Container Insights is a picture of what is running.
+
+### What an optional in-cluster collector would add, if one is ever built
+
+Events, phases, conditions, owner references, requests and limits, per-container state, and the ability to
+see a workload that is failing to start. That is a real product, with its own trust boundary — something
+running inside a customer's cluster, holding a credential, sending data out — and it is not built. The
+Kubernetes guide states the boundary; the page states it where the gap is visible. Neither pretends.
+
+### The rule this does not bend
+
+**Missing Container Insights is never healthy.** A cluster OpsWatch cannot see is not a cluster that is
+fine; it is a cluster OpsWatch cannot see. With no `ContainerInsights` metrics in the region, the section
+says exactly that and links to how to turn it on — it does not render an empty, reassuring page.
