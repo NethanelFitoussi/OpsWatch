@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import type { FormAction } from '@/lib/forms/action-state';
 import { createLogsApi, type ClientQueryResults, type LogsClientError } from '@/lib/monitoring/shared/logs-api';
 import { runLogsQuery } from '@/lib/monitoring/shared/logs-poller';
 import { EXAMPLE_QUERIES, EXAMPLE_QUERY_KEYS, LOGS_TIME_RANGES, type LogsTimeRange } from '@/lib/monitoring/shared/logs-queries';
@@ -29,6 +30,8 @@ import {
 import { withGroups } from '@/lib/monitoring/shared/logs-selection';
 import { RANGE_SECONDS } from '@/lib/monitoring/shared/time-range';
 import { isOneOf } from '@/lib/type-guards';
+import { AiAssist } from './ai-assist';
+import type { ProposeState } from './actions';
 import { SavedSearches, type SavedRow, type SavedSearchActions } from './saved-searches';
 import { LogsFacets, type FacetFilter } from './logs-facets';
 import { LogsRows } from './logs-rows';
@@ -74,6 +77,7 @@ export function LogsExplorer({
   initial,
   groupPicker,
   saved,
+  propose,
 }: {
   connectionId: string;
   region: string;
@@ -82,9 +86,13 @@ export function LogsExplorer({
   initial: { text: string; level: LogLevel | null; limit: number };
   groupPicker: ReactNode;
   saved: { rows: SavedRow[]; basePath: string; actions: SavedSearchActions };
+  /** Null unless an operator has configured and tested an AI provider. AI is optional for ever. */
+  propose: FormAction<ProposeState> | null;
 }) {
   const t = useTranslations('Monitoring.client');
   const { selected: groups } = useLogsSelection();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [text, setText] = useState(initial.text);
   const [level, setLevel] = useState<LogLevel | null>(initial.level);
@@ -195,6 +203,21 @@ export function LogsExplorer({
     },
     [connectionId, groups, range, region, remember, t],
   );
+
+  /**
+   * Applying a proposal is a navigation, exactly as loading a saved search is: the page comes back with
+   * those values in the form and **nothing run**. The operator presses Search.
+   */
+  const useProposal = (proposal: NonNullable<ProposeState['proposal']>) => {
+    const next = new URLSearchParams(withGroups(window.location.search, proposal.groups));
+    if (proposal.text === '') next.delete('q');
+    else next.set('q', proposal.text);
+    if (proposal.level === null) next.delete('level');
+    else next.set('level', proposal.level);
+    next.set('limit', String(proposal.limit));
+    next.set('range', proposal.range);
+    router.replace(`${pathname}?${next.toString()}`);
+  };
 
   const running = phase === 'running';
   const results = run?.results ?? null;
@@ -353,6 +376,9 @@ export function LogsExplorer({
               </div>
             </div>
           </details>
+
+          {/* Optional, and absent entirely when nobody has configured a provider. */}
+          {propose !== null && <AiAssist groups={groups} propose={propose} onUse={useProposal} />}
         </form>
       </MonitoringCard>
 

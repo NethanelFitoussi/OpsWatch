@@ -1242,6 +1242,36 @@
             "too_many_saved": "You have reached the limit on saved searches. Delete one first.",
             "not_found": "That saved search is no longer there."
           }
+        },
+        "ai": {
+          "title": "Ask for help building this search",
+          "label": "Describe what you are looking for",
+          "placeholder": "payment errors in the last day",
+          "ask": "Propose a search",
+          "neverRuns": "Nothing is searched until you press Search logs.",
+          "understood": "What OpsWatch understood",
+          "theQuery": "The query these values build",
+          "noText": "No text filter",
+          "use": "Use this search",
+          "by": "Proposed by {model}. A suggestion, not a measurement.",
+          "errors": {
+            "invalid_request": "Describe what you are looking for, in a sentence or two.",
+            "no_groups": "Choose at least one log group first. The assistant can only narrow what you selected.",
+            "not_json": "The assistant did not answer with a search OpsWatch can read. Nothing was changed.",
+            "unknown_shape": "The assistant answered with something OpsWatch does not accept, so it was refused rather than half-applied.",
+            "text_too_long": "The assistant asked for a search term that is too long.",
+            "unknown_level": "The assistant asked for a level OpsWatch does not recognise.",
+            "unknown_range": "The assistant asked for a time range OpsWatch cannot search.",
+            "unknown_limit": "The assistant asked for a line count that is not one of the choices.",
+            "unknown_group": "The assistant named a log group you have not selected, so the proposal was refused.",
+            "not_configured": "No AI provider is configured.",
+            "unauthorized": "The AI provider refused the key. Check it in Settings.",
+            "rate_limited": "The AI provider is rate limiting OpsWatch. Try again shortly.",
+            "unreachable": "The AI provider could not be reached.",
+            "refused_endpoint": "That AI endpoint was refused because it points inside this network.",
+            "bad_response": "The AI provider replied with something OpsWatch could not read.",
+            "timeout": "The AI provider did not answer in time."
+          }
         }
       },
       "facets": {
