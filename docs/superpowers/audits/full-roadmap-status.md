@@ -68,7 +68,7 @@ Patterns extracted from real observability products before any of it was built:
 | INF-1 | An evaluated-health model green cannot be faked in | `DONE` | Five states; no checks means `unknown`, a signal OpsWatch could not read blocks green without becoming a failure, and a reading older than three detect cycles is `stale`. Six mutations, six caught |
 | INF-2 | Reusable visual primitives | `DONE` | `ResourceMap` (grouped tiles, colour = evaluated state), `StatusBar` (segments with their counts), `MetricCell` (value with a bar only where a ceiling exists), `HealthySummary` (the checks that ran, and when) |
 | INF-3 | ECS opens on a verdict | `DONE` | `/containers/overview`, the section default: the verdict in words, the counts beside it, every service as a tile, the evidence behind the word, and the busiest services ranked. Judged against the detector's own thresholds so a tile and a problem cannot disagree |
-| INF-4 | EC2 explorer and host map | `NOT_STARTED` | — |
+| INF-4 | EC2 explorer and host map | `DONE` | A new `instances` section: the host map grouped by availability zone, and a list with an inline CPU bar. Colour is `StatusCheckFailed` — the one signal AWS publishes that means broken. **No CPU verdict**: a batch host at 95 % is doing its job. A running instance publishing no status check is an outline, not a green square, which the moto fixture now proves end to end |
 | INF-5 | Redis / ElastiCache as a first-class resource | `NOT_STARTED` | — |
 | INF-6 | Kubernetes / EKS, with an honest account of what CloudWatch alone can see | `NOT_STARTED` | — |
 | DOC-1 | Categorised documentation for non-experts | `NOT_STARTED` | — |

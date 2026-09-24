@@ -16,7 +16,8 @@
       "overview": "Vue d'ensemble",
       "errors": "Erreurs",
       "loadBalancers": "Répartiteurs de charge",
-      "alarms": "Alarmes"
+      "alarms": "Alarmes",
+      "instances": "Instances"
     },
     "language": {
       "label": "Langue",
@@ -2431,6 +2432,23 @@
           "critical": "{cluster} : {healthy} services sur {total} sains, certains sont en échec",
           "stale": "{cluster} : la dernière lecture est trop ancienne pour valoir maintenant"
         }
+      },
+      "ec2": {
+        "state": {
+          "running": "L'instance est en marche",
+          "stopped": "L'instance est arrêtée volontairement",
+          "transition": "L'instance est {state}"
+        },
+        "statusCheck": {
+          "name": "le status check AWS",
+          "pass": "Status check AWS réussi",
+          "failed": "Status check AWS en échec"
+        },
+        "zone": {
+          "pass": "{zone} : {healthy} instances sur {total} saines",
+          "partial": "{zone} : {healthy} instances sur {total} saines, le reste non évalué",
+          "critical": "{zone} : {healthy} instances sur {total} saines, certaines en échec"
+        }
       }
     },
     "ecsOverview": {
@@ -2485,6 +2503,36 @@
         "minutes": "Dernière lecture il y a {value} min — trop ancienne pour valoir maintenant",
         "hours": "Dernière lecture il y a {value} h — trop ancienne pour valoir maintenant",
         "days": "Dernière lecture il y a {value} j — trop ancienne pour valoir maintenant"
+      }
+    },
+    "ec2": {
+      "title": "Vue d'ensemble EC2",
+      "description": "Chaque instance qu'OpsWatch peut lire, regroupée par zone de disponibilité.",
+      "none": "Aucune instance EC2 dans cette région.",
+      "noneMatching": "Aucune instance ne correspond à cette recherche.",
+      "noZone": "Aucune zone indiquée",
+      "running": "En marche",
+      "ofTotal": "{running} sur {total}",
+      "zones": "Zones",
+      "tileDetail": "{type}, {state}",
+      "byZone": "zone de disponibilité",
+      "mapTitle": "Toutes les instances",
+      "mapDescription": "Une tuile par instance. La couleur est le status check publié par AWS — le seul signal qui signifie « en panne ».",
+      "truncated": "Affichage des {shown} premières instances.",
+      "metricsUnavailable": "CloudWatch n'a pas pu être lu",
+      "hottestTitle": "Instances les plus chargées",
+      "hottestDescription": "CPU le plus élevé sur la fenêtre. Le CPU mérite d'être vu ; ce n'est pas un verdict.",
+      "listTitle": "Instances",
+      "listDescription": "Ce qu'est chacune, et ce qu'elle fait.",
+      "search": "Rechercher des instances",
+      "searchSubmit": "Rechercher",
+      "columns": {
+        "instance": "Instance",
+        "health": "Santé",
+        "state": "État",
+        "type": "Type",
+        "zone": "Zone",
+        "cpu": "CPU"
       }
     }
   },
@@ -2606,6 +2654,10 @@
     "errors": {
       "groups": "Groupes d'erreurs",
       "sources": "Sources de journaux"
+    },
+    "instances": {
+      "overview": "Vue d'ensemble",
+      "list": "Instances"
     }
   },
   "Settings": {

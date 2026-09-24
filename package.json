@@ -52,7 +52,7 @@
     "zod-openapi": "6.0.2"
   },
   "devDependencies": {
-    "@aws-sdk/client-ec2": "^3.1134.0",
+    "@aws-sdk/client-ec2": "^3.1139.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^9.6.0",
