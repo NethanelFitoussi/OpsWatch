@@ -1215,6 +1215,33 @@
           "no_groups": "Aucun groupe de journaux n’est sélectionné, il n’y a donc rien à chercher.",
           "failed": "La recherche n’a pas pu s’exécuter : on ignore donc si quelque chose correspond.",
           "no_match": "La recherche s’est exécutée et rien ne correspond. Ce n’est pas la même chose que l’absence de journaux."
+        },
+        "saved": {
+          "title": "Recherches enregistrées",
+          "hint": "Elles n’appartiennent qu’à vous. Rien ici ne s’exécute seul ni ne quitte cette installation.",
+          "nameThis": "Enregistrer cette recherche sous",
+          "placeholder": "Erreurs de paiement",
+          "save": "Enregistrer",
+          "none": "Vous n’avez encore enregistré aucune recherche dans cet environnement.",
+          "needGroups": "Choisissez au moins un groupe de journaux avant d’enregistrer.",
+          "newName": "Nouveau nom",
+          "update": "Remplacer « {name} » par la recherche affichée",
+          "rename": "Renommer « {name} »",
+          "duplicate": "Faire une copie de « {name} »",
+          "delete": "Supprimer « {name} »",
+          "errors": {
+            "name_required": "Donnez un nom à la recherche.",
+            "name_too_long": "Ce nom est trop long.",
+            "name_taken": "Vous avez déjà une recherche enregistrée sous ce nom.",
+            "no_groups": "Choisissez au moins un groupe de journaux avant d’enregistrer.",
+            "too_many_groups": "Cela dépasse le nombre de groupes qu’une requête peut couvrir.",
+            "invalid_range": "Cette période n’est pas une de celles qu’OpsWatch peut chercher.",
+            "invalid_level": "Ce niveau n’est pas un de ceux qu’OpsWatch reconnaît.",
+            "invalid_limit": "Ce nombre de lignes ne fait pas partie des choix.",
+            "query_too_long": "Cette requête est trop longue pour être enregistrée.",
+            "too_many_saved": "Vous avez atteint la limite de recherches enregistrées. Supprimez-en une d’abord.",
+            "not_found": "Cette recherche enregistrée n’existe plus."
+          }
         }
       },
       "facets": {

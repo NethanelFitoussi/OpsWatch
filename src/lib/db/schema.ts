@@ -1020,3 +1020,42 @@ export const cloudflareDaily = sqliteTable(
 );
 
 export type CloudflareDailyRow = typeof cloudflareDaily.$inferSelect;
+
+/**
+ * One person's saved log searches.
+ *
+ * Keyed by the user, like `user_preferences` and `user_marks`: two operators looking at the same
+ * environment keep different lists, and the foreign key makes that structural rather than a rule the read
+ * path has to remember. Nothing here is shared with anybody, published, or sent anywhere.
+ *
+ * Only a **relative** range is stored (`1h`, `24h`). An absolute window would make a saved search a
+ * bookmark to a moment that never comes back.
+ */
+export const savedLogSearches = sqliteTable(
+  'saved_log_searches',
+  {
+    id: text('id').primaryKey(),
+    adminUserId: integer('admin_user_id')
+      .notNull()
+      .references(() => adminUser.id, { onDelete: 'cascade' }),
+    connectionId: text('connection_id').notNull(),
+    scope: text('scope').notNull(),
+    name: text('name').notNull(),
+    searchText: text('search_text').notNull(),
+    level: text('level'),
+    limitRows: integer('limit_rows').notNull(),
+    range: text('range').notNull(),
+    logGroups: text('log_groups', { mode: 'json' }).$type<string[]>().notNull(),
+    /** The Logs Insights query when the editor was used; null when the search box built it. */
+    query: text('query'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [
+    // One name per person per environment: renaming onto an existing name is refused by the database.
+    uniqueIndex('saved_log_searches_name').on(t.adminUserId, t.connectionId, t.scope, t.name),
+    index('saved_log_searches_owner').on(t.adminUserId, t.connectionId, t.scope),
+  ],
+);
+
+export type SavedLogSearchRow = typeof savedLogSearches.$inferSelect;

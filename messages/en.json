@@ -1215,6 +1215,33 @@
           "no_groups": "No log group is selected, so there is nothing to search.",
           "failed": "The search could not run, so whether anything matches is unknown.",
           "no_match": "The search ran and nothing matched. That is not the same as nothing having been logged."
+        },
+        "saved": {
+          "title": "Saved searches",
+          "hint": "Yours alone. Nothing here runs on its own or leaves this instance.",
+          "nameThis": "Save this search as",
+          "placeholder": "Payments errors",
+          "save": "Save",
+          "none": "You have not saved a search in this environment yet.",
+          "needGroups": "Choose at least one log group before saving.",
+          "newName": "New name",
+          "update": "Overwrite “{name}” with the search on screen",
+          "rename": "Rename “{name}”",
+          "duplicate": "Make a copy of “{name}”",
+          "delete": "Delete “{name}”",
+          "errors": {
+            "name_required": "Give the search a name.",
+            "name_too_long": "That name is too long.",
+            "name_taken": "You already have a saved search with that name.",
+            "no_groups": "Choose at least one log group before saving.",
+            "too_many_groups": "That is more log groups than a query can cover.",
+            "invalid_range": "That time range is not one OpsWatch can search.",
+            "invalid_level": "That level is not one OpsWatch recognises.",
+            "invalid_limit": "That line count is not one of the choices.",
+            "query_too_long": "That query is too long to store.",
+            "too_many_saved": "You have reached the limit on saved searches. Delete one first.",
+            "not_found": "That saved search is no longer there."
+          }
         }
       },
       "facets": {

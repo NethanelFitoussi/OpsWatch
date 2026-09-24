@@ -87,6 +87,7 @@ const SERVER_ONLY_MODULES = [
   'lib/detect/errors.ts',
   'lib/detect/log-parse.ts',
   'lib/store/logs-budget.ts',
+  'lib/store/saved-searches.ts',
   'lib/api/v1/envelope.ts',
   'lib/api/v1/features.ts',
   'lib/api/v1/handler.ts',

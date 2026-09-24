@@ -183,6 +183,13 @@
       "when": 1790240202052,
       "tag": "0025_odd_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1790253709440,
+      "tag": "0026_wealthy_zaladane",
+      "breakpoints": true
     }
   ]
 }

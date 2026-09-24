@@ -29,6 +29,7 @@ import {
 import { withGroups } from '@/lib/monitoring/shared/logs-selection';
 import { RANGE_SECONDS } from '@/lib/monitoring/shared/time-range';
 import { isOneOf } from '@/lib/type-guards';
+import { SavedSearches, type SavedRow, type SavedSearchActions } from './saved-searches';
 import { LogsFacets, type FacetFilter } from './logs-facets';
 import { LogsRows } from './logs-rows';
 import { LogsTimeline } from './logs-timeline';
@@ -72,6 +73,7 @@ export function LogsExplorer({
   maxQueryLength,
   initial,
   groupPicker,
+  saved,
 }: {
   connectionId: string;
   region: string;
@@ -79,6 +81,7 @@ export function LogsExplorer({
   maxQueryLength: number;
   initial: { text: string; level: LogLevel | null; limit: number };
   groupPicker: ReactNode;
+  saved: { rows: SavedRow[]; basePath: string; actions: SavedSearchActions };
 }) {
   const t = useTranslations('Monitoring.client');
   const { selected: groups } = useLogsSelection();
@@ -369,6 +372,16 @@ export function LogsExplorer({
               />
             </MonitoringCard>
           )}
+          <MonitoringCard title={t('logs.saved.title')} description={t('logs.saved.hint')}>
+            {/* The search as it stands right now, so saving stores what is on screen rather than what was
+                last run. */}
+            <SavedSearches
+              rows={saved.rows}
+              basePath={saved.basePath}
+              actions={saved.actions}
+              current={{ name: '', text, level, limit, range, logGroups: groups, query: advanced ? advancedQuery : null }}
+            />
+          </MonitoringCard>
         </div>
 
         <div className="min-w-0 space-y-6">
