@@ -1,10 +1,8 @@
 import type { TimeRange } from './time-range';
 
 /** Query text is CloudWatch Logs Insights syntax, so it is never translated. */
-export const DEFAULT_LOGS_QUERY = 'fields @timestamp, @message | sort @timestamp desc | limit 100';
-
 export const EXAMPLE_QUERIES = {
-  default: DEFAULT_LOGS_QUERY,
+  default: 'fields @timestamp, @message | sort @timestamp desc | limit 100',
   errors: 'fields @timestamp, @logStream, @message | filter @message like /(?i)(error|exception|fatal)/ | sort @timestamp desc | limit 100',
   serverErrors: 'fields @timestamp, @logStream, @message | filter @message like / 5\\d\\d / | sort @timestamp desc | limit 100',
   slowRequests: 'fields @timestamp, @message | parse @message /(?<durationMs>\\d+(\\.\\d+)?)\\s?ms/ | filter durationMs > 1000 | sort durationMs desc | limit 100',

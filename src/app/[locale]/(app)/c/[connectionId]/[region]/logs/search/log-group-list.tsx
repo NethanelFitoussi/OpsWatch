@@ -20,6 +20,11 @@ export type PickedLogGroup = { name: string; size: string | null };
  * The list of log groups. Typing filters what the server already sent, in the browser: no round trip and no
  * AWS call. Only text that reaches past the loaded groups offers the server search, which is a navigation
  * (the search text lives in the URL) and stays a plain GET form for a browser without JavaScript.
+ *
+ * The list is bounded and scrolls inside itself. An account with three hundred log groups used to push the
+ * search box, the timeline and every log line below the fold, so the page opened on a wall of checkboxes
+ * with the actual logs nowhere in sight. Ticked groups are lifted to the top of the list, so the selection
+ * stays on screen instead of scrolling away behind the filter that no longer matches it.
  */
 export function LogGroupList({
   groups,
@@ -35,9 +40,15 @@ export function LogGroupList({
   const t = useTranslations('Monitoring.client');
   const router = useRouter();
   const pathname = usePathname();
-  const { selected, max, toggle } = useLogsSelection();
+  const { selected, max, toggle, clear } = useLogsSelection();
   const [filter, setFilter] = useState(search);
-  const matches = useMemo(() => groups.filter((group) => matchesGroupFilter(group.name, filter)), [groups, filter]);
+
+  const matches = useMemo(() => {
+    const filtered = groups.filter((group) => matchesGroupFilter(group.name, filter));
+    const isSelected = (group: PickedLogGroup) => selected.includes(group.name);
+    // Stable within each half: ticked first, otherwise the order AWS gave.
+    return [...filtered.filter(isSelected), ...filtered.filter((group) => !isSelected(group))];
+  }, [groups, filter, selected]);
 
   const text = filter.trim();
   // Everything the server sent is on screen already: asking AWS again is only worth it to reach past it.
@@ -53,7 +64,7 @@ export function LogGroupList({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <form
         className="space-y-2"
         onSubmit={(event) => {
@@ -61,14 +72,16 @@ export function LogGroupList({
           searchAws();
         }}
       >
-        <Label htmlFor="log-group-filter">{t('logs.picker.filter')}</Label>
+        <Label htmlFor="log-group-filter" className="text-xs">
+          {t('logs.picker.filter')}
+        </Label>
         <Input
           id="log-group-filter"
           name="prefix"
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
           maxLength={512}
-          className="font-mono text-xs"
+          className="h-8 font-mono text-xs"
         />
         {/* Without JavaScript this is still the GET search it has always been. */}
         <input type="hidden" name="range" value={range} />
@@ -86,26 +99,39 @@ export function LogGroupList({
         )}
       </form>
 
+      {/* How many are ticked, always, beside the way to untick them all. */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {t('logs.picker.selected', { count: selected.length, total: groups.length })}
+        </p>
+        {selected.length > 0 && (
+          <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={clear}>
+            {t('logs.picker.clear')}
+          </Button>
+        )}
+      </div>
+
       {matches.length === 0 ? (
         <p className="text-sm text-muted-foreground">{groups.length === 0 ? t('logs.picker.empty') : t('logs.picker.noMatch')}</p>
       ) : (
-        <ul className="space-y-2">
+        // Bounded: the logs are what this page is for, and they stay above the fold whatever the account holds.
+        <ul className="max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
           {matches.map((group) => {
             const checked = selected.includes(group.name);
             return (
               <li key={group.name}>
-                <label className="flex items-start gap-2 text-sm">
+                <label className="flex items-start gap-2 rounded-sm px-1 py-1 text-sm hover:bg-muted/50">
                   <input
                     type="checkbox"
                     checked={checked}
                     // At the cap a further tick would be dropped by the API, so it is refused here instead.
                     disabled={!checked && full}
                     onChange={(event) => toggle(group.name, event.target.checked)}
-                    className="mt-1 size-4 shrink-0"
+                    className="mt-0.5 size-4 shrink-0"
                   />
                   <span className="min-w-0">
                     <span className="block font-mono text-xs break-all">{group.name}</span>
-                    {group.size !== null && <span className="block text-xs text-muted-foreground">{group.size}</span>}
+                    {group.size !== null && <span className="block text-[11px] text-muted-foreground">{group.size}</span>}
                   </span>
                 </label>
               </li>
