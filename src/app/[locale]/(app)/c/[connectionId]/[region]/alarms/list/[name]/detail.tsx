@@ -30,7 +30,9 @@ const STATE_WORD = { OK: STATE_TEXT.healthy, ALARM: STATE_TEXT.critical, INSUFFI
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border p-3">
+    // `min-w-0`: a grid item defaults to min-content width, so one unbroken metric name was widening the
+    // whole grid past a 390px viewport however hard the value inside it tried to wrap.
+    <div className="min-w-0 rounded-lg border p-3">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 text-sm font-medium break-words">{children}</dd>
     </div>
@@ -83,7 +85,7 @@ export async function AlarmDetail({ scope, name }: { scope: MonitoringScope; nam
     <div className="space-y-6">
       <MonitoringCard title={t('detail.whatIsThis')}>
         <p className={cn('text-lg font-semibold', STATE_WORD[alarm.state])}>{t(`filters.states.${alarm.state}`)}</p>
-        <p className="mt-1 text-sm">
+        <p className="mt-1 text-sm break-words">
           {parts === null
             ? t('detail.compositeWhat')
             : parts.resource === null

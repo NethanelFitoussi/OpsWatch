@@ -44,7 +44,13 @@ export const DOCS: readonly DocGuide[] = [
   { slug: 'ec2', category: 'infrastructure', keywords: ['ec2', 'instance', 'host', 'status check', 'cpu', 'availability zone', 'detailed monitoring'] },
   { slug: 'kubernetes', category: 'infrastructure', keywords: ['kubernetes', 'eks', 'pod', 'namespace', 'container insights', 'kubernetes monitoring', 'node', 'restart'] },
   { slug: 'redis', category: 'infrastructure', keywords: ['redis', 'elasticache', 'cache', 'redis cpu', 'redis memory', 'engine cpu', 'evictions', 'hit rate', 'connections'] },
-  { slug: 'logs', category: 'infrastructure', keywords: ['logs', 'cloudwatch logs', 'log group', 'ecs logs', 'send logs', 'search logs', 'errors'] },
+  { slug: 'logs', category: 'infrastructure', keywords: ['logs', 'cloudwatch logs', 'log group', 'ecs logs', 'send logs', 'errors'] },
+  {
+    slug: 'searching-logs',
+    category: 'infrastructure',
+    keywords: ['search logs', 'find in logs', 'log search', 'logs insights', 'query logs', 'saved search', 'log level', 'grep', 'timeline', 'filter logs'],
+    appHref: '/logs/search',
+  },
 
   { slug: 'connect-github', category: 'code', keywords: ['github', 'connect github', 'repository', 'commit', 'code', 'deployment', 'map service', 'changed files'] },
 
