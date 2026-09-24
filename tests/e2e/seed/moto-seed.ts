@@ -1,6 +1,6 @@
 import { CloudWatchClient, PutMetricAlarmCommand, PutMetricDataCommand, SetAlarmStateCommand, type Dimension } from '@aws-sdk/client-cloudwatch';
 import { CloudWatchLogsClient, CreateLogGroupCommand, CreateLogStreamCommand, PutLogEventsCommand } from '@aws-sdk/client-cloudwatch-logs';
-import { CreateSubnetCommand, CreateVpcCommand, EC2Client } from '@aws-sdk/client-ec2';
+import { CreateSubnetCommand, CreateVpcCommand, EC2Client, RunInstancesCommand } from '@aws-sdk/client-ec2';
 import { CreateClusterCommand, CreateServiceCommand, ECSClient, RegisterTaskDefinitionCommand } from '@aws-sdk/client-ecs';
 import {
   CreateListenerCommand,
@@ -25,6 +25,7 @@ export const SEED = {
   loadBalancer: 'opswatch-e2e-alb',
   targetGroup: 'opswatch-e2e-web',
   targetIp: '10.0.1.10',
+  instancePrefix: 'opswatch-e2e-host',
   dbInstance: 'opswatch-e2e-db',
   alarm: 'opswatch-e2e-high-cpu',
   targetTrackingAlarm: 'TargetTracking-service/opswatch-e2e/web-AlarmHigh-e2e',
@@ -90,6 +91,24 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
   const subnets = await Promise.all(
     [['10.0.1.0/24', 'us-east-1a'], ['10.0.2.0/24', 'us-east-1b']].map(async ([CidrBlock, AvailabilityZone]) =>
       required((await ec2.send(new CreateSubnetCommand({ VpcId: vpcId, CidrBlock, AvailabilityZone }))).Subnet?.SubnetId, 'subnet id'),
+    ),
+  );
+
+  // EC2 (fact 5 again): two zones, so the host map has something to group by. moto publishes no
+  // CloudWatch status checks for them, which is the point — a running instance nobody can vouch for is
+  // `unknown`, and the acceptance walk proves that missing telemetry never becomes green.
+  await Promise.all(
+    subnets.map((SubnetId, index) =>
+      ec2.send(
+        new RunInstancesCommand({
+          ImageId: 'ami-12345678',
+          InstanceType: index === 0 ? 't3.small' : 't3.micro',
+          MinCount: 1,
+          MaxCount: 1,
+          SubnetId,
+          TagSpecifications: [{ ResourceType: 'instance', Tags: [{ Key: 'Name', Value: `${SEED.instancePrefix}-${index === 0 ? 'a' : 'b'}` }] }],
+        }),
+      ),
     ),
   );
 

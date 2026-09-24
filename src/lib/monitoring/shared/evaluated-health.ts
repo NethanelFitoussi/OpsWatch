@@ -24,11 +24,17 @@ export type EvaluatedState = (typeof EVALUATED_STATES)[number];
  */
 export const FRESH_FOR_MS = 15 * 60_000;
 
-/** One check that actually ran. A check nobody ran is absent from the list, never a passing one. */
+/**
+ * One check that actually ran. A check nobody ran is absent from the list, never a passing one.
+ *
+ * `unknown` is the fourth outcome and the one that is easy to leave out: a check that ran and could not
+ * reach a verdict. Folding it into `pass` is how a summary ends up printing a green tick beside "0 of 1
+ * instances healthy, the rest not evaluated" — a sentence and a symbol saying opposite things.
+ */
 export type ResourceCheck = {
   /** A key into `Monitoring.checks.*`, so the sentence is translated and cannot drift from the rule. */
   id: string;
-  outcome: 'pass' | 'warn' | 'fail';
+  outcome: 'pass' | 'warn' | 'fail' | 'unknown';
   values?: Record<string, string | number>;
 };
 
@@ -78,9 +84,9 @@ export function evaluate(input: {
   if (ageMs !== null && ageMs > freshForMs) return { ...base, state: 'stale' };
   if (checks.some((check) => check.outcome === 'fail')) return { ...base, state: 'critical' };
   if (checks.some((check) => check.outcome === 'warn')) return { ...base, state: 'warning' };
-  // Everything that ran passed, but something did not run. That is not a healthy resource; it is a
-  // resource OpsWatch has not finished looking at.
-  if (unread.length > 0) return { ...base, state: 'unknown' };
+  // Everything that ran either passed or could not reach a verdict, and something did not run at all.
+  // Neither is a healthy resource; both are a resource OpsWatch has not finished looking at.
+  if (unread.length > 0 || checks.some((check) => check.outcome === 'unknown')) return { ...base, state: 'unknown' };
   return { ...base, state: 'healthy' };
 }
 

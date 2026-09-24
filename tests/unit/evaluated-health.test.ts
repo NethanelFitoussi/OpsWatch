@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { evaluateEc2Instance } from '@/lib/monitoring/ec2-health';
 import { evaluateEcsService } from '@/lib/monitoring/ecs-health';
 import { ECS_UTILIZATION_LEVELS } from '@/lib/monitoring/insights';
 import { FRESH_FOR_MS, evaluate, hasGaps, rollUp, type ResourceCheck } from '@/lib/monitoring/shared/evaluated-health';
@@ -126,5 +127,57 @@ describe('what OpsWatch checks about an ECS service', () => {
   it('leaves out a rollout state ECS does not report, rather than inventing one', () => {
     const evaluation = evaluateEcsService({ ...facts, rolloutState: null }, readings, NOW);
     expect(evaluation.checks.map((check) => check.id)).not.toContain('ecs.rollout.completed');
+  });
+});
+
+describe('what OpsWatch checks about an EC2 instance', () => {
+  const readings = { statusCheckFailed: 0, cpu: 12, metricsUnavailable: false };
+
+  it('THE RULING: CPU is never a verdict, because 95% is a batch host doing its job', () => {
+    // The only thing that changes the state is the status check. A busy instance stays green.
+    expect(evaluateEc2Instance({ state: 'running' }, { ...readings, cpu: 99 }, NOW).state).toBe('healthy');
+    expect(evaluateEc2Instance({ state: 'running' }, { ...readings, statusCheckFailed: 1 }, NOW).state).toBe('critical');
+  });
+
+  it('THE RULING: a running instance with no status-check data is unknown, not healthy', () => {
+    const evaluation = evaluateEc2Instance({ state: 'running' }, { ...readings, statusCheckFailed: null }, NOW);
+    expect(evaluation.state).toBe('unknown');
+    expect(evaluation.unread).toEqual(['ec2.statusCheck']);
+  });
+
+  it('does not demand a status check from an instance that is switched off', () => {
+    // A stopped instance publishes nothing and is not broken; asking it to prove otherwise would paint
+    // every parked box grey for ever.
+    const evaluation = evaluateEc2Instance({ state: 'stopped' }, { ...readings, statusCheckFailed: null }, NOW);
+    expect(evaluation.state).toBe('healthy');
+    expect(evaluation.checks.map((check) => check.id)).toEqual(['ec2.state.stopped']);
+  });
+
+  it('treats starting and stopping as a moment rather than a verdict', () => {
+    for (const state of ['pending', 'stopping', 'shutting-down']) {
+      const evaluation = evaluateEc2Instance({ state }, { ...readings, statusCheckFailed: null }, NOW);
+      expect(evaluation.state, state).toBe('healthy');
+      expect(evaluation.checks[0].id, state).toBe('ec2.state.transition');
+    }
+  });
+
+  it('admits a failed CloudWatch call as a gap, not as a failure', () => {
+    const evaluation = evaluateEc2Instance({ state: 'stopped' }, { statusCheckFailed: null, cpu: null, metricsUnavailable: true }, NOW);
+    expect(evaluation.state).toBe('unknown');
+    expect(evaluation.unread).toEqual(['ec2.statusCheck']);
+  });
+});
+
+describe('a check that ran and could not decide', () => {
+  it('THE RULING: it blocks green, so a tick never sits beside "0 of 1 healthy"', () => {
+    // Folding "could not decide" into "passed" is how a summary prints a green tick above a sentence
+    // that says the opposite. It is its own outcome.
+    const evaluation = evaluate({ checks: [pass, { id: 'x.partial', outcome: 'unknown' }], evaluatedAt: NOW, nowMs: NOW });
+    expect(evaluation.state).toBe('unknown');
+  });
+
+  it('still loses to something known to be wrong', () => {
+    expect(evaluate({ checks: [{ id: 'x.partial', outcome: 'unknown' }, { id: 'x.fail', outcome: 'fail' }], evaluatedAt: NOW, nowMs: NOW }).state).toBe('critical');
+    expect(evaluate({ checks: [{ id: 'x.partial', outcome: 'unknown' }, { id: 'x.warn', outcome: 'warn' }], evaluatedAt: NOW, nowMs: NOW }).state).toBe('warning');
   });
 });

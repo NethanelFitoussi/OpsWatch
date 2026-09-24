@@ -8,6 +8,7 @@ export const SUBSECTIONS = {
   overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup', 'ask'],
   errors: ['groups', 'sources'],
   containers: ['overview', 'services', 'deployments', 'report'],
+  instances: ['overview', 'list'],
   databases: ['instances', 'queries', 'report'],
   'load-balancers': ['list', 'objectives', 'report'],
   alarms: ['list', 'report'],

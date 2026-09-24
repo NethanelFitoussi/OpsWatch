@@ -16,7 +16,8 @@
       "overview": "Overview",
       "errors": "Errors",
       "loadBalancers": "Load balancers",
-      "alarms": "Alarms"
+      "alarms": "Alarms",
+      "instances": "Instances"
     },
     "language": {
       "label": "Language",
@@ -2431,6 +2432,23 @@
           "critical": "{cluster}: {healthy} of {total} services healthy, some are failing",
           "stale": "{cluster}: the last reading is too old to stand for now"
         }
+      },
+      "ec2": {
+        "state": {
+          "running": "Instance is running",
+          "stopped": "Instance is stopped on purpose",
+          "transition": "Instance is {state}"
+        },
+        "statusCheck": {
+          "name": "the AWS status check",
+          "pass": "Passed the AWS status check",
+          "failed": "Failed the AWS status check"
+        },
+        "zone": {
+          "pass": "{zone}: {healthy} of {total} instances healthy",
+          "partial": "{zone}: {healthy} of {total} instances healthy, the rest not evaluated",
+          "critical": "{zone}: {healthy} of {total} instances healthy, some are failing"
+        }
       }
     },
     "ecsOverview": {
@@ -2485,6 +2503,36 @@
         "minutes": "Last read {value} min ago — too long ago to stand for now",
         "hours": "Last read {value} h ago — too long ago to stand for now",
         "days": "Last read {value} d ago — too long ago to stand for now"
+      }
+    },
+    "ec2": {
+      "title": "EC2 overview",
+      "description": "Every instance OpsWatch can read, grouped by availability zone.",
+      "none": "No EC2 instance in this region.",
+      "noneMatching": "No instance matches that search.",
+      "noZone": "No zone reported",
+      "running": "Running",
+      "ofTotal": "{running} of {total}",
+      "zones": "Zones",
+      "tileDetail": "{type}, {state}",
+      "byZone": "availability zone",
+      "mapTitle": "Every instance",
+      "mapDescription": "One tile per instance. Colour is the status check AWS publishes — the one signal that means broken.",
+      "truncated": "Showing the first {shown} instances.",
+      "metricsUnavailable": "CloudWatch could not be read",
+      "hottestTitle": "Busiest instances",
+      "hottestDescription": "Highest CPU over the window. CPU is worth seeing; it is not a verdict.",
+      "listTitle": "Instances",
+      "listDescription": "What each one is, and what it is doing.",
+      "search": "Search instances",
+      "searchSubmit": "Search",
+      "columns": {
+        "instance": "Instance",
+        "health": "Health",
+        "state": "State",
+        "type": "Type",
+        "zone": "Zone",
+        "cpu": "CPU"
       }
     }
   },
@@ -2606,6 +2654,10 @@
     "errors": {
       "groups": "Error groups",
       "sources": "Log sources"
+    },
+    "instances": {
+      "overview": "Overview",
+      "list": "Instances"
     }
   },
   "Settings": {

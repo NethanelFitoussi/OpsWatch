@@ -5,8 +5,8 @@ import type { Evaluation } from '@/lib/monitoring/shared/evaluated-health';
 import { STATE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
-const OUTCOME_ICON = { pass: Check, warn: TriangleAlert, fail: X } as const;
-const OUTCOME_TONE = { pass: STATE_TEXT.healthy, warn: STATE_TEXT.warning, fail: STATE_TEXT.critical } as const;
+const OUTCOME_ICON = { pass: Check, warn: TriangleAlert, fail: X, unknown: CircleHelp } as const;
+const OUTCOME_TONE = { pass: STATE_TEXT.healthy, warn: STATE_TEXT.warning, fail: STATE_TEXT.critical, unknown: STATE_TEXT.unknown } as const;
 
 /**
  * Why OpsWatch says this is healthy — which is a piece of analysis, not the absence of one.

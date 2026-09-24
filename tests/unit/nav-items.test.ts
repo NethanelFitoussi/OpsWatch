@@ -10,6 +10,8 @@ describe('navigation items', () => {
       // Errors sits directly under the overview: it is the second thing anyone looks at.
       'errors',
       'containers',
+      // EC2 sits beside the containers it often runs: both are "where the code is".
+      'instances',
       'databases',
       'loadBalancers',
       'alarms',

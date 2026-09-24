@@ -127,7 +127,14 @@ export async function EcsEstate({ scope, range, nowMs }: { scope: MonitoringScop
       return [
         {
           id: group.state === 'healthy' ? 'ecs.cluster.pass' : group.state === 'unknown' ? 'ecs.cluster.partial' : `ecs.cluster.${group.state}`,
-          outcome: group.state === 'critical' ? ('fail' as const) : group.state === 'warning' ? ('warn' as const) : ('pass' as const),
+          outcome:
+            group.state === 'critical'
+              ? ('fail' as const)
+              : group.state === 'warning'
+                ? ('warn' as const)
+                : group.state === 'unknown'
+                  ? ('unknown' as const)
+                  : ('pass' as const),
           values: { cluster: clusters.data[index].name, healthy: group.counts.healthy, total: group.total },
         },
       ];
