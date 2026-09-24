@@ -52,7 +52,7 @@ test('the page says what it stores, which is the question a logging tool has to 
 test('discovery happens on search, and the result can be chosen', async ({ page }) => {
   await page.goto(sourcesUrl());
   await page.getByLabel('Search log groups').fill('opswatch');
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
 
   // Three honest outcomes and never a silent blank: groups found, nothing matched, or a stated failure.
   const found = page.locator('main button', { hasText: /^\// });

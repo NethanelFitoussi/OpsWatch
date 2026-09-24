@@ -4421,5 +4421,35 @@
         }
       }
     }
+  },
+  "Search": {
+    "title": "Search OpsWatch",
+    "open": "Search",
+    "placeholder": "A service, a problem, a guide…",
+    "results": "Results",
+    "noResults": "Nothing found. Try the name of the resource, or fewer words.",
+    "hint": "Arrows to move, Enter to open, Escape to close. Press / from anywhere.",
+    "inSection": "Search {section}",
+    "kinds": {
+      "connection": "Connection",
+      "problem": "Problem",
+      "error": "Error",
+      "alert": "Alert",
+      "incident": "Incident",
+      "deployment": "Deployment",
+      "repository": "Repository",
+      "synthetic": "Synthetic check",
+      "objective": "Objective",
+      "doc": "Documentation",
+      "page": "Page",
+      "sectionSearch": "Search"
+    },
+    "sections": {
+      "containers": "ECS services",
+      "instances": "EC2 instances",
+      "redis": "Redis nodes",
+      "kubernetes": "Kubernetes workloads",
+      "logs": "logs"
+    }
   }
 }

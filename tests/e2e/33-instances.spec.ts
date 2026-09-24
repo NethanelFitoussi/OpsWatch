@@ -60,7 +60,7 @@ test('the instance list says what each one is, and the search narrows it', async
   await expect(rows.first()).toContainText('us-east-1a');
 
   await page.getByLabel('Search instances').fill('host-b');
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.locator('main tbody tr')).toHaveCount(1);
   await expect(page.locator('main tbody tr')).toContainText('opswatch-e2e-host-b');
 });

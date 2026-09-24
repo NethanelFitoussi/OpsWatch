@@ -21,7 +21,7 @@ const PROMISED_VALUES = [
   'ERROR_STATUSES', 'EVIDENCE_KINDS', 'FAVORITE_TYPES', 'FEATURES', 'HEALTH_STATUSES', 'INCIDENT_STATUSES',
   'INFRA_CATEGORIES', 'LOG_LEVELS', 'MAX_PAGE_SIZE', 'METRIC_UNITS', 'MIN_PAGE_SIZE', 'MIN_SEVERITIES',
   'NOTIFICATION_CATEGORIES', 'PERMISSIONS', 'PERMISSION_NAMES', 'PROBLEM_STATUSES', 'REF_TYPES', 'ROLES',
-  'SEVERITIES', 'SLO_STATUSES', 'SYNTHETIC_STATUSES', 'TOKEN_AUDIENCES', 'TRENDS', 'aiAnswerSchema',
+  'GLOBAL_SEARCH_KINDS', 'SEVERITIES', 'SLO_STATUSES', 'SYNTHETIC_STATUSES', 'TOKEN_AUDIENCES', 'TRENDS', 'aiAnswerSchema', 'globalSearchResponseSchema', 'globalSearchResultSchema',
   'alertDetailSchema', 'alertSummarySchema', 'allowedActionsSchema', 'apiErrorBodySchema', 'authSessionSchema',
   'briefSchema', 'can', 'changeSchema', 'checkFindingSchema', 'checkNotRunReasonSchema',
   'checkNotRunSchema', 'checkupSchema', 'checkValuesSchema', 'CLOUDFLARE_STATES', 'cloudflareDaySchema', 'cloudflareOverviewSchema', 'cloudflareZoneSchema', 'commitSchema', 'decodeCursor', 'deploymentDetailSchema',
