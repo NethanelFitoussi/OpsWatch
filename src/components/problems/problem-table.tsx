@@ -58,15 +58,16 @@ export async function ProblemTable({
 
   if (ranked.length === 0) {
     return (
-      <MonitoringCard title={labels.title} description={labels.description}>
+      <MonitoringCard title={<span className="sr-only">{labels.title}</span>}>
         <p className="text-sm">{hasRun ? labels.empty : labels.waiting}</p>
         <p className="mt-1 text-sm text-muted-foreground">{hasRun ? labels.emptyHint : labels.waitingHint}</p>
       </MonitoringCard>
     );
   }
 
+  // The page header names the list and explains it; repeating both here said everything twice.
   return (
-    <MonitoringCard title={labels.title} description={labels.description}>
+    <MonitoringCard title={<span className="sr-only">{labels.title}</span>}>
       <p className="mb-3 text-sm text-muted-foreground">{labels.counts}</p>
       {/* A table at every width: the header is hidden below `sm` and each row reads as a block instead. */}
       <ul aria-label={labels.title} className="divide-y">

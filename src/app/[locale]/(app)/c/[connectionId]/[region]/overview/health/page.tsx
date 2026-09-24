@@ -29,8 +29,8 @@ export default async function HealthPage({ params }: Props) {
 
   if (!hasBeenRead(db, query)) {
     return (
-      <SectionLayout context={context} section="overview" subsection="health">
-        <MonitoringCard title={t('title')} description={t('description')}>
+      <SectionLayout context={context} section="overview" subsection="health" description={t('description')}>
+        <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
           <p className="text-sm">{t('waiting')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('waitingHint')}</p>
         </MonitoringCard>
@@ -45,7 +45,7 @@ export default async function HealthPage({ params }: Props) {
   });
 
   return (
-    <SectionLayout context={context} section="overview" subsection="health">
+    <SectionLayout context={context} section="overview" subsection="health" description={t('description')}>
       <HealthSummary health={health} scope={context.scope} nowMs={nowMs} />
     </SectionLayout>
   );

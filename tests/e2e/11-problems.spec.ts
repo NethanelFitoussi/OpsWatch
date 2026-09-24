@@ -14,13 +14,14 @@ const problemsUrl = () => `/en/c/${connectionId}/${MOTO_REGION}/overview/problem
 test('the overview opens on the Morning brief, as the section default', async ({ page }) => {
   await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/overview`);
   await expect(page).toHaveURL(new RegExp('/overview/brief$'));
-  await expect(page.getByRole('heading', { level: 2, name: 'Morning brief' }).first()).toBeVisible();
+  // The page's name is its h1. It used to be an h2 as well, on a card that repeated the header.
+  await expect(page.getByRole('heading', { level: 1, name: 'Morning brief' })).toBeVisible();
 });
 
 test('Problems, Health and the brief are all real pages', async ({ page }) => {
   for (const [subsection, heading] of [['problems', 'Problems'], ['health', 'Health'], ['brief', 'Morning brief']] as const) {
     await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/overview/${subsection}`);
-    await expect(page.getByRole('heading', { level: 2, name: heading }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
   }
 });
 
@@ -258,4 +259,17 @@ test('THE RULING: possible causes are offered as possibilities, or not at all', 
     expect(body).toMatch(/alarm/i);
   }
   expect(body).not.toMatch(/root cause|caused by/i);
+});
+
+test('THE RULING: a page says its own name once', async ({ page }) => {
+  // Every one of these carried a card that repeated the page header's title *and* its description, so an
+  // operator read "Problems / What OpsWatch believes is wrong right now" twice before reaching a problem.
+  for (const subsection of ['brief', 'health', 'problems', 'checkup', 'alerts', 'incidents', 'synthetics'] as const) {
+    await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/overview/${subsection}`);
+    const h1 = await page.getByRole('heading', { level: 1 }).first().innerText();
+    // Visible headings only: a card may still label itself for a screen reader, and that is not a repeat
+    // anybody reads twice.
+    const repeats = page.locator('main h2:not(:has(.sr-only))').filter({ hasText: new RegExp(`^${h1}$`) });
+    await expect(repeats, subsection).toHaveCount(0);
+  }
 });

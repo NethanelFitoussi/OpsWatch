@@ -14,7 +14,9 @@ import { formatMetricValue, NO_VALUE } from '@/lib/monitoring/shared/format';
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
-import { TONE_SOFT } from '@/lib/ui/tones';
+import { evaluateEcsService } from '@/lib/monitoring/ecs-health';
+import { STATE_FILL, TONE_SOFT } from '@/lib/ui/tones';
+import { cn } from '@/lib/utils';
 
 const ROLLOUT_BADGE_CLASS = {
   COMPLETED: TONE_SOFT.success,
@@ -64,6 +66,7 @@ async function ServicesCard({ scope, cluster, range, nowMs, search }: { scope: M
   const t = await getTranslations('Monitoring.containers');
   const tMetrics = await getTranslations('Monitoring.metrics');
   const tCommon = await getTranslations('Monitoring.common');
+  const tEstate = await getTranslations('Monitoring.estate');
   const locale = await getLocale();
   const actions = cluster.containerInsights ? <Badge variant="outline">{t('containerInsights')}</Badge> : undefined;
 
@@ -107,6 +110,7 @@ async function ServicesCard({ scope, cluster, range, nowMs, search }: { scope: M
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.service')}</TableHead>
+              <TableHead>{tEstate('health')}</TableHead>
               <TableHead>{t('columns.status')}</TableHead>
               <TableHead>{t('columns.tasks')}</TableHead>
               <TableHead>{t('columns.cpu')}</TableHead>
@@ -124,6 +128,22 @@ async function ServicesCard({ scope, cluster, range, nowMs, search }: { scope: M
                   >
                     {s.name}
                   </Link>
+                </TableCell>
+                <TableCell>
+                  {/* The same evaluation the overview colours its tiles with, so the two cannot disagree. */}
+                  {(() => {
+                    const evaluation = evaluateEcsService(
+                      { desiredCount: s.desiredCount, runningCount: s.runningCount, pendingCount: s.pendingCount, rolloutState: s.primaryDeployment?.rolloutState ?? null },
+                      { cpu: latestValue(seriesById(series, `s${i}cpu`)), memory: latestValue(seriesById(series, `s${i}mem`)), metricsUnavailable: metrics !== null && !metrics.ok },
+                      nowMs,
+                    );
+                    return (
+                      <span className="flex items-center gap-2 whitespace-nowrap">
+                        <span className={cn('size-2 shrink-0 rounded-full', STATE_FILL[evaluation.state])} aria-hidden />
+                        {tEstate(`state.${evaluation.state}`)}
+                      </span>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>{s.status}</TableCell>
                 <TableCell>{t('taskCounts', { running: s.runningCount, desired: s.desiredCount, pending: s.pendingCount })}</TableCell>

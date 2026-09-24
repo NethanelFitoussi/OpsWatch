@@ -43,8 +43,8 @@ export default async function SyntheticsPage({ params }: Props) {
   });
 
   return (
-    <SectionLayout context={context} section="overview" subsection="synthetics">
-      <MonitoringCard title={t('title')} description={t('description')}>
+    <SectionLayout context={context} section="overview" subsection="synthetics" description={t('description')}>
+      <MonitoringCard title={<span className="sr-only">{t('title')}</span>}>
         <p className="text-sm text-muted-foreground">{t('rules')}</p>
       </MonitoringCard>
 
