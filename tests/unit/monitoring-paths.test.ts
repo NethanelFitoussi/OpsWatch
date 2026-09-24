@@ -33,7 +33,7 @@ describe('monitoring paths', () => {
 
   // Without a recognised sub-section the default one is used, so a switch never lands on a bare section.
   it('switches region or connection and keeps the section, defaulting the sub-page', () => {
-    expect(withRegion('/c/abc123def456/eu-west-1/containers/prod/web', 'us-east-1')).toBe('/c/abc123def456/us-east-1/containers/services');
+    expect(withRegion('/c/abc123def456/eu-west-1/containers/prod/web', 'us-east-1')).toBe('/c/abc123def456/us-east-1/containers/overview');
     expect(withRegion('/accounts', 'us-east-1')).toBe('/accounts');
     expect(switchConnectionPath('/c/abc123def456/eu-west-1/alarms', target)).toBe('/c/def456abc123/us-east-1/alarms/list');
     expect(switchConnectionPath('/accounts', target)).toBe('/c/def456abc123/us-east-1/overview/brief');
@@ -48,7 +48,7 @@ describe('monitoring paths', () => {
     );
     // The resource is dropped with the section it belonged to, the query string is not.
     expect(withRegion('/c/abc123def456/eu-west-1/containers/prod/web', 'us-east-1', 'range=12h&q=web')).toBe(
-      '/c/abc123def456/us-east-1/containers/services?range=12h&q=web',
+      '/c/abc123def456/us-east-1/containers/overview?range=12h&q=web',
     );
   });
 

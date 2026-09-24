@@ -20,7 +20,7 @@ test('a monitoring section without a selection opens the first usable connection
 test('sidebar links keep the connection and region, and auto-refresh can be paused', async ({ page }) => {
   await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  await expect(nav.getByRole('link', { name: 'Containers' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/containers/services`);
+  await expect(nav.getByRole('link', { name: 'Containers' })).toHaveAttribute('href', `/en/c/${connectionId}/us-east-1/containers/overview`);
   await expect(nav.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByText('Refreshes every 2 min')).toBeVisible();
   await page.getByRole('button', { name: 'Pause auto-refresh' }).click();
@@ -142,7 +142,7 @@ test('the overview shows the seeded alarm insight and leaves target-tracking ala
   await expect(alarm).toHaveCount(1);
   await expect(insights).not.toContainText('TargetTracking-');
   await expect(page.getByText('1 of 2 alarms firing')).toBeVisible();
-  await expect(page.getByText(/of 1 services degraded/)).toBeVisible();
+  await expect(page.getByText(/of \d+ services degraded/)).toBeVisible();
   await alarm.getByRole('link', { name: 'View' }).click();
   await expect(page).toHaveURL(new RegExp(`/c/${connectionId}/us-east-1/alarms/list\\?state=ALARM$`));
 });
@@ -181,7 +181,7 @@ test('the main rail starts collapsed, still navigates, and remembers being opene
   await expect(page.locator('aside')).toHaveClass(/w-16/);
   // Collapsed is not hidden — the name is still the link's, and the link still works.
   await rail.getByRole('link', { name: 'Containers' }).click();
-  await expect(page).toHaveURL(/\/containers\/services$/);
+  await expect(page).toHaveURL(/\/containers\/overview$/);
   await expect(page.getByRole('button', { name: 'Expand the menu' })).toHaveAttribute('aria-pressed', 'true');
 
   // Opening it is remembered across a reload, and the words come back.
@@ -220,4 +220,64 @@ test('on a 360 px phone the section menu keeps its words and offers no collapse'
   await expect(menu.getByRole('button', { name: 'Hide the page names' })).toBeHidden();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('THE RULING: ECS opens on a verdict, and the verdict is earned', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'containers', 'overview'));
+  const main = page.locator('main');
+  await expect(page).toHaveTitle('ECS overview · OpsWatch');
+
+  // A verdict in words, not a table with nothing red in it.
+  await expect(main).toContainText(
+    /Everything checked here passed|Something here needs attention|Something here is failing|could not check everything/,
+  );
+  // The counts travel with the word, so the word is never read alone.
+  await expect(main).toContainText(/not evaluated/i);
+  // And the evidence behind it: the checks that actually ran, with a time.
+  await expect(main).toContainText(/services healthy/);
+  await expect(main).toContainText(/Checked \d+ (min|h|d) ago/);
+});
+
+test('the ECS map is one tile per service, and a tile says what it is before it is clicked', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'containers', 'overview'));
+  const map = page.locator('main section[aria-label="opswatch-e2e"]');
+  await expect(map).toBeVisible();
+
+  // The arrangement is stated rather than inferred.
+  await expect(page.locator('main')).toContainText('Grouped by cluster');
+  // The tile carries its name, its state and its measured detail — for a hover and for a screen reader.
+  const tile = map.getByRole('link').first();
+  await expect(tile).toHaveAttribute('title', /web —/);
+  await expect(tile).toHaveAttribute('title', /tasks running/);
+  await tile.click();
+  await expect(page).toHaveURL(new RegExp(`/containers/services/opswatch-e2e/web`));
+});
+
+test('the ECS overview renders at 360px without horizontal overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(monitoringUrl(connectionId, 'containers', 'overview'));
+  await expect(page.locator('main')).toContainText('Every service');
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('THE RULING: a healthy service is visibly healthy, and says what it checked', async ({ page }) => {
+  await page.goto(monitoringUrl(connectionId, 'containers', 'overview'));
+  const map = page.locator('main section[aria-label="opswatch-e2e"]');
+  // The estate holds one broken service and one parked at zero. The parked one is green — earned, not
+  // assumed: nothing is wrong with a service somebody deliberately scaled to nothing.
+  const healthy = map.getByRole('link', { name: /web-idle — Healthy/ });
+  await expect(healthy).toHaveCount(1);
+  await expect(healthy).toHaveAttribute('title', /Healthy/);
+
+  // And the two states are not the same colour, which is the whole point of the map.
+  const broken = map.getByRole('link', { name: /^web — Critical/ });
+  await expect(broken).toHaveCount(1);
+  const [healthyClass, brokenClass] = await Promise.all([healthy.getAttribute('class'), broken.getAttribute('class')]);
+  expect(healthyClass).not.toBe(brokenClass);
+  expect(healthyClass).toMatch(/emerald/);
+
+  // The counts say both, so the bar above is answerable.
+  // The count and its word are separate elements, so the assertion is on the pair rather than a string.
+  await expect(page.locator('main')).toContainText(/1\s*Healthy/);
 });

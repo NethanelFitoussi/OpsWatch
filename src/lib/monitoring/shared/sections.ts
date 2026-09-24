@@ -7,7 +7,7 @@ import type { MonitoringSection } from './paths';
 export const SUBSECTIONS = {
   overview: ['brief', 'health', 'problems', 'alerts', 'incidents', 'synthetics', 'insights', 'checkup', 'ask'],
   errors: ['groups', 'sources'],
-  containers: ['services', 'deployments', 'report'],
+  containers: ['overview', 'services', 'deployments', 'report'],
   databases: ['instances', 'queries', 'report'],
   'load-balancers': ['list', 'objectives', 'report'],
   alarms: ['list', 'report'],
@@ -74,7 +74,9 @@ export const SUBSECTION_ICONS: Record<
   | 'ask'
   | 'deployments'
   | 'sources'
+  | 'estate'
 > = {
+  overview: 'estate',
   groups: 'list',
   sources: 'sources',
   problems: 'problems',

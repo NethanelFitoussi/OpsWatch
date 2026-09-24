@@ -118,3 +118,50 @@ describe('the causes a problem page offers', () => {
     }
   });
 });
+
+/**
+ * Every literal message key a component asks for, resolved against the namespace it asked in.
+ *
+ * `const t = await getTranslations('Monitoring.estate')` followed by `t('verdict.healthy')` is a promise
+ * that `Monitoring.estate.verdict.healthy` exists. Nothing checked that promise, and the cost of breaking
+ * it is a raw key rendered at a reader — which is how `Insights.messages.synthetic_down` reached a screen,
+ * and how a whole namespace was once replaced wholesale without a single test noticing.
+ *
+ * Only literal keys in files with a literal namespace are resolved: a key built at runtime cannot be
+ * checked here, and pretending otherwise would mean guessing.
+ */
+function requestedKeys(): { file: string; key: string }[] {
+  const asked: { file: string; key: string }[] = [];
+  for (const file of [...sourceFilesUnder('components'), ...sourceFilesUnder('app'), ...sourceFilesUnder('lib')]) {
+    const source = readFileSync(file, 'utf8');
+    // Translator variable -> namespace, for the namespaces written out in full. A name bound twice in one
+    // file is one component's `t` and another's; without scope analysis it cannot be resolved, so it is
+    // dropped rather than guessed at.
+    const bindings = new Map<string, Set<string>>();
+    for (const [, name, namespace] of source.matchAll(/(?:const|let)\s+(\w+)\s*=\s*(?:await\s+)?(?:get|use)Translations\(\s*'([\w.]+)'\s*\)/g)) {
+      (bindings.get(name) ?? bindings.set(name, new Set()).get(name)!).add(namespace);
+    }
+    const namespaces = new Map([...bindings].filter(([, set]) => set.size === 1).map(([name, set]) => [name, [...set][0]]));
+    if (namespaces.size === 0) continue;
+    for (const [name, namespace] of namespaces) {
+      // `t('a.b')` and `t('a.b', { … })`, never `t(\`a.${x}\`)`.
+      for (const [, key] of source.matchAll(new RegExp(`\\b${name}\\(\\s*'([\\w.]+)'`, 'g'))) {
+        asked.push({ file, key: `${namespace}.${key}` });
+      }
+    }
+  }
+  return asked;
+}
+
+describe('the keys the product actually asks for', () => {
+  it('THE RULING: every literal key a component reads exists in English and in French', () => {
+    const enFlat = flatten(en as Tree);
+    const frFlat = flatten(fr as Tree);
+    const asked = requestedKeys();
+    // A guard that resolves nothing would pass for ever; this is the tripwire on the tripwire.
+    expect(asked.length).toBeGreaterThan(200);
+
+    const missing = asked.filter(({ key }) => typeof enFlat[key] !== 'string' || typeof frFlat[key] !== 'string');
+    expect(missing.map(({ file, key }) => `${key} (${file})`)).toEqual([]);
+  });
+});

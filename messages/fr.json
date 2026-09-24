@@ -2398,6 +2398,94 @@
           "action": "Gérer la connexion"
         }
       }
+    },
+    "checks": {
+      "ecs": {
+        "tasks": {
+          "zero": "Volontairement réduit à zéro tâche",
+          "pass": "{running} tâches sur {desired} en cours",
+          "short": "Seulement {running} tâches sur {desired} en cours",
+          "none": "Aucune tâche en cours, {desired} attendues"
+        },
+        "cpu": {
+          "name": "le CPU",
+          "pass": "CPU à {value} %, sous {threshold} %",
+          "warn": "CPU à {value} %, au-dessus de {threshold} %",
+          "critical": "CPU à {value} %, au-dessus de {threshold} %"
+        },
+        "memory": {
+          "name": "la mémoire",
+          "pass": "Mémoire à {value} %, sous {threshold} %",
+          "warn": "Mémoire à {value} %, au-dessus de {threshold} %",
+          "critical": "Mémoire à {value} %, au-dessus de {threshold} %"
+        },
+        "rollout": {
+          "completed": "Dernier déploiement terminé",
+          "inProgress": "Un déploiement est en cours",
+          "failed": "Le dernier déploiement a échoué"
+        },
+        "cluster": {
+          "pass": "{cluster} : {healthy} services sur {total} sains",
+          "partial": "{cluster} : {healthy} services sur {total} sains, le reste non évalué",
+          "warning": "{cluster} : {healthy} services sur {total} sains, certains demandent attention",
+          "critical": "{cluster} : {healthy} services sur {total} sains, certains sont en échec",
+          "stale": "{cluster} : la dernière lecture est trop ancienne pour valoir maintenant"
+        }
+      }
+    },
+    "ecsOverview": {
+      "title": "Vue d'ensemble ECS",
+      "description": "Chaque service qu'OpsWatch peut lire, et s'il est sain.",
+      "noClusters": "Aucun cluster ECS dans cette région.",
+      "services": "Services",
+      "tasksRunning": "Tâches en cours",
+      "ofDesired": "{running} sur {desired}",
+      "tileDetail": "{running} tâches sur {desired} en cours",
+      "mapTitle": "Tous les services",
+      "mapDescription": "Une tuile par service. La couleur est ce qu'OpsWatch a mesuré ; un contour est ce qu'il n'a pas pu lire.",
+      "byCluster": "cluster",
+      "hottestTitle": "Services les plus chargés",
+      "hottestDescription": "CPU le plus élevé sur la fenêtre, pour mettre un nom sur la forme ci-dessus.",
+      "unreadableTitle": "Clusters qu'OpsWatch n'a pas pu lire"
+    },
+    "estate": {
+      "nothingHere": "Rien à évaluer ici.",
+      "ofTotal": "{count, plural, one {# ressource} other {# ressources}}",
+      "notEvaluated": "Non évalué",
+      "notEvaluatedHint": "OpsWatch ne l'a pas encore lu : il ne peut dire ni que c'est sain, ni le contraire.",
+      "unread": "OpsWatch n'a pas pu lire {signal} : il ne déclare donc pas cette ressource saine.",
+      "groupedBy": "Regroupé par {dimension}",
+      "state": {
+        "healthy": "Sain",
+        "warning": "À surveiller",
+        "critical": "Critique",
+        "unknown": "Non évalué",
+        "stale": "Lecture ancienne"
+      },
+      "countOf": {
+        "healthy": "{count} sain(s)",
+        "warning": "{count} à surveiller",
+        "critical": "{count} critique(s)",
+        "unknown": "{count} non évalué(s)",
+        "stale": "{count} à lecture ancienne"
+      },
+      "verdict": {
+        "healthy": "Tout ce qui a été vérifié ici est passé.",
+        "warning": "Quelque chose ici demande attention.",
+        "critical": "Quelque chose ici est en échec.",
+        "unknown": "OpsWatch n'a pas pu tout vérifier ici.",
+        "stale": "Ces réponses proviennent d'une lecture ancienne."
+      },
+      "evaluated": {
+        "minutes": "Vérifié il y a {value} min",
+        "hours": "Vérifié il y a {value} h",
+        "days": "Vérifié il y a {value} j"
+      },
+      "staleSince": {
+        "minutes": "Dernière lecture il y a {value} min — trop ancienne pour valoir maintenant",
+        "hours": "Dernière lecture il y a {value} h — trop ancienne pour valoir maintenant",
+        "days": "Dernière lecture il y a {value} j — trop ancienne pour valoir maintenant"
+      }
     }
   },
   "Insights": {
@@ -2491,6 +2579,7 @@
       "ask": "Demander à OpsWatch"
     },
     "containers": {
+      "overview": "Vue d'ensemble",
       "services": "Services",
       "report": "Rapport",
       "deployments": "Déploiements"
@@ -2730,6 +2819,18 @@
       "empty": "Rien n’a encore été enregistré.",
       "truncated": "Affichage des {limit} plus récentes.",
       "when": "Quand",
+      "actionColumn": "Action",
+      "actor": "Qui",
+      "result": "Résultat",
+      "from": "Depuis",
+      "system": "OpsWatch lui-même",
+      "user": "Utilisateur {id}",
+      "notRecorded": "non enregistré",
+      "results": {
+        "ok": "Réussi",
+        "denied": "Refusé",
+        "failed": "Échoué"
+      },
       "action": {
         "sign_in": "Connexion",
         "sign_out": "Déconnexion",
@@ -2758,17 +2859,6 @@
         "incident_dismiss": "Incident écarté",
         "export_download": "Export téléchargé",
         "retention_purge": "Passe de rétention exécutée"
-      },
-      "actor": "Qui",
-      "result": "Résultat",
-      "from": "Depuis",
-      "system": "OpsWatch lui-même",
-      "user": "Utilisateur {id}",
-      "notRecorded": "non enregistré",
-      "results": {
-        "ok": "Réussi",
-        "denied": "Refusé",
-        "failed": "Échoué"
       }
     },
     "ai": {

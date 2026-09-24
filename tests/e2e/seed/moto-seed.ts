@@ -15,6 +15,7 @@ export const SEED = {
   region: 'us-east-1',
   cluster: 'opswatch-e2e',
   service: 'web',
+  idleService: 'web-idle',
   taskFamily: 'opswatch-web',
   logGroup: '/ecs/opswatch-web',
   /** A second group under another prefix, so a picker search can show one without the other. */
@@ -128,6 +129,17 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
       taskDefinition: SEED.taskFamily,
       desiredCount: 2,
       loadBalancers: [{ targetGroupArn, containerName: 'web', containerPort: 80 }],
+    }),
+  );
+  // A second service, deliberately parked at zero tasks. It is the estate's one genuinely *healthy*
+  // resource, which is what lets the acceptance walk prove that green is reachable and earned — a
+  // fixture where everything is broken can only ever test the unhappy half of the product.
+  await ecs.send(
+    new CreateServiceCommand({
+      cluster: SEED.cluster,
+      serviceName: SEED.idleService,
+      taskDefinition: SEED.taskFamily,
+      desiredCount: 0,
     }),
   );
 
