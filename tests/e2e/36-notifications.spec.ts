@@ -75,3 +75,44 @@ test('the notifications page renders at 360px without horizontal overflow', asyn
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+/**
+ * The weekly summary (REP-7).
+ *
+ * §15's promise applies to a scheduled send more strictly than to an alert, because nobody is waiting for
+ * a summary they did not ask for. The switch is off, and the page says a setting that can never take
+ * effect cannot take effect.
+ */
+test('THE RULING: the weekly summary is off, and says nothing will be sent without a destination', async ({ page }) => {
+  await page.goto('/en/settings/notifications');
+  const main = page.locator('main');
+  await expect(main.getByRole('heading', { name: 'Weekly summary' })).toBeVisible();
+
+  const toggle = main.getByLabel('Send a weekly summary of each environment');
+  await expect(toggle).not.toBeChecked();
+  // Storing a setting that can never take effect quietly is worse than saying so.
+  await expect(main).toContainText('Nothing will be sent until you add a destination');
+});
+
+test('the weekly summary keeps a day and an hour, and refuses one it was not offered', async ({ page }) => {
+  await page.goto('/en/settings/notifications');
+  const main = page.locator('main');
+  await main.getByLabel('Send a weekly summary of each environment').check();
+  await main.getByLabel('Day').selectOption('3');
+  await main.getByLabel('Hour (UTC)').selectOption('17');
+  await main.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(main).toContainText('Saved.');
+
+  await page.reload();
+  await expect(main.getByLabel('Send a weekly summary of each environment')).toBeChecked();
+  await expect(main.getByLabel('Day')).toHaveValue('3');
+  await expect(main.getByLabel('Hour (UTC)')).toHaveValue('17');
+
+  // Left as it was found, so the rest of the suite starts from the default.
+  await main.getByLabel('Send a weekly summary of each environment').uncheck();
+  await main.getByLabel('Day').selectOption('1');
+  await main.getByLabel('Hour (UTC)').selectOption('8');
+  await main.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(main).toContainText('Saved.');
+  await expect(main.getByLabel('Send a weekly summary of each environment')).not.toBeChecked();
+});

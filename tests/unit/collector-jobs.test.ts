@@ -20,6 +20,7 @@ describe('the job catalogue', () => {
       slo: HOUR,
       cloudflare: 6 * HOUR,
       notify: MINUTE,
+      digest: HOUR,
       compact: 24 * HOUR,
     });
   });
@@ -39,7 +40,7 @@ describe('the job catalogue', () => {
     // `errors` finds no enabled log source, `metrics` finds history switched off, `synthetics` finds no
     // enabled check and `cloudflare` finds no connection - so each is scheduled and none of them spends
     // anything until an operator asks for it.
-    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['cloudflare', 'compact', 'detect', 'errors', 'inventory', 'metrics', 'notify', 'synthetics']);
+    expect([...FRESH_INSTALL_JOBS].sort()).toEqual(['cloudflare', 'compact', 'detect', 'digest', 'errors', 'inventory', 'metrics', 'notify', 'synthetics']);
   });
 
   it('leaves every job that would spend money on a fresh install switched off', () => {
@@ -74,7 +75,9 @@ describe('the job catalogue', () => {
     // than to one AWS account and region — running it per environment would fetch each zone three times
     // for an operator with three regions.
     // `notify` joins them: a destination belongs to the installation, not to one AWS account and region.
-    const instanceWide = ['compact', 'cloudflare', 'notify'];
+    // `digest` too: the weekly summary switch is one switch for the installation, and the job walks every
+    // environment itself rather than being run once per environment.
+    const instanceWide = ['compact', 'cloudflare', 'notify', 'digest'];
     for (const id of instanceWide) expect(JOBS[id as (typeof JOB_IDS)[number]].scope, id).toBe('instance');
     for (const id of JOB_IDS.filter((job) => !instanceWide.includes(job))) {
       expect(JOBS[id].scope, id).toBe('environment');

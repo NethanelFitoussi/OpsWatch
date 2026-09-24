@@ -93,11 +93,12 @@ describe('deciding what is due', () => {
 
   it('runs nothing for an instance with no environments, except the instance-wide jobs', () => {
     // None touches an environment: `compact` forgets, `cloudflare` reads zones that belong to the
-    // installation, `notify` sends what the alert cycle queued. Each finds nothing to do on a fresh
-    // instance and says it covered nothing.
+    // installation, `notify` sends what the alert cycle queued, `digest` reads one switch that is off.
+    // Each finds nothing to do on a fresh instance and says it covered nothing.
     expect(due({ environments: [] })).toEqual([
       { id: 'cloudflare', connectionId: null, scope: null },
       { id: 'notify', connectionId: null, scope: null },
+      { id: 'digest', connectionId: null, scope: null },
       { id: 'compact', connectionId: null, scope: null },
     ]);
   });

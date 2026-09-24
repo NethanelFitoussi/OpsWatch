@@ -10,6 +10,7 @@ import type { ActionState } from '@/lib/forms/action-state';
 import { formString } from '@/lib/forms/form-data';
 import { deliver } from '@/lib/notify/deliver';
 import type { AlertPayload } from '@/lib/notify/payload';
+import { writeDigestSettings } from '@/lib/store/digest-settings';
 import { createDestination, deleteDestination, findDestination, recordAttempt, secretOf, setDestinationEnabled } from '@/lib/store/notifications';
 
 /**
@@ -98,5 +99,29 @@ export async function deleteDestinationAction(locale: string, id: string): Promi
     deleteDestination(getDb(), id);
     revalidatePath(`/${resolveLocale(locale)}/settings/notifications`);
     return {};
+  });
+}
+
+/**
+ * The weekly summary switch (REP-7).
+ *
+ * Audited as `notify_update`, like every other change to where things go: turning a scheduled send on is
+ * a decision about what leaves the instance, and §21 records who made it.
+ *
+ * The day and the hour are checked against their ranges rather than clamped. A form that silently turns
+ * "hour 25" into "hour 23" would send a summary at a time nobody chose.
+ */
+export type DigestState = ActionState<'invalid_day' | 'invalid_hour', { saved?: boolean }>;
+
+export async function saveDigestAction(locale: string, _prev: DigestState, formData: FormData): Promise<DigestState> {
+  return auditedAdmin(resolveLocale(locale), 'notify_update', 'settings', async (): Promise<DigestState> => {
+    const dayOfWeek = Number(formString(formData, 'dayOfWeek'));
+    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) return { error: 'invalid_day' };
+    const hourUtc = Number(formString(formData, 'hourUtc'));
+    if (!Number.isInteger(hourUtc) || hourUtc < 0 || hourUtc > 23) return { error: 'invalid_hour' };
+
+    writeDigestSettings(getDb(), { enabled: formString(formData, 'enabled') === 'on', dayOfWeek, hourUtc }, Date.now());
+    revalidatePath(`/${resolveLocale(locale)}/settings/notifications`);
+    return { saved: true };
   });
 }

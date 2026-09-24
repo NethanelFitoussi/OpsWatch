@@ -1,7 +1,7 @@
 import 'server-only';
 import type { Db } from '../db/client';
 import { MAX_ATTEMPTS, deliver, nextAttemptAt, type DeliveryDeps } from '../notify/deliver';
-import type { AlertPayload } from '../notify/payload';
+import type { NotifyPayload } from '../notify/payload';
 import { dueDeliveries, findDestination, recordAttempt, recordDelivery, secretOf } from '../store/notifications';
 import type { JobOutcome } from './runner';
 
@@ -34,7 +34,7 @@ export async function runNotifyJob(db: Db, secret: string, nowMs: number, deps: 
       continue;
     }
 
-    const outcome = await deliver(destination, delivery.payload as AlertPayload, signingSecret, { ...deps, nowMs });
+    const outcome = await deliver(destination, delivery.payload as NotifyPayload, signingSecret, { ...deps, nowMs });
     recordAttempt(db, destination.id, { ok: outcome.ok, error: outcome.error, atMs: nowMs });
 
     if (outcome.ok) {

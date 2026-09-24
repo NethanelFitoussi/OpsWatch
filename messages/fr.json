@@ -3485,7 +3485,29 @@
         "not_found": "Cette destination n'existe plus.",
         "http": "Le destinataire a répondu par une erreur.",
         "timeout": "Le destinataire n'a pas répondu à temps.",
-        "network": "OpsWatch n'a pas pu joindre cette URL."
+        "network": "OpsWatch n'a pas pu joindre cette URL.",
+        "invalid_day": "Choisissez un jour de la semaine.",
+        "invalid_hour": "Choisissez une heure entre 00:00 et 23:00 UTC."
+      },
+      "digest": {
+        "title": "Résumé hebdomadaire",
+        "hint": "Un résumé par semaine, vers les destinations ci-dessous. Désactivé tant que vous ne l’activez pas.",
+        "enable": "Envoyer un résumé hebdomadaire de chaque environnement",
+        "day": "Jour",
+        "hour": "Heure (UTC)",
+        "save": "Enregistrer",
+        "saved": "Enregistré.",
+        "noDestination": "Rien ne sera envoyé tant que vous n’aurez pas ajouté une destination ci-dessous et activée.",
+        "lastSent": "Le dernier résumé est parti {when}.",
+        "days": {
+          "0": "Dimanche",
+          "1": "Lundi",
+          "2": "Mardi",
+          "3": "Mercredi",
+          "4": "Jeudi",
+          "5": "Vendredi",
+          "6": "Samedi"
+        }
       }
     }
   },
@@ -3769,6 +3791,10 @@
           "3": {
             "title": "Choisir une destination",
             "body": "Paramètres, puis Notifications. Un webhook envoie un corps JSON signé à une URL que vous contrôlez. La page montre ce qui sera envoyé et permet un test avant de s'y fier."
+          },
+          "4": {
+            "title": "Activez le résumé hebdomadaire, si vous en voulez un",
+            "body": "Paramètres, puis Notifications. Un résumé par semaine et par environnement, vers les mêmes destinations. Désactivé tant que vous ne l’activez pas, il ne transporte que des décomptes et un lien — jamais une ligne de journal."
           }
         },
         "verify": "Envoyez une notification de test depuis la destination configurée et vérifiez qu'elle arrive. Le journal d'audit enregistre l'envoi.",
@@ -3784,6 +3810,10 @@
           "2": {
             "q": "Comment vérifier qu'un webhook vient bien d'OpsWatch ?",
             "a": "Chaque requête est signée avec le secret partagé affiché à la création de la destination. Vérifiez la signature avant d'agir sur le corps."
+          },
+          "3": {
+            "q": "OpsWatch m’enverra-t-il quelque chose que je n’ai pas demandé ?",
+            "a": "Non. Sans destination, rien n’est jamais envoyé, et le résumé hebdomadaire est désactivé tant que vous ne l’activez pas. Une fois activé, il part une fois par semaine vers les destinations que vous avez créées et activées, et il ne transporte que des décomptes et un lien — pas les lignes de journal derrière."
           }
         },
         "next": {

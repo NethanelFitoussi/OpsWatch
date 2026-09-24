@@ -7,7 +7,7 @@ import { FormErrorAlert } from '@/components/form-error-alert';
 import { FormField } from '@/components/form-field';
 import { SubmitButton } from '@/components/submit-button';
 import type { FormAction } from '@/lib/forms/action-state';
-import type { NotifyState } from './actions';
+import type { DigestState, NotifyState } from './actions';
 
 /**
  * Creating a destination, and testing one.
@@ -49,6 +49,67 @@ export function TestDestinationForm({ action }: { action: FormAction<NotifyState
       <SubmitButton>{t('test')}</SubmitButton>
       {state.tested === true && <span className="text-sm text-emerald-600 dark:text-emerald-400">{t('testOk')}</span>}
       {state.error !== undefined && <span className="text-sm text-red-600 dark:text-red-400">{t(`errors.${state.error}`)}</span>}
+    </form>
+  );
+}
+
+/**
+ * The weekly summary (REP-7).
+ *
+ * The sentence under the switch is the part that matters: with no destination there is nowhere for a
+ * summary to go, and the form says so rather than accepting a setting that can never take effect.
+ */
+export function DigestForm({
+  action,
+  settings,
+  hasDestination,
+}: {
+  action: FormAction<DigestState>;
+  settings: { enabled: boolean; dayOfWeek: number; hourUtc: number; lastSentAt: number | null };
+  hasDestination: boolean;
+}) {
+  const t = useTranslations('Settings.notifications');
+  const [state, formAction] = useActionState(action, {});
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <FormErrorAlert message={state.error ? t(`errors.${state.error}`) : undefined} />
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="enabled" defaultChecked={settings.enabled} className="mt-0.5 size-4" />
+        <span>{t('digest.enable')}</span>
+      </label>
+
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <label htmlFor="dayOfWeek" className="text-sm font-medium">
+            {t('digest.day')}
+          </label>
+          <select id="dayOfWeek" name="dayOfWeek" defaultValue={settings.dayOfWeek} className="h-9 rounded-md border bg-background px-2 text-sm">
+            {[1, 2, 3, 4, 5, 6, 0].map((day) => (
+              <option key={day} value={day}>
+                {t(`digest.days.${day}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="hourUtc" className="text-sm font-medium">
+            {t('digest.hour')}
+          </label>
+          <select id="hourUtc" name="hourUtc" defaultValue={settings.hourUtc} className="h-9 rounded-md border bg-background px-2 text-sm">
+            {Array.from({ length: 24 }, (_, hour) => (
+              <option key={hour} value={hour}>
+                {String(hour).padStart(2, '0')}:00
+              </option>
+            ))}
+          </select>
+        </div>
+        <SubmitButton>{t('digest.save')}</SubmitButton>
+      </div>
+
+      {/* A setting that can never take effect is worth saying out loud rather than storing quietly. */}
+      {!hasDestination && <p className="text-sm text-muted-foreground">{t('digest.noDestination')}</p>}
+      {state.saved === true && <p className="text-sm text-muted-foreground">{t('digest.saved')}</p>}
     </form>
   );
 }

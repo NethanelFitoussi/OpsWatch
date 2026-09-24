@@ -9,11 +9,12 @@ import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
 import { SIGNATURE_HEADER, TIMESTAMP_HEADER } from '@/lib/notify/payload';
+import { readDigestSettings } from '@/lib/store/digest-settings';
 import { listDestinations } from '@/lib/store/notifications';
 import { STATE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
-import { createDestinationAction, deleteDestinationAction, testDestinationAction, toggleDestinationAction } from './actions';
-import { CreateDestinationForm, TestDestinationForm } from './forms';
+import { createDestinationAction, deleteDestinationAction, saveDigestAction, testDestinationAction, toggleDestinationAction } from './actions';
+import { CreateDestinationForm, DigestForm, TestDestinationForm } from './forms';
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -31,6 +32,7 @@ export default async function NotificationsSettingsPage({ params }: Props) {
   const t = await getTranslations('Settings.notifications');
   const format = await getFormatter();
   const destinations = listDestinations(getDb());
+  const digest = readDigestSettings(getDb());
 
   const example = JSON.stringify(
     {
@@ -67,6 +69,19 @@ export default async function NotificationsSettingsPage({ params }: Props) {
         <p className="mt-3">
           <DocLink slug="alerts" label={t('readGuide')} />
         </p>
+      </MonitoringCard>
+
+      <MonitoringCard title={t('digest.title')} description={t('digest.hint')}>
+        <DigestForm
+          action={saveDigestAction.bind(null, locale)}
+          settings={digest}
+          hasDestination={destinations.some((destination) => destination.enabled)}
+        />
+        {digest.lastSentAt !== null && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t('digest.lastSent', { when: format.relativeTime(new Date(digest.lastSentAt)) })}
+          </p>
+        )}
       </MonitoringCard>
 
       <MonitoringCard title={t('addTitle')} description={t('addHint')}>

@@ -3485,7 +3485,29 @@
         "not_found": "That destination no longer exists.",
         "http": "The receiver answered with an error.",
         "timeout": "The receiver did not answer in time.",
-        "network": "OpsWatch could not reach that URL."
+        "network": "OpsWatch could not reach that URL.",
+        "invalid_day": "Choose a day of the week.",
+        "invalid_hour": "Choose an hour between 00:00 and 23:00 UTC."
+      },
+      "digest": {
+        "title": "Weekly summary",
+        "hint": "One summary a week, to the destinations below. Off unless you switch it on.",
+        "enable": "Send a weekly summary of each environment",
+        "day": "Day",
+        "hour": "Hour (UTC)",
+        "save": "Save",
+        "saved": "Saved.",
+        "noDestination": "Nothing will be sent until you add a destination below and switch it on.",
+        "lastSent": "The last summary went out {when}.",
+        "days": {
+          "0": "Sunday",
+          "1": "Monday",
+          "2": "Tuesday",
+          "3": "Wednesday",
+          "4": "Thursday",
+          "5": "Friday",
+          "6": "Saturday"
+        }
       }
     }
   },
@@ -3769,6 +3791,10 @@
           "3": {
             "title": "Choose a destination",
             "body": "Settings, then Notifications. A webhook posts a signed JSON body to a URL you control. The page tells you what it will send and lets you send a test before you rely on it."
+          },
+          "4": {
+            "title": "Turn on the weekly summary, if you want one",
+            "body": "Settings, then Notifications. One summary a week, per environment, to the same destinations. It is off unless you switch it on, and it carries counts and a link — never a log line."
           }
         },
         "verify": "Send a test notification from the destination you configured and confirm it arrives. The audit log records that it was sent.",
@@ -3784,6 +3810,10 @@
           "2": {
             "q": "How do I verify a webhook really came from OpsWatch?",
             "a": "Each request is signed with the shared secret shown when you create the destination. Verify the signature before you act on the body."
+          },
+          "3": {
+            "q": "Will OpsWatch send me anything I did not ask for?",
+            "a": "No. With no destination nothing is ever sent, and the weekly summary is off until you switch it on. When it is on it goes out once a week, to the destinations you created and enabled, and it carries counts and a link — not the log lines behind them."
           }
         },
         "next": {

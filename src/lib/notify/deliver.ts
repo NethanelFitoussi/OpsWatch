@@ -1,6 +1,6 @@
 import 'server-only';
 import { env } from '../env';
-import { SIGNATURE_HEADER, TIMESTAMP_HEADER, sign, type AlertPayload } from './payload';
+import { SIGNATURE_HEADER, TIMESTAMP_HEADER, sign, type NotifyPayload } from './payload';
 
 /**
  * Sending one webhook.
@@ -27,7 +27,7 @@ export type DeliveryOutcome = { ok: boolean; status?: number; error?: string };
 
 export type DeliveryDeps = { fetch?: typeof fetch; nowMs?: number };
 
-export async function deliver(destination: { url: string }, payload: AlertPayload, secret: string, deps: DeliveryDeps = {}): Promise<DeliveryOutcome> {
+export async function deliver(destination: { url: string }, payload: NotifyPayload, secret: string, deps: DeliveryDeps = {}): Promise<DeliveryOutcome> {
   const send = deps.fetch ?? fetch;
   const nowMs = deps.nowMs ?? Date.now();
   // The exact bytes that are signed are the exact bytes that are sent: serialising twice would let the
@@ -57,6 +57,13 @@ export async function deliver(destination: { url: string }, payload: AlertPayloa
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** The absolute link to one environment's report, or null when no public URL is configured. */
+export function reportUrl(connectionId: string, scope: string): string | null {
+  const base = env().OPSWATCH_PUBLIC_URL;
+  if (base === undefined || base.length === 0) return null;
+  return `${base.replace(/\/$/, '')}/c/${connectionId}/${scope}/overview/report`;
 }
 
 /** The absolute link into this installation, or null when no public URL is configured. */

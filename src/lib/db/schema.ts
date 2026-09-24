@@ -1059,3 +1059,26 @@ export const savedLogSearches = sqliteTable(
 );
 
 export type SavedLogSearchRow = typeof savedLogSearches.$inferSelect;
+
+/**
+ * The weekly summary (REP-7): whether to send one, when, and when one last went out.
+ *
+ * One row, like `history_settings`, because it is a property of the installation. **Off by default and
+ * off until an operator switches it on** — §15's promise is that nothing leaves the instance unless
+ * somebody asked for it, and a digest that arrived on its own would break it more thoroughly than an
+ * alert, because nobody was waiting for it.
+ *
+ * `lastSentAt` is what makes the send exactly weekly rather than hourly: the job runs often and sends
+ * only when a week has passed and the chosen hour has come round.
+ */
+export const digestSettings = sqliteTable('digest_settings', {
+  id: integer('id').primaryKey(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  /** 0 is Sunday, matching `Date#getUTCDay`. UTC, so a send does not move with a timezone edge. */
+  dayOfWeek: integer('day_of_week').notNull().default(1),
+  hourUtc: integer('hour_utc').notNull().default(8),
+  lastSentAt: integer('last_sent_at'),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export type DigestSettingsRow = typeof digestSettings.$inferSelect;
