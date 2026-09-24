@@ -12,6 +12,7 @@ export const CLIENT_NAMESPACES = [
   'AccountDetail.role',
   'AccountDetail.keys',
   'Checklist',
+  'Collection',
   'ErrorPage',
   'GettingStarted.diagram',
   'Monitoring.client',

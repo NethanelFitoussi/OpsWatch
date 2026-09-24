@@ -6,7 +6,8 @@
     "packages/contract/index.ts",
     "tests/persistence/playwright.config.ts",
     "tests/persistence/*.spec.ts",
-    "tests/audit/*.spec.ts"
+    "tests/audit/*.spec.ts",
+    "forwarder/index.mjs"
   ],
   "ignore": [
     "src/components/ui/**",

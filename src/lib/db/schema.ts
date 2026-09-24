@@ -1082,3 +1082,150 @@ export const digestSettings = sqliteTable('digest_settings', {
 });
 
 export type DigestSettingsRow = typeof digestSettings.$inferSelect;
+
+/**
+ * Push collection, per AWS connection (the "managed collection" of the push design).
+ *
+ * **Three independent switches, never one.** Connecting an AWS account says nothing about whether anything
+ * may be forwarded; enabling forwarding says nothing about whether what arrives is kept. Collapsing them
+ * into one flag is how a product ends up retaining customer logs nobody agreed to store.
+ *
+ * A row exists only once somebody has touched the feature. Its absence is the default, and the default is
+ * everything off.
+ */
+export const COLLECTION_STACK_STATES = ['absent', 'declared', 'verified', 'stale'] as const;
+
+export const awsCollection = sqliteTable('aws_collection', {
+  connectionId: text('connection_id')
+    .primaryKey()
+    .references(() => connections.id, { onDelete: 'cascade' }),
+  /** May anything at all be forwarded. Off is the default and stays it. */
+  managed: integer('managed', { mode: 'boolean' }).notNull().default(false),
+  /** Is the log source enabled. Meaningless while `managed` is off, and the read path enforces that. */
+  realtimeLogs: integer('realtime_logs', { mode: 'boolean' }).notNull().default(false),
+  /** Are forwarded records kept after processing, or discarded once processed. */
+  persistLogs: integer('persist_logs', { mode: 'boolean' }).notNull().default(false),
+  /** How long kept records live, when they are kept at all. */
+  retentionHours: integer('retention_hours').notNull().default(24),
+  /**
+   * The shared secret the forwarder signs with, encrypted under its own purpose.
+   *
+   * Written when managed collection is enabled, shown to the operator exactly once, and never returned to
+   * a page again. Null means no forwarder could authenticate even if one existed.
+   */
+  ingestSecretCiphertext: text('ingest_secret_ciphertext'),
+  secretRotatedAt: integer('secret_rotated_at'),
+  /**
+   * What OpsWatch believes is installed in the account.
+   *
+   * `declared` is what a browser told it; `verified` is what AWS itself answered. The two are kept apart
+   * because a value a browser supplied is not a fact about somebody's AWS account.
+   */
+  stackState: text('stack_state', { enum: COLLECTION_STACK_STATES }).notNull().default('absent'),
+  stackName: text('stack_name'),
+  stackId: text('stack_id'),
+  forwarderArn: text('forwarder_arn'),
+  forwarderVersion: text('forwarder_version'),
+  verifiedAt: integer('verified_at'),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export type AwsCollectionRow = typeof awsCollection.$inferSelect;
+
+export const FORWARDED_GROUP_STATES = ['pending', 'active', 'failed', 'removing'] as const;
+
+/**
+ * Which log groups are forwarded, one row per group per region.
+ *
+ * Rows exist only for groups somebody ticked. There is no "all" and there is no wildcard: subscribing an
+ * account's every log group is the thing this table exists to make impossible to do by accident.
+ */
+export const awsForwardedGroups = sqliteTable(
+  'aws_forwarded_groups',
+  {
+    id: text('id').primaryKey(),
+    connectionId: text('connection_id')
+      .notNull()
+      .references(() => connections.id, { onDelete: 'cascade' }),
+    region: text('region').notNull(),
+    logGroup: text('log_group').notNull(),
+    /** The subscription filter's name in AWS. OpsWatch only ever touches filters carrying its own name. */
+    filterName: text('filter_name').notNull(),
+    state: text('state', { enum: FORWARDED_GROUP_STATES }).notNull(),
+    /** Why the last attempt failed, as a code from a closed list — never AWS's own words. */
+    lastError: text('last_error'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex('aws_forwarded_groups_key').on(t.connectionId, t.region, t.logGroup),
+    index('aws_forwarded_groups_owner').on(t.connectionId, t.region),
+  ],
+);
+
+export type AwsForwardedGroupRow = typeof awsForwardedGroups.$inferSelect;
+
+/**
+ * The ingestion queue.
+ *
+ * A table drained by a job, exactly like `notify_deliveries`, because the only queue this product has ever
+ * had is a table and introducing Redis for one feature would be introducing Redis.
+ *
+ * `id` is derived from the event rather than generated: AWS delivers at least once, and a unique index on
+ * a hash of (account, region, log group, stream, CloudWatch's own event id) turns a replayed batch into a
+ * no-op insert instead of a duplicate.
+ *
+ * `processedAt` null means still queued. What happens to a processed row is the operator's decision:
+ * discarded immediately when persistence is off, swept after the retention window when it is on.
+ */
+export const ingestEvents = sqliteTable(
+  'ingest_events',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    id: text('id').notNull().unique(),
+    connectionId: text('connection_id')
+      .notNull()
+      .references(() => connections.id, { onDelete: 'cascade' }),
+    region: text('region').notNull(),
+    source: text('source').notNull(),
+    logGroup: text('log_group').notNull(),
+    logStream: text('log_stream').notNull(),
+    at: integer('at').notNull(),
+    message: text('message').notNull(),
+    receivedAt: integer('received_at').notNull(),
+    processedAt: integer('processed_at'),
+  },
+  (t) => [
+    index('ingest_events_queue').on(t.processedAt, t.seq),
+    index('ingest_events_sweep').on(t.connectionId, t.processedAt),
+  ],
+);
+
+export type IngestEventRow = typeof ingestEvents.$inferSelect;
+
+/**
+ * Counted traffic, per minute, so forwarder health is a read of a few rows rather than a scan of every
+ * event ever received — and so the numbers survive the events themselves being discarded.
+ *
+ * `rejected` counts what the endpoint refused **after** it knew which integration was calling. A request
+ * whose signature did not verify belongs to nobody and is not counted here.
+ */
+export const ingestStats = sqliteTable(
+  'ingest_stats',
+  {
+    connectionId: text('connection_id')
+      .notNull()
+      .references(() => connections.id, { onDelete: 'cascade' }),
+    region: text('region').notNull(),
+    /** Epoch milliseconds at the start of the minute, UTC. */
+    minute: integer('minute').notNull(),
+    events: integer('events').notNull().default(0),
+    bytes: integer('bytes').notNull().default(0),
+    rejected: integer('rejected').notNull().default(0),
+    duplicates: integer('duplicates').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.connectionId, t.region, t.minute] })],
+);
+
+export type IngestStatRow = typeof ingestStats.$inferSelect;

@@ -232,7 +232,12 @@
     "danger": {
       "title": "Remove this connection",
       "description": "OpsWatch forgets this account. Delete the CloudFormation stack in AWS to revoke access completely.",
-      "delete": "Remove connection"
+      "delete": "Remove connection",
+      "stopsCollection": "OpsWatch stops reading this account. Every page about it stops working.",
+      "removesCredentials": "The stored role details and any encrypted credentials are deleted from this instance.",
+      "stopsForwarding": "Managed collection stops, and the subscription filters OpsWatch created are removed from your log groups.",
+      "deleteStack": "Nothing is removed from your AWS account. Delete the OpsWatch CloudFormation stack yourself to remove the role.",
+      "deleteBothStacks": "Nothing is removed from your AWS account. Delete both OpsWatch CloudFormation stacks yourself — the collection stack and the base one — to remove the forwarder and the role."
     },
     "details": {
       "title": "Connection details",
@@ -5026,6 +5031,108 @@
             "label": "Send alerts somewhere instead of polling"
           }
         }
+      },
+      "push-collection": {
+        "title": "Sending logs to OpsWatch as they happen",
+        "summary": "Optional. Off by default. OpsWatch reads AWS directly without it.",
+        "what": "OpsWatch normally reads your AWS account when it needs something: it assumes a read-only role and asks CloudWatch. That is the default and it stays the default. Managed collection is a second, optional way of getting log lines: a small Lambda in your account sends selected log groups to your OpsWatch instance as they are written. You enable it per account, you choose which log groups, and you can turn it off again without disconnecting anything.",
+        "flow": {
+          "0": {
+            "label": "You pick log groups"
+          },
+          "1": {
+            "label": "CloudWatch invokes a Lambda",
+            "note": "in your account"
+          },
+          "2": {
+            "label": "It signs and sends",
+            "note": "HTTPS"
+          },
+          "3": {
+            "label": "Your OpsWatch processes it"
+          }
+        },
+        "before": {
+          "0": "A connected AWS account whose permission test passes.",
+          "1": "OPSWATCH_PUBLIC_URL set to an HTTPS address AWS can reach. A laptop install cannot receive a webhook from Lambda.",
+          "2": "Permission to run a second CloudFormation stack in that AWS account.",
+          "3": "An understanding that AWS will charge for what it creates: Lambda invocations and duration, the forwarder’s own logs, and data transfer out of your account."
+        },
+        "steps": {
+          "0": {
+            "title": "Decide whether you want it at all",
+            "body": "You do not need it to see resources, read metrics, look at alarms or search existing logs. All of that works by reading AWS directly. Managed collection is for lines arriving continuously rather than when you ask — which is worth it if you want errors found within a minute instead of within fifteen."
+          },
+          "1": {
+            "title": "Enable it on the account",
+            "body": "Accounts, your account, then Managed collection. Read what it says, tick the confirmation, and press the button. Nothing is forwarded yet: this creates the possibility."
+          },
+          "2": {
+            "title": "Copy the signing secret",
+            "body": "It is shown once. It is what the Lambda uses to prove to your OpsWatch that a delivery is really from your forwarder. It is not an AWS credential and it grants no access to anything in your account."
+          },
+          "3": {
+            "title": "Run the second stack",
+            "body": "Download the collection template and deploy it, pasting the secret as the OpsWatchIngestSecret parameter. It is separate from the stack that connected the account, which is not touched. It creates a Lambda, a dead-letter queue, a role for the Lambda, a log group for it, and one policy attached to your existing OpsWatch role."
+          },
+          "4": {
+            "title": "Verify it",
+            "body": "Copy the ForwarderArn output back into OpsWatch and press Verify. OpsWatch asks AWS to confirm the function exists and reads the version the function itself reports, rather than believing what was typed."
+          },
+          "5": {
+            "title": "Turn on real-time logs and choose your log groups",
+            "body": "One at a time. OpsWatch never subscribes every log group in an account. Before it subscribes one it looks at what is already there, and refuses to replace another product’s forwarder."
+          },
+          "6": {
+            "title": "Decide whether records are kept",
+            "body": "Separately. Forwarding a line is not the same as storing it. With Keep forwarded records off, a line is processed and then discarded immediately — errors found in it survive, the line does not."
+          }
+        },
+        "verify": "The forwarder card shows records accepted in the last hour and the time the last one arrived. Write a line to one of the log groups you chose and it should appear there within a minute.",
+        "problems": {
+          "0": {
+            "q": "Does connecting an AWS account send anything to OpsWatch?",
+            "a": "No. A connected account is read directly and nothing leaves it. Managed collection is a separate switch, off by default, that you have to confirm — and even once it is on, nothing is forwarded until you pick a log group."
+          },
+          "1": {
+            "q": "Does this send my data to some OpsWatch service?",
+            "a": "There is no such service. OpsWatch is what you installed; the Lambda delivers to your own instance at your own address, which the page shows you. If you run OpsWatch on your own hardware, the data never leaves your network except to go from AWS to that address."
+          },
+          "2": {
+            "q": "The forwarder says “Nothing heard yet”.",
+            "a": "That is not a failure. It means no record has arrived and none has been refused — which is exactly what you expect from a quiet log group, out of hours, or a service that has not logged anything. It becomes Healthy the moment something arrives."
+          },
+          "3": {
+            "q": "It says another product is already subscribed.",
+            "a": "CloudWatch allows only a small number of subscription filters on a log group, and OpsWatch will not remove somebody else’s. It names the one that is in the way. Remove that filter if you want OpsWatch to have the slot, or forward a different log group."
+          },
+          "4": {
+            "q": "AWS refused when I tried to start forwarding.",
+            "a": "The permissions to manage subscription filters come from the collection stack, not the base one. Check that the collection stack deployed successfully and that the OpsWatchRoleName parameter matched your existing role."
+          },
+          "5": {
+            "q": "What does this cost?",
+            "a": "OpsWatch will not invent a number, because AWS pricing depends on your account and region. What it does show is the usage: records accepted, refused and repeated, and bytes received, per hour. AWS charges for Lambda invocations and duration, the CloudWatch Logs the forwarder writes about itself, and data transfer out of your account."
+          },
+          "6": {
+            "q": "How do I remove all of it?",
+            "a": "Turn managed collection off — OpsWatch removes the subscription filters it created and forgets the secret — then delete the collection stack. Everything it made goes with it: the Lambda, its role, its log group and the queue. Nothing is retained. Your AWS connection and the base stack are untouched."
+          },
+          "7": {
+            "q": "Who can read the signing secret?",
+            "a": "It lives in the Lambda’s environment, so anyone in your AWS account with lambda:GetFunctionConfiguration can read it. That is worth knowing and is the trade-off of not requiring a secrets manager. It authenticates a forwarder to your OpsWatch; it is not an AWS credential. You can rotate it from the collection page and update the stack parameter."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "logs",
+            "label": "Choose which log groups matter"
+          },
+          "1": {
+            "href": "searching-logs",
+            "label": "Search what arrives"
+          }
+        }
       }
     },
     "api": {
@@ -5103,6 +5210,133 @@
       "redis": "Redis nodes",
       "kubernetes": "Kubernetes workloads",
       "logs": "logs"
+    }
+  },
+  "Collection": {
+    "metaTitle": "Managed collection",
+    "title": "Managed collection — {name}",
+    "description": "Whether anything is sent from this AWS account to OpsWatch, and what.",
+    "back": "Back to the account",
+    "readGuide": "How push collection works",
+    "mode": {
+      "title": "How OpsWatch reads this account",
+      "hint": "The first thing to know about any AWS connection.",
+      "direct": "Direct",
+      "directHint": "OpsWatch reads this account when it needs to, using the read-only role. Nothing is sent from your AWS account to anywhere.",
+      "managed": "Managed",
+      "managedHint": "Selected log groups are sent from your AWS account to this OpsWatch instance as they are written. Reading AWS directly continues exactly as before.",
+      "destination": "Data destination",
+      "destinationDirect": "Nowhere — OpsWatch reads AWS, nothing is forwarded.",
+      "noDestination": "Not set. OPSWATCH_PUBLIC_URL must be an address AWS can reach."
+    },
+    "enable": {
+      "title": "Enable managed collection",
+      "hint": "Off. Connecting an AWS account does not enable this, and never will.",
+      "what": "Selected log groups will be sent from your AWS account to this OpsWatch instance, over HTTPS, signed.",
+      "creates": "You will run a second CloudFormation stack that creates a small forwarder Lambda, a dead-letter queue and one policy. It is separate from your base stack, which is not touched.",
+      "costs": "AWS may charge for what that creates: Lambda invocations and duration, the CloudWatch Logs the forwarder writes about itself, and data transfer out of your account.",
+      "nothingYet": "Nothing is forwarded until you choose a log group. Enabling this creates the possibility, not the traffic.",
+      "confirm": "I understand that selected AWS log data will be sent to this OpsWatch instance.",
+      "submit": "Enable managed collection"
+    },
+    "secretTitle": "Your forwarder signing secret",
+    "secretHint": "Copy it now. It is shown once and never again. You will paste it as the OpsWatchIngestSecret parameter when you deploy the stack. It authenticates the forwarder to this OpsWatch; it is not an AWS credential and grants no access to anything in your account.",
+    "install": {
+      "title": "Install the forwarder",
+      "hint": "A second stack, separate from the one that connects the account.",
+      "download": "Download the collection template:",
+      "downloadLink": "opswatch-collection.yaml",
+      "deploy": "Deploy it, pasting the secret when asked:",
+      "verifyStep": "Copy the ForwarderArn output back here and verify it.",
+      "noSecretInTemplate": "The template contains no secret. It can be read, diffed and kept; the secret is supplied when you deploy and lives only in the function’s environment."
+    },
+    "forwarder": {
+      "title": "Forwarder",
+      "hint": "What this instance has actually heard, over the last hour.",
+      "state": "State",
+      "version": "Version",
+      "unknownVersion": "Not verified yet",
+      "available": "(this OpsWatch ships {version})",
+      "lastEvent": "Last record",
+      "never": "Nothing has arrived yet",
+      "hour": "Last hour",
+      "counts": "{events} accepted · {rejected} refused · {duplicates} repeated",
+      "deadLetters": "Undelivered batches",
+      "deadLettersUnknown": "Could not be read",
+      "deadLettersCount": "{count, plural, =0 {None} one {# waiting in the dead-letter queue} other {# waiting in the dead-letter queue}}"
+    },
+    "states": {
+      "not_installed": "Not installed",
+      "inactive": "Installed, nothing selected",
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "error": "Undelivered batches",
+      "unknown": "Nothing heard yet"
+    },
+    "verify": {
+      "label": "Forwarder function ARN",
+      "hint": "From the ForwarderArn output of the collection stack. OpsWatch asks AWS to confirm it rather than taking your word for it.",
+      "submit": "Verify with AWS",
+      "ok": "Confirmed. The function reports version {version}.",
+      "unknownVersion": "no version"
+    },
+    "settings": {
+      "title": "What is collected, and what is kept",
+      "hint": "Two separate decisions. Forwarding data is not the same as storing it.",
+      "realtime": "Real-time logs",
+      "realtimeHint": "Allow selected log groups to be forwarded. With this off, nothing is accepted even from a correctly signed forwarder.",
+      "persist": "Keep forwarded records",
+      "persistOn": "Records are kept for the window below and can be searched afterwards.",
+      "persistOff": "Records are processed and then discarded immediately. Errors found in them survive; the log lines do not.",
+      "retention": "Keep for (hours)",
+      "retentionHint": "Only applies when records are kept. Nothing is retained longer than this.",
+      "submit": "Save",
+      "saved": "Saved."
+    },
+    "groups": {
+      "title": "Log groups",
+      "hint": "One at a time. OpsWatch never subscribes an account’s every log group.",
+      "sourceOff": "Real-time logs is off, so nothing can be started. Switch it on above first.",
+      "available": "Available in this region",
+      "noneLeft": "Every log group in this region is already listed above.",
+      "unavailable": "OpsWatch could not list the log groups of this region. Check the account’s permission test.",
+      "truncated": "Showing the first {count}. Forward the ones you need; this is not a list to work through.",
+      "forwarding": "Forwarding",
+      "notForwarding": "Not forwarding",
+      "start": "Start",
+      "stop": "Stop",
+      "costs": "AWS charges for what forwarding uses: Lambda invocations and duration, the forwarder’s own CloudWatch Logs, and data transfer out of your account. OpsWatch shows you the usage above rather than guessing at a price."
+    },
+    "disable": {
+      "title": "Turn managed collection off",
+      "hint": "This does not disconnect the AWS account.",
+      "subscriptions": "Every subscription filter OpsWatch created is removed, so nothing new is sent.",
+      "secret": "The signing secret is forgotten, so anything already in flight cannot authenticate.",
+      "records": "Queued and kept records are dropped. Errors already found in them survive.",
+      "keepsConnection": "The AWS connection stays exactly as it is, and OpsWatch keeps reading it directly.",
+      "confirm": "I understand that forwarding will stop and OpsWatch-created subscriptions will be removed.",
+      "submit": "Turn off managed collection",
+      "removed": "{count, plural, one {# subscription removed.} other {# subscriptions removed.}}",
+      "failed": "{count, plural, one {# could not be removed — delete it or the stack yourself, it is still costing invocations.} other {# could not be removed — delete them or the stack yourself, they are still costing invocations.}}",
+      "stack": "Then delete the collection stack. Everything OpsWatch created goes with it; nothing is retained."
+    },
+    "errors": {
+      "not_confirmed": "Tick the confirmation to enable managed collection.",
+      "no_public_url": "Managed collection needs OPSWATCH_PUBLIC_URL set to an HTTPS address AWS can reach. A forwarder cannot deliver to an instance it cannot find.",
+      "conflict": "Another subscription filter is already on that log group.",
+      "conflictWith": "“{owner}” is already subscribed to that log group. OpsWatch will not replace another product’s forwarder. Remove it first, or forward a different group.",
+      "limit": "That log group already has as many subscription filters as AWS allows.",
+      "denied": "AWS refused. The collection stack grants the permissions this needs — check it is installed and up to date.",
+      "not_found": "That log group, or the forwarder, could not be found.",
+      "failed": "That did not work. Check the forwarder is verified and real-time logs is on.",
+      "invalid_arn": "That is not a Lambda function ARN.",
+      "invalid_retention": "Choose between 1 and 720 hours."
+    },
+    "manage": "Manage collection",
+    "setUp": "Set up managed collection",
+    "rotate": {
+      "hint": "Issue a new signing secret. The current one stops working immediately, so update the stack parameter straight afterwards — between the two, the forwarder cannot deliver.",
+      "submit": "Rotate the signing secret"
     }
   }
 }

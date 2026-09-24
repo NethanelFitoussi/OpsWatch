@@ -11,6 +11,7 @@ import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { findConnection, toView } from '@/lib/connections/repository';
+import { readCollection } from '@/lib/store/collection';
 import { untestedRegions } from '@/lib/connections/tested-regions';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -43,10 +44,13 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
   const view = toView(row, env().OPSWATCH_SECRET);
 
   const untested = untestedRegions(view.regions, view.lastTest);
+  // Where this account's data goes is not an advanced setting, so it is on the account page itself.
+  const collection = readCollection(getDb(), row.id);
 
   const t = await getTranslations('AccountDetail');
   const tAccounts = await getTranslations('Accounts');
   const tChecklist = await getTranslations('Checklist');
+  const tCollection = await getTranslations('Collection');
 
   return (
     <PageBody>
@@ -99,7 +103,25 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         <PermissionChecklist result={view.lastTest} account={view.awsAccountId} />
       </SectionCard>
 
-      <DangerZone connectionId={view.id} locale={locale} />
+      {/*
+        * Where this account's data goes, on the account page rather than behind an advanced menu.
+        *
+        * It is a privacy decision before it is a technical one, and an operator should be able to answer
+        * "is anything leaving my AWS account" without opening anything.
+        */}
+      <SectionCard title={tCollection('mode.title')} description={tCollection('mode.hint')}>
+        <p className="text-sm">
+          <strong className="font-medium">{collection.managed ? tCollection('mode.managed') : tCollection('mode.direct')}</strong>
+          <span className="block text-muted-foreground">{collection.managed ? tCollection('mode.managedHint') : tCollection('mode.directHint')}</span>
+        </p>
+        <p className="mt-3">
+          <Link href={`/accounts/${view.id}/collection`} className="text-sm text-primary underline-offset-4 hover:underline">
+            {collection.managed ? tCollection('manage') : tCollection('setUp')}
+          </Link>
+        </p>
+      </SectionCard>
+
+      <DangerZone connectionId={view.id} locale={locale} managed={collection.managed} />
     </PageBody>
   );
 }

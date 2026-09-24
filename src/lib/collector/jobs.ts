@@ -20,6 +20,7 @@ export const JOB_IDS = [
   'cloudflare',
   'notify',
   'digest',
+  'ingest',
   'compact',
 ] as const;
 export type JobId = (typeof JOB_IDS)[number];
@@ -87,6 +88,13 @@ export const JOBS: Record<JobId, JobSpec> = {
    * free on a fresh install: with the switch off — which is the default — it reads one row and stops.
    */
   digest: { id: 'digest', everyMs: HOUR, cap: null, scope: 'instance', freshInstall: true },
+  /**
+   * Draining what forwarders delivered. Instance-wide, because the queue is one table for every
+   * integration; every minute, because a record that arrived in real time and then sat for an hour was
+   * not worth forwarding in real time. Free on a fresh install: with nothing forwarding, it reads an
+   * empty queue and stops.
+   */
+  ingest: { id: 'ingest', everyMs: MINUTE, cap: null, scope: 'instance', freshInstall: true },
   // Retention and the backup: one instance-wide pass, touching no provider.
   compact: { id: 'compact', everyMs: 24 * HOUR, cap: null, scope: 'instance', freshInstall: true },
 };

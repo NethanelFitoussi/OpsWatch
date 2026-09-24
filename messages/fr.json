@@ -232,7 +232,12 @@
     "danger": {
       "title": "Supprimer cette connexion",
       "description": "OpsWatch oublie ce compte. Supprimez la stack CloudFormation dans AWS pour révoquer complètement l'accès.",
-      "delete": "Supprimer la connexion"
+      "delete": "Supprimer la connexion",
+      "stopsCollection": "OpsWatch cesse de lire ce compte. Toutes les pages le concernant cessent de fonctionner.",
+      "removesCredentials": "Les détails du rôle et les identifiants chiffrés sont supprimés de cette installation.",
+      "stopsForwarding": "La collecte gérée s’arrête, et les filtres d’abonnement créés par OpsWatch sont retirés de vos groupes de journaux.",
+      "deleteStack": "Rien n’est supprimé de votre compte AWS. Supprimez vous-même la pile CloudFormation OpsWatch pour retirer le rôle.",
+      "deleteBothStacks": "Rien n’est supprimé de votre compte AWS. Supprimez vous-même les deux piles CloudFormation OpsWatch — celle de collecte et celle de base — pour retirer la Lambda et le rôle."
     },
     "details": {
       "title": "Détails de la connexion",
@@ -5026,6 +5031,108 @@
             "label": "Envoyer les alertes quelque part plutôt que d’interroger"
           }
         }
+      },
+      "push-collection": {
+        "title": "Envoyer les journaux à OpsWatch au fil de l’eau",
+        "summary": "Optionnel. Désactivé par défaut. OpsWatch lit AWS directement sans cela.",
+        "what": "OpsWatch lit normalement votre compte AWS quand il a besoin de quelque chose : il endosse un rôle en lecture seule et interroge CloudWatch. C’est le comportement par défaut et il le reste. La collecte gérée est une seconde façon, optionnelle, d’obtenir des lignes de journal : une petite Lambda dans votre compte envoie les groupes sélectionnés vers votre installation d’OpsWatch au fil de l’écriture. Vous l’activez par compte, vous choisissez les groupes, et vous pouvez la désactiver sans rien déconnecter.",
+        "flow": {
+          "0": {
+            "label": "Vous choisissez des groupes"
+          },
+          "1": {
+            "label": "CloudWatch invoque une Lambda",
+            "note": "dans votre compte"
+          },
+          "2": {
+            "label": "Elle signe et envoie",
+            "note": "HTTPS"
+          },
+          "3": {
+            "label": "Votre OpsWatch traite"
+          }
+        },
+        "before": {
+          "0": "Un compte AWS connecté dont le test de permissions réussit.",
+          "1": "OPSWATCH_PUBLIC_URL défini sur une adresse HTTPS joignable par AWS. Une installation sur portable ne peut pas recevoir d’appel depuis Lambda.",
+          "2": "Le droit de déployer une seconde pile CloudFormation dans ce compte AWS.",
+          "3": "Le fait qu’AWS facturera ce que cela crée : invocations et durée Lambda, les journaux de la Lambda elle-même, et le transfert sortant de votre compte."
+        },
+        "steps": {
+          "0": {
+            "title": "Décidez si vous en voulez",
+            "body": "Vous n’en avez pas besoin pour voir des ressources, lire des métriques, consulter des alarmes ou chercher dans des journaux existants. Tout cela fonctionne en lisant AWS directement. La collecte gérée sert à recevoir des lignes en continu plutôt que sur demande — utile si vous voulez que les erreurs soient trouvées en une minute plutôt qu’en quinze."
+          },
+          "1": {
+            "title": "Activez-la sur le compte",
+            "body": "Comptes, votre compte, puis Collecte gérée. Lisez ce qui est écrit, cochez la confirmation et validez. Rien n’est encore transféré : cela crée la possibilité."
+          },
+          "2": {
+            "title": "Copiez le secret de signature",
+            "body": "Il n’est affiché qu’une fois. C’est ce que la Lambda utilise pour prouver à votre OpsWatch qu’une livraison vient bien de votre Lambda. Ce n’est pas un identifiant AWS et il ne donne accès à rien dans votre compte."
+          },
+          "3": {
+            "title": "Déployez la seconde pile",
+            "body": "Téléchargez le modèle de collecte et déployez-le en collant le secret dans le paramètre OpsWatchIngestSecret. Elle est distincte de la pile qui a connecté le compte, qui n’est pas touchée. Elle crée une Lambda, une file de lettres mortes, un rôle pour la Lambda, un groupe de journaux pour elle, et une politique attachée à votre rôle OpsWatch existant."
+          },
+          "4": {
+            "title": "Vérifiez-la",
+            "body": "Recopiez la sortie ForwarderArn dans OpsWatch et cliquez sur Vérifier. OpsWatch demande à AWS de confirmer que la fonction existe et lit la version qu’elle annonce elle-même, plutôt que de croire ce qui a été saisi."
+          },
+          "5": {
+            "title": "Activez les journaux en temps réel et choisissez vos groupes",
+            "body": "Un par un. OpsWatch n’abonne jamais tous les groupes d’un compte. Avant d’en abonner un, il regarde ce qui s’y trouve déjà et refuse de remplacer la Lambda d’un autre produit."
+          },
+          "6": {
+            "title": "Décidez si les enregistrements sont conservés",
+            "body": "Séparément. Transférer une ligne n’est pas la stocker. Si « Conserver les enregistrements » est désactivé, une ligne est traitée puis immédiatement supprimée — les erreurs qui y ont été trouvées subsistent, la ligne non."
+          }
+        },
+        "verify": "La carte de la Lambda indique les enregistrements acceptés sur la dernière heure et l’heure du dernier. Écrivez une ligne dans l’un des groupes choisis : elle doit apparaître en moins d’une minute.",
+        "problems": {
+          "0": {
+            "q": "Connecter un compte AWS envoie-t-il quelque chose à OpsWatch ?",
+            "a": "Non. Un compte connecté est lu directement et rien n’en sort. La collecte gérée est un interrupteur distinct, désactivé par défaut, que vous devez confirmer — et même activée, rien n’est transféré tant que vous n’avez pas choisi un groupe de journaux."
+          },
+          "1": {
+            "q": "Cela envoie-t-il mes données vers un service OpsWatch ?",
+            "a": "Ce service n’existe pas. OpsWatch, c’est ce que vous avez installé ; la Lambda livre à votre propre installation, à votre propre adresse, que la page vous montre. Si vous hébergez OpsWatch vous-même, les données ne quittent jamais votre réseau, sauf pour aller d’AWS à cette adresse."
+          },
+          "2": {
+            "q": "La Lambda affiche « Rien reçu pour l’instant ».",
+            "a": "Ce n’est pas une panne. Cela veut dire qu’aucun enregistrement n’est arrivé et qu’aucun n’a été refusé — exactement ce qu’on attend d’un groupe calme, hors heures ouvrées, ou d’un service qui n’a rien journalisé. L’état passe à « En bon état » dès que quelque chose arrive."
+          },
+          "3": {
+            "q": "Il dit qu’un autre produit est déjà abonné.",
+            "a": "CloudWatch n’autorise qu’un petit nombre de filtres d’abonnement par groupe, et OpsWatch ne supprimera pas celui de quelqu’un d’autre. Il vous nomme celui qui bloque. Supprimez-le si vous voulez donner la place à OpsWatch, ou transférez un autre groupe."
+          },
+          "4": {
+            "q": "AWS a refusé quand j’ai voulu démarrer le transfert.",
+            "a": "Les permissions de gestion des filtres viennent de la pile de collecte, pas de la pile de base. Vérifiez que la pile de collecte s’est déployée et que le paramètre OpsWatchRoleName correspondait bien à votre rôle existant."
+          },
+          "5": {
+            "q": "Combien cela coûte-t-il ?",
+            "a": "OpsWatch n’inventera pas de chiffre : la tarification AWS dépend de votre compte et de votre région. Ce qu’il montre, c’est l’usage : enregistrements acceptés, refusés et répétés, et octets reçus, par heure. AWS facture les invocations et la durée Lambda, les journaux CloudWatch de la Lambda, et le transfert sortant de votre compte."
+          },
+          "6": {
+            "q": "Comment tout supprimer ?",
+            "a": "Désactivez la collecte gérée — OpsWatch retire les filtres d’abonnement qu’il a créés et oublie le secret — puis supprimez la pile de collecte. Tout ce qu’elle a créé part avec elle : la Lambda, son rôle, son groupe de journaux et la file. Rien n’est conservé. Votre connexion AWS et la pile de base restent intactes."
+          },
+          "7": {
+            "q": "Qui peut lire le secret de signature ?",
+            "a": "Il vit dans l’environnement de la Lambda : toute personne de votre compte AWS disposant de lambda:GetFunctionConfiguration peut le lire. C’est bon à savoir et c’est le compromis de ne pas exiger un gestionnaire de secrets. Il authentifie une Lambda auprès de votre OpsWatch ; ce n’est pas un identifiant AWS. Vous pouvez le renouveler depuis la page de collecte et mettre à jour le paramètre de la pile."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "logs",
+            "label": "Choisir les groupes qui comptent"
+          },
+          "1": {
+            "href": "searching-logs",
+            "label": "Chercher ce qui arrive"
+          }
+        }
       }
     },
     "api": {
@@ -5103,6 +5210,133 @@
       "redis": "les nœuds Redis",
       "kubernetes": "les charges Kubernetes",
       "logs": "les logs"
+    }
+  },
+  "Collection": {
+    "metaTitle": "Collecte gérée",
+    "title": "Collecte gérée — {name}",
+    "description": "Si quelque chose est envoyé de ce compte AWS vers OpsWatch, et quoi.",
+    "back": "Retour au compte",
+    "readGuide": "Comment fonctionne la collecte push",
+    "mode": {
+      "title": "Comment OpsWatch lit ce compte",
+      "hint": "La première chose à savoir sur toute connexion AWS.",
+      "direct": "Direct",
+      "directHint": "OpsWatch lit ce compte quand il en a besoin, via le rôle en lecture seule. Rien n’est envoyé depuis votre compte AWS où que ce soit.",
+      "managed": "Gérée",
+      "managedHint": "Les groupes de journaux sélectionnés sont envoyés de votre compte AWS vers cette installation d’OpsWatch au fil de l’écriture. La lecture directe d’AWS continue exactement comme avant.",
+      "destination": "Destination des données",
+      "destinationDirect": "Nulle part — OpsWatch lit AWS, rien n’est transféré.",
+      "noDestination": "Non définie. OPSWATCH_PUBLIC_URL doit être une adresse joignable par AWS."
+    },
+    "enable": {
+      "title": "Activer la collecte gérée",
+      "hint": "Désactivée. Connecter un compte AWS ne l’active pas, et ne l’activera jamais.",
+      "what": "Les groupes de journaux sélectionnés seront envoyés de votre compte AWS vers cette installation d’OpsWatch, en HTTPS, signés.",
+      "creates": "Vous déploierez une seconde pile CloudFormation qui crée une petite Lambda de transfert, une file de lettres mortes et une politique. Elle est distincte de votre pile de base, qui n’est pas touchée.",
+      "costs": "AWS peut facturer ce que cela crée : invocations et durée Lambda, les journaux CloudWatch que la Lambda écrit sur elle-même, et le transfert de données sortant de votre compte.",
+      "nothingYet": "Rien n’est transféré tant que vous n’avez pas choisi un groupe de journaux. Activer ceci crée la possibilité, pas le trafic.",
+      "confirm": "Je comprends que les données de journaux AWS sélectionnées seront envoyées à cette installation d’OpsWatch.",
+      "submit": "Activer la collecte gérée"
+    },
+    "secretTitle": "Votre secret de signature",
+    "secretHint": "Copiez-le maintenant. Il est affiché une seule fois. Vous le collerez dans le paramètre OpsWatchIngestSecret au déploiement. Il authentifie la Lambda auprès de cet OpsWatch ; ce n’est pas un identifiant AWS et il ne donne accès à rien dans votre compte.",
+    "install": {
+      "title": "Installer la Lambda de transfert",
+      "hint": "Une seconde pile, distincte de celle qui connecte le compte.",
+      "download": "Téléchargez le modèle de collecte :",
+      "downloadLink": "opswatch-collection.yaml",
+      "deploy": "Déployez-le en collant le secret quand il est demandé :",
+      "verifyStep": "Recopiez la sortie ForwarderArn ici et vérifiez-la.",
+      "noSecretInTemplate": "Le modèle ne contient aucun secret. Il peut être lu, comparé et conservé ; le secret est fourni au déploiement et ne vit que dans l’environnement de la fonction."
+    },
+    "forwarder": {
+      "title": "Lambda de transfert",
+      "hint": "Ce que cette installation a réellement reçu, sur la dernière heure.",
+      "state": "État",
+      "version": "Version",
+      "unknownVersion": "Pas encore vérifiée",
+      "available": "(cet OpsWatch fournit la {version})",
+      "lastEvent": "Dernier enregistrement",
+      "never": "Rien n’est encore arrivé",
+      "hour": "Dernière heure",
+      "counts": "{events} acceptés · {rejected} refusés · {duplicates} répétés",
+      "deadLetters": "Lots non délivrés",
+      "deadLettersUnknown": "Illisible",
+      "deadLettersCount": "{count, plural, =0 {Aucun} one {# en attente dans la file de lettres mortes} other {# en attente dans la file de lettres mortes}}"
+    },
+    "states": {
+      "not_installed": "Non installée",
+      "inactive": "Installée, rien de sélectionné",
+      "healthy": "En bon état",
+      "degraded": "Dégradée",
+      "error": "Lots non délivrés",
+      "unknown": "Rien reçu pour l’instant"
+    },
+    "verify": {
+      "label": "ARN de la fonction",
+      "hint": "Depuis la sortie ForwarderArn de la pile de collecte. OpsWatch demande confirmation à AWS plutôt que de vous croire sur parole.",
+      "submit": "Vérifier auprès d’AWS",
+      "ok": "Confirmée. La fonction annonce la version {version}.",
+      "unknownVersion": "aucune version"
+    },
+    "settings": {
+      "title": "Ce qui est collecté, et ce qui est conservé",
+      "hint": "Deux décisions distinctes. Transférer des données n’est pas les stocker.",
+      "realtime": "Journaux en temps réel",
+      "realtimeHint": "Autoriser le transfert des groupes sélectionnés. Désactivé, rien n’est accepté, même d’une Lambda correctement signée.",
+      "persist": "Conserver les enregistrements reçus",
+      "persistOn": "Les enregistrements sont conservés pendant la durée ci-dessous et restent consultables.",
+      "persistOff": "Les enregistrements sont traités puis immédiatement supprimés. Les erreurs qui y ont été trouvées subsistent ; les lignes de journal non.",
+      "retention": "Conserver (heures)",
+      "retentionHint": "Ne s’applique que si les enregistrements sont conservés. Rien n’est gardé plus longtemps.",
+      "submit": "Enregistrer",
+      "saved": "Enregistré."
+    },
+    "groups": {
+      "title": "Groupes de journaux",
+      "hint": "Un par un. OpsWatch n’abonne jamais tous les groupes d’un compte.",
+      "sourceOff": "Les journaux en temps réel sont désactivés : rien ne peut être démarré. Activez-les ci-dessus.",
+      "available": "Disponibles dans cette région",
+      "noneLeft": "Tous les groupes de cette région figurent déjà ci-dessus.",
+      "unavailable": "OpsWatch n’a pas pu lister les groupes de journaux de cette région. Vérifiez le test de permissions du compte.",
+      "truncated": "Affichage des {count} premiers. Transférez ceux dont vous avez besoin ; ce n’est pas une liste à parcourir en entier.",
+      "forwarding": "Transféré",
+      "notForwarding": "Non transféré",
+      "start": "Démarrer",
+      "stop": "Arrêter",
+      "costs": "AWS facture ce que le transfert consomme : invocations et durée Lambda, les journaux CloudWatch de la Lambda elle-même, et le transfert sortant de votre compte. OpsWatch vous montre l’usage ci-dessus plutôt que de deviner un prix."
+    },
+    "disable": {
+      "title": "Désactiver la collecte gérée",
+      "hint": "Cela ne déconnecte pas le compte AWS.",
+      "subscriptions": "Chaque filtre d’abonnement créé par OpsWatch est supprimé : plus rien n’est envoyé.",
+      "secret": "Le secret de signature est oublié : ce qui serait encore en vol ne peut plus s’authentifier.",
+      "records": "Les enregistrements en file et conservés sont supprimés. Les erreurs déjà trouvées subsistent.",
+      "keepsConnection": "La connexion AWS reste exactement telle quelle, et OpsWatch continue de la lire directement.",
+      "confirm": "Je comprends que le transfert s’arrêtera et que les abonnements créés par OpsWatch seront supprimés.",
+      "submit": "Désactiver la collecte gérée",
+      "removed": "{count, plural, one {# abonnement supprimé.} other {# abonnements supprimés.}}",
+      "failed": "{count, plural, one {# n’a pas pu être supprimé — supprimez-le ou supprimez la pile vous-même, il vous coûte encore des invocations.} other {# n’ont pas pu être supprimés — supprimez-les ou supprimez la pile vous-même, ils vous coûtent encore des invocations.}}",
+      "stack": "Supprimez ensuite la pile de collecte. Tout ce qu’OpsWatch a créé part avec elle ; rien n’est conservé."
+    },
+    "errors": {
+      "not_confirmed": "Cochez la confirmation pour activer la collecte gérée.",
+      "no_public_url": "La collecte gérée nécessite OPSWATCH_PUBLIC_URL, une adresse HTTPS joignable par AWS. Une Lambda ne peut pas livrer à une installation qu’elle ne trouve pas.",
+      "conflict": "Un autre filtre d’abonnement est déjà sur ce groupe de journaux.",
+      "conflictWith": "« {owner} » est déjà abonné à ce groupe de journaux. OpsWatch ne remplacera pas la Lambda d’un autre produit. Supprimez-la d’abord, ou transférez un autre groupe.",
+      "limit": "Ce groupe de journaux a déjà autant de filtres d’abonnement qu’AWS l’autorise.",
+      "denied": "AWS a refusé. La pile de collecte accorde les permissions nécessaires — vérifiez qu’elle est installée et à jour.",
+      "not_found": "Ce groupe de journaux, ou la Lambda, est introuvable.",
+      "failed": "Cela n’a pas fonctionné. Vérifiez que la Lambda est vérifiée et que les journaux en temps réel sont activés.",
+      "invalid_arn": "Ce n’est pas un ARN de fonction Lambda.",
+      "invalid_retention": "Choisissez entre 1 et 720 heures."
+    },
+    "manage": "Gérer la collecte",
+    "setUp": "Configurer la collecte gérée",
+    "rotate": {
+      "hint": "Émettre un nouveau secret de signature. L’actuel cesse immédiatement de fonctionner : mettez à jour le paramètre de la pile juste après — entre les deux, la Lambda ne peut pas livrer.",
+      "submit": "Renouveler le secret de signature"
     }
   }
 }
