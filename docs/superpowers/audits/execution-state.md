@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Google Cloud: a connected project now shows its instances |
+| Current checkpoint | §M: every read of a growing table is bounded, and stays that way |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0037** — `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -87,6 +87,9 @@ losing the whole conversation loses no plan.
   `awsAccountId`, at the schema level or in code, and the rest of the product treats two connections
   over one account as a supported configuration. Anything that matches on what an account *contains* —
   an instance id, a log group — must therefore be deterministic about which connection wins.
+- **A `select … .all()` is a page that stops loading in two years**, not one that is broken today.
+  `store-bounded-reads.test.ts` holds every one of them to being limited, windowed, or listed with the
+  reason it cannot grow.
 - **A connection id is twelve random hex characters**, so a test asserting "no timestamp in this URL"
   with `\d{10,}` over the whole href fails on the day an id happens to hold ten digits in a row
   (`f2956924662e` did). Assert against the part of the URL the claim is about.
@@ -157,6 +160,12 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **§M every store read is bounded.** An audit of all 48 unlimited `.all()` reads and of every
+      `await` inside a loop. The store turned out healthy — reads are windowed, capped where they are
+      written (`MAX_COMMITS = 10`), or over sets an operator creates by hand; the provider loops are
+      batched or deliberate polling. So the value is the guard, not the fixes: every unlimited read is
+      now windowed, limited, or on a written list with the reason it cannot grow, and the forty-ninth
+      fails until somebody decides which it is
 - [x] **A connected Google project shows something.** Compute Engine instances, per region, on the
       connection's own page rather than in the monitoring rail — every section of that rail is an AWS
       service, and carrying a Google connection through it would offer Containers and Databases that
