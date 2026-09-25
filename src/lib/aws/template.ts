@@ -15,6 +15,18 @@ export const resourcePrefix = (connectionId: string) => `opswatch-${connectionId
 export const roleNameFor = (connectionId: string) => `${ROLE_NAME_PREFIX}${connectionId}`;
 export const roleArnFor = (accountId: string, connectionId: string, partition = 'aws') =>
   `arn:${partition}:iam::${accountId}:role/${roleNameFor(connectionId)}`;
+
+/**
+ * Which AWS partition a region belongs to, for building an ARN without asking AWS.
+ *
+ * Only three exist and their regions are named by prefix. A region OpsWatch does not recognise is the
+ * ordinary commercial partition, which is what every region outside China and GovCloud is.
+ */
+export function partitionOf(region: string): string {
+  if (region.startsWith('cn-')) return 'aws-cn';
+  if (region.startsWith('us-gov-')) return 'aws-us-gov';
+  return 'aws';
+}
 export const stackNameFor = (connectionId: string) => resourcePrefix(connectionId);
 export const templateFileNameFor = (connectionId: string) => `${resourcePrefix(connectionId)}.yaml`;
 export const templateObjectKey = (connectionId: string) =>
@@ -111,10 +123,27 @@ export function roleArnCommand(connectionId: string, region: string): string {
   );
 }
 
+/**
+ * The AWS console link that opens the Create stack page with this connection's template already in it.
+ *
+ * Written to the documented quick-create format rather than the older `#/stacks/quickcreate` path:
+ * a **regional** console host, `#/stacks/create/review`, and a URL-encoded `templateURL`.
+ * https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stacks-quick-create-links.html
+ *
+ * `templateURL` **must** be an Amazon S3 URL — the console will not fetch a template from anywhere
+ * else, which is why a self-hosted OpsWatch cannot serve its own template here and why this path needs
+ * a bucket the operator provides. The regional S3 host is used because the documented formats name a
+ * region, and the global one redirects.
+ *
+ * The template carries no CloudFormation parameters, so there is nothing to pre-fill with `param_*`:
+ * the external id and the trust principal are baked into the object this connection uploads. That is
+ * deliberate — a parameter the operator can edit in the console is a trust policy they can widen by
+ * accident.
+ */
 export function quickCreateUrl(input: { bucket: string; connectionId: string; region: string }): string {
-  const templateUrl = `https://${input.bucket}.s3.amazonaws.com/${templateObjectKey(input.connectionId)}`;
+  const templateUrl = `https://${input.bucket}.s3.${input.region}.amazonaws.com/${templateObjectKey(input.connectionId)}`;
   return (
-    `https://console.aws.amazon.com/cloudformation/home?region=${input.region}` +
-    `#/stacks/quickcreate?templateURL=${encodeURIComponent(templateUrl)}&stackName=${stackNameFor(input.connectionId)}`
+    `https://${input.region}.console.aws.amazon.com/cloudformation/home?region=${input.region}` +
+    `#/stacks/create/review?templateURL=${encodeURIComponent(templateUrl)}&stackName=${stackNameFor(input.connectionId)}`
   );
 }

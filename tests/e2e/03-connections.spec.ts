@@ -96,7 +96,24 @@ test('the connection headings are read without their step numbers', async ({ pag
   await page.getByRole('link', { name: /Moto role/ }).first().click();
   await expect(page).toHaveTitle('Connection · OpsWatch');
   await expect(page.getByRole('heading', { level: 2, name: "OpsWatch's identity", exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2, name: 'Paste the role ARN', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Confirm the role', exact: true })).toBeVisible();
+});
+
+test('THE RULING: the role ARN is worked out, not asked for', async ({ page }) => {
+  /*
+   * The account, the role name and the partition are all known before the stack exists. Asking an
+   * operator to run a CLI query and paste the answer back was asking them to fetch a string OpsWatch
+   * could write down — and it is the kind of step that makes a product feel as though it needs an AWS
+   * expert to use.
+   */
+  await page.getByRole('link', { name: /Moto role/ }).first().click();
+  // Read after the navigation has settled: `page.url()` straight after the click is still /accounts.
+  await expect(page).toHaveURL(/\/en\/accounts\/[0-9a-f]{12}$/);
+  const id = page.url().split('/').pop() as string;
+  await expect(page.getByLabel('Role ARN')).toHaveValue(`arn:aws:iam::${MOTO_ACCOUNT}:role/OpsWatchReadOnly-${id}`);
+
+  // The CLI check is still there for anybody who wants to see it against the stack, one disclosure down.
+  await expect(page.getByText('Check it against the stack yourself')).toBeVisible();
 });
 
 test('copy buttons work without the async clipboard API (plain HTTP)', async ({ page }) => {
@@ -136,8 +153,11 @@ test('THE RULING: a connection is edited, not deleted and re-made', async ({ pag
   await page.getByRole('button', { name: 'Run test' }).click();
   await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
 
-  // Rename it and give it a second region.
+  // Rename it and give it a second region. The region grid is behind a disclosure now: twenty-eight
+  // permanent checkboxes were the largest thing on a page about setting a connection up.
   await page.getByLabel('Name').fill('After the rename');
+  await expect(page.getByText('Reading 1 region: us-east-1')).toBeVisible();
+  await page.getByText('Change which regions').click();
   await page.getByRole('checkbox', { name: 'eu-west-3' }).check();
   await page.getByRole('button', { name: 'Save changes' }).click();
 

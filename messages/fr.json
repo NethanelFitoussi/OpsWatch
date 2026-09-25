@@ -131,7 +131,8 @@
     "connectOther": "Connecter",
     "manageOther": "Gérer",
     "allIntegrations": "Voir toutes les intégrations",
-    "tested": "Testé"
+    "tested": "Testé",
+    "collectionOn": "Transfert de journaux actif"
   },
   "Services": {
     "ecs": "Amazon ECS",
@@ -210,10 +211,13 @@
       "launchFailed": "Le template n'a pas pu être envoyé dans le bucket configuré.",
       "noBaseIdentity": "Le template n'a pas pu être généré car OpsWatch n'a pas d'identité AWS. La première étape ci-dessus explique pourquoi.",
       "outdated": "Un template plus récent est disponible, avec les permissions de nouvelles fonctionnalités. Téléchargez-le et mettez la stack à jour.",
-      "roleArnTitle": "Coller l'ARN du rôle",
-      "roleArnHelp": "Copiez RoleArn dans les sorties de la stack, ou exécutez :",
+      "roleArnTitle": "Confirmez le rôle",
+      "roleArnHelp": "Voici l’ARN que la pile crée dans votre compte. OpsWatch l’a déduit du compte, de la région et de la connexion — enregistrez-le, puis lancez le test de permissions pour prouver que le rôle existe vraiment.",
       "roleArnLabel": "ARN du rôle",
-      "saveRoleArn": "Enregistrer l'ARN"
+      "saveRoleArn": "Enregistrer l'ARN",
+      "roleArnVerify": "Vérifiez-le vous-même auprès de la pile",
+      "roleArnVerifyHint": "À exécuter une fois la pile créée. Cela lit la sortie RoleArn de CloudFormation, qui est la même chaîne.",
+      "launchUnavailable": "Ouvrir ceci dans la console AWS en un clic nécessite un bucket S3, défini via OPSWATCH_TEMPLATE_BUCKET : la console CloudFormation ne récupère les modèles que depuis Amazon S3, donc un OpsWatch auto-hébergé ne peut pas en servir un depuis sa propre adresse. Sans bucket, téléchargez le modèle et déployez-le avec la commande ci-dessous — le résultat est identique."
     },
     "keys": {
       "warning": "Les clés d'accès servent à un test rapide en local. Préférez un rôle IAM en production.",
@@ -247,7 +251,9 @@
       "regions": "Régions",
       "regionsHint": "Retirer une région arrête sa lecture. Rien de ce qui a déjà été collecté n'est supprimé, et tout revient si vous rajoutez la région.",
       "save": "Enregistrer",
-      "untested": "Le dernier test de permissions ne couvrait pas {regions}. Relancez-le pour savoir ce qu'OpsWatch peut y lire."
+      "untested": "Le dernier test de permissions ne couvrait pas {regions}. Relancez-le pour savoir ce qu'OpsWatch peut y lire.",
+      "regionsChosen": "{count, plural, one {# région lue} other {# régions lues}} : {regions}",
+      "regionsChange": "Changer les régions"
     }
   },
   "Checklist": {
@@ -4540,24 +4546,24 @@
         },
         "steps": {
           "0": {
-            "title": "Ajouter la connexion",
-            "body": "Connexions, puis Ajouter une connexion, puis AWS. Donnez-lui un nom reconnaissable, le numéro de compte et les régions."
+            "title": "Ajoutez la connexion",
+            "body": "Connexions, puis Ajouter une connexion, puis AWS. Donnez-lui un nom reconnaissable, le numéro de compte et les régions. Vous pouvez ajouter autant de comptes AWS que vous voulez — production, préproduction, un par client — et chacun garde ses propres données, ses propres alertes et son propre état de permissions."
           },
           "1": {
-            "title": "Choisir le rôle IAM",
-            "body": "Les clés d'accès sont proposées pour des tests locaux et signalées comme telles. Pour tout usage réel, utilisez le rôle."
+            "title": "Choisissez le rôle IAM",
+            "body": "Les clés d’accès sont proposées pour les tests locaux et signalées comme telles. Pour tout usage réel, utilisez le rôle : OpsWatch l’assume, AWS enregistre qui l’a assumé, et vous pouvez le révoquer à un seul endroit sans rien changer dans OpsWatch."
           },
           "2": {
-            "title": "Déployer le modèle",
-            "body": "Téléchargez-le ou utilisez Launch Stack. Il crée un rôle IAM avec une politique en lecture seule, et rien d'autre. La politique de confiance nomme l'identité d'OpsWatch et un ExternalId propre à cette connexion : le rôle ne peut pas être assumé via une autre connexion."
+            "title": "Déployez le modèle",
+            "body": "Téléchargez-le et exécutez la commande affichée, ou appuyez sur Lancer la pile si cette installation dispose d’un bucket S3 configuré. Dans les deux cas, cela crée un rôle IAM avec une seule politique en lecture seule, et rien d’autre. La politique de confiance nomme l’identité d’OpsWatch et un ExternalId propre à cette connexion, de sorte que le rôle ne peut pas être assumé via une autre connexion."
           },
           "3": {
-            "title": "Coller l'ARN du rôle",
-            "body": "CloudFormation l'affiche dans les sorties de la pile. OpsWatch vérifie qu'il appartient bien au compte saisi."
+            "title": "Confirmez le rôle",
+            "body": "OpsWatch a déjà déduit l’ARN du compte, de la région et de la connexion : le champ est prérempli. Appuyez sur Enregistrer. Si vous préférez le vérifier auprès de la pile, la commande qui lit la sortie RoleArn se trouve juste en dessous."
           },
           "4": {
-            "title": "Lancer le test de permissions",
-            "body": "Il effectue une lecture inoffensive par service et vous dit exactement lesquelles ont répondu."
+            "title": "Lancez le test de permissions",
+            "body": "Il effectue une lecture inoffensive par service et vous dit exactement lesquels ont répondu. C’est l’étape qui prouve que le rôle existe et fonctionne — tout ce qui précède n’est que préparation."
           }
         },
         "verify": "La connexion affiche Connecté et la liste des permissions montre chaque service comme autorisé. Tout refus est nommé, avec l'action refusée.",

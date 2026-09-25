@@ -15,6 +15,7 @@ import { env } from '@/lib/env';
 import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
 import { integrationStatuses } from '@/lib/integrations/status';
 import { CONNECTION_TONES, INTEGRATION_TONES } from '@/lib/integrations/tone';
+import { listManagedConnections } from '@/lib/store/collection';
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -41,6 +42,9 @@ export default async function AccountsPage({ params }: Props) {
   const format = await getFormatter();
   const db = getDb();
   const views = listConnections(db).map((row) => toView(row, env().OPSWATCH_SECRET));
+  // Whether each connection is forwarding anything. Connecting an AWS account says nothing about
+  // whether logs may leave it, and the card is where that distinction has to be visible.
+  const collection = new Map(listManagedConnections(db).map((row) => [row.connectionId, row.managed && row.realtimeLogs]));
   const others = integrationStatuses(db).filter((entry) => entry.id !== 'aws' && INTEGRATION_SPECS[entry.id].connectable);
   const nothing = views.length === 0 && others.every((entry) => entry.state === 'not_configured');
 
@@ -93,7 +97,7 @@ export default async function AccountsPage({ params }: Props) {
               href={`/accounts/${c.id}`}
               actionLabel={t('manageOther')}
               badges={
-                (c.method === 'keys' || c.templateOutdated) && (
+                (c.method === 'keys' || c.templateOutdated || collection.get(c.id) === true) && (
                   <div className="flex flex-wrap gap-2">
                     {c.method === 'keys' && (
                       <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">
@@ -101,6 +105,12 @@ export default async function AccountsPage({ params }: Props) {
                       </Badge>
                     )}
                     {c.templateOutdated && <Badge variant="outline">{t('updateStack')}</Badge>}
+                    {/*
+                      * Connected and forwarding are different things, and this is where an operator with
+                      * several accounts can see which is which. Only shown when it is on: the absence of
+                      * a badge is the default state, and a badge saying "off" on every card is noise.
+                      */}
+                    {collection.get(c.id) === true && <Badge variant="outline">{t('collectionOn')}</Badge>}
                   </div>
                 )
               }

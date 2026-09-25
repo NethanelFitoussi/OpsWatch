@@ -131,7 +131,8 @@
     "connectOther": "Connect",
     "manageOther": "Manage",
     "allIntegrations": "See all integrations",
-    "tested": "Tested"
+    "tested": "Tested",
+    "collectionOn": "Forwarding logs"
   },
   "Services": {
     "ecs": "Amazon ECS",
@@ -210,10 +211,13 @@
       "launchFailed": "The template could not be uploaded to the configured bucket.",
       "noBaseIdentity": "The template could not be generated because OpsWatch has no AWS identity. The first step above explains why.",
       "outdated": "A newer template is available with permissions for new features. Download it and update the stack.",
-      "roleArnTitle": "Paste the role ARN",
-      "roleArnHelp": "Copy RoleArn from the stack outputs, or run:",
+      "roleArnTitle": "Confirm the role",
+      "roleArnHelp": "This is the ARN the stack creates in your account. OpsWatch worked it out from the account, the region and the connection — save it, then run the permission test to prove the role is really there.",
       "roleArnLabel": "Role ARN",
-      "saveRoleArn": "Save role ARN"
+      "saveRoleArn": "Save role ARN",
+      "roleArnVerify": "Check it against the stack yourself",
+      "roleArnVerifyHint": "Run this once the stack exists. It reads the RoleArn output from CloudFormation, which is the same string.",
+      "launchUnavailable": "Opening this in the AWS console in one click needs an S3 bucket, set as OPSWATCH_TEMPLATE_BUCKET: the CloudFormation console only fetches templates from Amazon S3, so a self-hosted OpsWatch cannot serve one from its own address. Without a bucket, download the template and deploy it with the command below — it does exactly the same thing."
     },
     "keys": {
       "warning": "Access keys are meant for a quick local test. Prefer an IAM role in production.",
@@ -247,7 +251,9 @@
       "regions": "Regions",
       "regionsHint": "Removing a region stops OpsWatch reading it. Nothing already collected is deleted, and it comes back if you add the region again.",
       "save": "Save changes",
-      "untested": "The last permission test did not cover {regions}. Run it again to find out what OpsWatch can read there."
+      "untested": "The last permission test did not cover {regions}. Run it again to find out what OpsWatch can read there.",
+      "regionsChosen": "{count, plural, one {Reading # region} other {Reading # regions}}: {regions}",
+      "regionsChange": "Change which regions"
     }
   },
   "Checklist": {
@@ -4541,23 +4547,23 @@
         "steps": {
           "0": {
             "title": "Add the connection",
-            "body": "Connections, then Add a connection, then AWS. Give it a name you will recognise, the account number, and the regions."
+            "body": "Connections, then Add a connection, then AWS. Give it a name you will recognise, the account number, and the regions. You can add as many AWS accounts as you like — production, staging, one per client — and each keeps its own data, its own alerts and its own permission status."
           },
           "1": {
             "title": "Choose IAM role",
-            "body": "Access keys are offered for local testing and are marked as such. For anything real, use the role."
+            "body": "Access keys are offered for local testing and are marked as such. For anything real, use the role: OpsWatch assumes it, AWS records who assumed it, and you can revoke it in one place without changing anything in OpsWatch."
           },
           "2": {
             "title": "Deploy the template",
-            "body": "Download it or use Launch Stack. It creates one IAM role with one read-only policy, and nothing else. The trust policy names OpsWatch’s own identity and an ExternalId unique to this connection, so the role cannot be assumed through another connection."
+            "body": "Download it and run the command shown, or press Launch Stack if this installation has an S3 bucket configured. Either way it creates one IAM role with one read-only policy, and nothing else. The trust policy names OpsWatch’s own identity and an ExternalId unique to this connection, so the role cannot be assumed through another connection."
           },
           "3": {
-            "title": "Paste the role ARN",
-            "body": "CloudFormation shows it in the stack outputs. OpsWatch checks that it belongs to the account you entered."
+            "title": "Confirm the role",
+            "body": "OpsWatch has already worked the ARN out from the account, the region and the connection, so the field is filled in. Press Save. If you would rather check it against the stack, the command that reads the RoleArn output is one disclosure down."
           },
           "4": {
             "title": "Run the permission test",
-            "body": "It calls one harmless read per service and tells you exactly which ones answered."
+            "body": "It calls one harmless read per service and tells you exactly which ones answered. This is the step that proves the role exists and works — everything before it is preparation."
           }
         },
         "verify": "The connection shows Connected and the permission checklist shows each service as allowed. Anything denied is named, with the action that was refused.",

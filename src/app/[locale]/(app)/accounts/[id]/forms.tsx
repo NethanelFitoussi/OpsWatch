@@ -72,27 +72,43 @@ export function ConnectionDetailsForm({
     <form action={formAction} className="space-y-4">
       <FormErrorAlert message={error} />
       <FormField id="name" label={t('name')} defaultValue={state.values?.name ?? name} required maxLength={CONNECTION_NAME_MAX} />
+      {/*
+        * The regions this connection reads, said rather than laid out.
+        *
+        * Twenty-eight permanent checkboxes were the largest thing on the page, above the steps that
+        * actually set the connection up, for a decision most operators make once. The answer is one
+        * line; the grid is behind it, and opens already showing what is ticked.
+        *
+        * A `<details>` rather than component state: the inputs stay in the form whether it is open or
+        * closed, so submitting without opening it cannot silently clear the selection.
+        */}
       <fieldset aria-describedby="edit-regions-hint">
         <legend className="font-medium">{t('regions')}</legend>
-        <p id="edit-regions-hint" className="mt-1 mb-3 text-sm text-muted-foreground">
-          {t('regionsHint')}
+        <p id="edit-regions-hint" className="mt-1 text-sm text-muted-foreground">
+          {t('regionsChosen', { regions: [...chosen].join(', '), count: chosen.size })}
         </p>
-        <div className="grid max-h-64 grid-cols-2 gap-1 overflow-y-auto rounded-md border p-2 sm:grid-cols-3">
-          {AWS_REGIONS.map((region) => (
-            <label key={region} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sm hover:bg-accent">
-              <input
-                type="checkbox"
-                className="size-4 accent-primary"
-                // Re-keyed on the value so a re-render after a failed submit shows what was sent.
-                key={`${region}:${chosen.has(region)}`}
-                name="regions"
-                value={region}
-                defaultChecked={chosen.has(region)}
-              />
-              {region}
-            </label>
-          ))}
-        </div>
+        <details className="mt-2">
+          <summary className="inline-flex cursor-pointer items-center gap-1 rounded-md text-sm text-muted-foreground hover:text-foreground">
+            {t('regionsChange')}
+          </summary>
+          <p className="mt-2 mb-2 text-sm text-muted-foreground">{t('regionsHint')}</p>
+          <div className="grid max-h-64 grid-cols-2 gap-1 overflow-y-auto rounded-md border p-2 sm:grid-cols-3">
+            {AWS_REGIONS.map((region) => (
+              <label key={region} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sm hover:bg-accent">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  // Re-keyed on the value so a re-render after a failed submit shows what was sent.
+                  key={`${region}:${chosen.has(region)}`}
+                  name="regions"
+                  value={region}
+                  defaultChecked={chosen.has(region)}
+                />
+                {region}
+              </label>
+            ))}
+          </div>
+        </details>
       </fieldset>
       <SubmitButton>{t('save')}</SubmitButton>
     </form>

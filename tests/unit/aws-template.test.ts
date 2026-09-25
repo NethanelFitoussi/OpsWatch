@@ -5,6 +5,7 @@ import {
   buildTemplate,
   type CloudFormationRoleTemplate,
   deployCommand,
+  partitionOf,
   quickCreateUrl,
   renderTemplateYaml,
   roleArnCommand,
@@ -71,16 +72,40 @@ describe('CloudFormation template', () => {
     );
   });
 
-  it('builds the quick-create URL for a template in a bucket', () => {
+  it('builds the quick-create URL in the format AWS documents', () => {
+    /*
+     * Checked against the documented format rather than whatever happened to work:
+     * https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stacks-quick-create-links.html
+     *
+     * A regional console host, `#/stacks/create/review`, a URL-encoded `templateURL`, and a regional S3
+     * URL — the documentation lists the three S3 forms the console accepts and every one names a region.
+     */
     expect(templateObjectKey('abc123def456')).toBe('opswatch/templates/opswatch-abc123def456-v1.yaml');
     const url = new URL(quickCreateUrl({ bucket: 'my-bucket', connectionId: 'abc123def456', region: 'eu-west-1' }));
-    expect(url.origin).toBe('https://console.aws.amazon.com');
+    expect(url.origin).toBe('https://eu-west-1.console.aws.amazon.com');
     expect(url.searchParams.get('region')).toBe('eu-west-1');
     expect(url.hash).toBe(
-      '#/stacks/quickcreate?templateURL=' +
-        encodeURIComponent('https://my-bucket.s3.amazonaws.com/opswatch/templates/opswatch-abc123def456-v1.yaml') +
+      '#/stacks/create/review?templateURL=' +
+        encodeURIComponent('https://my-bucket.s3.eu-west-1.amazonaws.com/opswatch/templates/opswatch-abc123def456-v1.yaml') +
         '&stackName=opswatch-abc123def456',
     );
+  });
+
+  it('THE RULING: the ARN the stack will create is one OpsWatch already knows', () => {
+    /*
+     * Account, role name and partition are all determined before the stack exists, so asking an operator
+     * to run a CLI query and paste the answer back was asking them to fetch a string this function can
+     * produce. The field is pre-filled from it; the operator presses Save and runs the test.
+     */
+    expect(roleArnFor('111122223333', 'abc123def456', partitionOf('eu-west-1'))).toBe(
+      'arn:aws:iam::111122223333:role/OpsWatchReadOnly-abc123def456',
+    );
+    // The three partitions AWS has, named by their regions' prefixes.
+    expect(partitionOf('cn-north-1')).toBe('aws-cn');
+    expect(partitionOf('us-gov-west-1')).toBe('aws-us-gov');
+    // Anything else is the ordinary commercial partition, which is every other region there is.
+    expect(partitionOf('eu-west-3')).toBe('aws');
+    expect(partitionOf('ap-southeast-4')).toBe('aws');
   });
 
   it('derives every resource name from the connection ID', () => {

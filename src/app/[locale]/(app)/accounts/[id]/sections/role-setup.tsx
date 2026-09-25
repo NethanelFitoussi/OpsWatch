@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import type { AppLocale } from '@/i18n/routing';
 import { lookUpBaseIdentity } from '@/lib/aws/identity';
-import { deployCommand, roleArnCommand } from '@/lib/aws/template';
+import { deployCommand, partitionOf, roleArnCommand, roleArnFor } from '@/lib/aws/template';
 import type { ConnectionView } from '@/lib/connections/repository';
 import { env } from '@/lib/env';
 import { launchStackAction, regenerateExternalIdAction, saveRoleArnAction } from '../../actions';
@@ -79,6 +79,15 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
               </form>
             )}
           </div>
+          {/*
+            * Said rather than hidden. The one-click path needs an S3 bucket, because the CloudFormation
+            * console will only fetch a template from Amazon S3 — a self-hosted OpsWatch cannot serve it
+            * from its own URL. An operator who never learns the button exists cannot decide whether to
+            * set one up.
+            */}
+          {!env().OPSWATCH_TEMPLATE_BUCKET && (
+            <p className="text-sm text-muted-foreground">{t('launchUnavailable')}</p>
+          )}
           <div>
             <p className="mb-2 text-sm">{t('cliLabel')}</p>
             <CodeBlock value={deployCommand(view.id, view.regions[0])} />
@@ -97,10 +106,28 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
 /** Step ③: paste the role ARN. It does not depend on OpsWatch's identity. */
 export async function RoleArnCard({ view, locale }: SectionProps) {
   const t = await getTranslations('AccountDetail.role');
+  /*
+   * The ARN the stack creates, worked out rather than asked for.
+   *
+   * Account, role name and partition are all known before the stack exists: the account is what this
+   * connection is for, the role name is derived from its id, and the partition follows from the region.
+   * Asking an operator to run a CLI query and paste the answer back was asking them to fetch a string
+   * OpsWatch could write down — and it is exactly the kind of step that makes a product feel as though
+   * it requires an AWS expert.
+   *
+   * It is still saved and still validated: the account and the role name are checked before it is
+   * stored, and only the permission test can say whether the role is really there.
+   */
+  const expected = roleArnFor(view.awsAccountId, view.id, partitionOf(view.regions[0]));
+
   return (
     <SectionCard step={3} title={t('roleArnTitle')} description={t('roleArnHelp')} contentClassName="space-y-4">
-        <CodeBlock value={roleArnCommand(view.id, view.regions[0])} />
-        <RoleArnForm action={saveRoleArnAction.bind(null, locale, view.id)} defaultValue={view.roleArn ?? ''} />
+        <RoleArnForm action={saveRoleArnAction.bind(null, locale, view.id)} defaultValue={view.roleArn ?? expected} />
+        <details className="text-sm">
+          <summary className="cursor-pointer text-muted-foreground">{t('roleArnVerify')}</summary>
+          <p className="mt-2 mb-2 text-xs text-muted-foreground">{t('roleArnVerifyHint')}</p>
+          <CodeBlock value={roleArnCommand(view.id, view.regions[0])} />
+        </details>
     </SectionCard>
   );
 }

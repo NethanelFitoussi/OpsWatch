@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Multiple AWS connections — MC-11 (notification tenancy) and MC-9's honesty |
-| Last green gates | tsc 0 · eslint 0 · **2375 unit** · **394 e2e** · `roadmap:check` 0 |
+| Current checkpoint | AWS onboarding: the ARN OpsWatch already knows, the documented quick-create URL |
+| Last green gates | tsc 0 · eslint 0 · **2376 unit** · **395 e2e** · `roadmap:check` 0 |
 | Schema | drizzle **0029** — `notify_destinations.connection_id`, nullable, existing rows keep `null` (unscoped), so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -87,11 +87,26 @@ losing the whole conversation loses no plan.
 - [x] **INV-1** `/api/v1/investigations/{id}`: §7's three bands, derived from the problem
 - [x] **UX-6** axe over 24 routes × 2 widths × 2 locales × 2 themes, zero WCAG 2.1 A/AA violations
 - [x] **UX-7** dark mode verified, including the failure no accessibility rule names
+- [x] **AWS onboarding.** The role ARN is worked out from the account, the region and the connection
+      instead of being fetched with a CLI query and pasted back; the quick-create URL is written to the
+      documented format; the one-click path explains what it needs instead of vanishing; the 28-checkbox
+      region grid on the connection page is one line with a disclosure; the account card says which
+      connections are forwarding logs, because connected and forwarding are different things
 - [x] **Multiple AWS connections, MC-1..MC-8.** The audit is a table in `full-roadmap-status.md`; the
       three that matter most were a cross-account delete (`deleteCheck` took an id alone), silent
       cross-connection data loss (the forwarded-record id did not name the connection, so two
       connections on one AWS account meant the second's records were swallowed as duplicates) and an
       unearned green (System status printed the first matching job run as the job's status)
+
+## Provider references (verified, not remembered)
+
+| What | Source |
+|---|---|
+| CloudFormation quick-create links | `docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stacks-quick-create-links.html` — `templateURL` **must** be an Amazon S3 URL in one of three regional forms; the path is `#/stacks/create/review`; `param_<Name>` pre-fills non-`NoEcho` parameters; the console host is regional |
+
+The consequence for a self-hosted product, and the reason the one-click path needs a bucket: the
+CloudFormation console will not fetch a template from anywhere but S3, so OpsWatch cannot serve its own.
+The page now says that instead of hiding the button.
 
 ## Next, in priority order (the owner's marathon queue)
 
