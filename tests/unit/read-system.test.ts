@@ -66,6 +66,74 @@ describe('what OpsWatch says about itself', () => {
   });
 });
 
+describe('THE RULING: a job failing in one AWS account is never reported as ok', () => {
+  /*
+   * The product is meant to hold Production, Staging and a client account at once. The status page used
+   * to take the first matching run out of the recent rows and print it as *the* job's status, so
+   * `errors · ok · 3 minutes ago` from Production could stand for a job that had been failing in another
+   * account for a day. An unearned green about the tool itself is the one thing it must not show.
+   */
+  const two = [
+    { connectionId: 'c1', scope: 'us-east-1' },
+    { connectionId: 'c2', scope: 'eu-west-1' },
+  ];
+  const readTwo = (db: ReturnType<typeof createTestDb>, nowMs = NOW) => readSystemStatus(db, { nowMs, environments: two });
+
+  const ran = (
+    db: ReturnType<typeof createTestDb>,
+    environment: { connectionId: string; scope: string },
+    startedAt: number,
+    status: 'ok' | 'failed',
+  ) => {
+    const run = startRun(db, { job: 'detect', ...environment, startedAt });
+    finishRun(db, run.id, { finishedAt: startedAt + 100, status, ...(status === 'failed' ? { errorCode: 'AccessDenied' } : {}) });
+  };
+
+  it('reports the worst outcome, not the most recent one', () => {
+    const db = createTestDb();
+    // The failure is older, so "most recent" would have answered `ok`.
+    ran(db, two[1], NOW - 600_000, 'failed');
+    ran(db, two[0], NOW - 60_000, 'ok');
+
+    const detect = readTwo(db).jobs.find((job) => job.job === 'detect');
+    expect(detect?.lastStatus).toBe('failed');
+    expect(detect?.errorCode).toBe('AccessDenied');
+    // And it still says when it last ran anywhere, which is what the field's name promises.
+    expect(detect?.lastRunAt).toBe(NOW - 60_000);
+  });
+
+  it('counts the environments, so the single word is not the whole claim', () => {
+    const db = createTestDb();
+    ran(db, two[0], NOW - 60_000, 'ok');
+    ran(db, two[1], NOW - 600_000, 'failed');
+
+    const detect = readTwo(db).jobs.find((job) => job.job === 'detect');
+    expect(detect?.environments).toEqual({ total: 2, failing: 1, neverRan: 0 });
+    // Every environment has been visited at least this recently — the older of the two, not the newer.
+    expect(detect?.coveredEverywhereSince).toBe(NOW - 600_000);
+  });
+
+  it('THE RULING: an environment it has never visited is not covered, and says so with null', () => {
+    const db = createTestDb();
+    ran(db, two[0], NOW - 60_000, 'ok');
+
+    const detect = readTwo(db).jobs.find((job) => job.job === 'detect');
+    expect(detect?.environments).toEqual({ total: 2, failing: 0, neverRan: 1 });
+    // There is no instant at which every environment had been visited, so there is no date to give.
+    expect(detect?.coveredEverywhereSince).toBeNull();
+  });
+
+  it('leaves an instance-wide job without per-environment counts, because it has none', () => {
+    const db = createTestDb();
+    const run = startRun(db, { job: 'compact', connectionId: null, scope: null, startedAt: NOW });
+    finishRun(db, run.id, { finishedAt: NOW + 10, status: 'ok' });
+
+    const compact = readTwo(db).jobs.find((job) => job.job === 'compact');
+    expect(compact?.lastStatus).toBe('ok');
+    expect(compact?.environments).toBeUndefined();
+  });
+});
+
 describe('per environment', () => {
   it('says an environment has never been read rather than implying it is fine', () => {
     const db = createTestDb();

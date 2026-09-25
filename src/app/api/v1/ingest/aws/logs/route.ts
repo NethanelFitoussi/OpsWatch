@@ -137,6 +137,9 @@ export const POST = publicApiRoute({
       db,
       parsed.records.map((record) => ({
         id: ingestEventId({
+          // The connection is part of the identity: two connections on one AWS account forward the same
+          // records, and without it the second one's are swallowed as duplicates of the first's.
+          connectionId: connection.id,
           awsAccountId: parsed.awsAccountId,
           region: parsed.region,
           logGroup: parsed.logGroup,

@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { Db } from '../db/client';
 import { appliedMigrations } from '../store/meta';
 import { JOBS, type JobId } from '../collector/jobs';
-import { readCollectorLock, lastRuns } from '../store/collector';
+import { latestRunPerEnvironment, readCollectorLock, lastRuns } from '../store/collector';
 import { listFamilySnapshots } from '../store/health';
 import { version } from '../../../package.json';
 import type { JobStatus, SystemStatus } from '@opswatch/contract';
@@ -29,24 +29,65 @@ export type { SystemStatus };
 /** A lock whose heartbeat is older than this is not being held by a live process. */
 const LOCK_ALIVE_MS = 90_000;
 
-function jobStatus(job: JobId, runs: ReturnType<typeof lastRuns>): JobStatus {
+/** Worst first: a job failing anywhere is failing, whatever it did somewhere else. */
+const STATUS_RANK = { failed: 0, running: 1, skipped: 2, ok: 3 } as const;
+
+function jobStatus(db: Db, job: JobId, environments: readonly { connectionId: string; scope: string }[]): JobStatus {
   const spec = JOBS[job];
-  const last = runs.find((run) => run.job === job);
   const base = { job, everyMs: spec.everyMs };
-  if (!last) {
-    return { ...base, lastRunAt: null, lastStatus: null, durationMs: null, covered: null, total: null, truncated: false, errorCode: null, nextRunAt: null };
-  }
+  const empty = {
+    ...base,
+    lastRunAt: null,
+    lastStatus: null,
+    durationMs: null,
+    covered: null,
+    total: null,
+    truncated: false,
+    errorCode: null,
+    nextRunAt: null,
+  };
+
+  /*
+   * An instance-scoped job has one run to report. An environment-scoped one has as many as there are
+   * environments, and the page used to print whichever came back first — so a job failing in one AWS
+   * account could be reported as `ok` because another account had just succeeded.
+   *
+   * The answer is the **worst** of them, with the counts beside it so the single word is not the whole
+   * claim, and `coveredEverywhereSince` for "every environment has been visited at least this recently".
+   */
+  const runs = latestRunPerEnvironment(db, job);
+  if (runs.length === 0) return empty;
+
+  const worst = [...runs].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])[0];
+  const newest = runs.reduce((a, b) => (a.startedAt >= b.startedAt ? a : b));
+  const oldest = runs.reduce((a, b) => (a.startedAt <= b.startedAt ? a : b));
+
+  const scoped = spec.scope === 'environment';
+  const neverRan = scoped ? Math.max(0, environments.length - runs.length) : 0;
+
   return {
     ...base,
-    lastRunAt: last.startedAt,
-    lastStatus: last.status,
+    lastRunAt: newest.startedAt,
+    // The worst outcome, never the most recent one.
+    lastStatus: worst.status,
     // Null rather than 0 for a run that never finished: it is unknown, not instant.
-    durationMs: last.finishedAt === null ? null : last.finishedAt - last.startedAt,
-    covered: last.covered,
-    total: last.total,
-    truncated: last.truncated,
-    errorCode: last.errorCode,
-    nextRunAt: last.startedAt + spec.everyMs,
+    durationMs: worst.finishedAt === null ? null : worst.finishedAt - worst.startedAt,
+    covered: worst.covered,
+    total: worst.total,
+    truncated: runs.some((run) => run.truncated),
+    errorCode: worst.errorCode,
+    nextRunAt: newest.startedAt + spec.everyMs,
+    ...(scoped
+      ? {
+          environments: {
+            total: Math.max(environments.length, runs.length),
+            failing: runs.filter((run) => run.status === 'failed').length,
+            neverRan,
+          },
+          // No such instant while an environment has never been visited at all.
+          coveredEverywhereSince: neverRan > 0 ? null : oldest.startedAt,
+        }
+      : {}),
   };
 }
 
@@ -67,7 +108,7 @@ export function readSystemStatus(
       // The state worth shouting about: nothing has ever collected, so every other page knows nothing.
       neverRan: runs.length === 0,
     },
-    jobs: Object.keys(JOBS).map((job) => jobStatus(job as JobId, runs)),
+    jobs: Object.keys(JOBS).map((job) => jobStatus(db, job as JobId, input.environments)),
     environments: input.environments.map((environment) => {
       const snapshots = listFamilySnapshots(db, environment.connectionId, environment.scope);
       return {

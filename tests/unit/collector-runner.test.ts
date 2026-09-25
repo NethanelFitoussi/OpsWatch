@@ -183,7 +183,7 @@ describe('the cycle', () => {
   it('records a job that threw, and still runs the next one', async () => {
     const log = vi.fn();
     const h = harness({
-      enabled: () => ['detect', 'inventory'],
+      enabled: () => ['detect', 'deployments'],
       run: async (job) => {
         if (job.id === 'detect') throw new TypeError('the rule is broken');
         return {};
@@ -193,8 +193,8 @@ describe('the cycle', () => {
     await h.collector.tick();
     const runs = lastRuns(h.db, 10);
     expect(runs.map((run) => [run.job, run.status]).sort()).toEqual([
+      ['deployments', 'ok'],
       ['detect', 'failed'],
-      ['inventory', 'ok'],
     ]);
     expect(runs.find((run) => run.job === 'detect')?.errorCode).toBe('TypeError');
   });
@@ -215,7 +215,7 @@ describe('the cycle', () => {
   });
 
   it('aborts the cycle when the lock was lost while it was busy (§33.4)', async () => {
-    const h = harness({ enabled: () => ['detect', 'inventory'] });
+    const h = harness({ enabled: () => ['detect', 'deployments'] });
     // Between the claim and the second job, another process takes the lock: the refresh changes no row.
     const original = h.deps.run;
     h.deps.run = async (job, at) => {

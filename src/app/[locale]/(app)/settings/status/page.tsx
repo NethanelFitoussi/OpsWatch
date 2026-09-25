@@ -86,9 +86,20 @@ export default async function SystemStatusPage({ params }: Props) {
                 <tr key={job.job}>
                   <th scope="row" className="py-1.5 pr-4 text-left font-normal">{job.job}</th>
                   <td className="py-1.5 pr-4">
-                    {/* "Never run" is not a failure and not a success; it is its own answer. */}
+                    {/* "Never run" is not a failure and not a success; it is its own answer. And the
+                        word here is the **worst** of the environments, not the most recent, so a job
+                        failing in one AWS account is never reported as ok because another succeeded. */}
                     {job.lastStatus === null ? t('jobStatus.never') : t(`jobStatus.${job.lastStatus}`)}
                     {job.truncated && <span className="ml-2 text-xs text-muted-foreground">{t('truncated')}</span>}
+                    {job.environments !== undefined && job.environments.total > 1 && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {job.environments.failing > 0
+                          ? t('job.failingIn', { failing: job.environments.failing, total: job.environments.total })
+                          : job.environments.neverRan > 0
+                            ? t('job.notYetIn', { count: job.environments.neverRan })
+                            : t('job.acrossAll', { count: job.environments.total })}
+                      </span>
+                    )}
                   </td>
                   <td className="py-1.5 pr-4 whitespace-nowrap">{when(job.lastRunAt)}</td>
                   <td className="py-1.5 pr-4 tabular-nums">

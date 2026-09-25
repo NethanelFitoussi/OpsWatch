@@ -6,17 +6,27 @@ import 'server-only';
  * The schedule lives here and nowhere else, so changing how often something runs is one edit and a fixture
  * update — the same discipline the score weights have.
  */
+/**
+ * Every job here has an implementation, and that is the point of the list.
+ *
+ * `inventory`, `queries`, `logvolume` and `slo` used to be in it. None of them was written. `inventory`
+ * ran every thirty minutes on a fresh install, fell through to the runner's default, and reported it had
+ * covered 0 of 0 — which System status then showed as a scheduled job doing its rounds. A monitoring
+ * tool claiming to collect something it does not collect is the one failure it cannot afford, so they
+ * are gone rather than listed.
+ *
+ * What each would have been, if one is ever written: `inventory` a periodic `Describe*` sweep into a
+ * stored estate; `queries` the Performance Insights digest behind Databases → Queries, which is read
+ * live today; `logvolume` a history of what Logs → Volume reads live; `slo` is not needed at all — the
+ * metrics job already stores what §19 reads.
+ */
 export const JOB_IDS = [
   'metrics',
   'detect',
   'deployments',
-  'inventory',
-  'queries',
   'errors',
   'synthetics',
-  'logvolume',
   'baselines',
-  'slo',
   'cloudflare',
   'notify',
   'digest',
@@ -55,9 +65,6 @@ export const JOBS: Record<JobId, JobSpec> = {
   // Runs over data the pages already fetched, so it costs nothing extra.
   detect: { id: 'detect', everyMs: 5 * MINUTE, cap: null, scope: 'environment', freshInstall: true },
   deployments: { id: 'deployments', everyMs: 5 * MINUTE, cap: 100, scope: 'environment', freshInstall: false },
-  // `Describe*` calls: §9.5 records them as throttled but not billed.
-  inventory: { id: 'inventory', everyMs: 30 * MINUTE, cap: 60, scope: 'environment', freshInstall: true },
-  queries: { id: 'queries', everyMs: 30 * MINUTE, cap: 25, scope: 'environment', freshInstall: false },
   /**
    * One bounded Logs Insights query per opted-in source. It is on from the start because a fresh install has
    * no enabled source, so the job finds nothing to do and costs nothing — and the moment an operator opts a
@@ -69,9 +76,7 @@ export const JOBS: Record<JobId, JobSpec> = {
    * do until somebody enables a check.
    */
   synthetics: { id: 'synthetics', everyMs: 5 * MINUTE, cap: 25, scope: 'environment', freshInstall: true },
-  logvolume: { id: 'logvolume', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },
   baselines: { id: 'baselines', everyMs: HOUR, cap: 500, scope: 'environment', freshInstall: false },
-  slo: { id: 'slo', everyMs: HOUR, cap: 100, scope: 'environment', freshInstall: false },
   /**
    * What the edge saw. **Instance-scoped**, because a Cloudflare zone belongs to the installation rather
    * than to one AWS account and region — an operator with three regions must not fetch the same zone

@@ -30,7 +30,7 @@ const withAccounts = () => {
 };
 
 const record = (connectionId: string, over: Record<string, unknown> = {}) => ({
-  id: ingestEventId({ awsAccountId: '123456789012', region: 'eu-west-1', logGroup: '/g', logStream: '/s', eventId: '1', ...over }),
+  id: ingestEventId({ connectionId, awsAccountId: '123456789012', region: 'eu-west-1', logGroup: '/g', logStream: '/s', eventId: '1', ...over }),
   connectionId,
   region: 'eu-west-1',
   source: 'aws.logs',

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { briefSchema, healthSchema, pageSchema, problemSummarySchema } from '@opswatch/contract';
+import { briefSchema, healthSchema, investigationSchema, pageSchema, problemSummarySchema } from '@opswatch/contract';
 import { MOTO_REGION, ensureMonitoringConnection, login, rscHeaders } from './helpers';
 
 let connectionId = '';
@@ -99,9 +99,13 @@ test('the server reports problems as a capability it actually serves', async ({ 
   expect(info.features.incidents).toBe(true);
   expect(info.features.synthetics).toBe(true);
   expect(info.features.slos).toBe(true);
+  // LOG-5 and INV-1 landed, and the flags moved with the endpoints rather than ahead of them.
+  expect(info.features.logs).toBe(true);
+  expect(info.features.investigations).toBe(true);
   // And still reports the ones it does not, so a client gates on the flag rather than on a field existing.
   expect(info.features.ai).toBe(false);
-  expect(info.features.logs).toBe(false);
+  expect(info.features.services).toBe(false);
+  expect(info.features.infrastructure).toBe(false);
 });
 
 test('a problem id from another environment reads as absent', async ({ page }) => {
@@ -352,4 +356,48 @@ test('the workspace links into the logs with the groups OpsWatch already reads, 
   // It lands on a search with those groups already ticked, and nothing has been run.
   await expect(page).toHaveURL(/\/logs\/search\?/);
   await expect(page.getByText('Nothing has been searched yet.')).toBeVisible();
+});
+
+/**
+ * INV-1 — the investigation of a problem, over `/api/v1`.
+ *
+ * The whole value is the separation: an observed fact, a correlation and a hypothesis are three different
+ * kinds of claim, and a client that flattens them lets a guess inherit the authority of a measurement. So
+ * what this checks is that they arrive apart, and that a hypothesis never arrives carrying `kind: fact`.
+ */
+test('THE RULING: an investigation keeps facts, correlations and hypotheses apart', async ({ page }) => {
+  const env = `${connectionId}:${MOTO_REGION}`;
+  const list = await page.request.get(`/api/v1/problems?env=${env}`).then((r) => r.json());
+  const first = (list.items as { id: string }[])[0];
+  test.skip(first === undefined, 'no problem has been detected in this environment yet');
+
+  // The problem says where its investigation is, so a client follows a field rather than guessing an id.
+  const problem = await page.request.get(`/api/v1/problems/${first.id}?env=${env}`).then((r) => r.json());
+  expect(problem.investigationId).toBe(first.id);
+
+  const response = await page.request.get(`/api/v1/investigations/${problem.investigationId}?env=${env}`);
+  expect(response.status(), await response.text()).toBe(200);
+  const investigation = investigationSchema.parse(await response.json());
+
+  expect(investigation.id).toBe(first.id);
+  expect(investigation.subject).toMatchObject({ type: 'problem', id: first.id });
+  // Derived from the problem, so its status can only follow it.
+  expect(investigation.status).toBe(problem.status === 'resolved' ? 'concluded' : 'open');
+  if (investigation.status === 'open') expect(investigation.concludedAt).toBeUndefined();
+  // Nobody wrote a summary, and a generated one would be a conclusion with an author's authority.
+  expect(investigation.summary).toBeUndefined();
+
+  // Every entry declares which of the three bands it is, and nothing arrives unbanded.
+  for (const entry of investigation.timeline) {
+    expect(['fact', 'correlation', 'hypothesis']).toContain(entry.kind);
+    // A fact is not a judgement, so it carries no confidence; a hypothesis must carry one.
+    if (entry.kind === 'fact') expect(entry.confidence).toBeUndefined();
+    if (entry.kind === 'hypothesis') expect(['low', 'medium', 'high']).toContain(entry.confidence);
+    // No key path ever reaches a reader, here or anywhere.
+    expect(entry.title).not.toMatch(/^(Monitoring|Insights)\./);
+  }
+
+  // Scoped like the problem it belongs to: an id from another environment is absent, not somebody else's.
+  expect((await page.request.get(`/api/v1/investigations/${first.id}?env=deadbeefcafe:us-east-1`)).status()).toBe(404);
+  expect((await page.request.get(`/api/v1/investigations/does-not-exist?env=${env}`)).status()).toBe(404);
 });

@@ -21,7 +21,9 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   errors: true,
   services: false,
   infrastructure: false,
-  logs: false,
+  // GET /logs/sources lists what there is to search; POST /logs/searches starts one and GET
+  // /logs/searches/{id} polls it. A Logs Insights search is a job, so the API is one too (LOG-5).
+  logs: true,
   // GET /alerts serves the rows the detect cycle raises (§15). In-app only: nothing leaves the instance.
   alerts: true,
   // GET /incidents and /incidents/{id} serve the rows the detect cycle opens (§16).
@@ -39,7 +41,8 @@ const IMPLEMENTED: Record<Feature, boolean> = {
   reports: true,
   // GET /checkup runs the catalogue over what is already stored, and says what it could not check.
   checkup: true,
-  investigations: false,
+  // GET /investigations/{id} serves §7's three bands for a problem, derived from the events spine (INV-1).
+  investigations: true,
   // `GET /deployments/{id}` carries repository evidence: the commits a deployment shipped and the files
   // they changed (REPO-4). Gated below on a connection that has actually been verified.
   repository: true,

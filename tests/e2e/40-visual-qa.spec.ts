@@ -112,3 +112,59 @@ test('THE RULING: the log lines sit above the fold on a phone, not under the sid
   await rows.getByRole('button').first().click();
   expect(await defectsOn(page)).toEqual([]);
 });
+
+/**
+ * UX-7 — dark mode, verified rather than assumed.
+ *
+ * The tokens were there throughout and nobody had ever checked them end to end. Two failures are possible
+ * and only one of them is a contrast failure: a panel that keeps a **light background and dark text** is
+ * perfectly legible on its own and obviously wrong on a dark page, and no accessibility rule will say so.
+ *
+ * So this looks for the thing itself: a large surface that is still bright while the page is dark. The
+ * contrast half is covered by the axe sweep, which now runs in both themes.
+ */
+test('THE RULING: nothing stays light when the page is dark', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  // next-themes reads this before the first paint, so the page renders dark rather than flipping into it.
+  await page.addInitScript(() => window.localStorage.setItem('theme', 'dark'));
+
+  const routes = [
+    `/c/${connectionId}/${MOTO_REGION}/overview/health`,
+    `/c/${connectionId}/${MOTO_REGION}/alarms/list`,
+    `/c/${connectionId}/${MOTO_REGION}/alarms/list/opswatch-e2e-high-cpu`,
+    `/c/${connectionId}/${MOTO_REGION}/logs/search`,
+    `/c/${connectionId}/${MOTO_REGION}/overview/report`,
+    '/settings',
+    '/docs/alarms',
+  ];
+
+  const bright: string[] = [];
+  for (const route of routes) {
+    await page.goto(`/en${route}`);
+    await expect(page.locator('main')).toBeVisible();
+    // Guards the check itself: a theme that silently did not apply would make every assertion below pass.
+    await expect(page.locator('html')).toHaveClass(/dark/);
+
+    const found = await page.evaluate(() => {
+      const luminance = (colour: string): number | null => {
+        const parts = /rgba?\(([^)]+)\)/.exec(colour);
+        if (parts === null) return null;
+        const [r, g, b, a] = parts[1].split(',').map((one) => Number(one.trim()));
+        // A transparent background is the one behind it, not a bright surface of its own.
+        if (a !== undefined && a < 0.5) return null;
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      };
+      const out: string[] = [];
+      for (const element of Array.from(document.querySelectorAll('main *, header *'))) {
+        const box = element.getBoundingClientRect();
+        // Only surfaces big enough to be a panel: a bright chip or a badge is a deliberate accent.
+        if (box.width < 200 || box.height < 60) continue;
+        const value = luminance(getComputedStyle(element).backgroundColor);
+        if (value !== null && value > 0.8) out.push(`<${element.tagName.toLowerCase()} class="${element.className}">`.slice(0, 80));
+      }
+      return out;
+    });
+    for (const one of found) bright.push(`${route}: ${one}`);
+  }
+  expect(bright).toEqual([]);
+});

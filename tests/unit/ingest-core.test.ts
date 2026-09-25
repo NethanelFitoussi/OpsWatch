@@ -12,6 +12,7 @@ const SECRET = 'ingest-secret-0123456789abcdef';
 
 const event = (over: Record<string, string> = {}) => ({
   awsAccountId: '123456789012',
+  connectionId: '6d293fe0d4b3',
   region: 'eu-west-1',
   logGroup: '/aws/ecs/api',
   logStream: 'api/api/abc',
@@ -32,6 +33,19 @@ describe('giving a forwarded record an identity', () => {
     expect(ingestEventId(event())).not.toBe(ingestEventId(event({ logGroup: '/aws/ecs/other' })));
     expect(ingestEventId(event())).not.toBe(ingestEventId(event({ logStream: 'other' })));
     expect(ingestEventId(event())).not.toBe(ingestEventId(event({ eventId: '1' })));
+  });
+
+  it('THE RULING: two OpsWatch connections on one AWS account keep their own copies of a record', () => {
+    /*
+     * Two connections may legitimately point at the same account — a role-based one and a break-glass
+     * one with access keys, or two with overlapping regions. Both forward the same records and both
+     * authenticate. Without the connection in the id the second one's records were swallowed as
+     * duplicates of the first's, counted under `duplicates` for a connection that would never show a
+     * single error group: silent data loss, of the kind that looks like everything working.
+     */
+    expect(ingestEventId(event())).not.toBe(ingestEventId(event({ connectionId: 'aaaaaaaaaaaa' })));
+    // And it is still the same id for the same connection, so a replay is still a no-op insert.
+    expect(ingestEventId(event({ connectionId: 'aaaaaaaaaaaa' }))).toBe(ingestEventId(event({ connectionId: 'aaaaaaaaaaaa' })));
   });
 
   it('THE RULING: two different splits of the same characters are two different ids', () => {

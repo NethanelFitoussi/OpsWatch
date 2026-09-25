@@ -12,7 +12,7 @@ import { formString } from '@/lib/forms/form-data';
 import { deleteCheck, upsertCheck } from '@/lib/store/synthetics';
 import { isAcceptableUrl } from './url-guard';
 
-export type CheckState = ActionState<'invalid_name' | 'invalid_url' | 'invalid_threshold' | 'invalid_headers', { saved?: boolean }>;
+export type CheckState = ActionState<'invalid_name' | 'invalid_url' | 'invalid_threshold' | 'invalid_headers' | 'not_found', { saved?: boolean }>;
 
 export async function saveCheckAction(
   locale: string,
@@ -89,7 +89,17 @@ export async function deleteCheckAction(
   const id = formString(formData, 'checkId').trim();
   if (id === '') return { error: 'invalid_name' };
 
-  deleteCheck(getDb(), id);
+  /*
+   * The environment goes to the store, which will not delete outside it.
+   *
+   * The id arrives in a form field, so a delete that trusted it alone would let a post from one AWS
+   * connection's page destroy a check — and its whole run history, which cascades — belonging to another
+   * account in the same installation.
+   *
+   * `not_found`, not "forbidden": a check in another environment must read as absent rather than as
+   * somebody else's, which is the rule the read side follows too.
+   */
+  if (deleteCheck(getDb(), connectionId, region, id) === 0) return { error: 'not_found' };
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/synthetics`);
   return { saved: true };
   });

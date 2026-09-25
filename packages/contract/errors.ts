@@ -103,9 +103,20 @@ export type ErrorDetail = z.infer<typeof errorDetailSchema>;
 
 export const logSearchSchema = z.object({
   searchId: z.string(),
+  /**
+   * `partial` is the one that matters: the search finished, and more lines matched than were returned. A
+   * client that reads it as `complete` prints a sample as a total.
+   */
   status: lenientEnum(['running', 'complete', 'partial', 'failed'] as const, 'failed'),
+  /** Empty while `running`, which is a different answer from having finished and matched nothing. */
   items: z.array(logEntrySchema),
   nextCursor: z.string().nullable().default(null),
   statistics: z.object({ recordsMatched: z.number(), recordsScanned: z.number() }).optional(),
+  /**
+   * The query the server composed and sent to AWS. Optional because it was added after the shape was
+   * first published; present on everything `/api/v1/logs` answers, so a caller can see the search that
+   * ran rather than infer it from what it asked for.
+   */
+  query: z.string().optional(),
 });
 export type LogSearch = z.infer<typeof logSearchSchema>;

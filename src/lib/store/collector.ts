@@ -1,5 +1,5 @@
 import 'server-only';
-import { desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { randomId } from '../crypto';
 import type { Db } from '../db/client';
 import { collectorLock, collectorRuns, type CollectorLockRow, type CollectorRunRow } from '../db/schema';
@@ -55,6 +55,48 @@ export function finishRun(
 /** The most recent runs, newest first. System status reads this and nothing else. */
 export function lastRuns(db: Db, limit: number): CollectorRunRow[] {
   return db.select().from(collectorRuns).orderBy(desc(collectorRuns.seq)).limit(limit).all();
+}
+
+/**
+ * The most recent run of one job in **each** environment it runs in.
+ *
+ * One row per `(connection, scope)` pair, which is what a per-environment job's status actually is. The
+ * page used to take the first matching row out of the recent runs and print it as *the* job's status:
+ * with two AWS accounts connected, `errors · ok · 3 minutes ago` could come from Production while the
+ * same job had been failing in another account for a day. An unearned green is the one thing a
+ * monitoring tool must not show about itself.
+ */
+export function latestRunPerEnvironment(db: Db, job: string): CollectorRunRow[] {
+  const newest = db
+    .select({ connectionId: collectorRuns.connectionId, scope: collectorRuns.scope, seq: sql<number>`max(${collectorRuns.seq})`.as('seq') })
+    .from(collectorRuns)
+    .where(eq(collectorRuns.job, job))
+    .groupBy(collectorRuns.connectionId, collectorRuns.scope)
+    .all();
+  const seqs = newest.map((row) => row.seq);
+  if (seqs.length === 0) return [];
+  return db.select().from(collectorRuns).where(inArray(collectorRuns.seq, seqs)).orderBy(desc(collectorRuns.seq)).all();
+}
+
+/**
+ * The most recent run of one job in one environment, or `null` if it has never run there.
+ *
+ * A `where` rather than a slice of the recent rows. Reading the last 200 runs and filtering in memory
+ * worked with one AWS connection and quietly stopped working with several: five connections across four
+ * regions running six environment-scoped jobs fill 200 rows in well under an hour, so an hourly job
+ * falls off the end of the window and every surface above it reads "nobody has ever looked" — the exact
+ * sentence this product reserves for a genuinely unmeasured environment.
+ */
+export function lastRunFor(db: Db, job: string, scope: { connectionId: string; scope: string }): CollectorRunRow | null {
+  return (
+    db
+      .select()
+      .from(collectorRuns)
+      .where(and(eq(collectorRuns.job, job), eq(collectorRuns.connectionId, scope.connectionId), eq(collectorRuns.scope, scope.scope)))
+      .orderBy(desc(collectorRuns.seq))
+      .limit(1)
+      .get() ?? null
+  );
 }
 
 export function deleteRunsBefore(db: Db, beforeMs: number): number {

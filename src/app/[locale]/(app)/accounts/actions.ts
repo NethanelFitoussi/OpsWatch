@@ -21,6 +21,7 @@ import {
   type ConnectionInputErrorCode,
 } from '@/lib/connections/repository';
 import { credentialResolver } from '@/lib/connections/resolver';
+import { purgeConnectionData } from '@/lib/store/connection-data';
 import { isTemplateReady, renderConnectionTemplate } from '@/lib/connections/template';
 import { getDb, type Db } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -157,6 +158,10 @@ export async function deleteConnectionAction(requestedLocale: string, id: string
   // removes the subscriptions. Afterwards there is no credential left to do it with, and the filters
   // would keep invoking a Lambda that delivers to an integration which no longer exists.
   await disableManagedCollection(getDb(), id, Date.now());
+  // And everything that connection wrote. Without this the problems, alerts, error groups, deployments,
+  // log sources, saved searches and history of an account the operator explicitly disconnected stayed in
+  // the database for ever: unreachable through any page, because every page is scoped, but still there.
+  purgeConnectionData(getDb(), id);
   deleteConnection(getDb(), id);
   credentialResolver.forget(id);
   redirect({ href: '/accounts', locale });

@@ -1,81 +1,131 @@
 # Execution state
 
-**Mode: continuous autonomous execution.** A checkpoint is an internal synchronisation boundary, not a
-conversation boundary. This file exists so that a session which loses its context can resume without the
-mission being restated.
+**Mode: continuous autonomous execution**, for approximately three days from 2026-09-25 or until the owner
+sends `STOP`. A checkpoint is an internal synchronisation boundary, never a conversation boundary. This
+file is the durable journal: a session that loses its context resumes from here without the mission being
+restated.
+
+## Where things stand
+
+| | |
+|---|---|
+| Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
+| Current checkpoint | Multiple AWS connections — MC-1..MC-8 |
+| Last green gates | tsc 0 · eslint 0 · **2370 unit** · **393 e2e** · `roadmap:check` 0 |
+| Schema | drizzle 0028. No migration added this checkpoint |
+| CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
 
-For every green checkpoint: implement → unit and adversarial tests → E2E → browser-verify on the running
-instance → update `full-roadmap-status.md` → `npm run roadmap:check` → commit on
-`feature/opswatch-intelligence` → `git fetch origin` → reconcile Mobile work → merge `--no-ff` into `main`
-→ integration gates → push `origin/main` → verify → return to the feature branch → start the next
-dependency-ready item immediately.
+For each checkpoint: `git fetch origin` → pick the highest-value dependency-ready task → implement →
+unit and adversarial tests (break the code, prove the test fails) → build the test image → full e2e →
+**look at the screenshots** → update the roadmap and this file → `npm run roadmap:check` → commit →
+`git fetch origin` → reconcile → push `origin/main` → start the next task immediately. No pause between
+the last step and the first.
+
+## On resuming (after a pause, a crash, a compaction or any interruption)
+
+An interruption is never a request to wait, and never a reason to ask whether to continue. Recover and
+carry on, in this order:
+
+1. Read this file.
+2. `git fetch origin`, then compare the working branch with `origin/main`.
+3. Work out the last **fully integrated** checkpoint from the log, not from memory.
+4. Look for a **partially finished** one in the worktree: uncommitted changes, a new test that does not
+   run yet, a route with no entry in `src/lib/api/v1/routes.ts`, a capability flag ahead of its endpoint.
+5. **Verify rather than assume.** Run the gates before believing anything was finished.
+6. Finish that checkpoint, or take the next dependency-ready task, and continue the loop.
+
+Never restart or discard partial work without inspecting it first. Keep this file current enough that
+losing the whole conversation loses no plan.
 
 ## Gate discipline
 
-Never pipe a build, a typecheck or a test run through `head`. Closing the pipe can kill the process, and a
-truncated log hides real errors — both happened, and cost a rebuild each. Write to a log file, report the
-exit code, then grep the file.
+- Never pipe a build, a typecheck or a test run through `head`: closing the pipe can kill the process and
+  a truncated log hides real errors. Write to a log, report the exit code, then grep the file.
+- `docker compose -p opswatch-test -f docker-compose.test.yml build opswatch` **and** `up -d
+  --force-recreate --wait` before `npm run e2e`. A `--force-recreate` wipes the database, so the whole
+  suite must run (01-setup seeds the admin) before any single spec can.
+- **Never run two e2e suites at once.** They share one instance: the second run's `--force-recreate`
+  wipes the tmpfs under the first, and 26 unrelated specs fail with "an admin already exists". Check
+  `pgrep -f "playwright test"` before starting one.
+- A mutating `/api/v1` call from a test needs `headers: { origin: baseURL }`: an ambient credential
+  requires an Origin, which is the whole of CSRF.
 
-## Current phase: product comprehension and UX
+## Decisions that must not be re-derived
 
-In order. Tick as they land.
+- **next-intl does not throw for a missing message — it renders the key path.** A dot inside a key is a
+  path separator, so a flat key `"opened.critical"` is unreachable. Three guards hold this now:
+  `message-keys.test.ts` (no dotted keys, EN/FR parity, no empty strings), `report-message-keys.test.ts`
+  (every key a report *composes at run time* has a message) and the browser sweep in `40-visual-qa`.
+- **A detector has no locale**, so it stores ids (`metricKey`, `subjectKind`, `subjectName`) and
+  `expandValues` turns them into words at render. Writing a sentence into the database would freeze one
+  language into every row a French reader ever sees.
+- **Application Insights alarms are metric-math alarms**: `MetricName`, `Namespace`, `Dimensions`,
+  `Period` and `Statistic` are null at the top level, and `Dimensions: []` must not win over the
+  dimensions inside `Metrics[].MetricStat`.
+- `values` is a SQLite reserved word; raw SQL referencing it fails to parse.
+- Only `lib/db/**` and `lib/store/**` may import drizzle; `lib/monitoring/shared/**` must stay
+  client-safe (no `node:crypto`).
+- §33.1: the contract is **additive-only**. New exports go in `PROMISED_VALUES`.
+- `null` is "not measured", never `0`. "Healthy" and "cannot tell" must never look the same.
 
-- [x] Problem comprehension: headline, severity, duration, impact, detection rule, what to check
-- [x] Problem visual evidence: lifecycle timeline, metric chart where history exists, unambiguous counters
-- [x] Recommended investigation per detector family — every headline kind now has a rule, and possible causes are their own card
-- [x] Cloudflare: a dashboard that shows what connecting it bought
-- [x] Navigation collapsed by default — the main rail, not the inner section menu (corrected mid-flight)
-- [x] Accounts: one card language across providers
-- [x] Accounts: editable per provider
-- [x] Full-site visual QA on the running product, and fixes — 41 routes swept and reviewed as images
-- [x] Visual polish and text reduction — every page says its own name once; held by a ruling test
-- [x] Visual infrastructure: patterns extracted and written down before any code
-- [x] INF-1..3 evaluated health, primitives, ECS estate
-- [x] INF-4 EC2 host map
-- [x] INF-5 Redis, discovered through CloudWatch
-- [x] INF-6 Kubernetes / EKS — Container Insights, cluster → namespace → workload → pod, boundary stated
-- [x] DOC-1 categorised documentation — 17 guides, 6 categories, EN and FR, searchable, contextual links
-- [x] Phase C full visual QA across every section, EN/FR, desktop and narrow
-- [x] ALE-4 webhook delivery — the documentation described it, so it had to exist
-- [x] **Alarms, reports and Logs — rebuilt after the product was rejected on the running instance.** The
-      first attempt shipped the AWS alarm identifier as the visible title, translation keys inside report
-      rows, and a Logs page that was a column of log-group checkboxes beside a query textarea. What the
-      rebuild changed, and why each was a defect rather than a preference:
-      · **Metric-math alarms had no metric at all.** Application Insights creates alarms whose
-        `MetricName`, `Namespace`, `Dimensions`, `Period` and `Statistic` are null, with the real metric
-        inside `Metrics[].MetricStat` — so there was nothing to call them *but* their identifier. Reading
-        the returned expression fixed the cause; `Dimensions: []` beating the query's dimensions was the
-        second half of it.
-      · **A deterministic metric catalogue** (32 families), not AI prose: the same words every render, in
-        both locales, with the explanation, why it matters, and what to check.
-      · **Titles are phrased for the state the alarm is in.** The family's sentence is written for the
-        state it exists to catch, and printing it over an OK alarm put "crossed the threshold" under the
-        heading *Healthy*.
-      · **Reports and problems say what happened, not what it is called.** The detector stores ids
-        (`metricKey`, `subjectKind`, `subjectName`) and `expandValues` turns them into words at render, so
-        the row stays language-neutral and the sentence stays human.
-      · **Three guards against a message key reaching a reader**, because next-intl renders a missing
-        message as its own key path: no key may contain a dot, EN and FR must hold the same keys, and every
-        key a report *composes at run time* must have a message. The third caught `openedCritical`.
-      · **Logs was rearranged, not restyled**: search → filter → timeline → results → investigate. Sources
-        are a popover, the query language is advanced, the empty state offers the four questions people
-        arrive with, and on a phone the log lines come before the facets.
-      · **UX-6 closed**: axe-core over 24 routes × 2 widths × 2 locales, zero WCAG 2.1 A/AA violations.
-- [ ] Resume the remaining roadmap queue. Next by value, all dependency-ready:
-      REP-6 overview and logs reports · REP-7 weekly send (ALE-4 unblocked it) ·
-      HIS-10 backup/restore/export · INV-5 investigation workspace · API-8 public API guide ·
-      UX-6 accessibility pass.
-      Found blocked while surveying: **LOG-4** needs `logs:GetLogRecord`, which the role does not grant —
-      it belongs with AWS-5's template version, not on its own. ALE-4's email and Slack halves each need a
-      new runtime dependency and are not dependency-ready here.
+## Completed
+
+- [x] Problem comprehension, visual evidence, recommended investigation per detector family
+- [x] Cloudflare dashboard · Accounts as one card language · navigation collapsed by default
+- [x] INF-1..6 evaluated health, primitives, ECS estate, EC2 host map, Redis, EKS
+- [x] DOC-1 categorised documentation — 17 guides, 6 categories, EN and FR, searchable
+- [x] ALE-4 webhook delivery · REP-6/REP-7 reports and the weekly send · HIS-10 backup and restore
+- [x] AWS push collection: two stacks, three capability switches, HMAC ingestion, clean uninstall
+- [x] **Alarms, reports and Logs rebuilt** after the owner rejected the first attempt on the running
+      instance. Root cause was a *reading* bug, not a presentation one; see `6b734b0`
+- [x] **INT-3 job catalogue honesty.** `inventory`, `queries`, `logvolume` and `slo` were declared and
+      never written; `inventory` ran every 30 minutes on a fresh install, fell through the runner's
+      `default` and reported it had covered 0 of 0, which System status showed as a job going its rounds
+- [x] **LOG-5** `/api/v1/logs`: sources, start, poll, stop
+- [x] **INV-1** `/api/v1/investigations/{id}`: §7's three bands, derived from the problem
+- [x] **UX-6** axe over 24 routes × 2 widths × 2 locales × 2 themes, zero WCAG 2.1 A/AA violations
+- [x] **UX-7** dark mode verified, including the failure no accessibility rule names
+- [x] **Multiple AWS connections, MC-1..MC-8.** The audit is a table in `full-roadmap-status.md`; the
+      three that matter most were a cross-account delete (`deleteCheck` took an id alone), silent
+      cross-connection data loss (the forwarded-record id did not name the connection, so two
+      connections on one AWS account meant the second's records were swallowed as duplicates) and an
+      unearned green (System status printed the first matching job run as the job's status)
+
+## Next, in priority order (the owner's marathon queue)
+
+1. ~~Multiple AWS accounts~~ — MC-1..MC-8 done; **MC-9..MC-12 remain**: per-region managed collection,
+   a per-connection logs budget, per-connection notification destinations, and a connection on the audit log
+2. One-click CloudFormation onboarding (prefilled stack URL; the operator creates the stack)
+3. Safe disconnect / removal / update, with stack identity tracked rather than inferred from names
+4. Storage and database setup, with a migration flow that shows versions and pending work first
+5. Linux host architecture, then the host MVP, then Redis-on-Ubuntu discovery
+6. Unified host/cloud identity (an agent on EC2 must not duplicate the discovered instance)
+7. Google Cloud, then DigitalOcean — against current official documentation, never from memory
+
+P0 correctness, security and data-integrity defects override this order. Serious UX defects override new
+features.
+
+## External blockers
+
+| Item | What is missing |
+|---|---|
+| ALE-5 push end to end | An EAS project and APNs/FCM credentials |
+| ALE-3 notification preferences UI | Nothing for it to change until ALE-5 exists: a webhook destination carries its own severity and belongs to the installation, not to a person |
+| CF-3 Cloudflare Zero Trust | A Cloudflare account with Zero Trust |
+| AWS-5 stack v2 deployment | The owner's decision. Prepared and tested here, **never deployed automatically** |
+| REPO-4/REPO-5 live commit reads | A GitHub fine-grained token with Contents: Read |
+| LOG-4 single log record | `logs:GetLogRecord`, which the read-only role does not grant; belongs with AWS-5's template version |
+| ERR-10 pattern discovery | CloudWatch `pattern` availability is unverified against a real account |
 
 ## Standing constraints
 
-- The running instance holds **real user data**: one AWS connection, a **real verified Cloudflare token**
-  with `gigsberg.com` selected, four problems. Never `docker compose down -v`, never delete the volume,
-  never revoke that connection.
-- Secrets are never returned to a browser, never logged, never in the contract.
-- Capability flags move only when the end-to-end behaviour genuinely exists; Mobile consumes them.
-- Correlation is never rendered as cause. Observed → Correlated → Possible cause → AI hypothesis.
+- The running instance holds **real user data**: an AWS connection, a **real verified Cloudflare token**
+  with `gigsberg.com` selected, and real problems. Never `docker compose down -v`, never delete the
+  volume, never revoke that connection.
+- Secrets are never returned to a browser, never logged, never in the contract, never in a screenshot.
+- Never deploy, never modify production infrastructure, never push to a customer repository.
+- Never force-push, never rewrite shared history, never touch the Mobile worktree or `feature/mobile`.
+- Capability flags move only when the end-to-end behaviour genuinely exists.
+- Correlation is never rendered as cause: Observed → Correlated → Possible cause → AI hypothesis.

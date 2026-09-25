@@ -88,7 +88,8 @@
     "rail": {
       "collapse": "Collapse the menu",
       "expand": "Expand the menu"
-    }
+    },
+    "noSelection": "Choose a connection"
   },
   "Status": {
     "draft": "Setup incomplete",
@@ -2755,7 +2756,8 @@
         "invalid_name": "Give the check a name.",
         "invalid_url": "That URL is not one OpsWatch will fetch: use http or https on a standard port.",
         "invalid_threshold": "A threshold is a whole number of milliseconds.",
-        "invalid_headers": "Each header goes on its own line, as \"Name: value\"."
+        "invalid_headers": "Each header goes on its own line, as \"Name: value\".",
+        "not_found": "That check is not in this environment."
       }
     },
     "alerts": {
@@ -3546,7 +3548,10 @@
         "status": "Result",
         "duration": "Took",
         "covered": "Covered",
-        "next": "Next"
+        "next": "Next",
+        "failingIn": "failing in {failing} of {total} environments",
+        "notYetIn": "not yet run in {count, plural, one {# environment} other {# environments}}",
+        "acrossAll": "across all {count} environments"
       },
       "jobStatus": {
         "running": "Running",
@@ -4012,6 +4017,18 @@
         "failed": "The backup could not be written. Check that the data directory has room and is writable."
       },
       "readGuide": "Backing up, and putting a backup back"
+    },
+    "defaultEnvironment": {
+      "title": "Your default connection",
+      "description": "Which AWS account and region your pages open in when a link does not name one. Yours alone: another operator can choose differently.",
+      "label": "Open in",
+      "unset": "The first connection that can be monitored",
+      "save": "Save",
+      "saved": "Saved.",
+      "none": "There is no connection to choose between yet.",
+      "errors": {
+        "unknown_environment": "That connection and region are not ones this installation monitors."
+      }
     }
   },
   "Api": {

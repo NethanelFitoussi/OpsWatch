@@ -254,3 +254,83 @@ test('the picker and the search fit a 360 px viewport', async ({ page }) => {
   await expect(page.getByRole('list', { name: 'Log lines' }).getByRole('listitem').first()).toBeInViewport();
   await fits();
 });
+
+/**
+ * LOG-5 — searching logs over `/api/v1`.
+ *
+ * A Logs Insights search is a job, so the API is one: start, poll, stop. What these prove is the part a
+ * client cannot get right on its own — that a search still running is told apart from one that finished
+ * and matched nothing, that a sample is told apart from a total, and that a search belongs to whoever
+ * started it.
+ */
+test('THE RULING: the v1 logs API starts, polls and bounds a search', async ({ page, playwright, baseURL }) => {
+  await login(page);
+  const id = await ensureMonitoringConnection(page);
+  const env = `${id}:${MOTO_REGION}`;
+
+  // The capability is advertised only because the endpoints exist.
+  const server = await page.request.get('/api/v1/server').then((r) => r.json());
+  expect(server.features.logs).toBe(true);
+
+  // What there is to search, before searching it.
+  const sources = await page.request.get(`/api/v1/logs/sources?env=${encodeURIComponent(env)}`);
+  expect(sources.status()).toBe(200);
+  const listed = (await sources.json()) as { items: { name: string; storedBytes: number | null }[]; truncated: boolean };
+  expect(listed.items.map((one) => one.name)).toContain('/ecs/opswatch-web');
+  expect(listed.truncated).toBe(false);
+
+  // A search that has *started*: 202, running, and no lines yet.
+  // The Origin a browser sends by itself: an ambient credential needs one, which is the whole of CSRF.
+  const origin = { origin: baseURL as string };
+  const started = await page.request.post(`/api/v1/logs/searches?env=${encodeURIComponent(env)}`, {
+    data: { logGroups: ['/ecs/opswatch-web'], text: 'timeout', rangeSeconds: 3600, limit: 100 },
+    headers: origin,
+  });
+  expect(started.status()).toBe(202);
+  const search = (await started.json()) as { searchId: string; status: string; items: unknown[]; query?: string };
+  expect(search.status).toBe('running');
+  expect(search.items).toEqual([]);
+  // The server composed the query, and says so rather than leaving the caller to infer it.
+  expect(search.query).toContain('filter @message like /(?i)timeout/');
+
+  // Polling reaches a finished search with real lines in it.
+  let polled = { status: 'running', items: [] as { message: string; level: string }[] };
+  for (let attempt = 0; attempt < 30 && polled.status === 'running'; attempt += 1) {
+    const response = await page.request.get(`/api/v1/logs/searches/${search.searchId}?env=${encodeURIComponent(env)}`);
+    expect(response.status()).toBe(200);
+    polled = await response.json();
+    if (polled.status === 'running') await page.waitForTimeout(500);
+  }
+  expect(['complete', 'partial']).toContain(polled.status);
+  expect(polled.items.some((entry) => entry.message.includes('payment gateway timeout'))).toBe(true);
+  // The level is what the line announced, and a line announcing none is `unknown` rather than `info`.
+  expect(polled.items.find((entry) => entry.message.includes('ERROR'))?.level).toBe('error');
+
+  // A request past the server's bound is refused, not quietly trimmed: searching fewer log groups than
+  // were asked for would answer a question nobody asked.
+  const tooMany = await page.request.post(`/api/v1/logs/searches?env=${encodeURIComponent(env)}`, {
+    data: { logGroups: Array.from({ length: 21 }, (_, i) => `/ecs/g${i}`), rangeSeconds: 60 },
+    headers: origin,
+  });
+  expect(tooMany.status()).toBe(400);
+  const tooLong = await page.request.post(`/api/v1/logs/searches?env=${encodeURIComponent(env)}`, {
+    data: { logGroups: ['/ecs/opswatch-web'], rangeSeconds: 90_000 },
+    headers: origin,
+  });
+  expect(tooLong.status()).toBe(400);
+
+  // A search id nobody bound is `not_found`, never `forbidden`: a caller who may not poll a search is not
+  // entitled to learn that it exists.
+  expect((await page.request.get(`/api/v1/logs/searches/not-a-search?env=${encodeURIComponent(env)}`)).status()).toBe(404);
+
+  // And none of it is reachable without a session.
+  const anonymous = await playwright.request.newContext({ baseURL });
+  expect((await anonymous.get(`/api/v1/logs/sources?env=${encodeURIComponent(env)}`)).status()).toBe(401);
+  expect((await anonymous.post(`/api/v1/logs/searches?env=${encodeURIComponent(env)}`, { data: {}, headers: origin })).status()).toBe(401);
+  // And a mutating call that carries the cookie but no Origin is refused before anything else happens.
+  expect((await page.request.post(`/api/v1/logs/searches?env=${encodeURIComponent(env)}`, { data: {} })).status()).toBe(403);
+  await anonymous.dispose();
+
+  // Stopping is idempotent from the caller's point of view, and stops the polling.
+  expect((await page.request.delete(`/api/v1/logs/searches/${search.searchId}?env=${encodeURIComponent(env)}`, { headers: origin })).status()).toBe(204);
+});

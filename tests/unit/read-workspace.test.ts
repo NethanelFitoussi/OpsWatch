@@ -91,6 +91,19 @@ describe('INV-5 — has this happened before', () => {
     expect(workspace.recordedSince).toBe(NOW - 2 * DAY);
   });
 
+  it('THE RULING: the record is this environment’s own, not the installation’s', () => {
+    /*
+     * A second AWS account added this morning has this morning's record, however long another account
+     * has been watched. Reading across the installation said the record went back six months — the same
+     * false clean record this figure exists to prevent, arrived at from the other direction.
+     */
+    const db = createTestDb();
+    occurrence(db, NOW - 200 * DAY, NOW - 200 * DAY + HOUR, { key: 'old-other-account'.padEnd(32, 'x'), connectionId: 'c2' });
+    const current = occurrence(db, NOW - HOUR, null);
+
+    expect(readWorkspace(db, current).recordedSince).toBe(NOW - HOUR);
+  });
+
   it('says it has recorded nothing at all when it has', () => {
     const db = createTestDb();
     const current = occurrence(db, NOW - HOUR, null);

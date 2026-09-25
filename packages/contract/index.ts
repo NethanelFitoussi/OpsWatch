@@ -32,6 +32,7 @@ export * from './health';
 export * from './brief';
 export * from './problems';
 export * from './errors';
+export * from './logs';
 export * from './services';
 export * from './alerts';
 export * from './incidents';

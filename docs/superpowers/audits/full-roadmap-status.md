@@ -21,15 +21,36 @@ conversation.
 
 A schema, a migration, a placeholder page, a demo fixture or an unused service is **not** `DONE`.
 
+## Multiple AWS connections (audited 2026-09-25)
+
+The product is meant to hold Production, Staging, Client A and Client B at once. The audit below read
+every `connection_id` in the schema, every store query, every cache key, the collector's fan-out and the
+ingestion path. Most of it was already right; what was not is listed with what was done.
+
+| # | What was wrong | Status |
+|---|---|---|
+| MC-1 | `deleteCheck` deleted by id alone, so a post from one account's page could destroy another's synthetic check **and its whole run history, by cascade** | `DONE` — the environment is part of the store signature, so no caller can forget it |
+| MC-2 | The forwarded-record id hashed account + region + group + stream + event, **not the connection**. Two connections on one AWS account both forward the same records; the second's were silently swallowed as duplicates and counted under `duplicates` for a connection that would never show an error group | `DONE` — the connection is in the material. Replay protection is unchanged: the signature already proved the connection |
+| MC-3 | System status took the first matching run and printed it as *the* job's status, so `errors · ok · 3 minutes ago` from Production could stand for a job failing in another account for a day | `DONE` — the **worst** outcome across environments, with the counts beside it and `coveredEverywhereSince` |
+| MC-4 | `lastRunOf` filtered the last 200 runs in memory; with several connections that window no longer reaches back an hour, so an hourly job read as never having run | `DONE` — a `where` in the store |
+| MC-5 | "Recorded since" read the earliest problem across the whole installation, so an account added this morning was measured against another's six months | `DONE` — scoped to the environment |
+| MC-6 | Deleting a connection deleted one row; nineteen tables carrying `connection_id` kept their data for ever | `DONE` — `purgeConnectionData`, held to the live schema by a test that fails when a new table appears |
+| MC-7 | The switcher fell back to `connections[0]`, so the top bar named an account on pages that had none; regions were inert text and every entry went to `regions[0]` | `DONE` — it names only what the page is about, and every region is its own destination |
+| MC-8 | A section link off a page with no environment went to the first usable connection, so an operator working in Client B could land in Production | `DONE` — the operator's own default, settable in Settings, checked against what the installation has |
+| MC-9 | Push collection is pinned to `regions[0]`: `aws_collection` holds one forwarder per connection, but a subscription filter can only target a Lambda in its own region | `NOT_STARTED` — a multi-region connection can forward from one region only. Next checkpoint |
+| MC-10 | The Logs Insights budget is one instance-wide pot spent in connection order, so the newest connection can eat the day and the others read `truncated` for ever | `NOT_STARTED` |
+| MC-11 | Notification destinations are instance-wide: every connection's alerts reach every webhook | `NOT_STARTED` |
+| MC-12 | The audit log has no connection, so "who disabled the log source, and for which client?" is unanswerable | `NOT_STARTED` |
+
 ## Counts
 
 | Status | Count |
 |---|---|
-| `DONE` | 128 |
-| `PARTIAL` | 8 |
-| `FOUNDATION_ONLY` | 3 |
+| `DONE` | 132 |
+| `PARTIAL` | 4 |
+| `FOUNDATION_ONLY` | 2 |
 | `NOT_STARTED` | 8 |
-| `BLOCKED_EXTERNAL` | 6 |
+| `BLOCKED_EXTERNAL` | 7 |
 | `INTENTIONALLY_DEFERRED` | 3 |
 | **Total audited** | **156** |
 
@@ -201,7 +222,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | INT-1 | Collector runtime, scheduling | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Visible on System status |
 | INT-2 | Single-writer lock (§33.4) | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Conditional UPDATE; refresh carries `AND owner = ?` |
-| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | **11 jobs declared, 7 implemented** (`detect`, `errors`, `metrics`, `compact`, `deployments`, `synthetics`, `baselines`). `inventory`, `queries`, `logvolume` remain; `slo` is no longer needed, since the metrics job stores what §19 reads |
+| INT-3 | Job catalogue | ✓ | ✓ | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | **11 jobs declared, 11 implemented.** `inventory`, `queries`, `logvolume` and `slo` were declared and never written — `inventory` ran every 30 minutes on a fresh install, fell through the runner's `default`, and reported it had covered 0 of 0, which System status showed as a scheduled job going about its rounds. They are removed rather than listed, and a ruling test holds the catalogue to jobs that do work. Databases → Queries and Logs → Volume read live and lost nothing; `slo` was never needed, since the metrics job stores what §19 reads |
 | INT-4 | Detector execution, isolation (§33.5) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Fired / clear / not_evaluated |
 | INT-5 | Problem identity (§33.2) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Length-prefixed key; digest pinned |
 | INT-6 | Lifecycle, reopen, flap | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | — |
@@ -238,7 +259,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | LOG-2 | Volume and retention | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Costs nothing against the budget, and says so |
 | LOG-3 | Endpoints / slow routes | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Runs on a button, not on load; field names validated, never escaped; shows real lines when the mapping matches nothing |
 | LOG-4 | Single log entry endpoint | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs `logs:GetLogRecord`, which the role's policy does not grant — fetching one event by its `@ptr` is the only way CloudWatch offers. Adding it means a new template version and every existing installation redeploying its stack, so it is bundled with AWS-5 rather than shipped on its own. Mobile's deep link opens the surrounding search until then |
-| LOG-5 | `features.logs` on `/api/v1` | ✗ | ✗ | ✓ | · | ✗ | ✗ | ✗ | ✗ | `FOUNDATION_ONLY` | Logs are served by the older non-v1 route; no v1 endpoint exists |
+| LOG-5 | `features.logs` on `/api/v1` | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `DONE` | `GET /logs/sources`, `POST /logs/searches`, `GET|DELETE /logs/searches/{id}`. A Logs Insights search is a job, so the API is one: start, poll, stop. The caller never sends query text — the server composes it, so nobody can ask for an aggregation the answer cannot carry or widen the search past the log groups they named. `partial` tells a sample from a total, `running` tells "not yet" from "nothing matched", and a search is bound to the person who started it, so `not_found` rather than `forbidden` on a mismatch |
 
 ## Historical data
 
@@ -283,7 +304,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 
 | ID | Requirement | B | A | C | W | M | R | T | V | Status | Missing / next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| INV-1 | Investigation timeline | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Rendered on Problem detail. No standalone investigation object or `/api/v1` route yet |
+| INV-1 | Investigation timeline | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | `GET /investigations/{id}`, serving §7's three bands apart. **Derived, not stored**: there is no investigation object to create or close, so it carries the problem's id, its status follows the problem, and `summary` is absent because nobody wrote one — a generated conclusion would carry an author's authority. `problemDetail.investigationId` points at it |
 | INV-2 | Cross-signal correlation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Any two facts in the events spine sharing a subject or service, within §7's window, with the measured Δt |
 | INV-3 | Observed fact vs correlation vs hypothesis | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `DONE` | Three headed groups, not badges on one list. Only a hypothesis carries a confidence, and five catalogue entries are declared unevaluated |
 | INV-4 | Probable-cause evidence chain | ✓ | ✗ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | `PARTIAL` | Four of §5's eight hypotheses evaluated. `traffic_surge` joined them with §8's baselines; the rest need PI digests, Cloudflare or the dependency map, and are named in `NOT_EVALUATED` rather than omitted |
@@ -315,7 +336,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | ALE-1 | Alert model and rules | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Rules and alerts, §15.1's install set created visibly, `/api/v1/alerts` and a page |
 | ALE-2 | Alert lifecycle, acknowledge | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | Fire, suppress, refire, acknowledge and resolve, with rules that can be turned off — every change audited |
-| ALE-3 | Notification preferences | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | `PARTIAL` | Stored per user and served on `/api/v1/me/preferences`. No web UI, because the web has no notifications to prefer yet |
+| ALE-3 | Notification preferences | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | `BLOCKED_EXTERNAL` | Stored per user and served on `/api/v1/me/preferences`. The remaining half is a web UI, and **there is nothing for it to change**: a webhook destination carries its own `minSeverity` and belongs to the installation, not to a person, so a per-user preference cannot gate it. What these preferences are for is push notifications to a device, which needs FCM/APNs credentials nobody here has (ALE-5). A settings page whose controls changed nothing would be worse than none |
 | ALE-4 | Delivery (webhook) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | Signed webhooks: HTTPS only, HMAC-SHA256 over the timestamp and the exact bytes sent, a secret shown once and never re-readable, four attempts on a backoff and then a visible failure. §15 holds — with no destination, nothing leaves the instance. **Email and Slack remain**: both need a new runtime dependency or an outbound integration, and neither is dependency-ready here |
 | ALE-5 | Push notifications | ✗ | ✗ | ✓ | · | ✓ | ✗ | ✗ | ✗ | `BLOCKED_EXTERNAL` | Needs an EAS project and APNs/FCM credentials |
 | ALE-6 | Deduplication / noise control | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | One alert per rule and subject, a 30-minute cooldown, and the suppressed count shown so the quiet is visible |
@@ -386,7 +407,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | UX-4 | Honest empty / unavailable / not-run states | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The product's central rule (§2.4, §2.6) |
 | UX-5 | Loading and stale states | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Suspense cards; problems mark staleness |
 | UX-6 | Accessibility pass (§V) | · | · | · | ✓ | · | · | ✓ | ✓ | `DONE` | axe-core over **24 routes × 2 widths × 2 locales**, zero WCAG 2.1 A/AA violations, held by `zz-axe.spec.ts`. What it found and what was fixed: `emerald-600`/`amber-600`/`red-600` all failed 4.5:1 on light backgrounds (measured 3.77 / 3.19 / 4.53) and moved to the `-700` shades in `tones.ts` and five components; `aria-pressed` on the alarm filter chips, which are links and may not carry it, became `aria-current`; secondary text at `/80` opacity lost the opacity; every sideways-scrolling table and `<pre>` became keyboard-reachable. Severity was already never colour-alone |
-| UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
+| UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Verified end to end, by two checks that fail for different reasons. axe runs the whole sweep in the dark theme, which catches a colour that passes on white and disappears on near-black. And a separate ruling looks for the failure no accessibility rule names: a panel that kept a **light background and dark text**, which is legible on its own and obviously wrong on a dark page |
 | UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Get started is a hub that asks what to connect, with a full guide per integration — what it unlocks, what it needs, what OpsWatch may do, steps, verification, failures, disconnect. Three entry points, one measured state, enforced by a `data-state` invariant |
 | UX-9 | Integration centre (§E) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` manages them, `/accounts/new` chooses one to add, `GET /repository` tells a client what is connected. All three read the same measured state |
 | UX-10 | Settings as a product (§F) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `PARTIAL` | General, Data & history, System status, Backup & restore, and a link list. Users & Access and Security absent |

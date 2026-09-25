@@ -73,6 +73,32 @@ export const jobStatusSchema = z.object({
   truncated: z.boolean(),
   errorCode: z.string().nullable(),
   nextRunAt: epochSchema.nullable(),
+  /**
+   * For a job that runs once per environment: how many environments it runs in, and how many of those
+   * are not healthy.
+   *
+   * `lastStatus` above is the **worst** of the per-environment outcomes, not the most recent one. With
+   * two AWS accounts connected, reporting the most recent let `errors · ok · 3 minutes ago` stand for a
+   * job that had been failing in another account for a day — an unearned green about the tool itself.
+   * These counts are what make the worst-of honest: "ok, 2 environments, none failing" says something
+   * the single word cannot.
+   *
+   * Optional because it was added after the shape was first published, and absent for the jobs that run
+   * once for the whole instance.
+   */
+  environments: z
+    .object({
+      total: z.number(),
+      failing: z.number(),
+      /** Environments this job has never run in at all, which is not the same as having run and failed. */
+      neverRan: z.number(),
+    })
+    .optional(),
+  /**
+   * The oldest of the per-environment latest runs: every environment has been visited at least this
+   * recently. `null` when at least one has never been visited, because there is then no such instant.
+   */
+  coveredEverywhereSince: epochSchema.nullable().optional(),
 });
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 

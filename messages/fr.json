@@ -88,7 +88,8 @@
     "rail": {
       "collapse": "Réduire le menu",
       "expand": "Déplier le menu"
-    }
+    },
+    "noSelection": "Choisir une connexion"
   },
   "Status": {
     "draft": "Configuration incomplète",
@@ -2755,7 +2756,8 @@
         "invalid_name": "Donnez un nom à la vérification.",
         "invalid_url": "OpsWatch ne récupérera pas cette URL : utilisez http ou https sur un port standard.",
         "invalid_threshold": "Un seuil est un nombre entier de millisecondes.",
-        "invalid_headers": "Chaque en-tête sur sa propre ligne, sous la forme « Nom : valeur »."
+        "invalid_headers": "Chaque en-tête sur sa propre ligne, sous la forme « Nom : valeur ».",
+        "not_found": "Cette vérification n’existe pas dans cet environnement."
       }
     },
     "alerts": {
@@ -3546,7 +3548,10 @@
         "status": "Résultat",
         "duration": "Durée",
         "covered": "Couvert",
-        "next": "Prochaine"
+        "next": "Prochaine",
+        "failingIn": "en échec dans {failing} environnements sur {total}",
+        "notYetIn": "pas encore exécutée dans {count, plural, one {# environnement} other {# environnements}}",
+        "acrossAll": "dans les {count} environnements"
       },
       "jobStatus": {
         "running": "En cours",
@@ -4012,6 +4017,18 @@
         "failed": "La sauvegarde n’a pas pu être écrite. Vérifiez que le répertoire de données a de la place et est accessible en écriture."
       },
       "readGuide": "Sauvegarder, et remettre une sauvegarde en place"
+    },
+    "defaultEnvironment": {
+      "title": "Votre connexion par défaut",
+      "description": "Le compte AWS et la région dans lesquels vos pages s’ouvrent quand un lien n’en nomme aucun. Propre à vous : un autre opérateur peut choisir autrement.",
+      "label": "Ouvrir dans",
+      "unset": "La première connexion surveillable",
+      "save": "Enregistrer",
+      "saved": "Enregistré.",
+      "none": "Il n’y a pas encore de connexion entre lesquelles choisir.",
+      "errors": {
+        "unknown_environment": "Ce couple connexion/région n’est pas surveillé par cette installation."
+      }
     }
   },
   "Api": {

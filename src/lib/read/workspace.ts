@@ -123,7 +123,9 @@ export function readWorkspace(db: Db, problem: ProblemRow, limit = PAST_LIMIT): 
 
   return {
     past,
-    recordedSince: earliestProblemAt(db),
+    // This environment's own record: measuring a problem in an account added this morning against
+    // another account's six months of history would imply a clean record nobody has.
+    recordedSince: earliestProblemAt(db, { connectionId: problem.connectionId, scope: problem.scope }),
     typicalDurationMs: medianDuration(past.map((occurrence) => occurrence.durationMs)),
     errors,
     logGroups: forService.map((source) => source.logGroup),

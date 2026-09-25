@@ -97,7 +97,26 @@ describe('checks and their runs', () => {
     const check = upsertCheck(db, base, NOW);
     recordRun(db, { checkId: check.id, at: NOW, ok: true, totalMs: 100, assertionResults: [] });
 
-    deleteCheck(db, check.id);
+    expect(deleteCheck(db, env.connectionId, env.scope, check.id)).toBe(1);
     expect(recentRuns(db, check.id, 10)).toEqual([]);
+  });
+
+  it('THE RULING: one AWS connection cannot delete another’s check, id or no id', () => {
+    /*
+     * The id travels in a form field. A delete that trusted it alone would let a post from one account's
+     * page destroy a check belonging to another account in the same installation — and, by cascade, its
+     * entire run history. The scope is part of the signature so no caller can forget it.
+     */
+    const db = createTestDb();
+    const check = upsertCheck(db, base, NOW);
+    recordRun(db, { checkId: check.id, at: NOW, ok: true, totalMs: 100, assertionResults: [] });
+
+    expect(deleteCheck(db, 'another-connection', env.scope, check.id)).toBe(0);
+    // The same account, a different region, is just as much somebody else's environment.
+    expect(deleteCheck(db, env.connectionId, 'eu-west-1', check.id)).toBe(0);
+
+    // Nothing was touched: the check and its history are both still there.
+    expect(listChecks(db, env.connectionId, env.scope).map((one) => one.id)).toEqual([check.id]);
+    expect(recentRuns(db, check.id, 10)).toHaveLength(1);
   });
 });

@@ -253,6 +253,14 @@ export function getProblem(
       repository: [],
       possibleCauses: [],
       alerts: [],
+      /*
+       * Where the investigation of this problem lives (INV-1).
+       *
+       * It is the problem's own id, because the investigation is derived from the problem rather than
+       * stored beside it — `GET /api/v1/investigations/{id}` assembles it from the events spine. The
+       * field is here so a client can follow it without having to know that the two ids are the same.
+       */
+      investigationId: row.id,
       // Acknowledging is the one thing phase 1 lets a reader do to a problem.
       allowedActions: row.status === 'acknowledged' ? [] : ['acknowledge'],
     },

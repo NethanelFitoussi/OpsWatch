@@ -576,11 +576,24 @@ export function pastOccurrences(db: Db, filter: { key: string; before: number },
 }
 
 /**
- * When the earliest problem this installation recorded was first seen, or null when it has recorded none.
+ * When the earliest problem **in one environment** was first seen, or null when it has recorded none.
  *
- * It is what makes "this has not happened before" mean anything. On an instance that started yesterday it
- * means nothing at all, and a page that said it without this would be implying a clean record.
+ * It is what makes "this has not happened before" mean anything. On an instance that started yesterday
+ * it means nothing at all, and a page that said it without this would be implying a clean record.
+ *
+ * Scoped to the environment for exactly that reason. Read across the whole installation, a problem in an
+ * AWS account added this morning was measured against six months of another account's history, and the
+ * page said the record went back six months — which is the false clean record this function exists to
+ * prevent, arrived at from the other direction.
  */
-export function earliestProblemAt(db: Db): number | null {
-  return db.select({ at: problems.firstSeenAt }).from(problems).orderBy(asc(problems.firstSeenAt)).limit(1).get()?.at ?? null;
+export function earliestProblemAt(db: Db, scope: { connectionId: string; scope: string }): number | null {
+  return (
+    db
+      .select({ at: problems.firstSeenAt })
+      .from(problems)
+      .where(and(eq(problems.connectionId, scope.connectionId), eq(problems.scope, scope.scope)))
+      .orderBy(asc(problems.firstSeenAt))
+      .limit(1)
+      .get()?.at ?? null
+  );
 }

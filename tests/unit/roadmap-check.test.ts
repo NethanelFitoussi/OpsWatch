@@ -21,8 +21,10 @@ describe('the checker actually looks at things', () => {
     const capabilities = notes.filter((note) => note.check === 'capabilities');
     // There are unimplemented capabilities today; a run that found none would mean the check stopped reading.
     expect(capabilities.length).toBeGreaterThan(0);
-    // `logs` is served by the older non-v1 route, so v1 does not advertise it yet (LOG-5).
-    expect(capabilities.some((note) => note.detail.includes('logs'))).toBe(true);
+    // `services` and `infrastructure` have no v1 endpoint: the pages read AWS directly and nothing serves
+    // the contract's shapes. `logs` used to be here too, and LOG-5 answered it.
+    expect(capabilities.some((note) => note.detail.includes('services'))).toBe(true);
+    expect(capabilities.some((note) => note.detail.includes('logs'))).toBe(false);
   });
 
   it('reports contract schemas nothing serves, which is the roadmap’s own backlog', () => {

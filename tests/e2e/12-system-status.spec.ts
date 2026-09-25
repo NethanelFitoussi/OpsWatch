@@ -38,8 +38,10 @@ test('the System status page renders for an admin, and says whether the collecto
   // Exactly one verdict about the collector, and "never run" is one of them.
   const says = ['Running', 'Not running', 'has never run'].filter((phrase) => main.includes(phrase));
   expect(says.length).toBeGreaterThanOrEqual(1);
-  // The job table names the jobs it is reporting on.
-  for (const job of ['detect', 'inventory', 'compact']) expect(main).toContain(job);
+  // The job table names the jobs it is reporting on. `inventory` used to be one of them, and was never
+  // written: it ran every half hour, did nothing, and appeared here as a job going about its rounds.
+  for (const job of ['detect', 'deployments', 'compact']) expect(main).toContain(job);
+  expect(main).not.toContain('inventory');
 });
 
 test('System status redirects an unauthenticated visitor to login', async ({ page }) => {

@@ -18,8 +18,9 @@ import type { JobRun } from './runner';
  * What each job actually does. One place, so the runner never knows a job's business and a job never knows
  * about locks, schedules or `collector_runs`.
  *
- * A job without an implementation reports that it covered nothing, which System status shows as a run that
- * did no work rather than as a success that quietly did nothing.
+ * There is no longer such a thing as a job without an implementation: the catalogue holds only jobs that
+ * do work, and `tests/unit/collector-jobs.test.ts` holds it that way. The `default` below is what the
+ * compiler needs, not a place for one to hide.
  */
 export const runJob: JobRun = async (job, nowMs) => {
   const db = getDb();
@@ -56,6 +57,7 @@ export const runJob: JobRun = async (job, nowMs) => {
       // Reads only what is already stored, so it asks AWS for nothing and is free to look back four weeks.
       return runBaselinesJob(scoped);
     default:
+      // Unreachable: every environment-scoped id is handled above, and the type says so.
       return { covered: 0, total: 0 };
   }
 };

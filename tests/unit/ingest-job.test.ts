@@ -28,7 +28,7 @@ const deliver = (db: ReturnType<typeof createTestDb>, connectionId: string, mess
   storeIngestEvents(
     db,
     messages.map((message, index) => ({
-      id: ingestEventId({ awsAccountId: '123456789012', region: REGION, logGroup: GROUP, logStream: 's', eventId: String(offset + index) }),
+      id: ingestEventId({ connectionId, awsAccountId: '123456789012', region: REGION, logGroup: GROUP, logStream: 's', eventId: String(offset + index) }),
       connectionId,
       region: REGION,
       source: 'aws.logs',

@@ -116,9 +116,22 @@ export function upsertCheck(db: Db, input: NewCheck, nowMs: number): CheckView {
   return toView(row);
 }
 
-export function deleteCheck(db: Db, id: string): number {
+/**
+ * Removes one check, **and the environment it must belong to**.
+ *
+ * The environment is a parameter rather than the caller's responsibility on purpose. The id arrives in a
+ * form field, and a delete that trusted it alone would let a post from one AWS connection's page destroy
+ * a check — and, by cascade, its entire run history — belonging to another account in the same
+ * installation. Making the scope part of the signature means no future caller can forget it.
+ *
+ * Returns the number of rows removed, so a caller can tell "deleted" from "not yours".
+ */
+export function deleteCheck(db: Db, connectionId: string, scope: string, id: string): number {
   // Runs cascade: a check that is gone must not leave orphaned history nobody can attribute.
-  return db.delete(syntheticChecks).where(eq(syntheticChecks.id, id)).run().changes;
+  return db
+    .delete(syntheticChecks)
+    .where(and(eq(syntheticChecks.id, id), eq(syntheticChecks.connectionId, connectionId), eq(syntheticChecks.scope, scope)))
+    .run().changes;
 }
 
 export type NewRun = {

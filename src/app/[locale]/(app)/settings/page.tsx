@@ -6,8 +6,12 @@ import { PageHeader } from '@/components/page-header';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
+import { listConnections } from '@/lib/connections/repository';
+import { isUsableStatus } from '@/lib/connections/types';
 import { appSettings } from '@/lib/settings/repository';
-import { saveSettingsAction } from './actions';
+import { readPreferences } from '@/lib/store/preferences';
+import { saveDefaultEnvironmentAction, saveSettingsAction } from './actions';
+import { DefaultEnvironment } from './default-environment';
 import { SettingsForm } from './settings-form';
 
 type Props = { params: Promise<{ locale: string }> };
@@ -29,12 +33,24 @@ const MORE_SETTINGS = [
 
 /** The instance's settings. Not a monitoring section: no connection and no region in its URL. */
 export default async function SettingsPage({ params }: Props) {
-  const { locale } = await initProtectedRoute(params);
+  const { locale, adminId } = await initProtectedRoute(params);
   const t = await getTranslations('Settings');
+  const db = getDb();
+
+  // Every environment this installation can actually monitor, named the way the switcher names them.
+  const choices = listConnections(db)
+    .filter((connection) => isUsableStatus(connection.status))
+    .flatMap((connection) => connection.regions.map((region) => ({ id: `${connection.id}:${region}`, label: `${connection.name} · ${region}` })));
+
   return (
     <PageBody>
       <PageHeader title={t('title')} description={t('description')} />
-      <SettingsForm action={saveSettingsAction.bind(null, locale)} current={appSettings.read(getDb())} />
+      <SettingsForm action={saveSettingsAction.bind(null, locale)} current={appSettings.read(db)} />
+      <DefaultEnvironment
+        action={saveDefaultEnvironmentAction.bind(null, locale)}
+        current={readPreferences(db, adminId).defaultEnvironmentId}
+        choices={choices}
+      />
 
       {/* Both pages existed before anything linked to them, which made them unreachable to a real user. */}
       <MonitoringCard title={t('more.title')}>
