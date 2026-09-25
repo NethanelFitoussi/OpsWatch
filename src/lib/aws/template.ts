@@ -116,6 +116,30 @@ export function deployCommand(connectionId: string, region: string): string {
   ].join(' \\\n  ');
 }
 
+/**
+ * The command that removes the base stack, and the console page to do it from.
+ *
+ * Shown, never run. OpsWatch's role is **read-only** — that is the whole point of it — so it could not
+ * delete this stack even if it wanted to, and a product that offered a button for something it cannot
+ * do would be worse than one that says who has to do it. The documented way to delete a stack is the
+ * console or `delete-stack`:
+ * https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html
+ */
+export function deleteStackCommand(connectionId: string, region: string): string {
+  return `aws cloudformation delete-stack --stack-name ${stackNameFor(connectionId)} --region ${region}`;
+}
+
+/**
+ * The CloudFormation console, in the right region.
+ *
+ * The stacks list rather than a link straight to one stack: AWS documents "choose the Region on the
+ * navigation bar, then choose the stack", and does not document a per-stack URL. A link built on an
+ * undocumented shape is a link that breaks quietly.
+ */
+export function stacksConsoleUrl(region: string): string {
+  return `https://${region}.console.aws.amazon.com/cloudformation/home?region=${region}#/stacks`;
+}
+
 export function roleArnCommand(connectionId: string, region: string): string {
   return (
     `aws cloudformation describe-stacks --stack-name ${stackNameFor(connectionId)} --region ${region} ` +

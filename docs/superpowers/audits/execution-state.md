@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | AWS onboarding: the ARN OpsWatch already knows, the documented quick-create URL |
-| Last green gates | tsc 0 · eslint 0 · **2376 unit** · **395 e2e** · `roadmap:check` 0 |
+| Current checkpoint | AWS safe disconnect: what OpsWatch does, and what only AWS can |
+| Last green gates | tsc 0 · eslint 0 · **2376 unit** · **396 e2e** · `roadmap:check` 0 |
 | Schema | drizzle **0029** — `notify_destinations.connection_id`, nullable, existing rows keep `null` (unscoped), so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -46,6 +46,10 @@ losing the whole conversation loses no plan.
 - `docker compose -p opswatch-test -f docker-compose.test.yml build opswatch` **and** `up -d
   --force-recreate --wait` before `npm run e2e`. A `--force-recreate` wipes the database, so the whole
   suite must run (01-setup seeds the admin) before any single spec can.
+- **`npm run e2e` needs a fresh instance.** `docker compose -p opswatch-test -f docker-compose.test.yml
+  up -d --force-recreate --wait` first, always — `/data` is a tmpfs, so recreating the container is what
+  wipes it. Running the suite against a database a previous run seeded fails `01-setup` ("an admin
+  already exists") and cascades into a dozen unrelated specs.
 - **Never run two e2e suites at once.** They share one instance: the second run's `--force-recreate`
   wipes the tmpfs under the first, and 26 unrelated specs fail with "an admin already exists". Check
   `pgrep -f "playwright test"` before starting one.
@@ -87,6 +91,10 @@ losing the whole conversation loses no plan.
 - [x] **INV-1** `/api/v1/investigations/{id}`: §7's three bands, derived from the problem
 - [x] **UX-6** axe over 24 routes × 2 widths × 2 locales × 2 themes, zero WCAG 2.1 A/AA violations
 - [x] **UX-7** dark mode verified, including the failure no accessibility rule names
+- [x] **AWS safe disconnect.** The card separates what OpsWatch does from what stays in AWS, names the
+      stacks with the documented `delete-stack` commands, links the console for the right region, and
+      lists the collection stack first because it holds the subscription filters. The history deletion
+      is said **before** the button, because the purge added in `cd78688` changed what the button means
 - [x] **AWS onboarding.** The role ARN is worked out from the account, the region and the connection
       instead of being fetched with a CLI query and pasted back; the quick-create URL is written to the
       documented format; the one-click path explains what it needs instead of vanishing; the 28-checkbox
@@ -113,8 +121,11 @@ The page now says that instead of hiding the button.
 1. ~~Multiple AWS accounts~~ — MC-1..MC-8 and MC-11 done; MC-9 is honest but still one region per
    connection. **MC-9 (per-region collection stacks), MC-10 (per-connection logs budget) and MC-12
    (a connection on the audit log) remain**
-2. One-click CloudFormation onboarding (prefilled stack URL; the operator creates the stack)
-3. Safe disconnect / removal / update, with stack identity tracked rather than inferred from names
+2. ~~One-click CloudFormation onboarding~~ — the documented URL format and an honest explanation of what
+   the button needs. It cannot be made bucket-free: the console fetches templates only from S3
+3. ~~Safe disconnect~~ — done. **Stack identity is still not tracked for the base stack**: the collection
+   row stores `stackId`, the connection does not, so "update available" is inferred from a template
+   version rather than read from the stack
 4. Storage and database setup, with a migration flow that shows versions and pending work first
 5. Linux host architecture, then the host MVP, then Redis-on-Ubuntu discovery
 6. Unified host/cloud identity (an agent on EC2 must not duplicate the discovered instance)

@@ -121,7 +121,7 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         </p>
       </SectionCard>
 
-      <DangerZone connectionId={view.id} locale={locale} managed={collection.managed} />
+      <DangerZone connectionId={view.id} locale={locale} region={view.regions[0]} managed={collection.managed} />
     </PageBody>
   );
 }

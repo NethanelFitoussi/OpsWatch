@@ -21,6 +21,17 @@ conversation.
 
 A schema, a migration, a placeholder page, a demo fixture or an unused service is **not** `DONE`.
 
+## AWS onboarding and removal (2026-09-25)
+
+The owner's marathon queue, items 2 and 3. What was researched, what changed, and what remains.
+
+| What | Status |
+|---|---|
+| One-click CloudFormation | `PARTIAL` — the quick-create link is written to the documented format (regional console host, `#/stacks/create/review`, URL-encoded regional S3 `templateURL`), and when no bucket is configured the page **says what the button needs** instead of hiding it. It cannot be made bucket-free: the CloudFormation console will only fetch a template from Amazon S3, which a self-hosted OpsWatch cannot serve |
+| Role ARN | `DONE` — worked out from the account, the region and the partition instead of asked for. Step 3 is "Confirm the role", and the permission test is still the only thing that proves the role exists |
+| Safe disconnect | `DONE` — the card separates **what OpsWatch does** (stops reading, deletes the credential, deletes everything this connection produced — said before the button, because that last one surprises people) from **what stays in AWS** (everything). The stacks are named, the commands are the documented `delete-stack`, the console link opens the right region, and the collection stack is listed first because it holds the subscription filters. Only stacks that exist are named |
+| Remove AWS resources from OpsWatch | `INTENTIONALLY_DEFERRED` — OpsWatch reads with a read-only role, which is what makes the role safe to grant. It cannot delete its own stack, and a button for something it cannot do would be worse than naming who has to |
+
 ## Multiple AWS connections (audited 2026-09-25)
 
 The product is meant to hold Production, Staging, Client A and Client B at once. The audit below read
@@ -46,16 +57,18 @@ ingestion path. Most of it was already right; what was not is listed with what w
 
 | Status | Count |
 |---|---|
-| `DONE` | 132 |
-| `PARTIAL` | 4 |
+| `DONE` | 141 |
+| `PARTIAL` | 5 |
 | `FOUNDATION_ONLY` | 2 |
-| `NOT_STARTED` | 8 |
+| `NOT_STARTED` | 10 |
 | `BLOCKED_EXTERNAL` | 7 |
 | `INTENTIONALLY_DEFERRED` | 3 |
-| **Total audited** | **156** |
+| **Total audited** | **168** |
 
-Counted from the item rows of this file, not carried forward from an earlier revision. The four rows in
-the blocked-externally table name what is missing rather than a status, and are not counted twice.
+Counted from the item rows of this file — the numbered roadmap items and the `MC-*` findings of the
+multi-connection audit, which are work items like any other — not carried forward from an earlier
+revision. The four rows in the blocked-externally table name what is missing rather than a status, and
+are not counted twice.
 
 Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**obile · **R**eal data · **T**ests ·
 **V**erified in a browser. `·` means not applicable.

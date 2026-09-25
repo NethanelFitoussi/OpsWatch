@@ -236,13 +236,18 @@
     },
     "danger": {
       "title": "Supprimer cette connexion",
-      "description": "OpsWatch oublie ce compte. Supprimez la stack CloudFormation dans AWS pour révoquer complètement l'accès.",
+      "description": "OpsWatch oublie ce compte. Retirer l’accès qui lui a été accordé est une étape distincte, dans AWS, et vous seul pouvez la faire.",
       "delete": "Supprimer la connexion",
-      "stopsCollection": "OpsWatch cesse de lire ce compte. Toutes les pages le concernant cessent de fonctionner.",
-      "removesCredentials": "Les détails du rôle et les identifiants chiffrés sont supprimés de cette installation.",
-      "stopsForwarding": "La collecte gérée s’arrête, et les filtres d’abonnement créés par OpsWatch sont retirés de vos groupes de journaux.",
-      "deleteStack": "Rien n’est supprimé de votre compte AWS. Supprimez vous-même la pile CloudFormation OpsWatch pour retirer le rôle.",
-      "deleteBothStacks": "Rien n’est supprimé de votre compte AWS. Supprimez vous-même les deux piles CloudFormation OpsWatch — celle de collecte et celle de base — pour retirer la Lambda et le rôle."
+      "opswatchDoes": "Ce que fait OpsWatch",
+      "stopsCollection": "Arrête de lire ce compte. Toutes les pages qui le concernent cessent de fonctionner.",
+      "removesCredentials": "Supprime de cette instance les détails du rôle et les identifiants chiffrés.",
+      "removesHistory": "Supprime tout ce que cette connexion a produit : ses problèmes, alertes, groupes d’erreurs, déploiements, sources de journaux, recherches enregistrées et historique. C’est irréversible, et reconnecter le même compte ne les ramène pas.",
+      "stopsForwarding": "Arrête la collecte gérée et retire les filtres d’abonnement créés par OpsWatch sur vos groupes de journaux.",
+      "awsKeeps": "Ce qui reste dans votre compte AWS",
+      "cannotDelete": "Tout. OpsWatch lit avec un rôle en lecture seule : il ne peut donc pas supprimer sa propre pile — c’est précisément ce qui rend ce rôle sûr à accorder. Supprimez les piles vous-même, avec ces commandes ou dans la console.",
+      "collectionStackFirst": "La pile de collecte d’abord : elle contient les filtres d’abonnement qui invoquent le forwarder.",
+      "baseStack": "Puis la pile de base, qui contient le rôle en lecture seule :",
+      "openConsole": "Ouvrir CloudFormation dans {region}"
     },
     "details": {
       "title": "Détails de la connexion",

@@ -111,12 +111,19 @@ test('the ingestion endpoint is documented as signed rather than as a session ro
   expect(operation.security).toEqual([{ signature: [] }]);
 });
 
-test('disconnecting the account says it will also stop forwarding, when there is forwarding', async ({ page }) => {
+test('disconnecting names the stacks that exist, and only those', async ({ page }) => {
   await page.goto(`/en/accounts/${connectionId}`);
   const main = page.locator('main');
-  await expect(main).toContainText('OpsWatch stops reading this account');
+  await expect(main).toContainText('Stops reading this account');
   // The part OpsWatch cannot do for them, said plainly rather than left to be discovered.
-  await expect(main).toContainText('Delete the OpsWatch CloudFormation stack yourself');
+  await expect(main).toContainText('it cannot delete its own stack');
+  await expect(main).toContainText('Delete the stacks yourself');
+  await expect(main).toContainText(`aws cloudformation delete-stack --stack-name opswatch-${connectionId}`);
+
+  // Managed collection was never enabled on this connection, so there is no second stack — and telling
+  // somebody to delete a stack they never created is how a removal guide loses their trust.
+  await expect(main).not.toContainText('The collection stack first');
+  await expect(main).not.toContainText('-collection --region');
 });
 
 test('the guide explains push without requiring anybody to understand a subscription filter', async ({ page }) => {

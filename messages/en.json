@@ -236,13 +236,18 @@
     },
     "danger": {
       "title": "Remove this connection",
-      "description": "OpsWatch forgets this account. Delete the CloudFormation stack in AWS to revoke access completely.",
+      "description": "OpsWatch forgets this account. Removing the access it was given is a separate step, in AWS, and only you can do it.",
       "delete": "Remove connection",
-      "stopsCollection": "OpsWatch stops reading this account. Every page about it stops working.",
-      "removesCredentials": "The stored role details and any encrypted credentials are deleted from this instance.",
-      "stopsForwarding": "Managed collection stops, and the subscription filters OpsWatch created are removed from your log groups.",
-      "deleteStack": "Nothing is removed from your AWS account. Delete the OpsWatch CloudFormation stack yourself to remove the role.",
-      "deleteBothStacks": "Nothing is removed from your AWS account. Delete both OpsWatch CloudFormation stacks yourself — the collection stack and the base one — to remove the forwarder and the role."
+      "opswatchDoes": "What OpsWatch does",
+      "stopsCollection": "Stops reading this account. Every page about it stops working.",
+      "removesCredentials": "Deletes the stored role details and any encrypted credentials from this instance.",
+      "removesHistory": "Deletes everything this connection produced: its problems, alerts, error groups, deployments, log sources, saved searches and stored history. This cannot be undone, and reconnecting the same account does not bring it back.",
+      "stopsForwarding": "Stops managed collection and removes the subscription filters OpsWatch created on your log groups.",
+      "awsKeeps": "What stays in your AWS account",
+      "cannotDelete": "Everything. OpsWatch reads with a read-only role, so it cannot delete its own stack — that is what makes the role safe to give it. Delete the stacks yourself, with these commands or in the console.",
+      "collectionStackFirst": "The collection stack first: it holds the subscription filters that invoke the forwarder.",
+      "baseStack": "Then the base stack, which holds the read-only role:",
+      "openConsole": "Open CloudFormation in {region}"
     },
     "details": {
       "title": "Connection details",

@@ -182,3 +182,33 @@ test('the account and the credential method are not editable, because they are w
   await expect(details.getByLabel('AWS account')).toHaveCount(0);
   await expect(page.getByRole('textbox', { name: /account/i })).toHaveCount(0);
 });
+
+test('THE RULING: disconnecting says what it destroys, and what only AWS can', async ({ page }) => {
+  /*
+   * Removing a connection deletes everything that connection produced — problems, alerts, error groups,
+   * deployments, log sources, saved searches, stored history. Somebody who pressed a button expecting
+   * "forget the credential" and got "forget six months of history" was told afterwards.
+   *
+   * And the other half: OpsWatch reads with a read-only role, so it cannot delete its own CloudFormation
+   * stack. A button for something it cannot do would be worse than naming who has to do it.
+   */
+  const id = await createConnection(page, 'role', 'About to be removed');
+  // Scoped to the page: these sentences appear nowhere else on it, and filtering divs by text picks
+  // the innermost one, which is the card's title.
+  const danger = page.locator('main');
+
+  await expect(danger).toContainText('Deletes everything this connection produced');
+  await expect(danger).toContainText('cannot be undone');
+  await expect(danger).toContainText('it cannot delete its own stack');
+  // The exact stack, with the documented command — not a vague instruction to go and look.
+  await expect(danger).toContainText(`aws cloudformation delete-stack --stack-name opswatch-${id} --region us-east-1`);
+  await expect(danger.getByRole('link', { name: /Open CloudFormation in us-east-1/ })).toHaveAttribute(
+    'href',
+    'https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks',
+  );
+
+  // And it does what it said: the connection is gone from the list afterwards.
+  await page.getByRole('button', { name: 'Remove connection' }).click();
+  await expect(page).toHaveURL(/\/en\/accounts$/);
+  await expect(page.getByRole('link', { name: 'About to be removed' })).toHaveCount(0);
+});
