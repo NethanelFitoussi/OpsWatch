@@ -44,5 +44,5 @@ export async function acceptMappingAction(
 
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/errors/groups`);
   return { saved: true };
-  });
+  }, { connectionId });
 }

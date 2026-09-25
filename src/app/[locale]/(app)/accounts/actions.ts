@@ -3,7 +3,9 @@
 import { redirect as nextRedirect } from 'next/navigation';
 import { redirect } from '@/i18n/navigation';
 import { resolveLocale, type AppLocale } from '@/i18n/routing';
+import { recordAdminAction } from '@/lib/auth/audited';
 import { requireAdmin } from '@/lib/auth/current';
+import type { AuditAction } from '@/lib/store/audit';
 import { disableManagedCollection } from '@/lib/aws/collection';
 import { awsErrorCode } from '@/lib/aws/errors';
 import { quickCreateUrl } from '@/lib/aws/template';
@@ -40,11 +42,11 @@ type FormValues = {
 
 export type FormState = ActionState<ConnectionInputErrorCode, { values: FormValues }>;
 
-/** Checks the session and returns the locale to redirect with (the bound argument comes from the client). */
-async function authorize(requestedLocale: string): Promise<AppLocale> {
+/** Checks the session and returns the locale to redirect with, and who is acting. */
+async function authorize(requestedLocale: string): Promise<{ locale: AppLocale; adminId: number }> {
   const locale = resolveLocale(requestedLocale);
-  await requireAdmin(locale);
-  return locale;
+  const adminId = await requireAdmin(locale);
+  return { locale, adminId };
 }
 
 /** What a change needs: the values to echo back on invalid input (null without a form), and the change. */
@@ -56,8 +58,8 @@ type Change = { values: FormValues | null; mutate: (db: Db) => { id: string } };
  * input goes back to the form with `values`, or is rethrown when there is no form (`values` null).
  * Cached credentials of the connection are dropped.
  */
-async function mutateConnection(requestedLocale: string, prepare: () => Change): Promise<FormState> {
-  const locale = await authorize(requestedLocale);
+async function mutateConnection(requestedLocale: string, action: AuditAction, prepare: () => Change): Promise<FormState> {
+  const { locale, adminId } = await authorize(requestedLocale);
   const { values, mutate } = prepare();
   let id: string;
   try {
@@ -67,16 +69,21 @@ async function mutateConnection(requestedLocale: string, prepare: () => Change):
       return redirect({ href: '/accounts', locale });
     }
     if (error instanceof ConnectionInputError && values) {
+      // Refused, not failed, and recorded as such: an administrator did try to change this.
+      await recordAdminAction({ adminId, action, subjectType: 'connection', result: 'denied', details: { reason: error.code } });
       return { error: error.code, values };
     }
     throw error;
   }
+  // Written here rather than around the call, because creating a connection does not know its id until
+  // the connection exists, and because a successful change ends in a redirect and never returns.
+  await recordAdminAction({ adminId, action, subjectType: 'connection', subjectId: id, connectionId: id, result: 'ok' });
   credentialResolver.forget(id);
   return redirect({ href: `/accounts/${id}`, locale });
 }
 
 export async function createConnectionAction(locale: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  return mutateConnection(locale, () => {
+  return mutateConnection(locale, 'connection_create', () => {
     const values = {
       name: formString(formData, 'name'),
       awsAccountId: formString(formData, 'awsAccountId'),
@@ -103,21 +110,23 @@ export async function createConnectionAction(locale: string, _prev: FormState, f
  * method — is not in the form, because changing either would keep that history while changing whose it is.
  */
 export async function saveConnectionDetailsAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  return mutateConnection(locale, () => {
+  return mutateConnection(locale, 'connection_update', () => {
     const values = { name: formString(formData, 'name'), regions: formStrings(formData, 'regions') };
     return { values, mutate: (db) => setNameAndRegions(db, id, values) };
   });
 }
 
 export async function saveRoleArnAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  return mutateConnection(locale, () => {
+  return mutateConnection(locale, 'connection_update', () => {
     const roleArn = formString(formData, 'roleArn');
     return { values: { roleArn }, mutate: (db) => setRoleArn(db, id, roleArn) };
   });
 }
 
+// A credential, replaced: `credential_rotate` rather than `connection_update`, because "somebody
+// changed the keys to this AWS account" is the line a reviewer is looking for.
 export async function saveAccessKeysAction(locale: string, id: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  return mutateConnection(locale, () => {
+  return mutateConnection(locale, 'credential_rotate', () => {
     const accessKeyId = formString(formData, 'accessKeyId');
     const secretAccessKey = formString(formData, 'secretAccessKey');
     return {
@@ -128,11 +137,11 @@ export async function saveAccessKeysAction(locale: string, id: string, _prev: Fo
 }
 
 export async function regenerateExternalIdAction(locale: string, id: string): Promise<void> {
-  await mutateConnection(locale, () => ({ values: null, mutate: (db) => regenerateExternalId(db, id) }));
+  await mutateConnection(locale, 'credential_rotate', () => ({ values: null, mutate: (db) => regenerateExternalId(db, id) }));
 }
 
 export async function launchStackAction(requestedLocale: string, id: string): Promise<void> {
-  const locale = await authorize(requestedLocale);
+  const { locale } = await authorize(requestedLocale);
   const row = findConnection(getDb(), id);
   if (!row) {
     return redirect({ href: '/accounts', locale });
@@ -153,7 +162,7 @@ export async function launchStackAction(requestedLocale: string, id: string): Pr
 }
 
 export async function deleteConnectionAction(requestedLocale: string, id: string): Promise<void> {
-  const locale = await authorize(requestedLocale);
+  const { locale, adminId } = await authorize(requestedLocale);
   // Forwarding is stopped **before** the connection goes, while OpsWatch can still assume the role that
   // removes the subscriptions. Afterwards there is no credential left to do it with, and the filters
   // would keep invoking a Lambda that delivers to an integration which no longer exists.
@@ -161,8 +170,11 @@ export async function deleteConnectionAction(requestedLocale: string, id: string
   // And everything that connection wrote. Without this the problems, alerts, error groups, deployments,
   // log sources, saved searches and history of an account the operator explicitly disconnected stayed in
   // the database for ever: unreachable through any page, because every page is scoped, but still there.
-  purgeConnectionData(getDb(), id);
+  const removed = purgeConnectionData(getDb(), id);
   deleteConnection(getDb(), id);
   credentialResolver.forget(id);
+  // The row that says this happened, and how much went with it. Without it the one action in the
+  // product that destroys an operator's data irreversibly left no trace that it had been taken.
+  await recordAdminAction({ adminId, action: 'connection_delete', subjectType: 'connection', subjectId: id, connectionId: id, result: 'ok', details: { rowsRemoved: removed } });
   redirect({ href: '/accounts', locale });
 }

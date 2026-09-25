@@ -232,6 +232,13 @@
       "when": 1790340599368,
       "tag": "0032_logs_usage_per_connection",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1790343557003,
+      "tag": "0033_audit_log_connection",
+      "breakpoints": true
     }
   ]
 }

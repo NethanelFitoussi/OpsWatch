@@ -50,5 +50,5 @@ export async function updateIncidentAction(
 
     revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/incidents/${id}`);
     return { saved: true };
-  });
+  }, { connectionId });
 }

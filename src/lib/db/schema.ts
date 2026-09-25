@@ -219,6 +219,14 @@ export const auditLog = sqliteTable(
     actorUserId: integer('actor_user_id'),
     actorKind: text('actor_kind', { enum: AUDIT_ACTOR_KINDS }).notNull(),
     action: text('action').notNull(),
+    /**
+     * Which connected AWS account the action was about, where it was about one.
+     *
+     * Null for an action that belongs to the installation — signing in, changing a setting, enrolling a
+     * host. With several accounts connected, "a log source was changed" is not a reviewable statement
+     * without this: the subject is the log source, and the account it belongs to appeared nowhere.
+     */
+    connectionId: text('connection_id'),
     subjectType: text('subject_type'),
     subjectId: text('subject_id'),
     result: text('result', { enum: AUDIT_RESULTS }).notNull(),
@@ -226,7 +234,11 @@ export const auditLog = sqliteTable(
     userAgentHash: text('user_agent_hash'),
     details: text('details', { mode: 'json' }).$type<Record<string, string | number | boolean>>().notNull(),
   },
-  (t) => [index('audit_log_at').on(t.at), index('audit_log_action').on(t.action, t.at)],
+  (t) => [
+    index('audit_log_at').on(t.at),
+    index('audit_log_action').on(t.action, t.at),
+    index('audit_log_connection').on(t.connectionId, t.at),
+  ],
 );
 
 export type AuditLogRow = typeof auditLog.$inferSelect;

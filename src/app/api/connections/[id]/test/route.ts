@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { recordAdminAction } from '@/lib/auth/audited';
 import { getCurrentAdminId } from '@/lib/auth/current';
 import { ConnectionNotFoundError } from '@/lib/connections/repository';
 import { credentialResolver } from '@/lib/connections/resolver';
@@ -14,7 +15,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!isSameOrigin(request, env().OPSWATCH_PUBLIC_URL)) {
     return apiError('forbidden_origin');
   }
-  if ((await getCurrentAdminId()) === null) {
+  const adminId = await getCurrentAdminId();
+  if (adminId === null) {
     return apiError('unauthorized');
   }
   const { id } = await params;
@@ -23,11 +25,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       secret: env().OPSWATCH_SECRET,
       resolver: credentialResolver,
     });
+    // `connection_test` was in the audit log's vocabulary and nothing ever wrote one. A permission test
+    // reads across somebody's AWS account with their credential, which is exactly the kind of action the
+    // log exists for — and with several accounts connected, which one it reached is the point.
+    await recordAdminAction({
+      adminId,
+      action: 'connection_test',
+      subjectType: 'connection',
+      subjectId: id,
+      connectionId: id,
+      result: 'ok',
+      details: { accountMatches: result.accountMatches },
+    });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ConnectionNotFoundError) {
       return apiError('not_found');
     }
+    await recordAdminAction({ adminId, action: 'connection_test', subjectType: 'connection', subjectId: id, connectionId: id, result: 'failed' });
     throw error;
   }
 }

@@ -58,6 +58,12 @@ import {
  *
  * Both have their link to the connection cleared instead, so they survive unattached — visible, still
  * working, and there for the operator to re-scope or remove themselves.
+ *
+ * The **audit log** is neither emptied nor unlinked. It records that this connection was created,
+ * tested, changed and removed, and a log that disappears along with the thing it is evidence about is
+ * not evidence. Unlinking would be no better: `store/audit.ts` contains no update and no delete, and
+ * that is the property the log rests on. Its rows keep the id of an account that no longer exists, and
+ * the page says "a removed account" rather than showing a dangling identifier.
  */
 /**
  * The tables this purge empties, in the order it empties them.

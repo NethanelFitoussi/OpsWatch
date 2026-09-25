@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | MC-10: the Logs Insights budget is shared between accounts instead of raced for |
+| Current checkpoint | MC-12: the audit log names the account, and records the five actions it only promised |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
-| Schema | drizzle **0032** — `logs_usage` keyed by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Schema | drizzle **0033** — `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -145,6 +145,15 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **MC-12 the audit log names the account.** `connection_id` on the row, nullable because signing
+      in and changing a setting belong to the installation rather than to an account; a column and a
+      per-account filter on the page; and "this installation only" as its own question, since a single
+      filter box would have hidden it. Found while wiring it: `connection_create`, `connection_update`,
+      `connection_delete`, `connection_test` and `credential_rotate` were all in the log's closed
+      vocabulary and **not one was ever written** — connecting an account, testing it with somebody's
+      credential, replacing that credential and removing the account together with every problem, alert
+      and log source it produced all left no trace. Also: `redirect()` throws, and an audited action
+      that ended in one was being recorded as having *failed*
 - [x] **Multiple AWS connections, MC-1..MC-8.** The audit is a table in `full-roadmap-status.md`; the
       three that matter most were a cross-account delete (`deleteCheck` took an id alone), silent
       cross-connection data loss (the forwarded-record id did not name the connection, so two
@@ -163,9 +172,8 @@ The page now says that instead of hiding the button.
 
 ## Next, in priority order (the owner's marathon queue)
 
-1. ~~Multiple AWS accounts~~ — MC-1..MC-8, MC-10 and MC-11 done; MC-9 is honest but still one region
-   per connection. **MC-9 (per-region collection stacks) and MC-12 (a connection on the audit log)
-   remain**
+1. ~~Multiple AWS accounts~~ — MC-1..MC-8 and MC-10..MC-12 done. **MC-9 (per-region collection stacks)
+   remains**: honest today, but still one region per connection, and it is a schema change
 2. ~~One-click CloudFormation onboarding~~ — the documented URL format and an honest explanation of what
    the button needs. It cannot be made bucket-free: the console fetches templates only from S3
 3. ~~Safe disconnect~~ — done. **Stack identity is still not tracked for the base stack**: the collection

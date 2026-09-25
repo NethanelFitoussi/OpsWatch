@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, desc, eq, gte, lt, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, lt, type SQL } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import { randomId } from '../crypto';
 import type { Db } from '../db/client';
@@ -70,6 +70,8 @@ export type AuditEntry = {
   actorUserId: number | null;
   actorKind: AuditLogRow['actorKind'];
   action: AuditAction;
+  /** The connected AWS account the action was about; omitted for an installation-wide action. */
+  connectionId?: string | null;
   subjectType?: string | null;
   subjectId?: string | null;
   result: AuditLogRow['result'];
@@ -88,6 +90,7 @@ export function appendAudit(db: Db, entry: AuditEntry): AuditLogRow {
       actorUserId: entry.actorUserId,
       actorKind: entry.actorKind,
       action: entry.action,
+      connectionId: entry.connectionId ?? null,
       subjectType: entry.subjectType ?? null,
       subjectId: entry.subjectId ?? null,
       result: entry.result,
@@ -99,13 +102,22 @@ export function appendAudit(db: Db, entry: AuditEntry): AuditLogRow {
     .get();
 }
 
-export type AuditFilter = { action?: AuditAction; actorUserId?: number; sinceMs?: number; untilMs?: number };
+export type AuditFilter = {
+  action?: AuditAction;
+  actorUserId?: number;
+  /** One account's actions. `null` asks for the installation-wide ones, which is a different question. */
+  connectionId?: string | null;
+  sinceMs?: number;
+  untilMs?: number;
+};
 
 /** Newest first, bounded. An audit log is read from the recent end and filtered, never paged to the start. */
 export function listAudit(db: Db, filter: AuditFilter, limit: number): AuditLogRow[] {
   const where: SQL[] = [];
   if (filter.action !== undefined) where.push(eq(auditLog.action, filter.action));
   if (filter.actorUserId !== undefined) where.push(eq(auditLog.actorUserId, filter.actorUserId));
+  if (filter.connectionId === null) where.push(isNull(auditLog.connectionId));
+  else if (filter.connectionId !== undefined) where.push(eq(auditLog.connectionId, filter.connectionId));
   if (filter.sinceMs !== undefined) where.push(gte(auditLog.at, filter.sinceMs));
   if (filter.untilMs !== undefined) where.push(lt(auditLog.at, filter.untilMs));
 

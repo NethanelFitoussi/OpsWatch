@@ -40,13 +40,69 @@ async function callerContext(): Promise<{ ip: string | null; userAgent: string |
   };
 }
 
+/**
+ * `redirect()` and `notFound()` work by throwing.
+ *
+ * Next.js signals both with a thrown error carrying a `digest`, which is ordinary control flow and not a
+ * failure — but it reaches a `catch` looking exactly like one, and an action that ends by redirecting
+ * would be written into the log as having failed. The audit log is evidence; a row saying an
+ * administrator's successful change failed is worse than no row at all.
+ */
+function isControlFlow(error: unknown): boolean {
+  const digest = (error as { digest?: unknown } | null)?.digest;
+  return typeof digest === 'string' && (digest.startsWith('NEXT_REDIRECT') || digest === 'NEXT_NOT_FOUND');
+}
+
+/**
+ * One administrator action, written down.
+ *
+ * Separate from `auditedAdmin` because some actions only learn what they acted on *inside* the change —
+ * creating a connection does not know its id until it exists — and because some never return at all,
+ * ending in a redirect. Those record here, where both facts are known.
+ */
+export async function recordAdminAction(entry: {
+  adminId: number;
+  action: AuditAction;
+  subjectType: string;
+  subjectId?: string | null;
+  connectionId?: string | null;
+  result: 'ok' | 'denied' | 'failed';
+  details?: Record<string, string | number | boolean>;
+}): Promise<void> {
+  const caller = await callerContext();
+  appendAudit(getDb(), {
+    at: Date.now(),
+    actorUserId: entry.adminId,
+    actorKind: 'user',
+    action: entry.action,
+    subjectType: entry.subjectType,
+    connectionId: entry.connectionId ?? null,
+    subjectId: entry.subjectId ?? null,
+    result: entry.result,
+    ip: caller.ip,
+    userAgent: caller.userAgent,
+    details: entry.details ?? {},
+  });
+}
+
+/**
+ * Which connected AWS account an action was about, when it was about one.
+ *
+ * Passed rather than inferred: a server action under `/c/[connectionId]` knows its account from its own
+ * parameters, and guessing it here from the subject id would be right for connection actions and wrong
+ * for every log source, rule and check — the ones an account review actually turns on.
+ */
+export type AuditScope = { subjectId?: string | null; connectionId?: string | null };
+
 export async function auditedAdmin<T extends object>(
   locale: string,
   action: AuditAction,
   subjectType: string,
   run: (adminId: number) => Promise<T>,
-  subjectId?: string | null,
+  scope?: string | null | AuditScope,
 ): Promise<T> {
+  const { subjectId, connectionId } =
+    scope === undefined || scope === null || typeof scope === 'string' ? { subjectId: scope, connectionId: null } : scope;
   const adminId = await requireAdmin(locale);
   const caller = await callerContext();
   const db = getDb();
@@ -58,6 +114,7 @@ export async function auditedAdmin<T extends object>(
       actorKind: 'user',
       action,
       subjectType,
+      connectionId: connectionId ?? null,
       subjectId: subjectId ?? null,
       result,
       ip: caller.ip,
@@ -74,9 +131,11 @@ export async function auditedAdmin<T extends object>(
     record(refusal === undefined ? 'ok' : 'denied', refusal === undefined ? {} : { reason: refusal });
     return result;
   } catch (error) {
-    // Recorded before it is rethrown, so a crash mid-action is a row rather than a silence.
+    // Recorded before it is rethrown, so a crash mid-action is a row rather than a silence — but a
+    // redirect is how a successful action ends, not how one fails.
     // The error's *name*, never its message: a message can carry a path, a query or a credential.
-    record('failed', { error: error instanceof Error ? error.name : 'unknown' });
+    if (isControlFlow(error)) record('ok');
+    else record('failed', { error: error instanceof Error ? error.name : 'unknown' });
     throw error;
   }
 }

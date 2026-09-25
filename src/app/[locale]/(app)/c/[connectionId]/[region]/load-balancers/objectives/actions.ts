@@ -78,7 +78,7 @@ export async function saveObjectiveAction(
 
     revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/load-balancers/objectives`);
     return { saved: true };
-  });
+  }, { connectionId });
 }
 
 export async function deleteObjectiveAction(
@@ -98,5 +98,5 @@ export async function deleteObjectiveAction(
     deleteSloDefinition(getDb(), mine.id);
     revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/load-balancers/objectives`);
     return { saved: true };
-  });
+  }, { connectionId });
 }

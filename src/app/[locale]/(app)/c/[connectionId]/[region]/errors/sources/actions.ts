@@ -91,5 +91,5 @@ export async function saveSourceAction(
 
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/errors/sources`);
   return { saved: true };
-  });
+  }, { connectionId });
 }

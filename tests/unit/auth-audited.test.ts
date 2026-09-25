@@ -74,3 +74,56 @@ describe('§21 — an administrator action records its outcome', () => {
     expect(requireAdmin).toHaveBeenCalled();
   });
 });
+
+describe('MC-12 — the account an action was about', () => {
+  it('THE RULING: a redirect is how a successful action ends, not how one fails', async () => {
+    // `redirect()` and `notFound()` work by throwing, and the throw reaches the same `catch` a crash
+    // does. Recorded as `failed`, the log would say an administrator's successful change had broken —
+    // which is worse than no row, because somebody would believe it.
+    const redirecting = Object.assign(new Error('NEXT_REDIRECT'), { digest: 'NEXT_REDIRECT;replace;/en/accounts;307;' });
+    await expect(
+      auditedAdmin('en', 'connection_update', 'connection', async () => {
+        throw redirecting;
+      }),
+    ).rejects.toBe(redirecting);
+
+    expect(listAudit(db, {}, 1)[0]).toMatchObject({ result: 'ok' });
+  });
+
+  it('still records a real crash as failed, by its name and never its message', async () => {
+    const boom = Object.assign(new Error('secret-bearing message'), { name: 'RangeError' });
+    await expect(
+      auditedAdmin('en', 'connection_update', 'connection', async () => {
+        throw boom;
+      }),
+    ).rejects.toBe(boom);
+
+    const [row] = listAudit(db, {}, 1);
+    expect(row).toMatchObject({ result: 'failed', details: { error: 'RangeError' } });
+    expect(JSON.stringify(row)).not.toContain('secret-bearing');
+  });
+
+  it('carries the connection when it is given one, and nothing when it is not', async () => {
+    await auditedAdmin('en', 'log_source_update', 'log_source', async () => ({}), { connectionId: 'abc123def456' });
+    await auditedAdmin('en', 'history_update', 'settings', async () => ({}));
+
+    const rows = listAudit(db, {}, 10);
+    expect(rows.find((row) => row.action === 'log_source_update')?.connectionId).toBe('abc123def456');
+    expect(rows.find((row) => row.action === 'history_update')?.connectionId).toBeNull();
+  });
+
+  it('keeps the old positional subject id working, so no caller had to be rewritten to stay correct', async () => {
+    await auditedAdmin('en', 'host_update', 'host', async () => ({}), 'host-1');
+    expect(listAudit(db, {}, 1)[0]).toMatchObject({ subjectId: 'host-1', connectionId: null });
+  });
+
+  it('asks for one account’s actions, or for the ones belonging to no account at all', async () => {
+    await auditedAdmin('en', 'log_source_update', 'log_source', async () => ({}), { connectionId: 'abc123def456' });
+    await auditedAdmin('en', 'history_update', 'settings', async () => ({}));
+
+    expect(listAudit(db, { connectionId: 'abc123def456' }, 10).map((row) => row.action)).toEqual(['log_source_update']);
+    // `null` is a question, not a missing filter: "what was done to this installation itself".
+    expect(listAudit(db, { connectionId: null }, 10).map((row) => row.action)).toEqual(['history_update']);
+    expect(listAudit(db, {}, 10)).toHaveLength(2);
+  });
+});

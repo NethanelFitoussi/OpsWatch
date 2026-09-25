@@ -152,7 +152,14 @@ describe('removing everything one connection wrote', () => {
     // destroy: a destination is the operator's own webhook with a secret shown once, and a host is a
     // machine that exists whether or not anybody watches the AWS account it runs in.
     const unscoped = ['notify_destinations', 'hosts'];
-    expect(inSchema.filter((name) => !purged.includes(name) && !cascading.includes(name) && !unscoped.includes(name))).toEqual([]);
+    // The audit log is neither: it is evidence *about* the connection, including of its removal, and it
+    // has no update and no delete anywhere in it. Its rows outlive the account on purpose.
+    const evidence = ['audit_log'];
+    expect(
+      inSchema.filter(
+        (name) => !purged.includes(name) && !cascading.includes(name) && !unscoped.includes(name) && !evidence.includes(name),
+      ),
+    ).toEqual([]);
     // And nothing is purged that the schema does not have, which would be a rename nobody finished.
     expect(purged.filter((name) => !inSchema.includes(name))).toEqual([]);
   });

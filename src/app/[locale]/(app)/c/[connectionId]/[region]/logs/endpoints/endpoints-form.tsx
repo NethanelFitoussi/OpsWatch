@@ -168,7 +168,6 @@ export function EndpointsForm({
                     <ul className="mt-1 space-y-1">
                       {(state.samples ?? []).map((line, index) => (
                         // A sample log line is usually wider than a phone, and nothing in it is focusable.
-                        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
                         <li key={index} tabIndex={0} className="overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs whitespace-pre focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                           {line}
                         </li>

@@ -37,7 +37,7 @@ export async function acknowledgeAlertAction(
     acknowledgeAlert(db, id, Date.now(), String(adminId));
     revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/alerts`);
     return { saved: true };
-  });
+  }, { connectionId });
 }
 
 /** Turning a rule off, which §15.1 promises is possible because the install rules are ordinary rules. */
@@ -57,5 +57,5 @@ export async function toggleRuleAction(
     setRuleEnabled(db, id, !rule.enabled);
     revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/alerts`);
     return { saved: true };
-  });
+  }, { connectionId });
 }

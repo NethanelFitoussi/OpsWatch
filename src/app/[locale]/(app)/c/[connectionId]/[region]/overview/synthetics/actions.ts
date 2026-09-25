@@ -75,7 +75,7 @@ export async function saveCheckAction(
 
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/synthetics`);
   return { saved: true };
-  });
+  }, { connectionId });
 }
 
 export async function deleteCheckAction(
@@ -102,5 +102,5 @@ export async function deleteCheckAction(
   if (deleteCheck(getDb(), connectionId, region, id) === 0) return { error: 'not_found' };
   revalidatePath(`/${resolveLocale(locale)}/c/${connectionId}/${region}/overview/synthetics`);
   return { saved: true };
-  });
+  }, { connectionId });
 }

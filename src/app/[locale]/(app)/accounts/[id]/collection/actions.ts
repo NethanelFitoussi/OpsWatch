@@ -47,7 +47,7 @@ export async function enableCollectionAction(locale: string, connectionId: strin
     const { secret } = enableManagedCollection(getDb(), connectionId, Date.now());
     refresh(locale, connectionId);
     return { secret };
-  }, connectionId);
+  }, { subjectId: connectionId, connectionId });
 }
 
 export async function rotateSecretAction(locale: string, connectionId: string, _prev: CollectionState): Promise<CollectionState> {
@@ -55,7 +55,7 @@ export async function rotateSecretAction(locale: string, connectionId: string, _
     const { secret } = rotateIngestSecret(getDb(), connectionId, Date.now());
     refresh(locale, connectionId);
     return { secret };
-  }, connectionId);
+  }, { subjectId: connectionId, connectionId });
 }
 
 /** Turns it off, removing every subscription first. The base integration is untouched. */
@@ -64,7 +64,7 @@ export async function disableCollectionAction(locale: string, connectionId: stri
     const outcome = await disableManagedCollection(getDb(), connectionId, Date.now());
     refresh(locale, connectionId);
     return { removed: outcome.removed.length, failed: outcome.failed.length };
-  }, connectionId);
+  }, { subjectId: connectionId, connectionId });
 }
 
 /** Confirms the forwarder against AWS. An ARN a browser supplied is a claim until this says otherwise. */
@@ -77,7 +77,7 @@ export async function verifyForwarderAction(locale: string, connectionId: string
     const outcome = await verifyForwarder(getDb(), connectionId, region, arn, Date.now());
     refresh(locale, connectionId);
     return outcome.ok ? { verified: true, version: outcome.version ?? null } : { error: 'failed' };
-  }, connectionId);
+  }, { subjectId: connectionId, connectionId });
 }
 
 /** The two switches that are not "may anything be forwarded": the log source, and whether records are kept. */
@@ -98,7 +98,7 @@ export async function saveCollectionSettingsAction(locale: string, connectionId:
     );
     refresh(locale, connectionId);
     return { saved: true };
-  }, connectionId);
+  }, { subjectId: connectionId, connectionId });
 }
 
 /** Starts or stops forwarding one log group. The AWS call and the row move together. */
@@ -119,5 +119,5 @@ export async function toggleLogGroupAction(locale: string, connectionId: string,
     refresh(locale, connectionId);
     if (started.ok) return { saved: true };
     return started.reason === 'conflict' ? { error: 'conflict', owner: started.owner } : { error: started.reason };
-  }, connectionId);
+  }, { subjectId: connectionId, connectionId });
 }
