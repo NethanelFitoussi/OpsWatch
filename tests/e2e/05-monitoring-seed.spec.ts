@@ -108,6 +108,8 @@ test('the seeded alarms and log events are readable', async () => {
     // test written against the first two.
     [SEED.unknownAlarm]: 'INSUFFICIENT_DATA',
     [SEED.longAlarm]: 'ALARM',
+    // A metric-math alarm, which carries its metric inside `Metrics[]` rather than at the top level.
+    [SEED.insightsAlarm]: 'ALARM',
   });
 
   const logs = new CloudWatchLogsClient(config);

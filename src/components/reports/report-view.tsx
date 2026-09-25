@@ -27,7 +27,7 @@ function Delta({ delta, notMeasured }: { delta: number | null; notMeasured: stri
   if (delta === 0) return <span className="text-muted-foreground">0</span>;
   const rounded = Number.isInteger(delta) ? String(delta) : delta.toFixed(1);
   return (
-    <span className={delta > 0 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'}>
+    <span className={delta > 0 ? 'text-destructive' : 'text-emerald-700 dark:text-emerald-400'}>
       {delta > 0 ? `+${rounded}` : rounded}
     </span>
   );
@@ -43,6 +43,7 @@ export async function ReportView({
   locale,
   basePath,
   exportHref,
+  problemsPath,
 }: {
   report: Report;
   locale: string;
@@ -50,6 +51,8 @@ export async function ReportView({
   basePath: string;
   /** Where the Markdown copy of this exact report comes from. */
   exportHref: string;
+  /** Where a problem row points. A report that lists problems and cannot open one is a dead end. */
+  problemsPath: string;
 }) {
   const t = await getTranslations({ locale, namespace: 'Monitoring.report' });
   const tSeverity = await getTranslations({ locale, namespace: 'Insights.severity' });
@@ -98,7 +101,20 @@ export async function ReportView({
             ))}
             {section.rows.map((row) => (
               <tr key={row.id}>
-                <th scope="row" className="max-w-md truncate py-2 pr-4 text-left font-normal" title={row.label}>{row.label}</th>
+                {/* What happened, with what it happened to underneath — and a link to the thing itself
+                    where the row knows which thing that is. An identifier belongs on the second line. */}
+                <th scope="row" className="max-w-md py-2 pr-4 text-left font-normal">
+                  <span className="block break-words">
+                    {row.ref?.type === 'problem' ? (
+                      <Link href={`${problemsPath}/${row.ref.id}`} className="underline-offset-4 hover:underline">
+                        {row.label}
+                      </Link>
+                    ) : (
+                      row.label
+                    )}
+                  </span>
+                  {row.detail !== undefined && <span className="block font-mono text-xs break-all text-muted-foreground">{row.detail}</span>}
+                </th>
                 <td className="py-2 pr-4 text-right tabular-nums"><Value value={row.value} notMeasured={notMeasured} /></td>
                 <td className="py-2 pr-4 text-right tabular-nums text-muted-foreground"><Value value={row.previous} notMeasured={notMeasured} /></td>
                 <td className="py-2 text-right tabular-nums"><Delta delta={row.delta} notMeasured={notMeasured} /></td>

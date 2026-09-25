@@ -8,6 +8,7 @@ import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/rou
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { readReport } from '@/lib/read/reports';
+import { insightRenderer } from '@/lib/read/render';
 
 type Props = { params: Promise<MonitoringParams>; searchParams: Promise<{ period?: string }> };
 
@@ -25,7 +26,8 @@ export default async function ReportPage({ params, searchParams }: Props) {
   const report = readReport(
     getDb(),
     { connectionId: context.scope.connectionId, scope: context.scope.region, section: 'load-balancers', period },
-    { nowMs: pageNow(), familyLabel: (family) => families(family) },
+    // The detector's own sentence, so a row says what happened rather than printing an AWS identifier.
+    { nowMs: pageNow(), familyLabel: (family) => families(family), render: await insightRenderer(context.locale) },
   );
 
   return (
@@ -34,6 +36,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
         report={report}
         locale={context.locale}
         basePath={subsectionPath(context.scope, 'load-balancers', 'report')}
+        problemsPath={subsectionPath(context.scope, 'overview', 'problems')}
         exportHref={`/api/v1/reports?env=${context.scope.connectionId}:${context.scope.region}&section=load-balancers&period=${period}&format=markdown&locale=${context.locale}`}
       />
     </SectionLayout>

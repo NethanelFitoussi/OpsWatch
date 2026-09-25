@@ -32,14 +32,29 @@ test('THE RULING: an alarm AWS could not evaluate is never counted as OK', async
   await expect(page.locator('main')).not.toContainText('opswatch-e2e-cache-engine-cpu');
 });
 
-test('a row leads with what is watched, and keeps the AWS name', async ({ page }) => {
+test('THE RULING: a row leads with what is watched, and the AWS name is secondary', async ({ page }) => {
   await page.goto(alarms());
   const row = page.getByRole('listitem').filter({ hasText: 'opswatch-e2e-high-cpu' });
-  // "CPU on web", not "opswatch-e2e-high-cpu".
-  await expect(row).toContainText(/on web/);
-  await expect(row).toContainText('ECS');
-  // The AWS name is still there, because that is what a runbook and the console say.
-  await expect(row).toContainText('opswatch-e2e-high-cpu');
+  // What, where and the condition — as sentences, before any AWS identifier.
+  await expect(row).toContainText('CPU use is above its threshold');
+  await expect(row).toContainText('ECS service web');
+  await expect(row).toContainText('CPU utilization > 30%');
+
+  // The identifier is still reachable, and it is behind the disclosure rather than being the title.
+  const title = row.locator('p').first();
+  await expect(title).not.toContainText('opswatch-e2e-high-cpu');
+  await expect(row.getByRole('group')).toContainText('opswatch-e2e-high-cpu');
+});
+
+test('THE RULING: an Application Insights alarm is readable without decoding its name', async ({ page }) => {
+  await page.goto(alarms());
+  // The shape a real estate produces: no MetricName of its own, everything inside `Metrics[].MetricStat`,
+  // and a name that is four AWS identifiers joined by slashes. The title has to come from the metric.
+  const row = page.getByRole('listitem').filter({ hasText: 'ApplicationInsights/' });
+  await expect(row).toContainText('CPU reservation is above its threshold');
+  await expect(row).toContainText('ECS cluster opswatch-e2e');
+  const title = row.locator('p').first();
+  await expect(title).not.toContainText('ApplicationInsights/');
 });
 
 test('THE RULING: the figure shown is what AWS reported, never an invented current value', async ({ page }) => {
@@ -54,14 +69,35 @@ test('THE RULING: the figure shown is what AWS reported, never an invented curre
   await expect(noFigure).not.toContainText('AWS reported');
 });
 
-test('alarms are grouped by the service their namespace names, not by their own name', async ({ page }) => {
+test('THE RULING: a healthy alarm never claims it crossed a threshold', async ({ page }) => {
+  await page.goto(alarms());
+  // The seeded RDS alarm is at OK. The family's sentence is written for the state the alarm exists to
+  // catch, and printing it here made the list say the opposite of what the row's own colour said.
+  const row = page.getByRole('listitem').filter({ hasText: 'opswatch-e2e-db-connections' });
+  await expect(row).toContainText('Connections: within its threshold');
+  await expect(row).not.toContainText('crossed');
+  await expect(row).not.toContainText('above its threshold');
+
+  // And one AWS could not evaluate says that, rather than either of the other two things.
+  const unknown = page.getByRole('listitem').filter({ hasText: 'opswatch-e2e-cache-engine-cpu' });
+  await expect(unknown).toContainText('AWS has no data for');
+  await expect(unknown).not.toContainText('above its threshold');
+});
+
+test('THE RULING: the list is grouped by what needs attention, not by AWS service', async ({ page }) => {
   await page.goto(alarms());
   const main = page.locator('main');
-  await expect(main.getByRole('heading', { name: 'ECS' })).toBeVisible();
-  await expect(main.getByRole('heading', { name: 'Databases' })).toBeVisible();
-  // `Acme/Custom` is a namespace OpsWatch does not know, and it says so rather than guessing.
-  await expect(main.getByRole('heading', { name: 'Other' })).toBeVisible();
+  // The question the page is opened with is "what needs me". Grouping by service answers a different one.
+  await expect(main.getByRole('heading', { name: 'Needs attention' })).toBeVisible();
+  await expect(main.getByRole('heading', { name: 'Healthy' })).toBeVisible();
+  // And the third state keeps its own section rather than being folded into either.
+  await expect(main.getByRole('heading', { name: 'Not evaluated' })).toBeVisible();
 
+  // The firing alarms come first, above the healthy ones.
+  const headings = await main.getByRole('heading', { name: /Needs attention|Healthy/ }).allTextContents();
+  expect(headings.indexOf('Needs attention')).toBeLessThan(headings.indexOf('Healthy'));
+
+  // Service is still how the list is narrowed; it is no longer how it is arranged.
   await page.locator('main').getByRole('link', { name: 'Databases', exact: true }).click();
   await expect(page).toHaveURL(/svc=rds/);
   await expect(page.locator('main')).toContainText('opswatch-e2e-db-connections');
@@ -95,6 +131,9 @@ test('THE RULING: an alarm detail explains the condition, and admits what it can
   await expect(main).toContainText('Raised by the payments team');
   // AWS's sentence is kept but not led with.
   await expect(main).toContainText('AWS saw 83 against a threshold of ≥ 5');
+  // The datapoints themselves, labelled as what AWS saw when the state changed rather than as "current".
+  await expect(main).toContainText('83, 91.5');
+  await expect(main).toContainText('They are not the current value');
   await expect(main.getByText('What AWS actually wrote')).toBeVisible();
 
   // No empty timeline: the permission is not granted and the page says which one.
@@ -107,6 +146,22 @@ test('an alarm with no resolvable resource says so rather than showing an empty 
   // A sentence, not "It watches X on no resource AWS names." — the slot where a name goes stays empty.
   await expect(main).toContainText('The alarm names no resource');
   await expect(main).not.toContainText(/ on no resource/);
+});
+
+test('THE RULING: the detail explains what to check, and only links where it can prove the way', async ({ page }) => {
+  await page.goto(`${alarms()}/${encodeURIComponent('opswatch-e2e-high-cpu')}`);
+  const main = page.locator('main');
+
+  // The page heading is not the AWS identifier.
+  await expect(main.getByRole('heading', { level: 1 })).not.toContainText('opswatch-e2e-high-cpu');
+  // A deterministic explanation of the metric family, written once rather than paraphrased per render.
+  await expect(main).toContainText('What this measures');
+  await expect(main).toContainText('Why it matters');
+  // And the investigation, which is the reason an alarm in ALARM state is worth opening.
+  await expect(main).toContainText('What to check');
+  await expect(main.getByRole('listitem')).not.toHaveCount(0);
+  // Only destinations OpsWatch can prove: an ECS alarm reaches the services it names.
+  await expect(main.getByRole('link', { name: 'ECS services' }).first()).toBeVisible();
 });
 
 test('THE RULING: a metric OpsWatch has no phrase for is shown by its AWS name, never as a message key', async ({ page }) => {

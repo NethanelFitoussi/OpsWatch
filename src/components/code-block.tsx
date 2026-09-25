@@ -5,7 +5,10 @@ export function CodeBlock({ label, value }: { label?: string; value: string }) {
   if (!label) {
     return (
       <div className="flex items-start gap-2">
-        <pre className="min-w-0 flex-1 overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs">{value}</pre>
+        {/* Focusable: a block that scrolls sideways is unreachable without a mouse otherwise. */}
+        <pre tabIndex={0} className="min-w-0 flex-1 overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+          {value}
+        </pre>
         <CopyButton value={value} />
       </div>
     );
@@ -16,7 +19,7 @@ export function CodeBlock({ label, value }: { label?: string; value: string }) {
         <span className="truncate font-mono text-xs text-muted-foreground">{label}</span>
         <CopyButton value={value} />
       </div>
-      <pre className="max-h-80 overflow-auto p-3 font-mono text-xs leading-relaxed">
+      <pre tabIndex={0} className="max-h-80 overflow-auto p-3 font-mono text-xs leading-relaxed focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring">
         <code>{value}</code>
       </pre>
     </div>

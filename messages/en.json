@@ -1185,7 +1185,8 @@
           "advancedOff": "Built from the search above. Click inside to edit it yourself.",
           "advancedOn": "You are editing the query. The search box above no longer changes it.",
           "billed": "AWS bills for the data a search scans, so fewer log groups and a shorter range cost less.",
-          "readGuide": "Searching your logs"
+          "readGuide": "Searching your logs",
+          "lines": "{count} lines"
         },
         "levels": {
           "error": "Error",
@@ -1248,7 +1249,8 @@
             "query_too_long": "That query is too long to store.",
             "too_many_saved": "You have reached the limit on saved searches. Delete one first.",
             "not_found": "That saved search is no longer there."
-          }
+          },
+          "open": "Saved searches ({count})"
         },
         "ai": {
           "title": "Ask for help building this search",
@@ -1278,7 +1280,29 @@
             "refused_endpoint": "That AI endpoint was refused because it points inside this network.",
             "bad_response": "The AI provider replied with something OpsWatch could not read.",
             "timeout": "The AI provider did not answer in time."
-          }
+          },
+          "open": "Ask AI"
+        },
+        "sources": {
+          "label": "Sources",
+          "none": "none chosen",
+          "count": "{count} chosen",
+          "filter": "Filter log groups",
+          "selected": "{count} of {total} chosen",
+          "selectVisible": "Choose these",
+          "done": "Done",
+          "failed": "OpsWatch could not list this region’s log groups. Open a search from a log group page, or check the connection.",
+          "chosen": "Chosen"
+        },
+        "quick": {
+          "errors": "Errors only",
+          "serverErrors": "HTTP 500s",
+          "timeouts": "Timeouts",
+          "latest": "Everything, newest first"
+        },
+        "start": {
+          "title": "Search your logs",
+          "hint": "Choose the log groups to look in, then search. These are the questions people ask most often."
         }
       },
       "facets": {
@@ -1489,9 +1513,29 @@
         "gone": "AWS no longer reports an alarm called {name} in this region. It may have been deleted or renamed.",
         "backToList": "All alarms",
         "watchesOnly": "It watches {metric}. The alarm names no resource, so OpsWatch cannot say what it covers.",
-        "noResourceFact": "The alarm names none",
+        "noResourceFact": "The alarm names no resource",
         "crossedNoValue": "AWS saw the measurement cross a threshold of {comparison} {threshold}.",
-        "crossedNoThreshold": "AWS saw {value}, which crossed the alarm’s threshold."
+        "crossedNoThreshold": "AWS saw {value}, which crossed the alarm’s threshold.",
+        "observedTitle": "What AWS observed",
+        "observedHint": "AWS’s own count, from the sentence it wrote when the state last changed.",
+        "observedCount": "{breached} of the last {evaluated} evaluation periods breached the configured threshold.",
+        "observedValues": "The datapoints AWS quoted: {values}.",
+        "observedWhen": "These are what AWS saw when it last changed the state, which may be some time ago. They are not the current value.",
+        "meansTitle": "What this measures",
+        "whyItMatters": "Why it matters:",
+        "checkTitle": "What to check",
+        "checkHint": "Things to look at, in the order that usually narrows it fastest. None of them is the cause; the alarm does not know the cause.",
+        "whereNext": "Where to go next",
+        "whereNextHint": "Only the places OpsWatch can actually take you for this alarm.",
+        "goServices": "ECS services",
+        "goDeployments": "Recent deployments",
+        "goBalancers": "Load balancers",
+        "goInstances": "Instances",
+        "goDatabases": "Databases",
+        "goRedis": "Redis nodes",
+        "goLogs": "Search the logs",
+        "forPeriods": "for {count} of {periods} periods",
+        "observedAgainst": "AWS saw {value} against a threshold of {comparison} {threshold}."
       },
       "metricNames": {
         "cpu": "CPU utilization",
@@ -1516,8 +1560,44 @@
         "throttles": "Throttles",
         "duration": "Duration",
         "queueDepth": "Messages waiting",
-        "queueAge": "Age of the oldest message"
-      }
+        "queueAge": "Age of the oldest message",
+        "cpuReservation": "CPU reservation",
+        "memoryReservation": "Memory reservation"
+      },
+      "rowFallbackTitle": "{metric} crossed its threshold",
+      "technical": "Technical details",
+      "evidenceShort": "{breached} of the last {evaluated} periods breached",
+      "changedAgo": "Changed {when}",
+      "investigate": "Investigate",
+      "open": "Open",
+      "resource": "Resource",
+      "kinds": {
+        "ecs-cluster": "ECS cluster",
+        "ecs-service": "ECS service",
+        "load-balancer": "Load balancer",
+        "target-group": "Target group",
+        "instance": "Instance",
+        "database": "Database",
+        "cache": "Cache",
+        "function": "Function",
+        "queue": "Queue",
+        "unknown": "Resource"
+      },
+      "sections": {
+        "ALARM": "Needs attention",
+        "INSUFFICIENT_DATA": "Not evaluated",
+        "OK": "Healthy"
+      },
+      "stateHeadline": {
+        "ALARM": "Needs attention",
+        "OK": "Healthy",
+        "INSUFFICIENT_DATA": "Not evaluated"
+      },
+      "reportedShort": "AWS reported {values}",
+      "withinTitle": "{metric}: within its threshold",
+      "unevaluatedTitle": "AWS has no data for {metric}",
+      "noMetricOK": "This alarm is not firing",
+      "noMetricUnknown": "AWS could not evaluate this alarm"
     },
     "metrics": {
       "cpu": "CPU utilization",
@@ -1540,7 +1620,361 @@
       "latency": "Latency",
       "read": "Read",
       "write": "Write",
-      "replicaLag": "Replica lag"
+      "replicaLag": "Replica lag",
+      "families": {
+        "ecsCpuReservation": {
+          "title": "CPU reservation is above its threshold",
+          "means": "The share of the cluster’s registered CPU capacity that is reserved by the tasks running on it. It counts what tasks asked for, not what they are using.",
+          "matters": "A cluster close to fully reserved cannot place new tasks, so a deployment or a scale-out can stall even while the instances look idle.",
+          "checks": {
+            "0": "Look at which ECS services in this cluster reserve the most CPU, and whether one of them changed recently.",
+            "1": "Check whether a deployment raised a task definition’s CPU reservation or its desired count.",
+            "2": "Compare the reserved CPU with the capacity actually registered in the cluster — reservation is a share of what is there, so removing an instance raises it without anything else changing.",
+            "3": "Check whether the container instances are near their own limits, or whether any have left the cluster.",
+            "4": "If the demand is real, the choice is more capacity or smaller reservations. Reserving less than a task needs is not a fix."
+          }
+        },
+        "ecsMemoryReservation": {
+          "title": "Memory reservation is above its threshold",
+          "means": "The share of the cluster’s registered memory that is reserved by its tasks. Like CPU reservation, it counts what was asked for rather than what is in use.",
+          "matters": "Memory is usually what stops a task being placed first. A cluster fully reserved for memory rejects new tasks whatever its CPU looks like.",
+          "checks": {
+            "0": "Look at which services reserve the most memory, and whether one changed recently.",
+            "1": "Check whether a deployment raised a task definition’s memory or its desired count.",
+            "2": "Compare the reservation with the memory registered in the cluster; an instance leaving raises this without any task changing.",
+            "3": "Check whether tasks are being stopped for memory, which is a different signal from reservation.",
+            "4": "If the demand is real, add capacity or reduce the per-task reservation to what the task actually needs."
+          }
+        },
+        "ecsCpuUtilization": {
+          "title": "CPU use is above its threshold",
+          "means": "How much CPU the service’s tasks are actually using, as a share of what they reserved.",
+          "matters": "Sustained high use means the tasks are working at their limit, and requests will queue before anything fails outright.",
+          "checks": {
+            "0": "Check whether request volume to this service rose at the same time.",
+            "1": "Check whether a deployment changed the code or the task size shortly before this started.",
+            "2": "Look at the service’s running task count — fewer tasks carrying the same work raises this.",
+            "3": "Compare with the cluster’s reservation: a service at its own limit inside a cluster with room is a sizing question, not a capacity one."
+          }
+        },
+        "ecsMemoryUtilization": {
+          "title": "Memory use is above its threshold",
+          "means": "How much memory the service’s tasks are using, as a share of what they reserved.",
+          "matters": "A task that reaches its memory limit is killed by the container runtime, which shows up as a restart rather than as an error.",
+          "checks": {
+            "0": "Check whether tasks in this service have restarted recently.",
+            "1": "Check whether a deployment changed the code or the task’s memory shortly before this started.",
+            "2": "Look at whether use is climbing steadily rather than spiking, which reads differently.",
+            "3": "Compare with the reservation: a task using nearly all of what it asked for may simply have asked for too little."
+          }
+        },
+        "ecsRunningTasks": {
+          "title": "The running task count crossed its threshold",
+          "means": "How many tasks of this service are running.",
+          "matters": "A service below its desired count is serving with less than it was configured to have; above it is usually a deployment in progress.",
+          "checks": {
+            "0": "Compare the running count with the desired count on the service.",
+            "1": "Check whether a deployment is in progress or has failed.",
+            "2": "Look for tasks that stopped, and what stopped them.",
+            "3": "Check whether the cluster has room to place the missing tasks."
+          }
+        },
+        "albTarget5xx": {
+          "title": "Targets are returning 5xx responses",
+          "means": "How many responses the targets behind this load balancer returned with a 5xx status. These come from the application, not from the load balancer.",
+          "matters": "A 5xx is the application telling the load balancer it could not serve the request. Users saw an error.",
+          "checks": {
+            "0": "Look at the errors OpsWatch collected for this service over the same window.",
+            "1": "Check whether a deployment shipped shortly before the first one.",
+            "2": "Check whether targets are also failing their health checks, which would point at the instances rather than the code.",
+            "3": "Check whether a dependency the service calls — a database, a cache, an upstream API — changed at the same time.",
+            "4": "Compare with request volume: the same error rate under far more traffic is a different problem from a new fault."
+          }
+        },
+        "albTarget4xx": {
+          "title": "Targets are returning 4xx responses",
+          "means": "How many responses the targets returned with a 4xx status: the request was refused as bad, unauthorised or not found.",
+          "matters": "A rise in 4xx is usually a client, a route or an authentication change rather than a broken server — but a sudden one is worth understanding.",
+          "checks": {
+            "0": "Check whether a deployment changed routes, validation or authentication.",
+            "1": "Look at which paths are returning them, if your logs carry the path.",
+            "2": "Check whether a client or an integration started sending something different.",
+            "3": "Separate 401 and 403 from 404: they have different explanations."
+          }
+        },
+        "albElb5xx": {
+          "title": "The load balancer itself is returning 5xx responses",
+          "means": "Responses the load balancer generated on its own, without a target answering — because none was healthy, or none answered in time.",
+          "matters": "This is not the application failing; it is the load balancer having nothing to send the request to.",
+          "checks": {
+            "0": "Check the healthy target count for the target groups behind this load balancer.",
+            "1": "Check whether tasks or instances were stopping or starting at the same time.",
+            "2": "Check whether targets are timing out rather than refusing.",
+            "3": "Look at whether a deployment was replacing targets at that moment."
+          }
+        },
+        "albResponseTime": {
+          "title": "Target response time is above its threshold",
+          "means": "How long targets took to answer, measured by the load balancer from sending the request to receiving the last byte.",
+          "matters": "It is what a user experiences as slowness, and it rises before failures do.",
+          "checks": {
+            "0": "Check whether request volume rose at the same time.",
+            "1": "Check whether a deployment shipped shortly before.",
+            "2": "Look at database and cache latency over the same window — a slow dependency shows up here first.",
+            "3": "Check whether the targets are CPU-bound or memory-bound.",
+            "4": "Look at the slowest endpoints, if your logs carry a duration."
+          }
+        },
+        "albUnhealthyHosts": {
+          "title": "Targets are failing their health checks",
+          "means": "How many targets in the group the load balancer currently considers unhealthy.",
+          "matters": "An unhealthy target receives no traffic, so the ones that remain carry all of it.",
+          "checks": {
+            "0": "Check how many healthy targets are left, and whether that is enough for the traffic.",
+            "1": "Check whether the tasks or instances behind them are restarting.",
+            "2": "Check whether the health check path itself is failing for a reason unrelated to the service being broken.",
+            "3": "Look at whether a deployment was replacing targets at that moment."
+          }
+        },
+        "albRequests": {
+          "title": "Request volume crossed its threshold",
+          "means": "How many requests the load balancer handled.",
+          "matters": "Volume itself is not a fault; it is context for everything else that changed at the same time.",
+          "checks": {
+            "0": "Check whether error rates or response times moved with it.",
+            "1": "Check whether the rise is a real change in traffic or a retry storm.",
+            "2": "Compare with the same period on previous days before treating it as unusual."
+          }
+        },
+        "ec2Cpu": {
+          "title": "Instance CPU use is above its threshold",
+          "means": "How much of the instance’s CPU is in use, as AWS measures it from the hypervisor.",
+          "matters": "A sustained high figure means the instance is working at its limit; on a burstable instance it also means credits are being spent.",
+          "checks": {
+            "0": "Check whether this is sustained or a spike — a burst is not the same problem as a plateau.",
+            "1": "Check what runs on this instance and whether any of it changed.",
+            "2": "If this is a burstable instance type, check the CPU credit balance.",
+            "3": "Check whether the instance is part of a group that could share the work."
+          }
+        },
+        "ec2StatusCheck": {
+          "title": "An instance status check is failing",
+          "means": "AWS’s own check that the instance is reachable and its operating system is responding.",
+          "matters": "A failing status check means the instance is not usable, whatever the application on it thinks.",
+          "checks": {
+            "0": "Check whether it is the instance check or the system check that is failing — they have different owners.",
+            "1": "Check whether the instance is reachable at all.",
+            "2": "Look for the instance running out of memory or disk.",
+            "3": "If it is the system check, this is AWS’s infrastructure: stopping and starting the instance moves it to different hardware."
+          }
+        },
+        "ec2StatusCheckInstance": {
+          "title": "The instance’s own status check is failing",
+          "means": "AWS’s check of the software and network configuration of this instance — the operating system, not the hardware.",
+          "matters": "Something on the instance is wrong. AWS’s hardware is fine; restarting it elsewhere will not help.",
+          "checks": {
+            "0": "Check whether the instance has run out of memory or disk.",
+            "1": "Check the operating system logs around the time it started failing.",
+            "2": "Check whether a recent change to the instance’s configuration or network caused it.",
+            "3": "A reboot clears some of these; understand why first if you can."
+          }
+        },
+        "ec2StatusCheckSystem": {
+          "title": "The system status check is failing",
+          "means": "AWS’s check of the hardware and network underneath this instance.",
+          "matters": "This one is AWS’s side. Nothing on the instance caused it and nothing on the instance will fix it.",
+          "checks": {
+            "0": "Stopping and starting the instance moves it to different hardware, which resolves most of these.",
+            "1": "Check the AWS Health Dashboard for an event in this availability zone.",
+            "2": "If the workload matters, move it to another instance rather than waiting."
+          }
+        },
+        "rdsCpu": {
+          "title": "Database CPU use is above its threshold",
+          "means": "How much of the database instance’s CPU is in use.",
+          "matters": "A database at its CPU limit makes every query slower, so the symptom usually appears in the applications first.",
+          "checks": {
+            "0": "Look at the slowest and most frequent queries over the same window.",
+            "1": "Check whether a deployment changed a query or added one.",
+            "2": "Check whether connection count rose at the same time.",
+            "3": "Look for a missing index on a query that suddenly became frequent.",
+            "4": "If the load is legitimate, the choices are a larger instance, a read replica, or less work."
+          }
+        },
+        "rdsFreeableMemory": {
+          "title": "Free database memory is below its threshold",
+          "means": "How much memory the database instance has available. Unlike most metrics, a **low** figure is the concerning one.",
+          "matters": "A database short of memory starts reading from disk instead of cache, and everything slows down before anything fails.",
+          "checks": {
+            "0": "Check whether read latency rose at the same time — that is what running out of cache looks like.",
+            "1": "Check whether connection count rose; each connection costs memory.",
+            "2": "Look for a query returning far more rows than it used to.",
+            "3": "If this is steady state rather than a spike, the instance may simply be too small for the working set."
+          }
+        },
+        "rdsFreeStorage": {
+          "title": "Free database storage is below its threshold",
+          "means": "How much disk the database instance has left. A **low** figure is the concerning one.",
+          "matters": "A database that runs out of storage stops accepting writes. This is one of the few AWS alarms that predicts a hard outage.",
+          "checks": {
+            "0": "Check how fast it is falling — the rate matters more than the level.",
+            "1": "Look for a table growing unexpectedly, and for logs or temporary files that are not being cleared.",
+            "2": "Check whether automated backups or snapshots are consuming it.",
+            "3": "If storage autoscaling is not enabled, enabling it buys time; it does not remove the cause."
+          }
+        },
+        "rdsConnections": {
+          "title": "Database connections crossed the threshold",
+          "means": "How many connections are open to the database.",
+          "matters": "Every engine has a limit. Reaching it means new connections are refused, which applications usually report as an outage.",
+          "checks": {
+            "0": "Check whether an application scaled out — more tasks usually means more pools.",
+            "1": "Check the pool size configured in each service against the instance’s limit.",
+            "2": "Look for connections that are opened and not returned.",
+            "3": "Check whether queries got slower, which holds connections open for longer."
+          }
+        },
+        "rdsReadLatency": {
+          "title": "Database read latency is above its threshold",
+          "means": "How long the database takes to serve a read from storage.",
+          "matters": "Reads leaving cache and going to disk is the usual explanation, and it makes every dependent request slower.",
+          "checks": {
+            "0": "Check freeable memory over the same window.",
+            "1": "Check whether a query started returning far more data.",
+            "2": "Look at the storage type and whether the instance is using its I/O allowance.",
+            "3": "Check whether the load moved to a replica that is sized differently."
+          }
+        },
+        "rdsWriteLatency": {
+          "title": "Database write latency is above its threshold",
+          "means": "How long the database takes to commit a write to storage.",
+          "matters": "Slow writes back up quickly, because a write usually holds a transaction open.",
+          "checks": {
+            "0": "Check whether write volume rose at the same time.",
+            "1": "Check the storage type and whether the instance is using its I/O allowance.",
+            "2": "Look for a batch job or migration running at that moment.",
+            "3": "Check whether replication is lagging, which can share a cause."
+          }
+        },
+        "rdsReplicaLag": {
+          "title": "Replica lag is above its threshold",
+          "means": "How far behind the primary a read replica is.",
+          "matters": "Anything reading from the replica is reading stale data, and how stale is exactly this number.",
+          "checks": {
+            "0": "Check whether write volume on the primary rose at the same time.",
+            "1": "Check whether the replica is CPU-bound or I/O-bound applying the changes.",
+            "2": "Look for a long transaction or a bulk write on the primary.",
+            "3": "Check whether anything reading from the replica assumes it is current."
+          }
+        },
+        "redisEngineCpu": {
+          "title": "Redis engine CPU is above its threshold",
+          "means": "How busy the Redis process itself is. Redis is single-threaded, so this is the figure that matters — not the node’s overall CPU.",
+          "matters": "At its limit, every command queues. Redis slowing down usually shows up as latency in everything that uses it.",
+          "checks": {
+            "0": "Look for expensive commands — anything scanning the keyspace, or a large collection being read whole.",
+            "1": "Check whether command volume rose at the same time.",
+            "2": "Check whether a deployment changed how the cache is used.",
+            "3": "If the load is legitimate, a larger node type or sharding is the answer; more replicas will not help writes."
+          }
+        },
+        "redisCpu": {
+          "title": "Redis node CPU is above its threshold",
+          "means": "The node’s overall CPU, across every core.",
+          "matters": "On a multi-core node this can look calm while Redis itself is saturated. Engine CPU is the better signal.",
+          "checks": {
+            "0": "Check engine CPU, which is what actually limits Redis.",
+            "1": "Check whether network throughput rose at the same time.",
+            "2": "Check whether a backup or a replication sync was running."
+          }
+        },
+        "redisMemory": {
+          "title": "Redis memory use is above its threshold",
+          "means": "How much of the node’s memory the dataset is using.",
+          "matters": "When it fills, Redis begins evicting keys, or refuses writes if no eviction policy is set. Either shows up as cache misses.",
+          "checks": {
+            "0": "Check the eviction count over the same window.",
+            "1": "Look for keys stored without an expiry.",
+            "2": "Check whether a deployment started caching something larger.",
+            "3": "Decide whether the answer is a larger node or a shorter expiry — the dataset will keep growing otherwise."
+          }
+        },
+        "redisEvictions": {
+          "title": "Redis is evicting keys",
+          "means": "How many keys Redis removed to make room, before they expired on their own.",
+          "matters": "Every eviction is a cache miss somebody is about to pay for, and it means the node is full.",
+          "checks": {
+            "0": "Check memory use over the same window — eviction is what a full node looks like.",
+            "1": "Check whether the cache hit rate fell at the same time.",
+            "2": "Look for keys stored without an expiry, which eviction is doing the job of.",
+            "3": "Either the node is too small for the dataset, or the dataset should be smaller."
+          }
+        },
+        "redisConnections": {
+          "title": "Redis connections crossed the threshold",
+          "means": "How many clients are connected to the node.",
+          "matters": "Each connection costs memory, and a client that opens connections without closing them will eventually exhaust the node.",
+          "checks": {
+            "0": "Check whether an application scaled out.",
+            "1": "Look for connections being opened per request rather than pooled.",
+            "2": "Check memory use, which rises with connection count."
+          }
+        },
+        "lambdaErrors": {
+          "title": "The function is returning errors",
+          "means": "How many invocations ended in an error, counted by Lambda itself.",
+          "matters": "An error here is an invocation that did not do its job. Whether anything retried it depends on what invoked it.",
+          "checks": {
+            "0": "Look at the function’s own logs over the same window.",
+            "1": "Check whether a deployment shipped shortly before the first error.",
+            "2": "Check whether a dependency the function calls changed at the same time.",
+            "3": "Check whether the invocations are being retried, and whether anything is collecting the ones that failed for good."
+          }
+        },
+        "lambdaThrottles": {
+          "title": "The function is being throttled",
+          "means": "How many invocations Lambda refused because the concurrency limit was reached.",
+          "matters": "A throttled invocation did not run at all. Depending on the caller, it was either retried or lost.",
+          "checks": {
+            "0": "Check whether invocation volume rose at the same time.",
+            "1": "Check the reserved concurrency on this function and the account limit.",
+            "2": "Check whether another function in the account consumed the shared pool."
+          }
+        },
+        "lambdaDuration": {
+          "title": "The function is running longer than its threshold",
+          "means": "How long invocations took, from the moment Lambda started running the handler to the moment it returned.",
+          "matters": "Duration is what Lambda bills, and an invocation that reaches the configured timeout is killed rather than finished.",
+          "checks": {
+            "0": "Check how close the duration is to the function’s timeout.",
+            "1": "Check whether a dependency the function calls got slower.",
+            "2": "Check whether a deployment changed what the function does.",
+            "3": "Look at cold starts separately from warm invocations."
+          }
+        },
+        "sqsAge": {
+          "title": "Messages are waiting longer than the threshold",
+          "means": "How old the oldest message in the queue is.",
+          "matters": "This is the queue’s real backlog: it says how far behind the consumers are, in time rather than in count.",
+          "checks": {
+            "0": "Check whether the consumers are running at all.",
+            "1": "Check whether consumers are erroring, which returns messages to the queue.",
+            "2": "Check whether message volume rose faster than the consumers can keep up.",
+            "3": "Look at the dead-letter queue, if there is one."
+          }
+        },
+        "sqsDepth": {
+          "title": "The queue depth crossed its threshold",
+          "means": "How many messages are waiting to be picked up.",
+          "matters": "Depth alone can be a brief spike. Read it with the age of the oldest message, which says whether anything is actually stuck.",
+          "checks": {
+            "0": "Check the age of the oldest message — depth without age is usually a burst.",
+            "1": "Check whether the consumers are keeping up or falling behind.",
+            "2": "Check whether a producer started sending more.",
+            "3": "Check whether consumers are erroring and returning messages."
+          }
+        }
+      }
     },
     "containers": {
       "title": "Containers",
@@ -2208,10 +2642,10 @@
         "traffic_surge": "Traffic was far above normal for this hour of the week"
       },
       "confirm": {
-        "deploy_regression.confirm": "Compare the deployed revision with the one before it, and check whether rolling back stops the errors.",
-        "capacity_shortfall.confirm": "Check desired against running counts, and whether raising the desired count clears it.",
-        "noise.confirm": "Look at how often this has opened and closed. If nothing else changed, the threshold is probably too tight.",
-        "traffic_surge.confirm": "Compare the request count with the same hour on previous weeks, and check whether the problem clears as traffic falls back."
+        "deploy_regression": "Compare the deployed revision with the one before it, and check whether rolling back stops the errors.",
+        "capacity_shortfall": "Check desired against running counts, and whether raising the desired count clears it.",
+        "noise": "Look at how often this has opened and closed. If nothing else changed, the threshold is probably too tight.",
+        "traffic_surge": "Compare the request count with the same hour on previous weeks, and check whether the problem clears as traffic falls back."
       }
     },
     "code": {
@@ -2954,7 +3388,9 @@
       "synthetic_slow": "{name} responds in {median} ms, above its {threshold} ms expectation.",
       "cert_expiring": "{name}'s certificate expires in {days, plural, one {# day} other {# days}}.",
       "slo_burn_fast": "{name} is burning its error budget {rate}× faster than it can afford, measured over the last {hours, plural, one {hour} other {# hours}}.",
-      "slo_burn_slow": "{name} has been burning its error budget {rate}× faster than it can afford over the last {hours, plural, one {hour} other {# hours}}."
+      "slo_burn_slow": "{name} has been burning its error budget {rate}× faster than it can afford over the last {hours, plural, one {hour} other {# hours}}.",
+      "alarm_firing_on": "{metric} crossed its alarm threshold on {subject}.",
+      "alarm_firing_metric": "{metric} crossed its alarm threshold."
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services of {cluster} run fewer tasks than desired.",

@@ -47,8 +47,8 @@ export function TestDestinationForm({ action }: { action: FormAction<NotifyState
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
       <SubmitButton>{t('test')}</SubmitButton>
-      {state.tested === true && <span className="text-sm text-emerald-600 dark:text-emerald-400">{t('testOk')}</span>}
-      {state.error !== undefined && <span className="text-sm text-red-600 dark:text-red-400">{t(`errors.${state.error}`)}</span>}
+      {state.tested === true && <span className="text-sm text-emerald-700 dark:text-emerald-400">{t('testOk')}</span>}
+      {state.error !== undefined && <span className="text-sm text-red-700 dark:text-red-400">{t(`errors.${state.error}`)}</span>}
     </form>
   );
 }

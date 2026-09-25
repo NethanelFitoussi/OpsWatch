@@ -1185,7 +1185,8 @@
           "advancedOff": "Construite à partir de la recherche ci-dessus. Cliquez dedans pour la modifier vous-même.",
           "advancedOn": "Vous modifiez la requête. Le champ de recherche ci-dessus ne la change plus.",
           "billed": "AWS facture les données analysées par une recherche : moins de groupes et une période plus courte coûtent moins cher.",
-          "readGuide": "Rechercher dans vos journaux"
+          "readGuide": "Rechercher dans vos journaux",
+          "lines": "{count} lignes"
         },
         "levels": {
           "error": "Erreur",
@@ -1248,7 +1249,8 @@
             "query_too_long": "Cette requête est trop longue pour être enregistrée.",
             "too_many_saved": "Vous avez atteint la limite de recherches enregistrées. Supprimez-en une d’abord.",
             "not_found": "Cette recherche enregistrée n’existe plus."
-          }
+          },
+          "open": "Recherches enregistrées ({count})"
         },
         "ai": {
           "title": "Demander de l’aide pour construire cette recherche",
@@ -1278,7 +1280,29 @@
             "refused_endpoint": "Ce point de terminaison d’IA a été refusé car il pointe à l’intérieur de ce réseau.",
             "bad_response": "Le fournisseur d’IA a répondu quelque chose qu’OpsWatch n’a pas pu lire.",
             "timeout": "Le fournisseur d’IA n’a pas répondu à temps."
-          }
+          },
+          "open": "Demander à l’IA"
+        },
+        "sources": {
+          "label": "Sources",
+          "none": "aucune choisie",
+          "count": "{count} choisies",
+          "filter": "Filtrer les groupes de journaux",
+          "selected": "{count} sur {total} choisies",
+          "selectVisible": "Choisir celles-ci",
+          "done": "Terminé",
+          "failed": "OpsWatch n’a pas pu lister les groupes de journaux de cette région. Ouvrez une recherche depuis la page d’un groupe, ou vérifiez la connexion.",
+          "chosen": "Choisies"
+        },
+        "quick": {
+          "errors": "Erreurs seulement",
+          "serverErrors": "Erreurs HTTP 500",
+          "timeouts": "Délais dépassés",
+          "latest": "Tout, du plus récent"
+        },
+        "start": {
+          "title": "Cherchez dans vos journaux",
+          "hint": "Choisissez les groupes de journaux à examiner, puis cherchez. Voici les questions les plus fréquentes."
         }
       },
       "facets": {
@@ -1489,9 +1513,29 @@
         "gone": "AWS ne signale plus d'alarme nommée {name} dans cette région. Elle a peut-être été supprimée ou renommée.",
         "backToList": "Toutes les alarmes",
         "watchesOnly": "Elle surveille {metric}. L’alarme ne nomme aucune ressource, OpsWatch ne peut donc pas dire ce qu’elle couvre.",
-        "noResourceFact": "L’alarme n’en nomme aucune",
+        "noResourceFact": "L’alarme ne nomme aucune ressource",
         "crossedNoValue": "AWS a vu la mesure franchir un seuil de {comparison} {threshold}.",
-        "crossedNoThreshold": "AWS a vu {value}, ce qui a franchi le seuil de l’alarme."
+        "crossedNoThreshold": "AWS a vu {value}, ce qui a franchi le seuil de l’alarme.",
+        "observedTitle": "Ce qu’AWS a observé",
+        "observedHint": "Le décompte d’AWS lui-même, tiré de la phrase qu’il a écrite au dernier changement d’état.",
+        "observedCount": "{breached} des {evaluated} dernières périodes d’évaluation ont franchi le seuil configuré.",
+        "observedValues": "Les points de mesure cités par AWS : {values}.",
+        "observedWhen": "Ce sont les valeurs vues par AWS au dernier changement d’état, qui peut dater. Ce n’est pas la valeur actuelle.",
+        "meansTitle": "Ce que cela mesure",
+        "whyItMatters": "Pourquoi c’est important :",
+        "checkTitle": "Que vérifier",
+        "checkHint": "Des choses à regarder, dans l’ordre qui restreint généralement le plus vite. Aucune n’est la cause ; l’alarme ne connaît pas la cause.",
+        "whereNext": "Où aller ensuite",
+        "whereNextHint": "Seulement les endroits où OpsWatch peut réellement vous emmener pour cette alarme.",
+        "goServices": "Services ECS",
+        "goDeployments": "Déploiements récents",
+        "goBalancers": "Répartiteurs de charge",
+        "goInstances": "Instances",
+        "goDatabases": "Bases de données",
+        "goRedis": "Nœuds Redis",
+        "goLogs": "Chercher dans les journaux",
+        "forPeriods": "pendant {count} périodes sur {periods}",
+        "observedAgainst": "AWS a mesuré {value} face à un seuil de {comparison} {threshold}."
       },
       "metricNames": {
         "cpu": "Utilisation CPU",
@@ -1516,8 +1560,44 @@
         "throttles": "Limitations",
         "duration": "Durée",
         "queueDepth": "Messages en attente",
-        "queueAge": "Âge du plus ancien message"
-      }
+        "queueAge": "Âge du plus ancien message",
+        "cpuReservation": "Réservation CPU",
+        "memoryReservation": "Réservation mémoire"
+      },
+      "rowFallbackTitle": "{metric} a franchi son seuil",
+      "technical": "Détails techniques",
+      "evidenceShort": "{breached} des {evaluated} dernières périodes ont franchi le seuil",
+      "changedAgo": "Modifiée {when}",
+      "investigate": "Enquêter",
+      "open": "Ouvrir",
+      "resource": "Ressource",
+      "kinds": {
+        "ecs-cluster": "Cluster ECS",
+        "ecs-service": "Service ECS",
+        "load-balancer": "Répartiteur de charge",
+        "target-group": "Groupe cible",
+        "instance": "Instance",
+        "database": "Base de données",
+        "cache": "Cache",
+        "function": "Fonction",
+        "queue": "File",
+        "unknown": "Ressource"
+      },
+      "sections": {
+        "ALARM": "À traiter",
+        "INSUFFICIENT_DATA": "Non évaluées",
+        "OK": "Saines"
+      },
+      "stateHeadline": {
+        "ALARM": "À traiter",
+        "OK": "Saine",
+        "INSUFFICIENT_DATA": "Non évaluée"
+      },
+      "reportedShort": "AWS a relevé {values}",
+      "withinTitle": "{metric} : en deçà de son seuil",
+      "unevaluatedTitle": "AWS n’a aucune donnée pour {metric}",
+      "noMetricOK": "Cette alarme ne se déclenche pas",
+      "noMetricUnknown": "AWS n’a pas pu évaluer cette alarme"
     },
     "metrics": {
       "cpu": "Utilisation CPU",
@@ -1540,7 +1620,361 @@
       "latency": "Latence",
       "read": "Lecture",
       "write": "Écriture",
-      "replicaLag": "Retard de réplication"
+      "replicaLag": "Retard de réplication",
+      "families": {
+        "ecsCpuReservation": {
+          "title": "La réservation de CPU dépasse son seuil",
+          "means": "La part de la capacité CPU enregistrée dans le cluster qui est réservée par les tâches qui y tournent. Elle compte ce que les tâches ont demandé, pas ce qu’elles utilisent.",
+          "matters": "Un cluster proche de la réservation complète ne peut plus placer de nouvelle tâche : un déploiement ou une montée en charge peut bloquer alors que les instances paraissent inactives.",
+          "checks": {
+            "0": "Regardez quels services ECS de ce cluster réservent le plus de CPU, et si l’un d’eux a changé récemment.",
+            "1": "Vérifiez si un déploiement a augmenté la réservation CPU d’une définition de tâche ou son nombre souhaité.",
+            "2": "Comparez le CPU réservé à la capacité réellement enregistrée : la réservation est une part de ce qui existe, donc retirer une instance la fait monter sans que rien d’autre ne change.",
+            "3": "Vérifiez si les instances du cluster approchent de leurs propres limites, ou si l’une d’elles l’a quitté.",
+            "4": "Si la demande est réelle, le choix est entre plus de capacité et des réservations plus petites. Réserver moins que ce dont une tâche a besoin n’est pas une solution."
+          }
+        },
+        "ecsMemoryReservation": {
+          "title": "La réservation de mémoire dépasse son seuil",
+          "means": "La part de la mémoire enregistrée dans le cluster réservée par ses tâches. Comme pour le CPU, elle compte ce qui a été demandé, pas ce qui est utilisé.",
+          "matters": "C’est généralement la mémoire qui empêche d’abord le placement d’une tâche. Un cluster entièrement réservé en mémoire refuse toute nouvelle tâche, quel que soit son CPU.",
+          "checks": {
+            "0": "Regardez quels services réservent le plus de mémoire, et si l’un d’eux a changé récemment.",
+            "1": "Vérifiez si un déploiement a augmenté la mémoire d’une définition de tâche ou son nombre souhaité.",
+            "2": "Comparez la réservation à la mémoire enregistrée dans le cluster ; le départ d’une instance fait monter ce chiffre sans qu’aucune tâche ne change.",
+            "3": "Vérifiez si des tâches sont arrêtées pour cause de mémoire, ce qui est un signal différent de la réservation.",
+            "4": "Si la demande est réelle, ajoutez de la capacité ou réduisez la réservation par tâche."
+          }
+        },
+        "ecsCpuUtilization": {
+          "title": "L’utilisation CPU dépasse son seuil",
+          "means": "Le CPU réellement consommé par les tâches du service, en part de ce qu’elles ont réservé.",
+          "matters": "Une valeur haute et durable signifie que les tâches travaillent à leur limite : les requêtes vont s’accumuler avant que quoi que ce soit n’échoue vraiment.",
+          "checks": {
+            "0": "Vérifiez si le volume de requêtes vers ce service a augmenté au même moment.",
+            "1": "Vérifiez si un déploiement a changé le code ou la taille des tâches juste avant.",
+            "2": "Regardez le nombre de tâches en cours : moins de tâches pour le même travail fait monter ce chiffre.",
+            "3": "Comparez avec la réservation du cluster : un service à sa limite dans un cluster qui a de la place est une question de dimensionnement, pas de capacité."
+          }
+        },
+        "ecsMemoryUtilization": {
+          "title": "L’utilisation mémoire dépasse son seuil",
+          "means": "La mémoire réellement utilisée par les tâches du service, en part de ce qu’elles ont réservé.",
+          "matters": "Une tâche qui atteint sa limite mémoire est tuée par le moteur de conteneurs, ce qui apparaît comme un redémarrage plutôt que comme une erreur.",
+          "checks": {
+            "0": "Vérifiez si des tâches de ce service ont redémarré récemment.",
+            "1": "Vérifiez si un déploiement a changé le code ou la mémoire de la tâche juste avant.",
+            "2": "Regardez si la consommation monte régulièrement plutôt que par pics — cela ne se lit pas pareil.",
+            "3": "Comparez à la réservation : une tâche qui utilise presque tout ce qu’elle a demandé en a peut-être demandé trop peu."
+          }
+        },
+        "ecsRunningTasks": {
+          "title": "Le nombre de tâches en cours a franchi son seuil",
+          "means": "Combien de tâches de ce service tournent.",
+          "matters": "Un service sous son nombre souhaité sert avec moins que ce pour quoi il a été configuré ; au-dessus, c’est généralement un déploiement en cours.",
+          "checks": {
+            "0": "Comparez le nombre en cours au nombre souhaité du service.",
+            "1": "Vérifiez si un déploiement est en cours ou a échoué.",
+            "2": "Cherchez les tâches qui se sont arrêtées, et ce qui les a arrêtées.",
+            "3": "Vérifiez si le cluster a la place de placer les tâches manquantes."
+          }
+        },
+        "albTarget5xx": {
+          "title": "Les cibles renvoient des réponses 5xx",
+          "means": "Combien de réponses les cibles derrière ce répartiteur ont renvoyées avec un statut 5xx. Elles viennent de l’application, pas du répartiteur.",
+          "matters": "Un 5xx, c’est l’application qui dit au répartiteur qu’elle n’a pas pu servir la requête. Des utilisateurs ont vu une erreur.",
+          "checks": {
+            "0": "Regardez les erreurs collectées par OpsWatch pour ce service sur la même période.",
+            "1": "Vérifiez si un déploiement est parti juste avant la première.",
+            "2": "Vérifiez si des cibles échouent aussi à leur contrôle de santé, ce qui désignerait les instances plutôt que le code.",
+            "3": "Vérifiez si une dépendance appelée par le service — base, cache, API amont — a changé au même moment.",
+            "4": "Comparez au volume de requêtes : le même taux d’erreur sous bien plus de trafic n’est pas la même panne."
+          }
+        },
+        "albTarget4xx": {
+          "title": "Les cibles renvoient des réponses 4xx",
+          "means": "Combien de réponses les cibles ont renvoyées avec un statut 4xx : requête refusée comme invalide, non autorisée ou introuvable.",
+          "matters": "Une hausse des 4xx vient généralement d’un client, d’une route ou d’un changement d’authentification plutôt que d’un serveur cassé — mais une hausse soudaine mérite d’être comprise.",
+          "checks": {
+            "0": "Vérifiez si un déploiement a changé les routes, la validation ou l’authentification.",
+            "1": "Regardez quels chemins les renvoient, si vos journaux portent le chemin.",
+            "2": "Vérifiez si un client ou une intégration s’est mis à envoyer autre chose.",
+            "3": "Distinguez les 401 et 403 des 404 : leurs explications diffèrent."
+          }
+        },
+        "albElb5xx": {
+          "title": "Le répartiteur lui-même renvoie des 5xx",
+          "means": "Des réponses que le répartiteur a générées seul, sans qu’une cible réponde — parce qu’aucune n’était saine, ou qu’aucune n’a répondu à temps.",
+          "matters": "Ce n’est pas l’application qui échoue : c’est le répartiteur qui n’a nulle part où envoyer la requête.",
+          "checks": {
+            "0": "Vérifiez le nombre de cibles saines des groupes cibles derrière ce répartiteur.",
+            "1": "Vérifiez si des tâches ou des instances démarraient ou s’arrêtaient au même moment.",
+            "2": "Vérifiez si les cibles expirent plutôt qu’elles ne refusent.",
+            "3": "Regardez si un déploiement remplaçait des cibles à cet instant."
+          }
+        },
+        "albResponseTime": {
+          "title": "Le temps de réponse des cibles dépasse son seuil",
+          "means": "Le temps mis par les cibles pour répondre, mesuré par le répartiteur de l’envoi de la requête au dernier octet reçu.",
+          "matters": "C’est ce qu’un utilisateur ressent comme de la lenteur, et cela monte avant que quoi que ce soit n’échoue.",
+          "checks": {
+            "0": "Vérifiez si le volume de requêtes a augmenté au même moment.",
+            "1": "Vérifiez si un déploiement est parti juste avant.",
+            "2": "Regardez la latence base de données et cache sur la même période : une dépendance lente se voit d’abord ici.",
+            "3": "Vérifiez si les cibles sont limitées par le CPU ou par la mémoire.",
+            "4": "Regardez les points d’entrée les plus lents, si vos journaux portent une durée."
+          }
+        },
+        "albUnhealthyHosts": {
+          "title": "Des cibles échouent à leur contrôle de santé",
+          "means": "Combien de cibles du groupe le répartiteur considère actuellement comme non saines.",
+          "matters": "Une cible non saine ne reçoit plus de trafic : celles qui restent le portent entièrement.",
+          "checks": {
+            "0": "Vérifiez combien de cibles saines restent, et si cela suffit au trafic.",
+            "1": "Vérifiez si les tâches ou instances derrière elles redémarrent.",
+            "2": "Vérifiez si c’est le chemin du contrôle de santé qui échoue, pour une raison sans rapport avec le service.",
+            "3": "Regardez si un déploiement remplaçait des cibles à cet instant."
+          }
+        },
+        "albRequests": {
+          "title": "Le volume de requêtes a franchi son seuil",
+          "means": "Combien de requêtes le répartiteur a traitées.",
+          "matters": "Le volume n’est pas une panne en soi ; c’est le contexte de tout ce qui a changé au même moment.",
+          "checks": {
+            "0": "Vérifiez si les taux d’erreur ou les temps de réponse ont bougé avec lui.",
+            "1": "Vérifiez si la hausse est un vrai changement de trafic ou une tempête de réessais.",
+            "2": "Comparez à la même période des jours précédents avant de la juger inhabituelle."
+          }
+        },
+        "ec2Cpu": {
+          "title": "L’utilisation CPU de l’instance dépasse son seuil",
+          "means": "La part du CPU de l’instance en cours d’utilisation, mesurée par AWS depuis l’hyperviseur.",
+          "matters": "Une valeur haute et durable signifie que l’instance travaille à sa limite ; sur un type « burstable », cela consomme aussi des crédits.",
+          "checks": {
+            "0": "Vérifiez si c’est durable ou un pic — une pointe n’est pas le même problème qu’un plateau.",
+            "1": "Vérifiez ce qui tourne sur cette instance et si quelque chose a changé.",
+            "2": "Si l’instance est de type « burstable », vérifiez le solde de crédits CPU.",
+            "3": "Vérifiez si l’instance fait partie d’un groupe qui pourrait partager le travail."
+          }
+        },
+        "ec2StatusCheck": {
+          "title": "Un contrôle d’état de l’instance échoue",
+          "means": "Le contrôle d’AWS vérifiant que l’instance est joignable et que son système répond.",
+          "matters": "Un contrôle en échec signifie que l’instance est inutilisable, quoi qu’en pense l’application dessus.",
+          "checks": {
+            "0": "Vérifiez si c’est le contrôle d’instance ou le contrôle système qui échoue — les responsables diffèrent.",
+            "1": "Vérifiez si l’instance est joignable du tout.",
+            "2": "Cherchez un manque de mémoire ou de disque sur l’instance.",
+            "3": "Si c’est le contrôle système, c’est l’infrastructure AWS : arrêter puis démarrer l’instance la déplace sur un autre matériel."
+          }
+        },
+        "ec2StatusCheckInstance": {
+          "title": "Le contrôle d’état propre à l’instance échoue",
+          "means": "Le contrôle par AWS du logiciel et de la configuration réseau de cette instance — le système, pas le matériel.",
+          "matters": "Quelque chose ne va pas sur l’instance. Le matériel d’AWS va bien ; la redémarrer ailleurs n’aidera pas.",
+          "checks": {
+            "0": "Vérifiez si l’instance manque de mémoire ou de disque.",
+            "1": "Consultez les journaux du système au moment où l’échec a commencé.",
+            "2": "Vérifiez si un changement récent de configuration ou de réseau en est la cause.",
+            "3": "Un redémarrage en résout certains ; comprenez d’abord pourquoi si vous le pouvez."
+          }
+        },
+        "ec2StatusCheckSystem": {
+          "title": "Le contrôle d’état système échoue",
+          "means": "Le contrôle par AWS du matériel et du réseau sous cette instance.",
+          "matters": "Celui-ci est du côté d’AWS. Rien sur l’instance ne l’a causé et rien sur l’instance ne le corrigera.",
+          "checks": {
+            "0": "Arrêter puis démarrer l’instance la déplace sur un autre matériel, ce qui résout la plupart de ces cas.",
+            "1": "Consultez le tableau de bord AWS Health pour un événement dans cette zone de disponibilité.",
+            "2": "Si la charge est importante, déplacez-la sur une autre instance plutôt que d’attendre."
+          }
+        },
+        "rdsCpu": {
+          "title": "L’utilisation CPU de la base dépasse son seuil",
+          "means": "La part du CPU de l’instance de base de données en cours d’utilisation.",
+          "matters": "Une base à sa limite CPU ralentit toutes les requêtes ; le symptôme apparaît donc d’abord dans les applications.",
+          "checks": {
+            "0": "Regardez les requêtes les plus lentes et les plus fréquentes sur la même période.",
+            "1": "Vérifiez si un déploiement a changé ou ajouté une requête.",
+            "2": "Vérifiez si le nombre de connexions a augmenté au même moment.",
+            "3": "Cherchez un index manquant sur une requête devenue soudainement fréquente.",
+            "4": "Si la charge est légitime, les options sont une instance plus grande, un réplica en lecture, ou moins de travail."
+          }
+        },
+        "rdsFreeableMemory": {
+          "title": "La mémoire libre de la base est sous son seuil",
+          "means": "La mémoire disponible sur l’instance. Contrairement à la plupart des métriques, c’est une valeur **basse** qui inquiète.",
+          "matters": "Une base à court de mémoire lit sur disque au lieu du cache, et tout ralentit avant que quoi que ce soit n’échoue.",
+          "checks": {
+            "0": "Vérifiez si la latence de lecture a monté au même moment — c’est à cela que ressemble un cache épuisé.",
+            "1": "Vérifiez si le nombre de connexions a augmenté ; chaque connexion coûte de la mémoire.",
+            "2": "Cherchez une requête renvoyant bien plus de lignes qu’avant.",
+            "3": "Si c’est un régime permanent et non un pic, l’instance est peut-être trop petite pour le jeu de données actif."
+          }
+        },
+        "rdsFreeStorage": {
+          "title": "Le stockage libre de la base est sous son seuil",
+          "means": "L’espace disque restant sur l’instance. C’est une valeur **basse** qui inquiète.",
+          "matters": "Une base à court de stockage cesse d’accepter les écritures. C’est l’une des rares alarmes AWS qui annonce une panne franche.",
+          "checks": {
+            "0": "Vérifiez à quelle vitesse il baisse — le rythme compte plus que le niveau.",
+            "1": "Cherchez une table qui grossit anormalement, et des journaux ou fichiers temporaires non purgés.",
+            "2": "Vérifiez si les sauvegardes automatiques ou les instantanés le consomment.",
+            "3": "Si l’autoscaling du stockage n’est pas activé, l’activer gagne du temps ; il ne supprime pas la cause."
+          }
+        },
+        "rdsConnections": {
+          "title": "Les connexions à la base ont franchi le seuil",
+          "means": "Combien de connexions sont ouvertes vers la base.",
+          "matters": "Chaque moteur a une limite. L’atteindre fait refuser les nouvelles connexions, ce que les applications signalent en général comme une panne.",
+          "checks": {
+            "0": "Vérifiez si une application a monté en charge — plus de tâches signifie souvent plus de pools.",
+            "1": "Comparez la taille de pool configurée dans chaque service à la limite de l’instance.",
+            "2": "Cherchez des connexions ouvertes et jamais rendues.",
+            "3": "Vérifiez si les requêtes ont ralenti, ce qui garde les connexions ouvertes plus longtemps."
+          }
+        },
+        "rdsReadLatency": {
+          "title": "La latence de lecture dépasse son seuil",
+          "means": "Le temps que met la base à servir une lecture depuis le stockage.",
+          "matters": "Des lectures qui sortent du cache pour aller au disque en sont l’explication habituelle, et cela ralentit toutes les requêtes dépendantes.",
+          "checks": {
+            "0": "Vérifiez la mémoire libre sur la même période.",
+            "1": "Vérifiez si une requête s’est mise à renvoyer beaucoup plus de données.",
+            "2": "Regardez le type de stockage et si l’instance consomme son quota d’E/S.",
+            "3": "Vérifiez si la charge s’est déplacée vers un réplica dimensionné différemment."
+          }
+        },
+        "rdsWriteLatency": {
+          "title": "La latence d’écriture dépasse son seuil",
+          "means": "Le temps que met la base à valider une écriture sur le stockage.",
+          "matters": "Les écritures lentes s’accumulent vite, car une écriture garde en général une transaction ouverte.",
+          "checks": {
+            "0": "Vérifiez si le volume d’écritures a augmenté au même moment.",
+            "1": "Regardez le type de stockage et si l’instance consomme son quota d’E/S.",
+            "2": "Cherchez un traitement par lots ou une migration en cours à cet instant.",
+            "3": "Vérifiez si la réplication prend du retard, ce qui peut partager la même cause."
+          }
+        },
+        "rdsReplicaLag": {
+          "title": "Le retard du réplica dépasse son seuil",
+          "means": "De combien un réplica en lecture est en retard sur le primaire.",
+          "matters": "Tout ce qui lit sur le réplica lit des données périmées, et ce chiffre dit exactement de combien.",
+          "checks": {
+            "0": "Vérifiez si le volume d’écritures sur le primaire a augmenté au même moment.",
+            "1": "Vérifiez si le réplica est limité par le CPU ou les E/S en appliquant les changements.",
+            "2": "Cherchez une transaction longue ou une écriture massive sur le primaire.",
+            "3": "Vérifiez si ce qui lit le réplica suppose qu’il est à jour."
+          }
+        },
+        "redisEngineCpu": {
+          "title": "Le CPU du moteur Redis dépasse son seuil",
+          "means": "À quel point le processus Redis lui-même est occupé. Redis est mono-thread : c’est ce chiffre qui compte, pas le CPU global du nœud.",
+          "matters": "À sa limite, toute commande fait la queue. Un Redis qui ralentit se voit généralement comme de la latence dans tout ce qui l’utilise.",
+          "checks": {
+            "0": "Cherchez les commandes coûteuses — tout ce qui parcourt l’espace de clés, ou une grande collection lue entièrement.",
+            "1": "Vérifiez si le volume de commandes a augmenté au même moment.",
+            "2": "Vérifiez si un déploiement a changé l’usage du cache.",
+            "3": "Si la charge est légitime, un nœud plus grand ou du sharding est la réponse ; ajouter des réplicas n’aide pas les écritures."
+          }
+        },
+        "redisCpu": {
+          "title": "Le CPU du nœud Redis dépasse son seuil",
+          "means": "Le CPU global du nœud, tous cœurs confondus.",
+          "matters": "Sur un nœud multicœur, cela peut paraître calme alors que Redis lui-même sature. Le CPU moteur est le meilleur signal.",
+          "checks": {
+            "0": "Vérifiez le CPU du moteur, qui est ce qui limite réellement Redis.",
+            "1": "Vérifiez si le débit réseau a augmenté au même moment.",
+            "2": "Vérifiez si une sauvegarde ou une synchronisation de réplication tournait."
+          }
+        },
+        "redisMemory": {
+          "title": "L’utilisation mémoire de Redis dépasse son seuil",
+          "means": "La part de la mémoire du nœud occupée par le jeu de données.",
+          "matters": "Quand elle se remplit, Redis commence à évincer des clés, ou refuse les écritures si aucune politique d’éviction n’est définie. Dans les deux cas cela se voit comme des défauts de cache.",
+          "checks": {
+            "0": "Vérifiez le nombre d’évictions sur la même période.",
+            "1": "Cherchez des clés stockées sans expiration.",
+            "2": "Vérifiez si un déploiement s’est mis à mettre en cache quelque chose de plus gros.",
+            "3": "Décidez si la réponse est un nœud plus grand ou une expiration plus courte — sinon le jeu de données continuera de croître."
+          }
+        },
+        "redisEvictions": {
+          "title": "Redis évince des clés",
+          "means": "Combien de clés Redis a supprimées pour faire de la place, avant leur expiration naturelle.",
+          "matters": "Chaque éviction est un défaut de cache que quelqu’un va payer, et cela signifie que le nœud est plein.",
+          "checks": {
+            "0": "Vérifiez l’utilisation mémoire sur la même période — l’éviction, c’est à quoi ressemble un nœud plein.",
+            "1": "Vérifiez si le taux de succès du cache a chuté au même moment.",
+            "2": "Cherchez des clés stockées sans expiration, dont l’éviction fait le travail.",
+            "3": "Soit le nœud est trop petit pour le jeu de données, soit le jeu de données devrait être plus petit."
+          }
+        },
+        "redisConnections": {
+          "title": "Les connexions Redis ont franchi le seuil",
+          "means": "Combien de clients sont connectés au nœud.",
+          "matters": "Chaque connexion coûte de la mémoire, et un client qui ouvre sans fermer finira par épuiser le nœud.",
+          "checks": {
+            "0": "Vérifiez si une application a monté en charge.",
+            "1": "Cherchez des connexions ouvertes par requête plutôt que mutualisées.",
+            "2": "Vérifiez l’utilisation mémoire, qui monte avec le nombre de connexions."
+          }
+        },
+        "lambdaErrors": {
+          "title": "La fonction renvoie des erreurs",
+          "means": "Combien d’invocations se sont terminées en erreur, comptées par Lambda lui-même.",
+          "matters": "Une erreur ici est une invocation qui n’a pas fait son travail. Savoir si elle a été réessayée dépend de ce qui l’a invoquée.",
+          "checks": {
+            "0": "Consultez les journaux de la fonction sur la même période.",
+            "1": "Vérifiez si un déploiement est parti juste avant la première erreur.",
+            "2": "Vérifiez si une dépendance appelée par la fonction a changé au même moment.",
+            "3": "Vérifiez si les invocations sont réessayées, et si quelque chose récupère celles définitivement échouées."
+          }
+        },
+        "lambdaThrottles": {
+          "title": "La fonction est limitée",
+          "means": "Combien d’invocations Lambda a refusées parce que la limite de concurrence était atteinte.",
+          "matters": "Une invocation limitée n’a pas tourné du tout. Selon l’appelant, elle a été réessayée ou perdue.",
+          "checks": {
+            "0": "Vérifiez si le volume d’invocations a augmenté au même moment.",
+            "1": "Vérifiez la concurrence réservée de cette fonction et la limite du compte.",
+            "2": "Vérifiez si une autre fonction du compte a consommé le pool partagé."
+          }
+        },
+        "lambdaDuration": {
+          "title": "La fonction s’exécute plus longtemps que son seuil",
+          "means": "Le temps qu’ont pris les invocations, du moment où Lambda a lancé le gestionnaire à celui où il a rendu la main.",
+          "matters": "La durée est ce que Lambda facture, et une invocation qui atteint le délai configuré est tuée plutôt que terminée.",
+          "checks": {
+            "0": "Vérifiez à quel point la durée approche le délai de la fonction.",
+            "1": "Vérifiez si une dépendance appelée par la fonction a ralenti.",
+            "2": "Vérifiez si un déploiement a changé ce que fait la fonction.",
+            "3": "Regardez les démarrages à froid séparément des invocations chaudes."
+          }
+        },
+        "sqsAge": {
+          "title": "Les messages attendent plus longtemps que le seuil",
+          "means": "L’âge du plus ancien message encore en attente dans la file, c’est-à-dire depuis combien de temps il attend d’être pris.",
+          "matters": "C’est le vrai retard de la file : il dit de combien les consommateurs sont en retard, en temps plutôt qu’en nombre.",
+          "checks": {
+            "0": "Vérifiez si les consommateurs tournent.",
+            "1": "Vérifiez si les consommateurs échouent, ce qui remet les messages dans la file.",
+            "2": "Vérifiez si le volume a augmenté plus vite que les consommateurs ne peuvent suivre.",
+            "3": "Regardez la file de lettres mortes, s’il y en a une."
+          }
+        },
+        "sqsDepth": {
+          "title": "La profondeur de la file a franchi son seuil",
+          "means": "Combien de messages attendent d’être pris.",
+          "matters": "La profondeur seule peut n’être qu’un pic bref. Lisez-la avec l’âge du plus ancien message, qui dit si quelque chose est vraiment bloqué.",
+          "checks": {
+            "0": "Vérifiez l’âge du plus ancien message — la profondeur sans l’âge est généralement une rafale.",
+            "1": "Vérifiez si les consommateurs suivent ou prennent du retard.",
+            "2": "Vérifiez si un producteur s’est mis à envoyer davantage.",
+            "3": "Vérifiez si les consommateurs échouent et remettent des messages."
+          }
+        }
+      }
     },
     "containers": {
       "title": "Conteneurs",
@@ -2208,10 +2642,10 @@
         "traffic_surge": "Le trafic était très au-dessus de la normale pour cette heure de la semaine"
       },
       "confirm": {
-        "deploy_regression.confirm": "Comparez la révision déployée avec la précédente, et voyez si revenir en arrière arrête les erreurs.",
-        "capacity_shortfall.confirm": "Comparez le nombre souhaité au nombre en cours, et voyez si augmenter le premier suffit.",
-        "noise.confirm": "Regardez la fréquence des ouvertures et fermetures. Si rien d’autre n’a changé, le seuil est probablement trop serré.",
-        "traffic_surge.confirm": "Comparez le nombre de requêtes avec la même heure des semaines précédentes, et vérifiez si le problème disparaît quand le trafic retombe."
+        "deploy_regression": "Comparez la révision déployée avec la précédente, et voyez si revenir en arrière arrête les erreurs.",
+        "capacity_shortfall": "Comparez le nombre souhaité au nombre en cours, et voyez si augmenter le premier suffit.",
+        "noise": "Regardez la fréquence des ouvertures et fermetures. Si rien d’autre n’a changé, le seuil est probablement trop serré.",
+        "traffic_surge": "Comparez le nombre de requêtes avec la même heure des semaines précédentes, et vérifiez si le problème disparaît quand le trafic retombe."
       }
     },
     "code": {
@@ -2954,7 +3388,9 @@
       "synthetic_slow": "{name} répond en {median} ms, au-dessus de son attente de {threshold} ms.",
       "cert_expiring": "Le certificat de {name} expire dans {days, plural, one {# jour} other {# jours}}.",
       "slo_burn_fast": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre, mesuré sur {hours, plural, one {la dernière heure} other {les # dernières heures}}.",
-      "slo_burn_slow": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre sur {hours, plural, one {la dernière heure} other {les # dernières heures}}."
+      "slo_burn_slow": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre sur {hours, plural, one {la dernière heure} other {les # dernières heures}}.",
+      "alarm_firing_on": "{metric} a franchi son seuil d’alarme sur {subject}.",
+      "alarm_firing_metric": "{metric} a franchi son seuil d’alarme."
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services de {cluster} exécutent moins de tâches que souhaité.",

@@ -21,7 +21,8 @@ export function MonitoringCard({
     <Card className={cn(SECTION_CARD_SPACING, className)}>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <CardTitle className="text-base font-semibold tracking-tight">
+          {/* A card title can be an AWS identifier with no spaces in it; at 390px it has to wrap. */}
+          <CardTitle className="text-base font-semibold tracking-tight break-words">
             <h2>{title}</h2>
           </CardTitle>
           {description && <CardDescription>{description}</CardDescription>}

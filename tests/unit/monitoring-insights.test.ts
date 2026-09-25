@@ -403,6 +403,19 @@ describe('albInsights', () => {
 });
 
 describe('alarmInsights', () => {
+  it('falls back to the alarm’s own name only when there is nothing better to say', () => {
+    // A metric nobody has a phrase for: the identifier is the honest answer, not half a sentence.
+    const [only] = alarmInsights([alarm({ namespace: 'Acme/Custom', metricName: 'WidgetsLost', dimensions: {} })], ctx);
+    expect(only.messageKey).toBe('messages.alarm_firing');
+    expect(only.values).toEqual({ alarm: 'db-cpu' });
+  });
+
+  it('names the metric without a resource when the alarm carries no dimension', () => {
+    const [only] = alarmInsights([alarm({ dimensions: {} })], ctx);
+    expect(only.messageKey).toBe('messages.alarm_firing_metric');
+    expect(only.values).toEqual({ alarm: 'db-cpu', metricKey: 'cpu' });
+  });
+
   it('keeps firing alarms and drops target tracking and healthy ones', () => {
     const alarms = [alarm(), alarm({ name: 'TargetTracking-x', targetTracking: true }), alarm({ name: 'ok', state: 'OK' })];
     expect(alarmInsights(alarms, ctx)).toEqual([
@@ -410,8 +423,10 @@ describe('alarmInsights', () => {
         severity: 'critical',
         kind: 'alarm_firing',
         resource: 'db-cpu',
-        messageKey: 'messages.alarm_firing',
-        values: { alarm: 'db-cpu' },
+        // THE RULING: what the alarm says, not what it is called. The ids are stored rather than a
+        // sentence, because a detector has no locale — `expandValues` turns them into words at render.
+        messageKey: 'messages.alarm_firing_on',
+        values: { alarm: 'db-cpu', metricKey: 'cpu', subjectKind: 'database', subjectName: 'orders-1' },
         href: '/c/abc123def456/eu-west-1/alarms/list?state=ALARM',
       },
     ]);

@@ -1,10 +1,9 @@
 'use client';
 
-import { Loader2, Search, X } from 'lucide-react';
+import { ChevronDown, Code2, Loader2, Search, Sparkles, Star, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DocLink } from '@/components/docs/doc-link';
-import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,43 +30,43 @@ import {
 import { withGroups } from '@/lib/monitoring/shared/logs-selection';
 import { RANGE_SECONDS } from '@/lib/monitoring/shared/time-range';
 import { isOneOf } from '@/lib/type-guards';
-import { AiAssist } from './ai-assist';
 import type { ProposeState } from './actions';
-import { SavedSearches, type SavedRow, type SavedSearchActions } from './saved-searches';
+import { AiAssist } from './ai-assist';
 import { LogsFacets, type FacetFilter } from './logs-facets';
 import { LogsRows } from './logs-rows';
 import { LogsTimeline } from './logs-timeline';
+import { QuickSearches, type QuickSearch } from './quick-searches';
+import { SavedSearches, type SavedRow, type SavedSearchActions } from './saved-searches';
+import { SourcePicker, type PickerGroup } from './source-picker';
 import { useLogsSelection } from './logs-selection';
 
 /**
  * The Logs explorer.
  *
- * It used to be a Logs Insights console: to see a log line you had to know the query language. The search
- * box builds the query instead — and then shows it, because a search box that hides what it ran cannot be
- * debugged, and because the query is what an operator pastes into a ticket. Anyone who wants the language
- * back opens the advanced editor, which is the editor that was always here.
+ * Arranged around the thing somebody came to do. One row of controls — **search, time, level, sources,
+ * go** — then the timeline, then the log lines, with the facets tucked beside them. Everything that is
+ * configuration rather than searching is behind a disclosure: the Logs Insights query, the AI helper,
+ * the saved searches.
  *
- * What it refuses to do:
- *   - call an empty result "no logs". A search that matched nothing, a search that could not run, and a
- *     log group nobody has written to are three different facts, and each gets its own sentence;
- *   - present a figure taken from the rows in hand as a total when the limit cut them short;
- *   - colour anything green. Nothing on this page is a health verdict.
+ * What it replaced: a permanent left column of log-group checkboxes beside a raw query textarea, with
+ * the results, when there were any, below the fold. That is a configuration form. This is meant to be an
+ * explorer, and the difference is what gets the vertical space.
+ *
+ * The empty state is the other half of that. A blank page teaches nobody what they can ask, so before a
+ * search it offers the four questions people actually arrive with, the searches they saved, and — only
+ * when a provider is configured — the assistant.
+ *
+ * Nothing about the honesty changed. Four distinct empties, a sample never presented as a total, a level
+ * never invented, and the query always visible.
  */
 
-/** Error codes of the Logs routes that have their own message; anything else falls back to the generic one. */
 const SIMPLE_ERROR_CODES = ['invalid_query', 'range_too_long', 'unauthorized'] as const;
-
-/** How often the elapsed time reaches the live region, whatever the poll interval is. */
 const ANNOUNCE_EVERY_MS = 5000;
-
-/** How many bars the timeline is drawn with. Enough to show shape, few enough to stay legible at 360px. */
-const TIMELINE_BUCKETS = 32;
-
+const TIMELINE_BUCKETS = 40;
 const RUN_HINT_ID = 'logs-run-hint';
 
 type Phase = 'idle' | 'running' | 'done';
 type Message = { kind: 'status' | 'error'; text: string };
-/** The results, plus the window they were asked over — the timeline's axis is that window, not "now". */
 type Run = { results: ClientQueryResults; startMs: number; endMs: number; query: string };
 
 export function LogsExplorer({
@@ -76,7 +75,7 @@ export function LogsExplorer({
   range,
   maxQueryLength,
   initial,
-  groupPicker,
+  sources,
   saved,
   propose,
 }: {
@@ -85,9 +84,9 @@ export function LogsExplorer({
   range: LogsTimeRange;
   maxQueryLength: number;
   initial: { text: string; level: LogLevel | null; limit: number };
-  groupPicker: ReactNode;
+  /** The log groups this region has, already fetched and formatted on the server. */
+  sources: { groups: PickerGroup[]; truncated: boolean; failed: boolean; search: string };
   saved: { rows: SavedRow[]; basePath: string; actions: SavedSearchActions };
-  /** Null unless an operator has configured and tested an AI provider. AI is optional for ever. */
   propose: FormAction<ProposeState> | null;
 }) {
   const t = useTranslations('Monitoring.client');
@@ -100,6 +99,10 @@ export function LogsExplorer({
   const [limit, setLimit] = useState(initial.limit);
   const [advanced, setAdvanced] = useState(false);
   const [advancedQuery, setAdvancedQuery] = useState(() => buildSearchQuery({ text: initial.text, level: initial.level, limit: initial.limit }));
+  // `null` means nobody has expressed a preference, so the panel follows the page: open while there is
+  // nothing to read, out of the way once there is. A saved search is most useful before a search.
+  const [savedPreference, setSavedPreference] = useState<boolean | null>(null);
+  const [showAi, setShowAi] = useState(false);
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [elapsed, setElapsed] = useState(0);
@@ -109,38 +112,35 @@ export function LogsExplorer({
   const controllerRef = useRef<AbortController | null>(null);
   const queryIdRef = useRef<string | null>(null);
 
-  // Leaving the page (unmount or a browser navigation) stops the query instead of letting AWS keep scanning.
   useEffect(() => () => controllerRef.current?.abort(), []);
   useEffect(() => {
     const onPageHide = () => {
       const queryId = queryIdRef.current;
-      // Nothing can be shown or retried at unload, so a failing stop is swallowed exactly as the poller swallows it.
       if (queryId) void createLogsApi(connectionId, region).stop(queryId).catch(() => undefined);
     };
     window.addEventListener('pagehide', onPageHide);
     return () => window.removeEventListener('pagehide', onPageHide);
   }, [connectionId, region]);
 
-  /** The query that will run, always visible, never guessed at. */
   const query = advanced ? advancedQuery : buildSearchQuery({ text, level, limit });
 
-  /**
-   * The search state rides in the URL so the back button, a reload and a pasted link all restore the same
-   * screen. It is written through the History API for the same reason the selection is: re-rendering the
-   * server tree on every keystroke would fetch the log-group list from AWS again.
-   */
-  const remember = useCallback(() => {
-    const params = new URLSearchParams(withGroups(window.location.search, groups));
-    if (text.trim() === '') params.delete('q');
-    else params.set('q', text.trim().slice(0, SEARCH_TEXT_MAX));
-    if (level === null) params.delete('level');
-    else params.set('level', level);
-    params.set('limit', String(limit));
-    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}${window.location.hash}`);
-  }, [groups, level, limit, text]);
+  const remember = useCallback(
+    (over: { text?: string; level?: LogLevel | null; limit?: number } = {}) => {
+      const params = new URLSearchParams(withGroups(window.location.search, groups));
+      const nextText = (over.text ?? text).trim();
+      const nextLevel = over.level === undefined ? level : over.level;
+      if (nextText === '') params.delete('q');
+      else params.set('q', nextText.slice(0, SEARCH_TEXT_MAX));
+      if (nextLevel === null) params.delete('level');
+      else params.set('level', nextLevel);
+      params.set('limit', String(over.limit ?? limit));
+      window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}${window.location.hash}`);
+    },
+    [groups, level, limit, text],
+  );
 
   const search = useCallback(
-    async (searchQuery: string) => {
+    async (searchQuery: string, over: { text?: string; level?: LogLevel | null } = {}) => {
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -149,7 +149,7 @@ export function LogsExplorer({
       setRun(null);
       setMessage(null);
       setFacetFilter({ level: null, stream: null });
-      remember();
+      remember(over);
 
       const endSeconds = Math.floor(Date.now() / 1000);
       const startSeconds = endSeconds - RANGE_SECONDS[range];
@@ -166,8 +166,6 @@ export function LogsExplorer({
           setElapsed(elapsedMs);
         },
       });
-      // Only an outcome AWS ended by itself proves the query is over. After a timeout, an abort or a poll error
-      // the poller asked for a stop that may have failed, so the id stays and `pagehide` can ask once more.
       if (outcome.kind === 'complete' || outcome.kind === 'ended') queryIdRef.current = null;
       setPhase('done');
 
@@ -182,10 +180,7 @@ export function LogsExplorer({
       switch (outcome.kind) {
         case 'complete':
           setRun({ results: outcome.results, ...window_ });
-          setMessage({
-            kind: 'status',
-            text: t('logs.status.complete', { rows: outcome.results.rows.length, records: outcome.results.statistics.recordsScanned }),
-          });
+          setMessage({ kind: 'status', text: t('logs.status.complete', { records: outcome.results.statistics.recordsScanned }) });
           break;
         case 'ended':
           setRun({ results: outcome.results, ...window_ });
@@ -205,10 +200,13 @@ export function LogsExplorer({
     [connectionId, groups, range, region, remember, t],
   );
 
-  /**
-   * Applying a proposal is a navigation, exactly as loading a saved search is: the page comes back with
-   * those values in the form and **nothing run**. The operator presses Search.
-   */
+  /** A quick search sets the controls and runs, so one press is one answer. */
+  const runQuick = (quick: QuickSearch) => {
+    setText(quick.text);
+    setLevel(quick.level);
+    void search(buildSearchQuery({ text: quick.text, level: quick.level, limit }), { text: quick.text, level: quick.level });
+  };
+
   const useProposal = (proposal: NonNullable<ProposeState['proposal']>) => {
     const next = new URLSearchParams(withGroups(window.location.search, proposal.groups));
     if (proposal.text === '') next.delete('q');
@@ -220,11 +218,17 @@ export function LogsExplorer({
     router.replace(`${pathname}?${next.toString()}`);
   };
 
+  const changeRange = (value: string) => {
+    const next = new URLSearchParams(withGroups(window.location.search, groups));
+    next.set('range', value);
+    router.replace(`${pathname}?${next.toString()}`);
+  };
+
   const running = phase === 'running';
+  const showSaved = savedPreference ?? phase === 'idle';
   const results = run?.results ?? null;
   const failed = message?.kind === 'error';
 
-  // Everything below is derived from the rows in hand. `populationOf` decides what may be said about them.
   const population = useMemo(
     () => populationOf({ fields: results?.fields ?? [], rows: results?.rows ?? [], recordsMatched: results?.statistics.recordsMatched ?? 0 }),
     [results],
@@ -233,7 +237,8 @@ export function LogsExplorer({
     const rows = results?.rows ?? [];
     return rows.filter(
       (row) =>
-        (facetFilter.level === null || (facetFilter.level === 'none' ? detectLevel(row['@message'] ?? '') === null : detectLevel(row['@message'] ?? '') === facetFilter.level)) &&
+        (facetFilter.level === null ||
+          (facetFilter.level === 'none' ? detectLevel(row['@message'] ?? '') === null : detectLevel(row['@message'] ?? '') === facetFilter.level)) &&
         (facetFilter.stream === null || row['@logStream'] === facetFilter.stream),
     );
   }, [results, facetFilter]);
@@ -246,239 +251,276 @@ export function LogsExplorer({
   const empty = emptyReason({ groups: groups.length, ran: phase === 'done', failed, rows: results?.rows.length ?? 0 });
   const narrowed = facetFilter.level !== null || facetFilter.stream !== null;
   const statusText = message?.kind === 'status' ? message.text : '';
+  const hasResults = results !== null && results.rows.length > 0;
+
+  // Announced at a human pace. The visible counter ticks every poll; reading that out would talk over
+  // itself, so the live region rounds the elapsed time into five-second steps.
+  const announced = running
+    ? t('logs.status.running', { seconds: Math.floor(elapsed / ANNOUNCE_EVERY_MS) * (ANNOUNCE_EVERY_MS / 1000) })
+    : (message?.text ?? '');
 
   return (
-    <div className="space-y-6">
-      {/* The search, first and widest. Everything else on the page is a consequence of it. */}
-      <MonitoringCard title={t('logs.search.title')}>
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (groups.length > 0 && !running) void search(query);
-          }}
-        >
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-0 flex-1 basis-64 space-y-1">
-              <Label htmlFor="logs-text">{t('logs.search.label')}</Label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-                <Input
-                  id="logs-text"
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  maxLength={SEARCH_TEXT_MAX}
-                  placeholder={t('logs.search.placeholder')}
-                  className="pr-8 pl-8"
-                />
-                {text !== '' && (
-                  <button
-                    type="button"
-                    onClick={() => setText('')}
-                    aria-label={t('logs.search.clear')}
-                    className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-sm p-1 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="size-3.5" aria-hidden />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="logs-level">{t('logs.facets.level')}</Label>
-              <select
-                id="logs-level"
-                value={level ?? ''}
-                onChange={(event) => setLevel(isOneOf(LOG_LEVELS, event.target.value) ? event.target.value : null)}
-                className="h-9 rounded-md border bg-background px-2 text-sm"
+    <div className="space-y-4">
+      <p role="status" aria-live="polite" className="sr-only">
+        {announced}
+      </p>
+      {/* One row of controls. Everything else is a disclosure. */}
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (groups.length > 0 && !running) void search(query);
+        }}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-0 flex-1 basis-80">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input
+              id="logs-text"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              maxLength={SEARCH_TEXT_MAX}
+              placeholder={t('logs.search.placeholder')}
+              aria-label={t('logs.search.label')}
+              className="h-11 pr-9 pl-9 text-base"
+            />
+            {text !== '' && (
+              <button
+                type="button"
+                onClick={() => setText('')}
+                aria-label={t('logs.search.clear')}
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground hover:text-foreground"
               >
-                <option value="">{t('logs.search.anyLevel')}</option>
-                {LOG_LEVELS.map((value) => (
-                  <option key={value} value={value}>
-                    {t(`logs.levels.${value}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="logs-range">{t('logs.range')}</Label>
-              <RangeSelect range={range} groups={groups} />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="logs-limit">{t('logs.search.limit')}</Label>
-              <select
-                id="logs-limit"
-                value={limit}
-                onChange={(event) => setLimit(Number(event.target.value))}
-                className="h-9 rounded-md border bg-background px-2 text-sm"
-              >
-                {ROW_LIMITS.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Button type="submit" disabled={groups.length === 0 || running} aria-describedby={groups.length === 0 ? RUN_HINT_ID : undefined}>
-              {running ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Search className="size-4" aria-hidden />}
-              {t('logs.search.run')}
-            </Button>
-            {running && (
-              <Button type="button" variant="outline" onClick={() => controllerRef.current?.abort()}>
-                {t('logs.stop')}
-              </Button>
+                <X className="size-4" aria-hidden />
+              </button>
             )}
           </div>
 
-          {/* A disabled search always says why, right where it is pressed. */}
-          {groups.length === 0 && (
-            <p id={RUN_HINT_ID} className="text-sm text-muted-foreground">
-              {t('logs.noGroups')}
-            </p>
+          <select
+            value={range}
+            onChange={(event) => changeRange(event.target.value)}
+            aria-label={t('logs.range')}
+            className="h-11 rounded-md border bg-background px-3 text-sm"
+          >
+            {LOGS_TIME_RANGES.map((value) => (
+              <option key={value} value={value}>
+                {t(`range.options.${value}`)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={level ?? ''}
+            onChange={(event) => setLevel(isOneOf(LOG_LEVELS, event.target.value) ? event.target.value : null)}
+            aria-label={t('logs.facets.level')}
+            className="h-11 rounded-md border bg-background px-3 text-sm"
+          >
+            <option value="">{t('logs.search.anyLevel')}</option>
+            {LOG_LEVELS.map((value) => (
+              <option key={value} value={value}>
+                {t(`logs.levels.${value}`)}
+              </option>
+            ))}
+          </select>
+
+          {/* The source selector: one control, not a column. */}
+          <div className="min-w-48">
+            <SourcePicker groups={sources.groups} truncated={sources.truncated} search={sources.search} />
+          </div>
+
+          <Button type="submit" size="lg" className="h-11" disabled={groups.length === 0 || running} aria-describedby={groups.length === 0 ? RUN_HINT_ID : undefined}>
+            {running ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Search className="size-4" aria-hidden />}
+            {t('logs.search.run')}
+          </Button>
+          {running && (
+            <Button type="button" variant="outline" className="h-11" onClick={() => controllerRef.current?.abort()}>
+              {t('logs.stop')}
+            </Button>
+          )}
+        </div>
+
+        {/* Nothing to search yet: said once, next to the control that fixes it. */}
+        {groups.length === 0 && (
+          <p id={RUN_HINT_ID} className="text-sm text-muted-foreground">
+            {sources.failed ? t('logs.sources.failed') : t('logs.noGroups')}
+          </p>
+        )}
+
+        {/* The secondary entry points, beside the search rather than buried under it. */}
+        <div className="flex flex-wrap items-center gap-2 border-t pt-3 text-sm">
+          <select
+            value={limit}
+            onChange={(event) => setLimit(Number(event.target.value))}
+            aria-label={t('logs.search.limit')}
+            className="h-8 rounded-md border bg-background px-2 text-xs"
+          >
+            {ROW_LIMITS.map((value) => (
+              <option key={value} value={value}>
+                {t('logs.search.lines', { count: value })}
+              </option>
+            ))}
+          </select>
+
+          {propose !== null && (
+            <button
+              type="button"
+              onClick={() => setShowAi((value) => !value)}
+              aria-expanded={showAi}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/30 px-2.5 text-xs text-primary transition-colors hover:bg-primary/10"
+            >
+              <Sparkles className="size-3.5" aria-hidden /> {t('logs.ai.open')}
+            </button>
           )}
 
-          {/* What was actually sent to AWS. Not a summary of it — the query itself. */}
-          <details open={advanced} onToggle={(event) => setAdvanced((event.currentTarget as HTMLDetailsElement).open)}>
-            <summary className="cursor-pointer text-xs text-muted-foreground">{t('logs.search.advanced')}</summary>
-            <div className="mt-2 space-y-2">
-              <Label htmlFor="logs-query" className="text-xs">
-                {t('logs.query')}
-              </Label>
-              <textarea
-                id="logs-query"
-                value={advanced ? advancedQuery : query}
-                onChange={(event) => setAdvancedQuery(event.target.value)}
-                onFocus={() => setAdvancedQuery(query)}
-                readOnly={!advanced}
-                rows={4}
-                maxLength={maxQueryLength}
-                spellCheck={false}
-                className="w-full rounded-md border bg-transparent p-2 font-mono text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              />
-              <p className="text-xs text-muted-foreground">{advanced ? t('logs.search.advancedOn') : t('logs.search.advancedOff')}</p>
-              <div className="flex flex-wrap gap-2">
-                {EXAMPLE_QUERY_KEYS.map((key) => (
-                  <Button
-                    key={key}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setAdvanced(true);
-                      setAdvancedQuery(EXAMPLE_QUERIES[key]);
-                    }}
-                  >
-                    {t(`logs.examples.${key}`)}
-                  </Button>
-                ))}
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => setSavedPreference(!showSaved)}
+            aria-expanded={showSaved}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs transition-colors hover:bg-muted"
+          >
+            <Star className="size-3.5 text-muted-foreground" aria-hidden /> {t('logs.saved.open', { count: saved.rows.length })}
+            <ChevronDown className={`size-3 transition-transform ${showSaved ? 'rotate-180' : ''}`} aria-hidden />
+          </button>
+
+          <details
+            open={advanced}
+            onToggle={(event) => {
+              const open = (event.currentTarget as HTMLDetailsElement).open;
+              // Opening it hands over the query the simple controls had built, so the advanced view starts
+              // from what was about to run rather than from whatever it held last.
+              if (open) setAdvancedQuery(buildSearchQuery({ text, level, limit }));
+              setAdvanced(open);
+            }}
+            className="min-w-0"
+          >
+            <summary className="inline-flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors hover:bg-muted">
+              <Code2 className="size-3.5" aria-hidden /> {t('logs.search.advanced')}
+              <ChevronDown className={`size-3 transition-transform ${advanced ? 'rotate-180' : ''}`} aria-hidden />
+            </summary>
           </details>
 
-          {/* Optional, and absent entirely when nobody has configured a provider. */}
-          {propose !== null && <AiAssist groups={groups} propose={propose} onUse={useProposal} />}
+          {/* What will actually run, on one line, without opening anything. */}
+          {!advanced && <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground" title={query}>{query}</span>}
+        </div>
 
+        {advanced && (
+          <div className="space-y-2 rounded-lg border p-3">
+            <Label htmlFor="logs-query" className="text-xs">
+              {t('logs.query')}
+            </Label>
+            <textarea
+              id="logs-query"
+              value={advancedQuery}
+              onChange={(event) => setAdvancedQuery(event.target.value)}
+              rows={3}
+              maxLength={maxQueryLength}
+              spellCheck={false}
+              className="w-full rounded-md border bg-transparent p-2 font-mono text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+            <p className="text-xs text-muted-foreground">{t('logs.search.advancedOn')}</p>
+            <div className="flex flex-wrap gap-2">
+              {EXAMPLE_QUERY_KEYS.map((key) => (
+                <Button key={key} type="button" variant="outline" size="sm" onClick={() => setAdvancedQuery(EXAMPLE_QUERIES[key])}>
+                  {t(`logs.examples.${key}`)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {propose !== null && showAi && <AiAssist groups={groups} propose={propose} onUse={useProposal} />}
+      </form>
+
+      {/* Before a search: the questions people arrive with, rather than a void. */}
+      {phase === 'idle' && !hasResults && (
+        <div className="space-y-4 rounded-lg border border-dashed p-6">
+          <div>
+            <h2 className="text-base font-medium">{t('logs.start.title')}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t('logs.start.hint')}</p>
+          </div>
+          <QuickSearches onPick={runQuick} />
+          {empty !== null && <p className="text-sm text-muted-foreground">{t(`logs.empty.${empty}`)}</p>}
           <p className="text-xs text-muted-foreground">
             {t('logs.search.billed')} <DocLink slug="searching-logs" label={t('logs.search.readGuide')} />
           </p>
-        </form>
-      </MonitoringCard>
+        </div>
+      )}
 
-      {/*
-       * Three items rather than two columns, placed explicitly.
-       *
-       * On a wide screen it reads as a sidebar and a results pane. On a phone, where the grid collapses to
-       * one column, DOM order decides what you scroll past — and the log lines are what the page is for, so
-       * they come straight after the log-group picker rather than under the facets and the saved searches.
-       *
-       * `min-w-0` on each: a grid item defaults to min-content width, and one unbreakable log group name
-       * was widening the whole page to 539px inside a 360px viewport.
-       */}
-      <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
-        <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">{groupPicker}</div>
-        <div className="min-w-0 space-y-6 lg:col-start-2 lg:row-start-1 lg:row-span-2">
-          <MonitoringCard title={t('logs.results.label')}>
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                {/*
-                 * One live region, never remounted, for both the elapsed time and the outcome. While the query runs it is
-                 * visually hidden and the seconds it announces only change every 5 s, so a screen reader is not flooded;
-                 * the visible line beside it keeps ticking every second and is hidden from assistive technology.
-                 */}
-                <p role="status" className={running ? 'sr-only' : undefined}>
-                  {running ? t('logs.status.running', { seconds: Math.floor(elapsed / ANNOUNCE_EVERY_MS) * (ANNOUNCE_EVERY_MS / 1000) }) : statusText}
-                </p>
-                {running && <p aria-hidden="true">{t('logs.status.running', { seconds: Math.round(elapsed / 1000) })}</p>}
+      {showSaved && (
+        <div className="rounded-lg border p-3">
+          <SavedSearches
+            rows={saved.rows}
+            basePath={saved.basePath}
+            actions={saved.actions}
+            current={{ name: '', text, level, limit, range, logGroups: groups, query: advanced ? advancedQuery : null }}
+          />
+        </div>
+      )}
+
+      {/* How much came back, and the timeline of it — above the lines, the full width of them. */}
+      {results !== null && population !== 'aggregated' && (
+        <div className="rounded-lg border p-4">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-sm font-medium">
+              {/* A sample is never printed as a total: the two sentences are different sentences. */}
+              {population === 'sample'
+                ? t('logs.results.sample', { shown: results.rows.length, matched: results.statistics.recordsMatched })
+                : t('logs.results.all', { count: results.rows.length })}
+            </p>
+            <p className="text-xs text-muted-foreground">{running ? t('logs.status.running', { seconds: Math.round(elapsed / 1000) }) : statusText}</p>
+          </div>
+          {buckets.length > 0 && <LogsTimeline buckets={buckets} population={population} />}
+        </div>
+      )}
+
+      {message?.kind === 'error' && (
+        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {message.text}
+        </p>
+      )}
+
+      {/* Facets beside the logs on a wide screen; under them on a narrow one, because in one column the
+          log lines are what the page is for and they go first. */}
+      {(hasResults || (phase === 'done' && empty !== null)) && (
+        <div className="grid gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
+          <div className="min-w-0 space-y-3 lg:order-2">
+            {narrowed && (
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span>{t('logs.facets.narrowed', { shown: shown.length, total: results?.rows.length ?? 0 })}</span>
+                <Button type="button" variant="outline" size="sm" onClick={() => setFacetFilter({ level: null, stream: null })}>
+                  {t('logs.facets.clear')}
+                </Button>
               </div>
+            )}
+            {empty !== null && !failed && <p className="rounded-lg border p-4 text-sm text-muted-foreground">{t(`logs.empty.${empty}`)}</p>}
+            {results !== null && results.rows.length > 0 && population === 'aggregated' && <Aggregated results={results} />}
+            {results !== null && shown.length > 0 && population !== 'aggregated' && <LogsRows rows={shown} fields={results.fields} />}
+          </div>
 
-              {message?.kind === 'error' && (
-                <p role="alert" className="text-sm text-destructive">
-                  {message.text}
-                </p>
-              )}
-
-              {results !== null && population !== 'aggregated' && (
-                <>
-                  <p className="text-sm">
-                    {population === 'sample'
-                      ? t('logs.results.sample', { shown: results.rows.length, matched: results.statistics.recordsMatched })
-                      : t('logs.results.all', { count: results.rows.length })}
-                  </p>
-                  <LogsTimeline buckets={buckets} population={population} />
-                </>
-              )}
-
-              {narrowed && (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span>{t('logs.facets.narrowed', { shown: shown.length, total: results?.rows.length ?? 0 })}</span>
-                  <Button type="button" variant="outline" size="sm" onClick={() => setFacetFilter({ level: null, stream: null })}>
-                    {t('logs.facets.clear')}
-                  </Button>
+          <div className="min-w-0 lg:order-1">
+            {results !== null && population !== 'aggregated' && (
+              <details open className="rounded-lg border p-3 lg:sticky lg:top-4">
+                <summary className="cursor-pointer text-sm font-medium">{t('logs.facets.card')}</summary>
+                <div className="mt-3">
+                  <LogsFacets
+                    levels={levelCounts(results.rows)}
+                    streams={facetOf(results.rows, '@logStream')}
+                    filter={facetFilter}
+                    population={population}
+                    onChange={setFacetFilter}
+                  />
                 </div>
-              )}
-
-              {/* Four different empties, four different sentences. */}
-              {empty !== null && !failed && <p className="text-sm text-muted-foreground">{t(`logs.empty.${empty}`)}</p>}
-
-              {results !== null && results.rows.length > 0 && population === 'aggregated' && <Aggregated results={results} />}
-              {results !== null && shown.length > 0 && population !== 'aggregated' && <LogsRows rows={shown} fields={results.fields} />}
-            </div>
-          </MonitoringCard>
+              </details>
+            )}
+          </div>
         </div>
-
-        <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-2">
-          {results !== null && (
-            <MonitoringCard title={t('logs.facets.card')}>
-              <LogsFacets
-                levels={levelCounts(results.rows)}
-                streams={facetOf(results.rows, '@logStream')}
-                filter={facetFilter}
-                population={population}
-                onChange={setFacetFilter}
-              />
-            </MonitoringCard>
-          )}
-          <MonitoringCard title={t('logs.saved.title')} description={t('logs.saved.hint')}>
-            {/* The search as it stands right now, so saving stores what is on screen rather than what was
-                last run. */}
-            <SavedSearches
-              rows={saved.rows}
-              basePath={saved.basePath}
-              actions={saved.actions}
-              current={{ name: '', text, level, limit, range, logGroups: groups, query: advanced ? advancedQuery : null }}
-            />
-          </MonitoringCard>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-/** A `stats` query has columns of its own making: it is shown as the table it is, with no log-line dressing. */
-function Aggregated({ results }: { results: ClientQueryResults }) {
+/** A `stats` query has columns of its own making: it is shown as the table it is. */
+function Aggregated({ results }: { results: ClientQueryResults }): ReactNode {
   const t = useTranslations('Monitoring.client');
   return (
     <div className="space-y-2">
@@ -506,31 +548,5 @@ function Aggregated({ results }: { results: ClientQueryResults }) {
         </TableBody>
       </Table>
     </div>
-  );
-}
-
-/** The range lives in the URL, so the picker's links and the search can never disagree about it. */
-function RangeSelect({ range, groups }: { range: LogsTimeRange; groups: string[] }) {
-  const t = useTranslations('Monitoring.client');
-  const router = useRouter();
-  const pathname = usePathname();
-  return (
-    <select
-      id="logs-range"
-      value={range}
-      onChange={(event) => {
-        // Read from the address bar and rewritten from the selection: a tick updates the URL without the router.
-        const next = new URLSearchParams(withGroups(window.location.search, groups));
-        next.set('range', event.target.value);
-        router.replace(`${pathname}?${next.toString()}`);
-      }}
-      className="h-9 rounded-md border bg-background px-2 text-sm"
-    >
-      {LOGS_TIME_RANGES.map((value) => (
-        <option key={value} value={value}>
-          {t(`range.options.${value}`)}
-        </option>
-      ))}
-    </select>
   );
 }

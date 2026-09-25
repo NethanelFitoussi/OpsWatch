@@ -1,5 +1,6 @@
 import 'server-only';
 import { getTranslations } from 'next-intl/server';
+import { expandValues } from './message-values';
 import type { SearchLabels } from './search';
 
 /**
@@ -15,8 +16,10 @@ export async function searchLabels(locale: string, environment: string): Promise
 
   return {
     kind: (kind) => search(`kinds.${kind}`),
-    headline: (key, values) => {
+    headline: (key, rawValues) => {
       try {
+        // `has` rather than try/catch: a missing message is returned as its own key path, not thrown.
+        const values = expandValues(rawValues, (one) => (root.has(one) ? root(one) : null));
         // A problem stores its key as `messages.x`; an alert and an incident store the same thing, and
         // some callers pass the fully-qualified `Insights.messages.x`. All three render through the one
         // catalogue, because a headline found by search must read as it reads on its own page.

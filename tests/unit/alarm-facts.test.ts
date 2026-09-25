@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   COMPARISONS,
   changedWithin,
+  breachedDatapoints,
   countStates,
   metricKey,
+  reportedValues,
   reasonKind,
   reportedValue,
   resourceOf,
@@ -165,5 +167,33 @@ describe('naming a metric', () => {
       expect(en.Monitoring.alarms.metricNames).toHaveProperty(key as string);
       expect(fr.Monitoring.alarms.metricNames).toHaveProperty(key as string);
     }
+  });
+});
+
+describe('what AWS actually observed', () => {
+  const crossed = 'Threshold Crossed: 2 out of the last 2 datapoints [83.0 (24/09/25 12:00:00), 91.5 (24/09/25 12:05:00)] were greater than the threshold (64.0).';
+
+  it('THE RULING: the breach count is AWS’s own, never the configuration dressed as a measurement', () => {
+    // `datapointsToAlarm` says how many *would have to* breach. This says how many did.
+    expect(breachedDatapoints(crossed)).toEqual({ breached: 2, evaluated: 2 });
+    expect(breachedDatapoints('Threshold Crossed: 1 datapoint [83.0 (24/09/25 12:00:00)] was greater than the threshold (5.0).')).toBeNull();
+  });
+
+  it('reads the shape AWS writes when only some datapoints breached', () => {
+    expect(breachedDatapoints('Threshold Crossed: 3 out of the last 5 datapoints were greater than the threshold (80.0).')).toEqual({
+      breached: 3,
+      evaluated: 5,
+    });
+  });
+
+  it('refuses a sentence it has misread rather than reporting an impossible count', () => {
+    expect(breachedDatapoints('9 out of the last 2 datapoints')).toBeNull();
+    expect(breachedDatapoints('no datapoints were received')).toBeNull();
+    expect(breachedDatapoints('')).toBeNull();
+  });
+
+  it('carries every datapoint AWS quoted, because two moving one way say more than one', () => {
+    expect(reportedValues(crossed)).toEqual([83, 91.5]);
+    expect(reportedValues('Insufficient Data: 3 datapoints were unknown.')).toEqual([]);
   });
 });

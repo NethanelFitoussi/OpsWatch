@@ -207,7 +207,7 @@ export function LogGroupToggle({
       <form action={formAction} className="flex flex-wrap items-center justify-between gap-2">
         <span className="min-w-0 font-mono text-xs break-all">{logGroup}</span>
         <span className="flex shrink-0 items-center gap-3">
-          <span className={active ? 'text-sm text-emerald-600 dark:text-emerald-400' : 'text-sm text-muted-foreground'}>
+          <span className={active ? 'text-sm text-emerald-700 dark:text-emerald-400' : 'text-sm text-muted-foreground'}>
             {active ? t('groups.forwarding') : t('groups.notForwarding')}
           </span>
           <Button type="submit" variant="outline" size="sm" disabled={disabled}>

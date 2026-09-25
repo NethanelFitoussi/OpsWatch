@@ -105,3 +105,69 @@ describe('alarm filters', () => {
     expect(names({ service: 'all', recent: false, state: 'all', showTargetTracking: false, search: 'API' })).toEqual(['api-5xx']);
   });
 });
+
+describe('a metric-math alarm, which is what Application Insights creates', () => {
+  /**
+   * CloudWatch answers these with `MetricName`, `Namespace`, `Period` and `Statistic` all null, and the
+   * real metric inside `Metrics[].MetricStat`. Reading only the top level left them with no metric at
+   * all, so the only thing the page could call them was their own identifier — which is exactly what a
+   * real estate showed.
+   */
+  const insights = {
+    AlarmName: 'ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-prod/AWS/ECS/CPUReservation/prod/',
+    StateValue: 'ALARM' as const,
+    StateReason: 'Threshold Crossed: 2 out of the last 2 datapoints were greater than the threshold (64.0).',
+    StateUpdatedTimestamp: updated,
+    Threshold: 64,
+    ComparisonOperator: 'GreaterThanOrEqualToThreshold' as const,
+    // The shape that matters: an empty array rather than an absent one.
+    Dimensions: [],
+    Metrics: [
+      {
+        Id: 'm1',
+        ReturnData: true,
+        MetricStat: {
+          Metric: { Namespace: 'AWS/ECS', MetricName: 'CPUReservation', Dimensions: [{ Name: 'ClusterName', Value: 'prod' }] },
+          Period: 300,
+          Stat: 'Average',
+        },
+      },
+    ],
+  };
+
+  it('THE RULING: the metric, its dimensions, its period and its statistic all come from the query', async () => {
+    cw.on(DescribeAlarmsCommand).resolves({ MetricAlarms: [insights] });
+    const result = await listAlarms(target, deps);
+    expect(result.ok && result.data[0]).toMatchObject({
+      namespace: 'AWS/ECS',
+      metricName: 'CPUReservation',
+      // `Dimensions: []` must not win over the dimensions inside the query, or the alarm names no resource.
+      dimensions: { ClusterName: 'prod' },
+      statistic: 'Average',
+      period: 300,
+    });
+  });
+
+  it('reads the returned expression rather than whichever metric happened to be first', async () => {
+    cw.on(DescribeAlarmsCommand).resolves({
+      MetricAlarms: [
+        {
+          ...insights,
+          Metrics: [
+            // A metric-math alarm carries its inputs too; only one of them is what the alarm watches.
+            { Id: 'm0', ReturnData: false, MetricStat: { Metric: { Namespace: 'AWS/ECS', MetricName: 'MemoryReservation' }, Period: 60, Stat: 'Sum' } },
+            ...insights.Metrics,
+          ],
+        },
+      ],
+    });
+    const result = await listAlarms(target, deps);
+    expect(result.ok && result.data[0].metricName).toBe('CPUReservation');
+  });
+
+  it('leaves a plain alarm alone, taking nothing from a query it does not have', async () => {
+    twoPages();
+    const result = await listAlarms(target, deps);
+    expect(result.ok && result.data[2]).toMatchObject({ namespace: 'AWS/ApplicationELB', metricName: 'HTTPCode_ELB_5XX_Count' });
+  });
+});

@@ -39,6 +39,30 @@ In order. Tick as they land.
 - [x] DOC-1 categorised documentation — 17 guides, 6 categories, EN and FR, searchable, contextual links
 - [x] Phase C full visual QA across every section, EN/FR, desktop and narrow
 - [x] ALE-4 webhook delivery — the documentation described it, so it had to exist
+- [x] **Alarms, reports and Logs — rebuilt after the product was rejected on the running instance.** The
+      first attempt shipped the AWS alarm identifier as the visible title, translation keys inside report
+      rows, and a Logs page that was a column of log-group checkboxes beside a query textarea. What the
+      rebuild changed, and why each was a defect rather than a preference:
+      · **Metric-math alarms had no metric at all.** Application Insights creates alarms whose
+        `MetricName`, `Namespace`, `Dimensions`, `Period` and `Statistic` are null, with the real metric
+        inside `Metrics[].MetricStat` — so there was nothing to call them *but* their identifier. Reading
+        the returned expression fixed the cause; `Dimensions: []` beating the query's dimensions was the
+        second half of it.
+      · **A deterministic metric catalogue** (32 families), not AI prose: the same words every render, in
+        both locales, with the explanation, why it matters, and what to check.
+      · **Titles are phrased for the state the alarm is in.** The family's sentence is written for the
+        state it exists to catch, and printing it over an OK alarm put "crossed the threshold" under the
+        heading *Healthy*.
+      · **Reports and problems say what happened, not what it is called.** The detector stores ids
+        (`metricKey`, `subjectKind`, `subjectName`) and `expandValues` turns them into words at render, so
+        the row stays language-neutral and the sentence stays human.
+      · **Three guards against a message key reaching a reader**, because next-intl renders a missing
+        message as its own key path: no key may contain a dot, EN and FR must hold the same keys, and every
+        key a report *composes at run time* must have a message. The third caught `openedCritical`.
+      · **Logs was rearranged, not restyled**: search → filter → timeline → results → investigate. Sources
+        are a popover, the query language is advanced, the empty state offers the four questions people
+        arrive with, and on a phone the log lines come before the facets.
+      · **UX-6 closed**: axe-core over 24 routes × 2 widths × 2 locales, zero WCAG 2.1 A/AA violations.
 - [ ] Resume the remaining roadmap queue. Next by value, all dependency-ready:
       REP-6 overview and logs reports · REP-7 weekly send (ALE-4 unblocked it) ·
       HIS-10 backup/restore/export · INV-5 investigation workspace · API-8 public API guide ·

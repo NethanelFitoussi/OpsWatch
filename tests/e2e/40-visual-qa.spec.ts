@@ -50,11 +50,15 @@ test.beforeEach(async ({ page }) => {
 
 test('THE RULING: Alarms, Logs and the reports render clean at both widths, in English and French', async ({ page }) => {
   const long = encodeURIComponent('opswatch-e2e-payments-business-transactions-failed-across-all-regions-critical');
+  const insights = encodeURIComponent('ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-opswatch-e2e/AWS/ECS/CPUReservation/opswatch-e2e/');
   const pages = [
     ['alarms', `/c/${connectionId}/${MOTO_REGION}/alarms/list`],
     ['alarms filtered', `/c/${connectionId}/${MOTO_REGION}/alarms/list?state=ALARM`],
     ['alarms with no match', `/c/${connectionId}/${MOTO_REGION}/alarms/list?q=zzzz-no-such-alarm`],
     ['an alarm with a long name and no resource', `/c/${connectionId}/${MOTO_REGION}/alarms/list/${long}`],
+    ['an alarm OpsWatch can explain', `/c/${connectionId}/${MOTO_REGION}/alarms/list/opswatch-e2e-high-cpu`],
+    // The identifier a real estate produces: four AWS names joined by slashes, and nothing to break on.
+    ['an Application Insights alarm', `/c/${connectionId}/${MOTO_REGION}/alarms/list/${insights}`],
     ['an alarm that is gone', `/c/${connectionId}/${MOTO_REGION}/alarms/list/does-not-exist`],
     ['logs', `/c/${connectionId}/${MOTO_REGION}/logs/search`],
     ['logs with a search restored from a link', `/c/${connectionId}/${MOTO_REGION}/logs/search?group=%2Fecs%2Fopswatch-web&q=gateway&level=error&limit=500&range=24h`],
@@ -85,18 +89,24 @@ test('THE RULING: Alarms, Logs and the reports render clean at both widths, in E
 test('THE RULING: the log lines sit above the fold on a phone, not under the sidebar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1400 });
   await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/logs/search`);
+  await page.getByRole('button', { name: 'Sources' }).click();
   await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Search logs' }).click();
   const rows = page.getByRole('list', { name: 'Log lines' });
   await expect(rows).toBeVisible({ timeout: 20_000 });
 
   // In one column the grid follows DOM order, and the logs are what the page is for: they come straight
-  // after the log-group picker, before the facets and the saved searches.
+  // after the search row, before the facets. Nothing that is configuration sits between the two.
   const top = async (locator: ReturnType<typeof page.locator>) =>
     (await locator.first().evaluate((element) => element.getBoundingClientRect().top + window.scrollY)) as number;
   const logs = await top(rows);
-  expect(logs, 'log lines above the facets').toBeLessThan(await top(page.getByText('Narrow these results')));
-  expect(logs, 'log lines above the saved searches').toBeLessThan(await top(page.getByText('Save this search as')));
+  expect(logs, 'the search box above the log lines').toBeGreaterThan(await top(page.getByLabel('Find in logs')));
+  expect(logs, 'log lines above the facets').toBeLessThan(await top(page.getByText('What came back')));
+
+  // And the saved searches, which are a shortcut *to* a search, are out of the way once one has run.
+  await expect(page.getByLabel('Save this search as')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Saved searches/ })).toBeVisible();
 
   // A results view still shows nothing cut off.
   await rows.getByRole('button').first().click();

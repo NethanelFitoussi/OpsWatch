@@ -11,6 +11,8 @@ type LogsSelection = {
   toggle: (name: string, checked: boolean) => void;
   /** Unticks everything at once. A selection of twenty is otherwise twenty clicks to undo. */
   clear: () => void;
+  /** Sets the whole selection, for "select everything I can see" in the source picker. */
+  replace: (names: string[]) => void;
 };
 
 const LogsSelectionContext = createContext<LogsSelection | null>(null);
@@ -51,6 +53,8 @@ export function LogsSelectionProvider({ initial, max, children }: { initial: str
       max,
       toggle: (name, checked) => apply(toggleGroup(selected, name, checked, max)),
       clear: () => apply([]),
+      // Bounded by the same cap a tick is: a bulk select must not be a way past the query API's limit.
+      replace: (names) => apply([...new Set(names)].slice(0, max)),
     };
   }, [max, selected]);
 

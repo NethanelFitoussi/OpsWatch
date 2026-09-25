@@ -1,8 +1,8 @@
-import { getTranslations } from 'next-intl/server';
 import { SectionLayout } from '@/components/monitoring/section-layout';
-import { SuspenseCard } from '@/components/monitoring/suspense-card';
 import { localizedTitle } from '@/i18n/metadata';
-import { LOGS_MAX_GROUPS, LOGS_MAX_QUERY_LENGTH, LOGS_MAX_ROWS } from '@/lib/monitoring/logs';
+import { LOG_GROUP_SEARCH_LIMIT, LOGS_MAX_GROUPS, LOGS_MAX_QUERY_LENGTH, LOGS_MAX_ROWS, searchLogGroups } from '@/lib/monitoring/logs';
+import { formatMetricValue } from '@/lib/monitoring/shared/format';
+import { resolveTarget } from '@/lib/monitoring/target';
 import { initMonitoringRoute, type MonitoringParams } from '@/lib/monitoring/route';
 import { aiIsReady } from '@/lib/ai/connection';
 import { requireAdmin } from '@/lib/auth/current';
@@ -12,7 +12,6 @@ import { LOG_LEVELS, SEARCH_TEXT_MAX, parseRowLimit } from '@/lib/monitoring/sha
 import { fieldsOf, listSavedSearches } from '@/lib/store/saved-searches';
 import { isOneOf } from '@/lib/type-guards';
 import { deleteSearchAction, duplicateSearchAction, proposeSearchAction, saveSearchAction } from './actions';
-import { LogGroupPicker } from './log-group-picker';
 import { LogsExplorer } from './logs-explorer';
 import { LogsSelectionProvider } from './logs-selection';
 
@@ -38,7 +37,25 @@ export default async function LogsPage({ params, searchParams }: Props) {
   const range: LogsTimeRange = isOneOf(LOGS_TIME_RANGES, rangeParam) ? rangeParam : '1h';
   // Bounded here as well as in the browser: a link is whatever somebody pasted into the address bar.
   const levelParam = first(sp.level);
-  const t = await getTranslations('Monitoring.logs');
+
+  // The log groups this region has, read once on the server. The picker is a popover rather than a
+  // column, so it needs the whole list at render rather than a fetch per keystroke; `searchLogGroups`
+  // already bounds what it returns, and the browser filters inside that.
+  const target = await resolveTarget(context.scope);
+  const listed = target.ok ? await searchLogGroups(target.data, search) : target;
+  const locale = context.locale;
+  const sources = {
+    groups: listed.ok
+      ? listed.data.map((group) => ({
+          name: group.name,
+          size: group.storedBytes === null ? null : formatMetricValue(group.storedBytes, 'bytes', locale),
+        }))
+      : [],
+    truncated: listed.ok && listed.data.length === LOG_GROUP_SEARCH_LIMIT,
+    // Said rather than hidden: a picker that silently has nothing in it looks like an empty account.
+    failed: !listed.ok,
+    search,
+  };
 
   // Saved searches are this person's, read with their own id: the store filters every statement on it.
   const adminId = await requireAdmin(context.locale);
@@ -73,11 +90,7 @@ export default async function LogsPage({ params, searchParams }: Props) {
               remove: deleteSearchAction.bind(null, context.locale, context.scope.connectionId, context.scope.region),
             },
           }}
-          groupPicker={
-            <SuspenseCard key={search} title={t('picker.title')} variant="table" rows={6}>
-              <LogGroupPicker scope={context.scope} search={search} range={range} />
-            </SuspenseCard>
-          }
+          sources={sources}
         />
       </LogsSelectionProvider>
     </SectionLayout>

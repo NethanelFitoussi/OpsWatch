@@ -138,8 +138,11 @@ test('the load balancer page shows traffic charts and its target group', async (
 test('the overview shows the seeded alarm insight and leaves target-tracking alarms out', async ({ page }) => {
   await page.goto(monitoringUrl(connectionId, 'overview', 'insights'));
   const insights = page.getByRole('list', { name: 'Insights' });
-  const alarm = insights.getByRole('listitem').filter({ hasText: 'Alarm opswatch-e2e-high-cpu is in ALARM state.' });
+  // THE RULING: what the alarm says, not what it is called. `Alarm opswatch-e2e-high-cpu is in ALARM
+  // state.` was an identifier read aloud, and on a real estate the identifier is four names and a slash.
+  const alarm = insights.getByRole('listitem').filter({ hasText: 'CPU utilization crossed its alarm threshold on ECS service web' });
   await expect(alarm).toHaveCount(1);
+  await expect(insights).not.toContainText('opswatch-e2e-high-cpu');
   await expect(insights).not.toContainText('TargetTracking-');
   await expect(page.getByText(/\d+ of \d+ alarms firing/)).toBeVisible();
   await expect(page.getByText(/of \d+ services degraded/)).toBeVisible();

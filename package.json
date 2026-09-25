@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-ec2": "^3.1139.0",
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^9.6.0",

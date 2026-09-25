@@ -78,7 +78,8 @@ describe('ChangeArrow', () => {
     const html = await render(await ChangeArrow({ change: { kind: 'up', ratio: 0.2 }, rangeKey: '12h' }));
     expect(html).toContain('+20%'); // the number stays visible
     expect(announced(html)).toBe('Up +20% against the previous 12 hours');
-    expect(html).toContain('text-red-600'); // a rise is the bad direction for every metric this stage ranks
+    // 700 rather than 600 in light mode: the lighter shade failed WCAG AA against the card background.
+    expect(html).toContain('text-red-700'); // a rise is the bad direction for every metric this stage ranks
   });
 
   it('announces a flat window and a missing comparison without repeating itself', async () => {

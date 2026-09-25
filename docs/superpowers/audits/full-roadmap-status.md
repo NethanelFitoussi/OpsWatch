@@ -25,13 +25,16 @@ A schema, a migration, a placeholder page, a demo fixture or an unused service i
 
 | Status | Count |
 |---|---|
-| `DONE` | 73 |
+| `DONE` | 128 |
 | `PARTIAL` | 8 |
 | `FOUNDATION_ONLY` | 3 |
-| `NOT_STARTED` | 7 |
-| `BLOCKED_EXTERNAL` | 4 |
+| `NOT_STARTED` | 8 |
+| `BLOCKED_EXTERNAL` | 6 |
 | `INTENTIONALLY_DEFERRED` | 3 |
-| **Total audited** | **97** |
+| **Total audited** | **156** |
+
+Counted from the item rows of this file, not carried forward from an earlier revision. The four rows in
+the blocked-externally table name what is missing rather than a status, and are not counted twice.
 
 Verification columns: **B**ackend · **A**PI · **C**ontract · **W**eb · **M**obile · **R**eal data · **T**ests ·
 **V**erified in a browser. `·` means not applicable.
@@ -382,7 +385,7 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 | UX-3 | Responsive down to 360 px | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `PARTIAL` | Every new page is tested at 360 px; §U's full pass across older pages is not done |
 | UX-4 | Honest empty / unavailable / not-run states | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `DONE` | The product's central rule (§2.4, §2.6) |
 | UX-5 | Loading and stale states | · | · | · | ✓ | ✓ | · | ✓ | ✓ | `DONE` | Suspense cards; problems mark staleness |
-| UX-6 | Accessibility pass (§V) | · | · | · | ✗ | ✗ | · | ✗ | ✗ | `NOT_STARTED` | Severity is never colour-alone today, but no audit has been run |
+| UX-6 | Accessibility pass (§V) | · | · | · | ✓ | · | · | ✓ | ✓ | `DONE` | axe-core over **24 routes × 2 widths × 2 locales**, zero WCAG 2.1 A/AA violations, held by `zz-axe.spec.ts`. What it found and what was fixed: `emerald-600`/`amber-600`/`red-600` all failed 4.5:1 on light backgrounds (measured 3.77 / 3.19 / 4.53) and moved to the `-700` shades in `tones.ts` and five components; `aria-pressed` on the alarm filter chips, which are links and may not carry it, became `aria-current`; secondary text at `/80` opacity lost the opacity; every sideways-scrolling table and `<pre>` became keyboard-reachable. Severity was already never colour-alone |
 | UX-7 | Dark mode | · | · | · | ✓ | ✓ | · | ✗ | ✗ | `PARTIAL` | Tokens exist throughout; never verified end to end |
 | UX-8 | Onboarding wizard (§D) | ✓ | · | · | ✓ | · | ✓ | ✓ | ✓ | `DONE` | Get started is a hub that asks what to connect, with a full guide per integration — what it unlocks, what it needs, what OpsWatch may do, steps, verification, failures, disconnect. Three entry points, one measured state, enforced by a `data-state` invariant |
 | UX-9 | Integration centre (§E) | ✓ | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | `DONE` | `/settings/integrations` manages them, `/accounts/new` chooses one to add, `GET /repository` tells a client what is connected. All three read the same measured state |

@@ -7,7 +7,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      // A region that scrolls sideways has to be reachable by keyboard, or the columns past the edge
+      // exist only for a mouse. At 390px every one of these tables scrolls.
+      tabIndex={0}
+      className="relative w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <table
         data-slot="table"

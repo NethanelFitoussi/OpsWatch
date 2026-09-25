@@ -107,7 +107,7 @@ export async function ApiReference() {
                   <td className="py-2">
                     <span className="text-muted-foreground">{route.summary}</span>
                     {route.errors.length > 0 && (
-                      <span className="mt-1 block font-mono text-[11px] break-all text-muted-foreground/80">
+                      <span className="mt-1 block font-mono text-[11px] break-all text-muted-foreground">
                         {route.errors.join(' · ')}
                       </span>
                     )}

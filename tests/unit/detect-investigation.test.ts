@@ -146,7 +146,9 @@ describe('§7 — traffic_surge, once §8 has a baseline to compare against', ()
     const [hypothesis] = hypothesesFor({ ...problem, trafficRobustZ: 5 }, [], []);
     expect(hypothesis.supporting).toEqual([]);
     // And it still says what would confirm it, like every other entry in the catalogue.
-    expect(hypothesis.confirmedBy).toBe('traffic_surge.confirm');
+    // The hypothesis id, not a message path: a path with a dot in it was rendered onto the page as its
+    // own key, because next-intl reads the dot as another level.
+    expect(hypothesis.confirmedBy).toBe('traffic_surge');
   });
 
   it('has left the not-evaluated list, because it is evaluated now', () => {

@@ -6,6 +6,8 @@ import { MIN_CONSECUTIVE, average, breachActive, sliceSince, sum, thresholdLevel
 import type { SeriesData } from './metrics';
 import type { RdsCluster, RdsInstance } from './rds';
 import { GIB, formatMetricValue, type MetricUnit } from './shared/format';
+import { metricKey } from './shared/alarm-facts';
+import { RESOURCE_DIMENSIONS, subjectOf } from './shared/metric-catalogue';
 import { subsectionPath, type ScopeRef } from './shared/paths';
 
 export type InsightSeverity = 'critical' | 'warning' | 'info';
@@ -323,14 +325,42 @@ export function albInsights(input: readonly AlbSignals[], ctx: RuleContext): Ins
 export function alarmInsights(alarms: readonly AlarmSummary[], ctx: RuleContext): Insight[] {
   return alarms
     .filter((a) => a.state === 'ALARM' && !a.targetTracking)
-    .map((a) => ({
-      severity: 'critical' as const,
-      kind: 'alarm_firing' as const,
-      resource: a.name,
-      messageKey: 'messages.alarm_firing',
-      values: { alarm: a.name },
-      href: `${subsectionPath(ctx.scope, 'alarms', 'list')}?state=ALARM`,
-    }));
+    .map((a) => {
+      /*
+       * What it says, not what it is called.
+       *
+       * `Alarm ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-prod/AWS/ECS/
+       * CPUReservation/prod/ is in ALARM state.` was the sentence this produced, on the problems list,
+       * in every report and in every notification. It is an identifier read aloud.
+       *
+       * The ids go in and the words come out at render time (`expandValues`), because a detector has no
+       * locale and a sentence written here would freeze one language into the database. Where the metric
+       * or the resource is not recognised the older sentence is chosen instead — the alarm's own name is
+       * the honest answer when there is nothing better, rather than a half-built phrase.
+       */
+      const subject = subjectOf(a, RESOURCE_DIMENSIONS);
+      const metric = metricKey(a.metricName);
+      const values = {
+        alarm: a.name,
+        ...(metric === null ? {} : { metricKey: metric }),
+        ...(subject === null ? {} : { subjectKind: subject.kind, subjectName: subject.name }),
+      };
+      const messageKey =
+        metric === null
+          ? 'messages.alarm_firing'
+          : subject === null
+            ? 'messages.alarm_firing_metric'
+            : 'messages.alarm_firing_on';
+      return {
+        severity: 'critical' as const,
+        kind: 'alarm_firing' as const,
+        // Unchanged: the resource is what gives the problem its identity, and it must stay the alarm.
+        resource: a.name,
+        messageKey,
+        values,
+        href: `${subsectionPath(ctx.scope, 'alarms', 'list')}?state=ALARM`,
+      };
+    });
 }
 
 // --- Presentation ------------------------------------------------------------------------------

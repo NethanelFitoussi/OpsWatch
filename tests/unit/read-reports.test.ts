@@ -129,7 +129,9 @@ describe('the problems section, which needs no history switch', () => {
 
     const rows = sectionOf(readReport(db, query, context), 'problems')?.rows ?? [];
     expect(rows[0]).toMatchObject({ id: 'prod/api', label: 'api', value: 3, previous: 1, delta: 2 });
-    expect(rows[0]?.ref).toMatchObject({ type: 'infrastructure', id: 'prod/api' });
+    // The problem itself, so a report row can open the thing its sentence is about rather than point at
+    // an identifier the reader then has to go and look up.
+    expect(rows[0]?.ref).toMatchObject({ type: 'problem' });
     // A subject with nothing last period gets a real zero: it existed and opened nothing.
     expect(rows.find((row) => row.id === 'prod/web')).toMatchObject({ previous: 0 });
     expect(rows.length).toBeLessThanOrEqual(REPORT_ROW_LIMIT);
@@ -447,6 +449,32 @@ describe('§14 — what the checks saw, in a report (REP-5)', () => {
     run(db, one.id, NOW - 120_000, true);
 
     expect(sectionOf(readReport(db, day, context), 'synthetics')?.rows[0]).toMatchObject({ value: 50, severity: 'warning' });
+  });
+});
+
+describe('THE RULING: a report says what happened, not what it happened to', () => {
+  const seeded = () => {
+    const db = createTestDb();
+    open(db, NOW - DAY, { kind: 'alarm_firing', subjectId: 'ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-ecs-gigs-prod/AWS/ECS/CPUReservation/ecs-gigs-prod/', subjectName: 'ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-ecs-gigs-prod/AWS/ECS/CPUReservation/ecs-gigs-prod/', titleKey: 'messages.alarm_firing' });
+    return db;
+  };
+
+  it('renders the detector’s sentence as the row, with the identifier underneath', () => {
+    // The identifier is a real one from a real estate. A report that led with it was asking an executive
+    // summary's reader to decode AWS's naming.
+    const db = seeded();
+    const alarms = { ...query, section: 'alarms' };
+    const rows = sectionOf(readReport(db, alarms, { ...context, render: (key) => `Sentence for ${key}` }), 'problems')?.rows ?? [];
+    expect(rows[0]?.label).toBe('Sentence for messages.alarm_firing');
+    expect(rows[0]?.detail).toContain('ecs-gigs-prod');
+  });
+
+  it('falls back to the subject when nobody supplied a renderer, and adds no empty detail', () => {
+    // `/api/v1/reports` is read by machines, which are entitled to identifiers.
+    const db = seeded();
+    const rows = sectionOf(readReport(db, { ...query, section: 'alarms' }, context), 'problems')?.rows ?? [];
+    expect(rows[0]?.label).toContain('ApplicationInsights/');
+    expect(rows[0]?.detail).toBeUndefined();
   });
 });
 

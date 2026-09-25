@@ -2,6 +2,7 @@ import { Info, OctagonAlert, TriangleAlert } from 'lucide-react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { formatInsightValues, type Insight, type InsightSeverity } from '@/lib/monitoring/insights';
+import { expandValues } from '@/lib/read/message-values';
 import { TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +14,16 @@ const LINK_CLASS = 'shrink-0 text-sm font-medium text-primary underline-offset-4
 export async function InsightList({ insights }: { insights: readonly Insight[] }) {
   const t = await getTranslations('Insights');
   const tList = await getTranslations('Monitoring.overview.insights');
+  const root = await getTranslations();
   const locale = await getLocale();
+
+  /**
+   * A detector stores ids where the sentence needs words, because a job has no locale of its own. They
+   * become words here. `has` rather than a try: next-intl answers a missing message with its own key
+   * path, so catching nothing would have printed `Monitoring.alarms.kinds.…` into the sentence.
+   */
+  const values = (key: string, stored: Insight['values']) =>
+    formatInsightValues(key, expandValues(stored, (one) => (root.has(one) ? root(one) : null)), locale);
 
   return (
     <ul aria-label={tList('listLabel')} className="divide-y">
@@ -25,7 +35,7 @@ export async function InsightList({ insights }: { insights: readonly Insight[] }
             <div className="min-w-0 flex-1 text-sm">
               <p>
                 <span className="sr-only">{t(`severity.${insight.severity}`)}: </span>
-                {t(insight.messageKey, formatInsightValues(insight.messageKey, insight.values, locale))}
+                {t(insight.messageKey, values(insight.messageKey, insight.values))}
               </p>
               {insight.members && (
                 <details className="mt-1">
@@ -34,7 +44,7 @@ export async function InsightList({ insights }: { insights: readonly Insight[] }
                     {insight.members.map((member) => (
                       <li key={member.resource}>
                         <Link href={member.href} className="text-primary underline-offset-4 hover:underline">
-                          {t(member.messageKey, formatInsightValues(member.messageKey, member.values, locale))}
+                          {t(member.messageKey, values(member.messageKey, member.values))}
                         </Link>
                       </li>
                     ))}

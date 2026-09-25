@@ -163,6 +163,10 @@ export function changedWithin(alarm: { stateUpdatedAt: number | null }, nowMs: n
 const METRIC_KEYS: Record<string, string> = {
   CPUUtilization: 'cpu',
   MemoryUtilization: 'memory',
+  CPUReservation: 'cpuReservation',
+  MemoryReservation: 'memoryReservation',
+  CPUUtilized: 'cpu',
+  MemoryUtilized: 'memory',
   EngineCPUUtilization: 'engineCpu',
   DatabaseMemoryUsagePercentage: 'memory',
   FreeableMemory: 'freeableMemory',
@@ -198,4 +202,39 @@ const METRIC_KEYS: Record<string, string> = {
 export function metricKey(metricName: string | null): string | null {
   if (metricName === null) return null;
   return METRIC_KEYS[metricName] ?? null;
+}
+
+/**
+ * How many of the evaluated datapoints breached, as AWS itself counted them.
+ *
+ * CloudWatch writes `Threshold Crossed: 2 out of the last 2 datapoints [83.0 (…), 91.5 (…)] were greater
+ * than the threshold (5.0).` The pair at the front is the evidence an operator wants — "2 of the last 2
+ * evaluation periods breached" says more than any number of datapoints would — and it is a count AWS
+ * made rather than one OpsWatch derived.
+ *
+ * Null the moment the sentence is not the shape expected. `datapointsToAlarm` is the *configuration*; it
+ * says how many would have to breach, not how many did, and presenting one as the other would be
+ * reporting a setting as a measurement.
+ */
+export function breachedDatapoints(stateReason: string): { breached: number; evaluated: number } | null {
+  const match = /(\d+)\s+(?:out\s+of|datapoints?\s+out\s+of)\s+the\s+last\s+(\d+)\s+datapoints?/i.exec(stateReason);
+  if (match === null) return null;
+  const breached = Number(match[1]);
+  const evaluated = Number(match[2]);
+  // A count larger than the window it was drawn from is a sentence OpsWatch has misread.
+  return Number.isFinite(breached) && Number.isFinite(evaluated) && breached <= evaluated ? { breached, evaluated } : null;
+}
+
+/**
+ * Every datapoint AWS quoted, not only the first.
+ *
+ * `reportedValue` answers "what did AWS last see"; this answers "what did it see across the window", and
+ * two figures moving in one direction say something a single figure cannot.
+ */
+export function reportedValues(stateReason: string): number[] {
+  const bracket = /\[([^\]]*)\]/.exec(stateReason);
+  if (bracket === null) return [];
+  return [...bracket[1].matchAll(/(-?\d+(?:\.\d+)?)\s*\(/g)]
+    .map((one) => Number(one[1]))
+    .filter((value) => Number.isFinite(value));
 }

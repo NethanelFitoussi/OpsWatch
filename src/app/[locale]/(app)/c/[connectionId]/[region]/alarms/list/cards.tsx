@@ -7,7 +7,7 @@ import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { Link } from '@/i18n/navigation';
 import { ALARM_STATE_FILTERS, filterAlarms, listAlarms, type AlarmFilter, type AlarmState, type AlarmSummary } from '@/lib/monitoring/alarms';
 import type { MonitoringScope } from '@/lib/monitoring/call';
-import { ALARM_SERVICES, countStates, serviceOf, type AlarmService } from '@/lib/monitoring/shared/alarm-facts';
+import { ALARM_SERVICES, countStates, serviceOf } from '@/lib/monitoring/shared/alarm-facts';
 import type { GroupHealth } from '@/lib/monitoring/shared/evaluated-health';
 import { subsectionPath } from '@/lib/monitoring/shared/paths';
 import { resolveTarget } from '@/lib/monitoring/target';
@@ -107,11 +107,20 @@ export async function AlarmsCard({ scope, filter, nowMs }: { scope: MonitoringSc
 
   // Only services that actually have an alarm: a filter for a service nobody uses is a dead control.
   const present = ALARM_SERVICES.filter((service) => considered.some((alarm) => serviceOf(alarm) === service));
-  const grouped = new Map<AlarmService, AlarmSummary[]>();
-  for (const alarm of rows) {
-    const service = serviceOf(alarm);
-    grouped.set(service, [...(grouped.get(service) ?? []), alarm]);
-  }
+
+  /**
+   * Grouped by **state**, not by service.
+   *
+   * The question somebody opens this page with is "what needs me", and grouping by AWS service answers a
+   * different one — it scatters the two alarms that are firing across four cards of alarms that are not.
+   * Service is still how the list is narrowed; it is no longer how it is arranged.
+   *
+   * `INSUFFICIENT_DATA` keeps its own section between the two. Folding it into either would be the whole
+   * point of counting it separately, undone at the last step.
+   */
+  const sections: { state: AlarmState; alarms: AlarmSummary[] }[] = (['ALARM', 'INSUFFICIENT_DATA', 'OK'] as const)
+    .map((state) => ({ state, alarms: rows.filter((alarm) => alarm.state === state) }))
+    .filter((section) => section.alarms.length > 0);
 
   return (
     <div className="space-y-6">
@@ -120,9 +129,15 @@ export async function AlarmsCard({ scope, filter, nowMs }: { scope: MonitoringSc
           <StatusBar group={toGroup(counts)} />
           <div className="flex flex-wrap gap-2">{ALARM_STATE_FILTERS.map(stateTab)}</div>
           <div className="flex flex-wrap items-center gap-2">
+            {/*
+              * `aria-current`, not `aria-pressed`: these are links, and `aria-pressed` is only allowed on
+              * something with a button role. An accessibility audit called it a critical violation, and it
+              * was also the wrong word — a filter chip that navigates is the current view, not a toggle
+              * somebody is holding down.
+              */}
             <Link
               href={hrefWith(scope, filter, { recent: !filter.recent })}
-              aria-pressed={filter.recent}
+              aria-current={filter.recent ? 'page' : undefined}
               className={cn(
                 'rounded-full border px-3 py-1 text-xs transition-colors',
                 filter.recent ? 'border-primary/40 bg-primary/10 text-primary' : 'hover:bg-accent',
@@ -134,7 +149,7 @@ export async function AlarmsCard({ scope, filter, nowMs }: { scope: MonitoringSc
               <Link
                 key={service}
                 href={hrefWith(scope, filter, { service: filter.service === service ? 'all' : service })}
-                aria-pressed={filter.service === service}
+                aria-current={filter.service === service ? 'page' : undefined}
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs transition-colors',
                   filter.service === service ? 'border-primary/40 bg-primary/10 text-primary' : 'hover:bg-accent',
@@ -161,10 +176,14 @@ export async function AlarmsCard({ scope, filter, nowMs }: { scope: MonitoringSc
           </p>
         </MonitoringCard>
       ) : (
-        [...grouped.entries()].map(([service, serviceAlarms]) => (
-          <MonitoringCard key={service} title={t(`services.${service}`)} description={t('inGroup', { count: serviceAlarms.length })}>
-            <ul>
-              {serviceAlarms.map((alarm) => (
+        sections.map((section) => (
+          <MonitoringCard
+            key={section.state}
+            title={t(`sections.${section.state}`)}
+            description={t('inGroup', { count: section.alarms.length })}
+          >
+            <ul className="-mx-3">
+              {section.alarms.map((alarm) => (
                 <AlarmRow
                   key={alarm.name}
                   alarm={alarm}

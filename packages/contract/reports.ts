@@ -54,6 +54,15 @@ export const reportRowSchema = z.object({
   previous: nullableNumberSchema.default(null),
   delta: nullableNumberSchema.default(null),
   severity: severitySchema.optional(),
+  /**
+   * A second line under the label: the resource, the subject, whatever names *where* rather than *what*.
+   *
+   * Added because a report that listed
+   * `ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-ecs-gigs-prod/AWS/ECS/…`
+   * as a row's name was printing an identifier where an executive summary needs a sentence. The label is
+   * now what happened; this is what it happened to.
+   */
+  detail: z.string().optional(),
   /** Where the row points, so a report is a way into the product rather than a dead end. */
   ref: refSchema.optional(),
 });

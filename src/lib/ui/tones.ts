@@ -13,9 +13,9 @@ export const TONE_SOFT = {
 
 /** Icons and short status text. */
 export const TONE_TEXT = {
-  success: 'text-emerald-600 dark:text-emerald-400',
-  warning: 'text-amber-600 dark:text-amber-400',
-  danger: 'text-red-600 dark:text-red-400',
+  success: 'text-emerald-700 dark:text-emerald-400',
+  warning: 'text-amber-700 dark:text-amber-400',
+  danger: 'text-red-700 dark:text-red-400',
 } as const satisfies Partial<Record<Tone, string>>;
 
 /** Borders of a card or callout that carries a tone. */
@@ -67,11 +67,17 @@ export const STATE_FILL = {
   stale: 'bg-muted-foreground/75',
 } as const;
 
-/** Short status text, where the word carries the state rather than a shape. */
+/**
+ * Short status text, where the word carries the state rather than a shape.
+ *
+ * **700 in light mode, not 600.** Measured against the card background: emerald-600 is 3.77:1 and
+ * amber-600 is 3.19:1, both under WCAG AA's 4.5 for normal text, and an accessibility audit found them on
+ * seven pages. The 700 shades are 5.48 and 5.02. The 400 shades in dark mode are already well clear.
+ */
 export const STATE_TEXT = {
-  healthy: 'text-emerald-600 dark:text-emerald-400',
-  warning: 'text-amber-600 dark:text-amber-400',
-  critical: 'text-red-600 dark:text-red-400',
+  healthy: 'text-emerald-700 dark:text-emerald-400',
+  warning: 'text-amber-700 dark:text-amber-400',
+  critical: 'text-red-700 dark:text-red-400',
   unknown: 'text-muted-foreground',
   stale: 'text-muted-foreground',
 } as const;

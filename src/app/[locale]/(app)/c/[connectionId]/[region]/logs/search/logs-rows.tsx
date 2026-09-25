@@ -20,8 +20,8 @@ import { cn } from '@/lib/utils';
 
 /** Level colours. Neutral for a line that announces no level, which is not the same as `info`. */
 const LEVEL_TONE: Record<LogLevel, string> = {
-  error: 'text-red-600 dark:text-red-400',
-  warn: 'text-amber-600 dark:text-amber-400',
+  error: 'text-red-700 dark:text-red-400',
+  warn: 'text-amber-700 dark:text-amber-400',
   info: 'text-muted-foreground',
   debug: 'text-muted-foreground',
 };

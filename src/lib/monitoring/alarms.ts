@@ -48,23 +48,53 @@ const MAX_PAGES = 50;
 
 const state = (value: string | undefined): AlarmState => (isOneOf(STATES, value) ? value : 'INSUFFICIENT_DATA');
 
+/**
+ * The metric behind an alarm that does not carry one at the top level.
+ *
+ * An alarm built from a metric **query** — which is what CloudWatch Application Insights, and anything
+ * using metric math, creates — leaves `MetricName`, `Namespace`, `Dimensions`, `Period` and `Statistic`
+ * all null, and puts them inside `Metrics[]` instead. Reading only the top level made every one of those
+ * alarms metric-less, which meant the page had nothing to call them but their own identifier: rows in a
+ * real estate read
+ * `ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-ecs-gigs-prod/AWS/ECS/CPUReservation/…`
+ * instead of "CPU reservation on ecs-gigs-prod".
+ *
+ * The **returned** datapoint is the one to read: a metric-math alarm has several entries, and the one
+ * with `ReturnData` is the expression the alarm is actually evaluating. Falling back to the first entry
+ * that has a `MetricStat` is what handles the ordinary single-metric query.
+ */
+function metricQuery(a: MetricAlarm) {
+  const metrics = a.Metrics ?? [];
+  const returned = metrics.find((one) => one.ReturnData === true && one.MetricStat !== undefined);
+  const stat = (returned ?? metrics.find((one) => one.MetricStat !== undefined))?.MetricStat;
+  return stat;
+}
+
 function fromMetric(a: MetricAlarm): AlarmSummary {
   const name = a.AlarmName ?? '';
+  // Only consulted where the top level is silent, so an ordinary alarm is read exactly as before.
+  const query = a.MetricName === undefined ? metricQuery(a) : undefined;
+  // `??` is not enough: CloudWatch answers a metric-math alarm with `Dimensions: []` rather than with
+  // nothing at all, and an empty array would then win over the dimensions inside the query — which is how
+  // an Application Insights alarm ended up naming no resource.
+  const top = a.Dimensions ?? [];
+  const dimensions = top.length > 0 ? top : (query?.Metric?.Dimensions ?? []);
+
   return {
     name,
     type: 'metric',
     state: state(a.StateValue),
     stateReason: a.StateReason ?? '',
     stateUpdatedAt: a.StateUpdatedTimestamp?.getTime() ?? null,
-    namespace: a.Namespace ?? null,
-    metricName: a.MetricName ?? null,
-    dimensions: Object.fromEntries((a.Dimensions ?? []).map((d) => [d.Name ?? '', d.Value ?? ''])),
+    namespace: a.Namespace ?? query?.Metric?.Namespace ?? null,
+    metricName: a.MetricName ?? query?.Metric?.MetricName ?? null,
+    dimensions: Object.fromEntries(dimensions.map((d) => [d.Name ?? '', d.Value ?? ''])),
     threshold: a.Threshold ?? null,
     comparison: a.ComparisonOperator ?? null,
     targetTracking: isTargetTrackingAlarm(name),
     description: a.AlarmDescription ?? null,
-    statistic: a.Statistic ?? a.ExtendedStatistic ?? null,
-    period: a.Period ?? null,
+    statistic: a.Statistic ?? a.ExtendedStatistic ?? query?.Stat ?? null,
+    period: a.Period ?? query?.Period ?? null,
     evaluationPeriods: a.EvaluationPeriods ?? null,
     datapointsToAlarm: a.DatapointsToAlarm ?? null,
     unit: a.Unit ?? null,

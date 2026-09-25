@@ -21,6 +21,13 @@ test.beforeEach(async ({ page }) => {
 
 const logs = () => `/en/c/${connectionId}/${MOTO_REGION}/logs/search`;
 
+/** The log groups live in a popover now, so choosing one is open, tick, close — as it is for a person. */
+async function pickSource(page: import('@playwright/test').Page, name = /\/ecs\/opswatch-web/) {
+  await page.getByRole('button', { name: 'Sources' }).click();
+  await page.getByRole('checkbox', { name }).check();
+  await page.getByRole('button', { name: 'Done' }).click();
+}
+
 /** Removes every saved search, so a rerun starts from the same place as a first run. */
 async function clearSaved(page: import('@playwright/test').Page) {
   await page.goto(logs());
@@ -40,7 +47,7 @@ test('a search is saved, loaded, renamed, copied and deleted', async ({ page }) 
   // Saving needs something to search, and says so rather than storing an empty search.
   await expect(page.getByText('Choose at least one log group before saving.')).toBeVisible();
 
-  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await pickSource(page);
   await page.getByLabel('Find in logs').fill('gateway');
   await page.getByLabel('Level').selectOption('error');
   await page.getByLabel('Save this search as').fill('Payments errors');
@@ -55,7 +62,9 @@ test('a search is saved, loaded, renamed, copied and deleted', async ({ page }) 
   await expect(page).toHaveURL(/group=%2Fecs%2Fopswatch-web/);
   await expect(page.getByLabel('Find in logs')).toHaveValue('gateway');
   await expect(page.getByLabel('Level')).toHaveValue('error');
+  await page.getByRole('button', { name: 'Sources' }).click();
   await expect(page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ })).toBeChecked();
+  await page.getByRole('button', { name: 'Done' }).click();
 
   // A copy takes a free name rather than failing on the one that is taken.
   await page.getByRole('button', { name: 'Make a copy of “Payments errors”' }).click();
@@ -78,7 +87,7 @@ test('a search is saved, loaded, renamed, copied and deleted', async ({ page }) 
 test('THE RULING: two saved searches cannot share a name, and the refusal says so', async ({ page }) => {
   await clearSaved(page);
   await page.goto(logs());
-  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await pickSource(page);
   await page.getByLabel('Save this search as').fill('Only one');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Only one' })).toBeVisible();
@@ -96,7 +105,7 @@ test('THE RULING: two saved searches cannot share a name, and the refusal says s
 test('THE RULING: only a relative range is stored, so a saved search still means something tomorrow', async ({ page }) => {
   await clearSaved(page);
   await page.goto(logs());
-  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await pickSource(page);
   await page.getByLabel('Time range').selectOption('24h');
   await expect(page).toHaveURL(/range=24h/);
   await page.getByLabel('Save this search as').fill('Last day');
@@ -112,7 +121,7 @@ test('THE RULING: only a relative range is stored, so a saved search still means
 test('saving needs a session, and an anonymous post changes nothing', async ({ page, context, playwright, baseURL }) => {
   await clearSaved(page);
   await page.goto(logs());
-  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await pickSource(page);
   await page.getByLabel('Save this search as').fill('Mine');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Mine' })).toBeVisible();
@@ -155,7 +164,7 @@ test('THE RULING: with no AI provider configured, the search page offers no assi
   await expect(page.getByRole('button', { name: 'Propose a search' })).toHaveCount(0);
 
   // And the page is entirely usable without one.
-  await page.getByRole('checkbox', { name: /\/ecs\/opswatch-web/ }).check();
+  await pickSource(page);
   await page.getByLabel('Find in logs').fill('gateway');
   await page.getByRole('button', { name: 'Search logs' }).click();
   await expect(page.getByRole('list', { name: 'Log lines' })).toBeVisible({ timeout: 15_000 });

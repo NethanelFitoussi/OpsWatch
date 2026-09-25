@@ -1,6 +1,7 @@
 import 'server-only';
 import { getTranslations } from 'next-intl/server';
 import { formatInsightValues } from '../monitoring/insights';
+import { expandValues } from './message-values';
 import type { Render } from './problems';
 
 /**
@@ -15,9 +16,15 @@ import type { Render } from './problems';
  */
 export async function insightRenderer(locale: string): Promise<Render> {
   const t = await getTranslations({ locale, namespace: 'Insights' });
+  const root = await getTranslations({ locale });
+  // A detector stores ids where a sentence needs words — it has no locale of its own. They become words
+  // here, so the same stored problem reads as English or as French depending only on who is looking.
+  // `has` rather than try/catch: next-intl does not throw for a missing message, it returns the key
+  // path — so catching nothing would have put `Monitoring.alarms.kinds.…` inside the sentence.
+  const lookup = (key: string) => (root.has(key) ? root(key) : null);
   return (key, values) => {
     try {
-      return t(key, formatInsightValues(key, values, locale));
+      return t(key, formatInsightValues(key, expandValues(values, lookup), locale));
     } catch {
       // A key the catalogue does not hold must not take the page down with it. The key itself is the most
       // useful thing left to show, and it is never a secret.

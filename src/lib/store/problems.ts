@@ -497,30 +497,65 @@ export function worstSubjectsInWindow(
   filter: { connectionId: string; scope: string; kinds?: readonly string[] },
   window: { from: number; to: number },
   limit: number,
-): { subjectId: string; subjectName: string; severity: ProblemSeverity; total: number }[] {
+): {
+  subjectId: string;
+  subjectName: string;
+  severity: ProblemSeverity;
+  total: number;
+  /** The detector's own sentence, so a report can say what happened rather than print an identifier. */
+  titleKey: string;
+  values: Record<string, string | number>;
+  /** The most recent problem for this subject, so a report row can link to something real. */
+  problemId: string;
+}[] {
   if (filter.kinds !== undefined && filter.kinds.length === 0) return [];
   const scoped = [eq(problems.connectionId, filter.connectionId), eq(problems.scope, filter.scope)];
   if (filter.kinds !== undefined) scoped.push(inArray(problems.kind, [...filter.kinds]));
 
-  return db
+  const rows = db
     .select({
       subjectId: problems.subjectId,
       subjectName: sql<string>`min(${problems.subjectName})`,
       // The worst severity the subject reached, which is what makes it worth listing.
       severity: sql<ProblemSeverity>`min(case ${problems.severity} when 'critical' then 1 when 'warning' then 2 else 3 end)`,
       total: sql<number>`count(*)`,
+      /** The newest row of this subject, which is the one whose sentence the report shows. */
+      newestSeq: sql<number>`max(${problems.seq})`,
     })
     .from(problems)
     .where(and(...scoped, gte(problems.firstSeenAt, window.from), lt(problems.firstSeenAt, window.to)))
     .groupBy(problems.subjectId)
     .orderBy(desc(sql`count(*)`), asc(problems.subjectId))
     .limit(limit)
-    .all()
-    .map((row) => ({
-      ...row,
+    .all();
+
+  // A second, bounded read rather than three correlated sub-selects. `values` is a reserved word in
+  // SQLite, so reaching for raw SQL here meant quoting it by hand; drizzle already knows how to decode
+  // the column, and the second query is over at most `limit` rows.
+  const newest = new Map(
+    (rows.length === 0
+      ? []
+      : db
+          .select({ seq: problems.seq, id: problems.id, titleKey: problems.titleKey, values: problems.values })
+          .from(problems)
+          .where(inArray(problems.seq, rows.map((row: { newestSeq: number }) => Number(row.newestSeq))))
+          .all()
+    ).map((row) => [row.seq, row] as const),
+  );
+
+  return rows.map((row) => {
+    const latest = newest.get(Number(row.newestSeq));
+    return {
+      subjectId: row.subjectId,
+      subjectName: row.subjectName,
+      total: row.total,
       // The rank came back as the ordinal the CASE produced; turn it back into the word.
-      severity: (['critical', 'warning', 'info'] as const)[Number(row.severity) - 1] ?? 'info',
-    }));
+      severity: (['critical', 'warning', 'info'] as const)[Number(row.severity) - 1] ?? ('info' as const),
+      titleKey: latest?.titleKey ?? '',
+      values: latest?.values ?? {},
+      problemId: latest?.id ?? '',
+    };
+  });
 }
 
 /**

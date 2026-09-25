@@ -53,6 +53,14 @@ export type Hypothesis = {
   /** The fact and correlation ids it rests on, so a reader can check the reasoning rather than trust it. */
   supporting: string[];
   /** One line saying what would settle it, per §7. */
+  /**
+   * Which sentence says what would settle this hypothesis.
+   *
+   * The **hypothesis id**, not a message path. It used to carry `deploy_regression.confirm`, which the
+   * label then looked up as `confirm.deploy_regression.confirm` — a path next-intl reads three levels
+   * deep, while the catalogue held it as one flat key with a dot in it. The lookup missed silently and
+   * the key path was printed onto the problem page.
+   */
   confirmedBy: string;
 };
 
@@ -169,7 +177,7 @@ export function hypothesesFor(problem: ProblemContext, facts: readonly Fact[], c
       id: 'deploy_regression',
       confidence: errorSignals.length > 0 ? 'high' : 'medium',
       supporting: [...deployments.map((one) => one.id), ...errorSignals.map((one) => one.id)],
-      confirmedBy: 'deploy_regression.confirm',
+      confirmedBy: 'deploy_regression',
     });
   }
 
@@ -177,7 +185,7 @@ export function hypothesesFor(problem: ProblemContext, facts: readonly Fact[], c
   // the same symptom during a rollout is an ordinary deployment in progress rather than a capacity problem.
   const capacityKinds = ['ecs_tasks_below_desired', 'alb_unhealthy_hosts'];
   if (capacityKinds.includes(problem.kind) && deployments.length === 0) {
-    found.push({ id: 'capacity_shortfall', confidence: 'high', supporting: [], confirmedBy: 'capacity_shortfall.confirm' });
+    found.push({ id: 'capacity_shortfall', confidence: 'high', supporting: [], confirmedBy: 'capacity_shortfall' });
   }
 
   // §7's `traffic_surge`: the service was doing far more than it normally does for this hour of the week.
@@ -189,13 +197,13 @@ export function hypothesesFor(problem: ProblemContext, facts: readonly Fact[], c
       id: 'traffic_surge',
       confidence: deployments.length === 0 ? 'high' : 'medium',
       supporting: [],
-      confirmedBy: 'traffic_surge.confirm',
+      confirmedBy: 'traffic_surge',
     });
   }
 
   // §5's `noise`: it proposes tuning the detector rather than looking at the estate.
   if (problem.reopensInWindow >= FLAP_THRESHOLD && facts.length === 0) {
-    found.push({ id: 'noise', confidence: 'medium', supporting: [], confirmedBy: 'noise.confirm' });
+    found.push({ id: 'noise', confidence: 'medium', supporting: [], confirmedBy: 'noise' });
   }
 
   const rank: Record<Confidence, number> = { high: 0, medium: 1, low: 2 };

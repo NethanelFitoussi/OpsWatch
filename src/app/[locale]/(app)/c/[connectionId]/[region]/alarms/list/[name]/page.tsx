@@ -18,8 +18,10 @@ export default async function AlarmDetailPage({ params }: Props) {
   const alarmName = decodeURIComponent(name);
   const t = await getTranslations('Monitoring.alarms');
 
+  // The heading is not the AWS identifier: the detail below leads with what the alarm watches, and the
+  // identifier is kept under its own disclosure, for the runbook or the console that needs it.
   return (
-    <SectionLayout context={context} section="alarms" subsection="list" title={alarmName} description={t('detail.description')}>
+    <SectionLayout context={context} section="alarms" subsection="list" title={t('detail.title')} description={t('detail.description')}>
       <Link
         href={subsectionPath(context.scope, 'alarms', 'list')}
         className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"

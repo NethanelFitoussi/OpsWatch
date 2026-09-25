@@ -35,6 +35,8 @@ export const SEED = {
   okAlarm: 'opswatch-e2e-db-connections',
   unknownAlarm: 'opswatch-e2e-cache-engine-cpu',
   longAlarm: 'opswatch-e2e-payments-business-transactions-failed-across-all-regions-critical',
+  /** The shape Application Insights creates: four AWS identifiers joined by slashes, and no metric of its own. */
+  insightsAlarm: 'ApplicationInsights/ApplicationInsights-ContainerInsights-ECS_CLUSTER-opswatch-e2e/AWS/ECS/CPUReservation/opswatch-e2e/',
   /** One datapoint per minute for the 30 whole minutes before the seed ran. */
   datapoints: 30,
 } as const;
@@ -297,6 +299,44 @@ export async function seedMoto(endpoint: string, now: Date = new Date()): Promis
       StateReason: 'Insufficient Data: 3 datapoints were unknown.',
     }),
   );
+  // The shape Application Insights actually creates: a metric **query** rather than a plain metric, so
+  // `MetricName`, `Namespace` and `Dimensions` are all absent at the top level. Reading only the top
+  // level made every one of these metric-less, and the page then had nothing to call them but their own
+  // identifier — which is exactly what a real estate showed.
+  await cw.send(
+    new PutMetricAlarmCommand({
+      AlarmName: SEED.insightsAlarm,
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      EvaluationPeriods: 2,
+      DatapointsToAlarm: 2,
+      Threshold: 64,
+      TreatMissingData: 'notBreaching',
+      Metrics: [
+        {
+          Id: 'm1',
+          ReturnData: true,
+          MetricStat: {
+            Metric: {
+              Namespace: 'AWS/ECS',
+              MetricName: 'CPUReservation',
+              Dimensions: [{ Name: 'ClusterName', Value: 'opswatch-e2e' }],
+            },
+            Period: 300,
+            Stat: 'Average',
+          },
+        },
+      ],
+    }),
+  );
+  await cw.send(
+    new SetAlarmStateCommand({
+      AlarmName: SEED.insightsAlarm,
+      StateValue: 'ALARM',
+      StateReason:
+        'Threshold Crossed: 2 out of the last 2 datapoints [71.2 (24/09/25 12:00:00), 78.4 (24/09/25 12:05:00)] were greater than or equal to the threshold (64.0).',
+    }),
+  );
+
   // An alarm with no dimension AWS recognises as a resource, and a name long enough to break a layout.
   await cw.send(
     new PutMetricAlarmCommand({

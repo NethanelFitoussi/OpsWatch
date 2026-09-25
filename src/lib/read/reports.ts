@@ -57,6 +57,14 @@ export type ReportQuery = { connectionId: string; scope: string; section: string
 export type ReportContext = {
   nowMs: number;
   /**
+   * Turns a detector's stored key and values into the sentence it wrote.
+   *
+   * Optional, and the subject's own name when it is not given — a machine reading `/api/v1/reports` is
+   * entitled to identifiers, and a page is not. Without it a report listed the AWS alarm name as the
+   * thing that happened, which is the identifier an operator should never have to read.
+   */
+  render?: (key: string, values: Record<string, string | number>) => string;
+  /**
    * How a detector family is named for a reader. Optional, and the id itself when it is not given: a read
    * module has no locale of its own, and a report exported by a machine is entitled to the raw ids.
    */
@@ -96,7 +104,7 @@ function unavailableSection(id: string, reason: ReportUnavailableReason): Report
  * This section needs no history switch: `detect` runs on data the pages already fetched, so an installation
  * that has been running at all has these numbers. It is the half of a report that is real today.
  */
-function problemsSection(db: Db, query: ReportQuery, family: ProblemFamily | null, windows: ReturnType<typeof windowsFor>): ReportSection {
+function problemsSection(db: Db, query: ReportQuery, family: ProblemFamily | null, windows: ReturnType<typeof windowsFor>, context: ReportContext): ReportSection {
   // `undefined` rather than every kind concatenated: the store reads it as "no kind filter", and an
   // estate-wide report must count a problem from a detector nobody has thought to add to a family yet.
   const kinds = family === null ? undefined : kindsOfFamily(family);
@@ -124,14 +132,18 @@ function problemsSection(db: Db, query: ReportQuery, family: ProblemFamily | nul
   const rows: ReportRow[] = worstSubjectsInWindow(db, filter, windows.period, REPORT_ROW_LIMIT).map((row) => {
     // A subject absent from the previous window opened nothing then, which is a real zero rather than unknown.
     const previous = previousBySubject.get(row.subjectId) ?? 0;
+    const sentence = context.render?.(row.titleKey, row.values);
     return {
       id: row.subjectId,
-      label: row.subjectName,
+      // What happened, with what it happened to underneath. Never the identifier as the headline.
+      label: sentence ?? row.subjectName,
+      ...(sentence === undefined ? {} : { detail: row.subjectName }),
       value: row.total,
       previous,
       delta: row.total - previous,
       severity: row.severity,
-      ref: { type: 'infrastructure' as const, id: row.subjectId, label: row.subjectName },
+      // The problem itself, so a reader can open the thing the sentence is about.
+      ref: { type: 'problem' as const, id: row.problemId, label: row.subjectName },
     };
   });
 
@@ -486,7 +498,7 @@ export function readReport(db: Db, query: ReportQuery, context: ReportContext): 
   }
 
   // `overview` reports on the whole estate: every problem, whatever family its detector belongs to.
-  sections.push(problemsSection(db, query, family, windows));
+  sections.push(problemsSection(db, query, family, windows, context));
   if (query.section === 'overview') sections.push(familiesSection(db, query, windows, context));
   sections.push(errorsSection(db, query, windows));
   // Availability is measured per family, so the estate-wide report has no single number to give and says so
