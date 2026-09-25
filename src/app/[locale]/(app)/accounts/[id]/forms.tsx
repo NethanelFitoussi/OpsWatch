@@ -136,3 +136,20 @@ export function VerifyGoogleForm({ action }: { action: FormAction<FormState> }) 
     </form>
   );
 }
+
+/** Asks DigitalOcean what this token can read. One call, and it is the one the product makes anyway. */
+export function VerifyDoForm({ action }: { action: FormAction<FormState> }) {
+  const t = useTranslations('DoSetup');
+  const [state, formAction] = useActionState(action, {});
+
+  return (
+    <form action={formAction} className="flex flex-wrap items-center gap-3">
+      <SubmitButton>{t('verify')}</SubmitButton>
+      {state.error !== undefined && (
+        <p role="alert" className="text-sm text-destructive">
+          {t(`errors.${state.error}`)}
+        </p>
+      )}
+    </form>
+  );
+}

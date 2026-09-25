@@ -115,7 +115,8 @@
       "role": "IAM role",
       "ambient": "Running on AWS",
       "keys": "Access keys",
-      "federation": "Workload identity federation"
+      "federation": "Workload identity federation",
+      "token": "Personal access token"
     },
     "provider": {
       "aws": "AWS",
@@ -693,14 +694,16 @@
         "github": "GitHub",
         "cloudflare": "Cloudflare",
         "ai": "AI provider",
-        "gcp": "Google Cloud"
+        "gcp": "Google Cloud",
+        "do": "DigitalOcean"
       },
       "unlocks": {
         "aws": "Services, databases, load balancers, alarms, logs, errors and deployments. This is the monitoring itself.",
         "github": "Turns a stack frame into a link to the file it came from, and tells you which commits a deployment carried.",
         "cloudflare": "Traffic, cache and security events at the edge, for the zones you choose.",
         "ai": "Optional. Lets a model narrate what OpsWatch already measured. Nothing else depends on it.",
-        "gcp": "The instances in a project and the metrics Google already collects for them."
+        "gcp": "The instances in a project and the metrics Google already collects for them.",
+        "do": "The droplets in an account, and what DigitalOcean reports about each one."
       },
       "states": {
         "connected": "Connected",
@@ -721,7 +724,9 @@
         "cloudflare_untested": "A token is saved but has never been verified.",
         "cloudflare_failed": "The last verification failed. Check the token's scope in Cloudflare.",
         "gcpConnected": "{projects, plural, one {One project} other {# projects}} connected",
-        "gcpFailing": "{failing} of {projects} projects cannot be read"
+        "gcpFailing": "{failing} of {projects} projects cannot be read",
+        "doConnected": "{accounts, plural, one {One account} other {# accounts}} connected",
+        "doFailing": "{failing} of {accounts} accounts cannot be read"
       },
       "readGuide": "Read the guide",
       "setUp": "Set it up",
@@ -1205,6 +1210,122 @@
         "intro": "The connection can be removed from either side, and neither leaves anything behind that matters.",
         "disconnectTitle": "Removing it",
         "disconnectDetail": "Removing the connection in OpsWatch deletes its key and everything it read. Deleting the provider in Google stops it from the other side. Either is enough; nothing is left in your project that could be used."
+      }
+    },
+    "do": {
+      "metaTitle": "Connect DigitalOcean",
+      "title": "Connect DigitalOcean",
+      "subtitle": "Read the droplets in an account, with a token that can do nothing else.",
+      "cta": "Connect DigitalOcean",
+      "manageCta": "Manage the connection",
+      "chainLabel": "How a DigitalOcean connection is made",
+      "chain": {
+        "0": {
+          "title": "A narrow scope",
+          "detail": "You create a token with droplet:read, not the read-everything alias."
+        },
+        "1": {
+          "title": "The token",
+          "detail": "You paste it once. OpsWatch encrypts it and never shows it again."
+        },
+        "2": {
+          "title": "Verification",
+          "detail": "OpsWatch makes the read it will be making anyway, and says what came back."
+        },
+        "3": {
+          "title": "Droplets",
+          "detail": "What DigitalOcean reports about each one, read when you open the page."
+        }
+      },
+      "unlocks": {
+        "title": "What connecting DigitalOcean adds",
+        "intro": "The droplets in an account, beside everything else OpsWatch watches rather than in another tab."
+      },
+      "before": {
+        "title": "Before you start",
+        "intro": "One token, and a decision about scope that DigitalOcean will not let you change later.",
+        "needTerm": "What you need",
+        "needDetail": "A DigitalOcean account and permission to create a personal access token for it.",
+        "costTerm": "What it costs",
+        "costDetail": "Nothing. The reads are well inside DigitalOcean's allowance of 5000 requests an hour."
+      },
+      "permissions": {
+        "title": "What OpsWatch is allowed to do",
+        "intro": "Read the droplets. It cannot create, resize, restart or destroy one, and there is no code in it that could.",
+        "grantTerm": "What to grant",
+        "grantDetail": "A custom scope of droplet:read, and nothing else.",
+        "guaranteeTitle": "What it cannot do",
+        "guaranteeDetail": "Anything that changes your account. The scope is read-only and the token is the only credential OpsWatch holds.",
+        "whyTerm": "Why not api:read",
+        "whyDetail": "That alias grants read access to everything your team role can see — databases, billing, domains. OpsWatch reads droplets, so it asks for droplets."
+      },
+      "steps": {
+        "title": "Setting it up",
+        "methodTitle": "One token, one scope",
+        "methodIntro": "DigitalOcean has no federation to offer, so a credential is stored. The narrowest one it offers is the honest thing to ask for.",
+        "scope": {
+          "title": "Choose the scope",
+          "purpose": "It cannot be changed afterwards.",
+          "body": "In DigitalOcean, create a token with custom scopes and tick only droplet:read. A token's scopes cannot be modified once it exists — only renamed or regenerated."
+        },
+        "create": {
+          "title": "Create the token",
+          "purpose": "It is shown once.",
+          "body": "Copy it straight away. DigitalOcean does not show it again either."
+        },
+        "paste": {
+          "title": "Paste it here",
+          "purpose": "So OpsWatch can read.",
+          "body": "It is encrypted before it is stored, and no page ever shows it again — including this one after you leave it."
+        },
+        "verify": {
+          "title": "Check it",
+          "purpose": "So you know rather than assume.",
+          "body": "OpsWatch makes the same read the droplets page makes, and says what came back — including \"the token works and is not allowed to read droplets\", which is a different problem from a wrong token."
+        },
+        "droplets": {
+          "title": "See the droplets",
+          "purpose": "The point of all of it.",
+          "body": "Read live when you open the page. Nothing is collected on a schedule yet, so nothing here is ever stale."
+        }
+      },
+      "states": {
+        "title": "What the states mean",
+        "intro": "A token that authenticates is not a token that can read anything.",
+        "goodTerm": "Connected",
+        "goodDetail": "The read worked, and OpsWatch says how many droplets it saw.",
+        "degradedTerm": "Failed",
+        "degradedDetail": "The read did not work, and the page says which of the reasons it was rather than showing an empty list."
+      },
+      "failures": {
+        "title": "When it does not work",
+        "intro": "Each of these has a different fix, so each is named.",
+        "unauthorized": {
+          "title": "The token was rejected",
+          "fix": "It has been revoked or regenerated in DigitalOcean. Create another and reconnect."
+        },
+        "forbidden": {
+          "title": "The token is not allowed to read droplets",
+          "fix": "It is missing droplet:read. Scopes cannot be added to a token that exists — create a new one."
+        },
+        "rate_limited": {
+          "title": "DigitalOcean is rate-limiting the account",
+          "fix": "It allows 5000 requests an hour and 250 a minute. Wait, and check what else is using this account's API."
+        },
+        "unreachable": {
+          "title": "This instance could not reach DigitalOcean",
+          "fix": "OpsWatch needs outbound HTTPS to api.digitalocean.com. Nothing needs to reach in."
+        },
+        "no_token": {
+          "title": "There is no readable token",
+          "fix": "OPSWATCH_SECRET has changed since the token was stored. Remove the connection and create it again."
+        }
+      },
+      "manage": {
+        "title": "Afterwards",
+        "intro": "The connection can be ended from either side.",
+        "disconnectTitle": "Removing it",
+        "disconnectDetail": "Removing the connection here deletes the token and everything it read. Revoking the token in DigitalOcean does the same from the other side, immediately. Either is enough."
       }
     }
   },
@@ -4274,7 +4395,8 @@
       "ai": "AI provider",
       "cloudflare": "Cloudflare",
       "google": "Google sign-in",
-      "gcp": "Google Cloud"
+      "gcp": "Google Cloud",
+      "do": "DigitalOcean"
     },
     "states": {
       "connected": "Connected",
@@ -4288,14 +4410,16 @@
       "ai": "Optional. Lets a model narrate what OpsWatch already measured, for Ask OpsWatch and investigations.",
       "cloudflare": "Traffic, cache and security events at the edge, for the zones you choose.",
       "google": "Signing in with a Google account instead of a password.",
-      "gcp": "The instances in a project and the metrics Google already collects for them."
+      "gcp": "The instances in a project and the metrics Google already collects for them.",
+      "do": "The droplets in an account, and what DigitalOcean reports about each one."
     },
     "access": {
       "aws": "A read-only IAM role, ambient credentials, or access keys. The CloudFormation template lists every action it grants.",
       "github": "Repository contents, read-only. OpsWatch never writes to your code and has no code that could.",
       "ai": "Your API key, used only for questions you ask. OpsWatch is complete without it.",
       "cloudflare": "An API token scoped to the zones you pick, read-only.",
-      "gcp": "Two read-only roles, compute.viewer and monitoring.viewer. No service account key is created or stored — OpsWatch signs its own short-lived token instead."
+      "gcp": "Two read-only roles, compute.viewer and monitoring.viewer. No service account key is created or stored — OpsWatch signs its own short-lived token instead.",
+      "do": "One custom scope, droplet:read. Not the read-everything alias, and the token is encrypted at rest."
     },
     "detail": {
       "awsConnected": "{accounts, plural, one {# account connected} other {# accounts connected}}",
@@ -4310,7 +4434,9 @@
       "cloudflare_untested": "saved, not verified",
       "cloudflare_failed": "the last verification failed",
       "gcpConnected": "{projects, plural, one {One project} other {# projects}} connected",
-      "gcpFailing": "{failing} of {projects} projects cannot be read"
+      "gcpFailing": "{failing} of {projects} projects cannot be read",
+      "doConnected": "{accounts, plural, one {One account} other {# accounts}} connected",
+      "doFailing": "{failing} of {accounts} accounts cannot be read"
     },
     "signIn": "Signing in with Google",
     "signInHint": "Google is an authentication provider, not something OpsWatch reads from. It is configured in the environment rather than here, and the Integrations page shows whether it is on.",
@@ -6436,6 +6562,107 @@
       "unreachable": "This instance could not reach Google.",
       "no_token": "There is no usable token for this connection yet.",
       "error": "Compute Engine returned an error."
+    }
+  },
+  "DoWizard": {
+    "title": "Connect a DigitalOcean account",
+    "description": "OpsWatch reads the droplets. It asks for the narrowest scope DigitalOcean offers.",
+    "accessTitle": "What the token needs to be able to do",
+    "accessHint": "One custom scope, and nothing else.",
+    "scope": "read the droplets in this account, and only read them",
+    "notApiRead": "Not api:read. DigitalOcean offers that as a read-everything alias, and a product that asks for it when it uses one resource is asking for access it has no plan for.",
+    "stored": "The token is encrypted before it is stored and is never shown again, here or anywhere else. Revoking it in DigitalOcean stops this connection immediately.",
+    "formTitle": "The account",
+    "formHint": "A name for it here, and the token.",
+    "name": "Connection name",
+    "nameHint": "What you will call it in OpsWatch.",
+    "token": "Personal access token",
+    "tokenHint": "Create it in DigitalOcean with the droplet:read scope. It is not shown again after you leave this page, here or there.",
+    "submit": "Create connection",
+    "errors": {
+      "name_invalid": "Give the connection a name.",
+      "do_token_invalid": "That does not look like a DigitalOcean token. They are long, and hold only letters, digits, hyphens and underscores.",
+      "account_invalid": "Something went wrong creating the connection.",
+      "regions_invalid": "Something went wrong creating the connection.",
+      "method_invalid": "Something went wrong creating the connection.",
+      "role_arn_invalid": "Something went wrong creating the connection.",
+      "role_arn_account_mismatch": "Something went wrong creating the connection.",
+      "role_arn_wrong_role": "Something went wrong creating the connection.",
+      "keys_invalid": "Something went wrong creating the connection.",
+      "wrong_method": "Something went wrong creating the connection.",
+      "gcp_project_invalid": "Something went wrong creating the connection.",
+      "gcp_project_number_invalid": "Something went wrong creating the connection.",
+      "gcp_pool_invalid": "Something went wrong creating the connection.",
+      "gcp_provider_invalid": "Something went wrong creating the connection.",
+      "gcp_service_account_invalid": "Something went wrong creating the connection.",
+      "gcp_regions_invalid": "Something went wrong creating the connection.",
+      "not_ready": "Something went wrong creating the connection."
+    }
+  },
+  "DoSetup": {
+    "accessTitle": "What this token can do",
+    "accessHint": "One scope, read-only.",
+    "scope": "read the droplets in this account, and only read them",
+    "stored": "The token is encrypted at rest and is never shown again. Revoking it in DigitalOcean stops this connection immediately, from the other side.",
+    "verifyTitle": "Check it",
+    "verifyHint": "One read-only call — the same one the droplets page makes.",
+    "verify": "Check access",
+    "neverTested": "Not checked yet. That is not the same as not working.",
+    "testedAt": "Checked {when}.",
+    "ok": "{count, plural, =0 {The token works. No droplets in this account.} one {The token works. One droplet.} other {The token works. # droplets.}}",
+    "droplets": "See the droplets",
+    "failures": {
+      "no_token": "There is no readable token for this connection. That usually means OPSWATCH_SECRET has changed since it was stored.",
+      "unauthorized": "DigitalOcean rejected the token. It may have been revoked or regenerated.",
+      "forbidden": "The token works but is not allowed to read droplets. It needs the droplet:read scope, which cannot be added to an existing token — create a new one.",
+      "rate_limited": "DigitalOcean is rate-limiting this account. It allows 5000 requests an hour; try again shortly.",
+      "unreachable": "This instance could not reach DigitalOcean.",
+      "error": "DigitalOcean returned an error."
+    },
+    "errors": {
+      "not_ready": "This is not a DigitalOcean connection.",
+      "name_invalid": "Something went wrong.",
+      "do_token_invalid": "Something went wrong.",
+      "account_invalid": "Something went wrong.",
+      "regions_invalid": "Something went wrong.",
+      "method_invalid": "Something went wrong.",
+      "role_arn_invalid": "Something went wrong.",
+      "role_arn_account_mismatch": "Something went wrong.",
+      "role_arn_wrong_role": "Something went wrong.",
+      "keys_invalid": "Something went wrong.",
+      "wrong_method": "Something went wrong.",
+      "gcp_project_invalid": "Something went wrong.",
+      "gcp_project_number_invalid": "Something went wrong.",
+      "gcp_pool_invalid": "Something went wrong.",
+      "gcp_provider_invalid": "Something went wrong.",
+      "gcp_service_account_invalid": "Something went wrong.",
+      "gcp_regions_invalid": "Something went wrong."
+    }
+  },
+  "DoDroplets": {
+    "title": "Droplets in {name}",
+    "description": "What DigitalOcean reports, read when this page is drawn.",
+    "back": "Back to the connection",
+    "listTitle": "Droplets",
+    "listHint": "Every droplet this token can see.",
+    "none": "DigitalOcean reports no droplets in this account. That is an answer, not a failure.",
+    "notReported": "not reported",
+    "sizeDetail": "{memory} MB · {vcpus} vCPU",
+    "readNow": "Read live. Nothing about a DigitalOcean account is collected on a schedule yet, so there is no stale figure here and no history behind it.",
+    "columns": {
+      "name": "Droplet",
+      "status": "Status",
+      "region": "Region",
+      "size": "Size",
+      "created": "Created"
+    },
+    "failures": {
+      "no_token": "There is no readable token for this connection.",
+      "unauthorized": "DigitalOcean rejected the token.",
+      "forbidden": "This token is not allowed to read droplets. It needs the droplet:read scope.",
+      "rate_limited": "DigitalOcean is rate-limiting this account; try again shortly.",
+      "unreachable": "This instance could not reach DigitalOcean.",
+      "error": "DigitalOcean returned an error."
     }
   }
 }

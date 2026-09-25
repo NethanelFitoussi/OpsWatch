@@ -21,6 +21,7 @@ import { AmbientSection } from './sections/ambient-section';
 import { DangerZone } from './sections/danger-zone';
 import { IdentitySkeleton } from './sections/identity-skeleton';
 import { KeysSection } from './sections/keys-section';
+import { DoSetup } from './sections/do-setup';
 import { GoogleSetup } from './sections/google-setup';
 import { RoleArnCard, RoleIdentityAndTemplate } from './sections/role-setup';
 import { TestButton } from './test-button';
@@ -82,6 +83,8 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
           would be describing a thing that is not there. */}
       {row.provider === 'gcp' ? (
         <GoogleSetup row={row} locale={locale} baseUrl={env().OPSWATCH_PUBLIC_URL} />
+      ) : row.provider === 'do' ? (
+        <DoSetup row={row} locale={locale} />
       ) : (
         <>
         <SectionCard title={t('details.title')} description={t('details.description')}>

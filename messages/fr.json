@@ -115,7 +115,8 @@
       "role": "Rôle IAM",
       "ambient": "Exécution sur AWS",
       "keys": "Clés d'accès",
-      "federation": "Fédération d’identité de charge de travail"
+      "federation": "Fédération d’identité de charge de travail",
+      "token": "Jeton d’accès personnel"
     },
     "provider": {
       "aws": "AWS",
@@ -693,14 +694,16 @@
         "github": "GitHub",
         "cloudflare": "Cloudflare",
         "ai": "Fournisseur d'IA",
-        "gcp": "Google Cloud"
+        "gcp": "Google Cloud",
+        "do": "DigitalOcean"
       },
       "unlocks": {
         "aws": "Services, bases de données, répartiteurs de charge, alarmes, journaux, erreurs et déploiements. C'est la surveillance elle-même.",
         "github": "Transforme une ligne de pile en lien vers le fichier dont elle provient, et indique quels commits un déploiement portait.",
         "cloudflare": "Trafic, cache et événements de sécurité en périphérie, pour les zones que vous choisissez.",
         "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré. Rien d'autre n'en dépend.",
-        "gcp": "Les instances d’un projet et les métriques que Google collecte déjà pour elles."
+        "gcp": "Les instances d’un projet et les métriques que Google collecte déjà pour elles.",
+        "do": "Les droplets d’un compte, et ce que DigitalOcean rapporte sur chacun."
       },
       "states": {
         "connected": "Connecté",
@@ -721,7 +724,9 @@
         "cloudflare_untested": "Un jeton est enregistré mais n'a jamais été vérifié.",
         "cloudflare_failed": "La dernière vérification a échoué. Vérifiez la portée du jeton dans Cloudflare.",
         "gcpConnected": "{projects, plural, one {Un projet} other {# projets}} connectés",
-        "gcpFailing": "{failing} projets sur {projects} sont illisibles"
+        "gcpFailing": "{failing} projets sur {projects} sont illisibles",
+        "doConnected": "{accounts, plural, one {Un compte} other {# comptes}} connectés",
+        "doFailing": "{failing} comptes sur {accounts} sont illisibles"
       },
       "readGuide": "Lire le guide",
       "setUp": "Configurer",
@@ -1205,6 +1210,122 @@
         "intro": "La connexion peut être retirée des deux côtés, et ni l’un ni l’autre ne laisse quoi que ce soit d’important.",
         "disconnectTitle": "La retirer",
         "disconnectDetail": "La supprimer dans OpsWatch efface sa clé et tout ce qu’elle a lu. Supprimer le fournisseur dans Google l’arrête de l’autre côté. L’un ou l’autre suffit ; rien d’utilisable ne reste dans votre projet."
+      }
+    },
+    "do": {
+      "metaTitle": "Connecter DigitalOcean",
+      "title": "Connecter DigitalOcean",
+      "subtitle": "Lire les droplets d’un compte, avec un jeton qui ne peut rien faire d’autre.",
+      "cta": "Connecter DigitalOcean",
+      "manageCta": "Gérer la connexion",
+      "chainLabel": "Comment se fait une connexion DigitalOcean",
+      "chain": {
+        "0": {
+          "title": "Une portée étroite",
+          "detail": "Vous créez un jeton avec droplet:read, pas l’alias « tout lire »."
+        },
+        "1": {
+          "title": "Le jeton",
+          "detail": "Vous le collez une fois. OpsWatch le chiffre et ne l’affiche plus jamais."
+        },
+        "2": {
+          "title": "La vérification",
+          "detail": "OpsWatch fait la lecture qu’il fera de toute façon, et dit ce qui est revenu."
+        },
+        "3": {
+          "title": "Les droplets",
+          "detail": "Ce que DigitalOcean rapporte sur chacun, lu à l’ouverture de la page."
+        }
+      },
+      "unlocks": {
+        "title": "Ce qu’apporte une connexion DigitalOcean",
+        "intro": "Les droplets d’un compte, à côté de tout ce qu’OpsWatch surveille par ailleurs plutôt que dans un autre onglet."
+      },
+      "before": {
+        "title": "Avant de commencer",
+        "intro": "Un jeton, et un choix de portée que DigitalOcean ne vous laissera pas modifier ensuite.",
+        "needTerm": "Ce qu’il vous faut",
+        "needDetail": "Un compte DigitalOcean et le droit d’y créer un jeton d’accès personnel.",
+        "costTerm": "Ce que cela coûte",
+        "costDetail": "Rien. Les lectures restent largement dans le quota de 5000 requêtes par heure de DigitalOcean."
+      },
+      "permissions": {
+        "title": "Ce qu’OpsWatch a le droit de faire",
+        "intro": "Lire les droplets. Il ne peut ni en créer, ni en redimensionner, ni en redémarrer, ni en détruire, et aucun code en lui ne le pourrait.",
+        "grantTerm": "Ce qu’il faut accorder",
+        "grantDetail": "Une portée personnalisée droplet:read, et rien d’autre.",
+        "guaranteeTitle": "Ce qu’il ne peut pas faire",
+        "guaranteeDetail": "Quoi que ce soit qui modifie votre compte. La portée est en lecture seule et le jeton est le seul identifiant qu’OpsWatch détient.",
+        "whyTerm": "Pourquoi pas api:read",
+        "whyDetail": "Cet alias donne accès en lecture à tout ce que votre rôle d’équipe peut voir — bases de données, facturation, domaines. OpsWatch lit des droplets, il demande donc des droplets."
+      },
+      "steps": {
+        "title": "La mise en place",
+        "methodTitle": "Un jeton, une portée",
+        "methodIntro": "DigitalOcean ne propose pas de fédération, un identifiant est donc conservé. La portée la plus étroite qu’il propose est ce qu’il est honnête de demander.",
+        "scope": {
+          "title": "Choisissez la portée",
+          "purpose": "Elle ne pourra plus être modifiée.",
+          "body": "Dans DigitalOcean, créez un jeton avec des portées personnalisées et ne cochez que droplet:read. Les portées d’un jeton ne peuvent pas être modifiées une fois créé — seulement renommé ou régénéré."
+        },
+        "create": {
+          "title": "Créez le jeton",
+          "purpose": "Il n’est affiché qu’une fois.",
+          "body": "Copiez-le immédiatement. DigitalOcean ne l’affiche pas non plus une seconde fois."
+        },
+        "paste": {
+          "title": "Collez-le ici",
+          "purpose": "Pour qu’OpsWatch puisse lire.",
+          "body": "Il est chiffré avant d’être stocké, et aucune page ne l’affiche à nouveau — y compris celle-ci une fois quittée."
+        },
+        "verify": {
+          "title": "Vérifiez",
+          "purpose": "Pour savoir plutôt que supposer.",
+          "body": "OpsWatch fait la même lecture que la page des droplets et dit ce qui est revenu — y compris « le jeton fonctionne mais n’a pas le droit de lire les droplets », qui est un autre problème qu’un jeton erroné."
+        },
+        "droplets": {
+          "title": "Voyez les droplets",
+          "purpose": "Le but de tout cela.",
+          "body": "Lu en direct à l’ouverture de la page. Rien n’est encore collecté périodiquement, donc rien ici n’est périmé."
+        }
+      },
+      "states": {
+        "title": "Ce que veulent dire les états",
+        "intro": "Un jeton qui s’authentifie n’est pas un jeton qui peut lire quelque chose.",
+        "goodTerm": "Connectée",
+        "goodDetail": "La lecture a fonctionné, et OpsWatch indique combien de droplets il a vus.",
+        "degradedTerm": "En échec",
+        "degradedDetail": "La lecture n’a pas fonctionné, et la page dit laquelle des raisons c’était plutôt que d’afficher une liste vide."
+      },
+      "failures": {
+        "title": "Quand cela ne marche pas",
+        "intro": "Chacun de ces cas a un remède différent, chacun est donc nommé.",
+        "unauthorized": {
+          "title": "Le jeton a été rejeté",
+          "fix": "Il a été révoqué ou régénéré dans DigitalOcean. Créez-en un autre et reconnectez."
+        },
+        "forbidden": {
+          "title": "Le jeton n’a pas le droit de lire les droplets",
+          "fix": "Il lui manque droplet:read. On ne peut pas ajouter de portée à un jeton existant — créez-en un nouveau."
+        },
+        "rate_limited": {
+          "title": "DigitalOcean limite le débit du compte",
+          "fix": "Il autorise 5000 requêtes par heure et 250 par minute. Patientez, et regardez ce qui d’autre utilise l’API de ce compte."
+        },
+        "unreachable": {
+          "title": "Cette installation n’a pas pu joindre DigitalOcean",
+          "fix": "OpsWatch a besoin d’un accès HTTPS sortant vers api.digitalocean.com. Rien n’a besoin d’entrer."
+        },
+        "no_token": {
+          "title": "Aucun jeton lisible",
+          "fix": "OPSWATCH_SECRET a changé depuis l’enregistrement du jeton. Supprimez la connexion et recréez-la."
+        }
+      },
+      "manage": {
+        "title": "Ensuite",
+        "intro": "La connexion peut être rompue des deux côtés.",
+        "disconnectTitle": "La retirer",
+        "disconnectDetail": "La supprimer ici efface le jeton et tout ce qu’il a lu. Révoquer le jeton dans DigitalOcean fait de même depuis l’autre côté, immédiatement. L’un ou l’autre suffit."
       }
     }
   },
@@ -4274,7 +4395,8 @@
       "ai": "Fournisseur d'IA",
       "cloudflare": "Cloudflare",
       "google": "Connexion Google",
-      "gcp": "Google Cloud"
+      "gcp": "Google Cloud",
+      "do": "DigitalOcean"
     },
     "states": {
       "connected": "Connecté",
@@ -4288,14 +4410,16 @@
       "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré, pour Demander à OpsWatch et les investigations.",
       "cloudflare": "Trafic, cache et événements de sécurité en périphérie, pour les zones que vous choisissez.",
       "google": "Se connecter avec un compte Google plutôt qu'avec un mot de passe.",
-      "gcp": "Les instances d’un projet et les métriques que Google collecte déjà pour elles."
+      "gcp": "Les instances d’un projet et les métriques que Google collecte déjà pour elles.",
+      "do": "Les droplets d’un compte, et ce que DigitalOcean rapporte sur chacun."
     },
     "access": {
       "aws": "Un rôle IAM en lecture seule, des identifiants ambiants, ou des clés d'accès. Le modèle CloudFormation liste chaque action accordée.",
       "github": "Le contenu des dépôts, en lecture seule. OpsWatch n'écrit jamais dans votre code et n'a aucun code qui le pourrait.",
       "ai": "Votre clé d'API, utilisée uniquement pour les questions que vous posez. OpsWatch est complet sans elle.",
       "cloudflare": "Un jeton d'API limité aux zones que vous choisissez, en lecture seule.",
-      "gcp": "Deux rôles en lecture seule, compute.viewer et monitoring.viewer. Aucune clé de compte de service n’est créée ni conservée — OpsWatch signe son propre jeton de courte durée."
+      "gcp": "Deux rôles en lecture seule, compute.viewer et monitoring.viewer. Aucune clé de compte de service n’est créée ni conservée — OpsWatch signe son propre jeton de courte durée.",
+      "do": "Une portée personnalisée, droplet:read. Pas l’alias « tout lire », et le jeton est chiffré au repos."
     },
     "detail": {
       "awsConnected": "{accounts, plural, one {# compte connecté} other {# comptes connectés}}",
@@ -4310,7 +4434,9 @@
       "cloudflare_untested": "enregistré, non vérifié",
       "cloudflare_failed": "la dernière vérification a échoué",
       "gcpConnected": "{projects, plural, one {Un projet} other {# projets}} connectés",
-      "gcpFailing": "{failing} projets sur {projects} sont illisibles"
+      "gcpFailing": "{failing} projets sur {projects} sont illisibles",
+      "doConnected": "{accounts, plural, one {Un compte} other {# comptes}} connectés",
+      "doFailing": "{failing} comptes sur {accounts} sont illisibles"
     },
     "signIn": "Se connecter avec Google",
     "signInHint": "Google est un fournisseur d'authentification, pas un système qu'OpsWatch lit. Il se configure dans l'environnement plutôt qu'ici, et la page Intégrations indique s'il est actif.",
@@ -6436,6 +6562,107 @@
       "unreachable": "Cette installation n’a pas pu joindre Google.",
       "no_token": "Cette connexion n’a pas encore de jeton utilisable.",
       "error": "Compute Engine a renvoyé une erreur."
+    }
+  },
+  "DoWizard": {
+    "title": "Connecter un compte DigitalOcean",
+    "description": "OpsWatch lit les droplets. Il demande la portée la plus étroite que propose DigitalOcean.",
+    "accessTitle": "Ce que le jeton doit pouvoir faire",
+    "accessHint": "Une seule portée personnalisée, et rien d’autre.",
+    "scope": "lire les droplets de ce compte, et uniquement les lire",
+    "notApiRead": "Pas api:read. DigitalOcean le propose comme alias « tout lire », et un produit qui le demande alors qu’il n’utilise qu’une ressource demande un accès dont il n’a aucun usage prévu.",
+    "stored": "Le jeton est chiffré avant d’être stocké et n’est plus jamais affiché, ici ou ailleurs. Le révoquer dans DigitalOcean arrête immédiatement cette connexion.",
+    "formTitle": "Le compte",
+    "formHint": "Un nom ici, et le jeton.",
+    "name": "Nom de la connexion",
+    "nameHint": "Le nom que vous lui donnerez dans OpsWatch.",
+    "token": "Jeton d’accès personnel",
+    "tokenHint": "Créez-le dans DigitalOcean avec la portée droplet:read. Il n’est plus affiché après cette page, ni ici ni là-bas.",
+    "submit": "Créer la connexion",
+    "errors": {
+      "name_invalid": "Donnez un nom à la connexion.",
+      "do_token_invalid": "Cela ne ressemble pas à un jeton DigitalOcean. Ils sont longs et ne contiennent que lettres, chiffres, tirets et tirets bas.",
+      "account_invalid": "La création de la connexion a échoué.",
+      "regions_invalid": "La création de la connexion a échoué.",
+      "method_invalid": "La création de la connexion a échoué.",
+      "role_arn_invalid": "La création de la connexion a échoué.",
+      "role_arn_account_mismatch": "La création de la connexion a échoué.",
+      "role_arn_wrong_role": "La création de la connexion a échoué.",
+      "keys_invalid": "La création de la connexion a échoué.",
+      "wrong_method": "La création de la connexion a échoué.",
+      "gcp_project_invalid": "La création de la connexion a échoué.",
+      "gcp_project_number_invalid": "La création de la connexion a échoué.",
+      "gcp_pool_invalid": "La création de la connexion a échoué.",
+      "gcp_provider_invalid": "La création de la connexion a échoué.",
+      "gcp_service_account_invalid": "La création de la connexion a échoué.",
+      "gcp_regions_invalid": "La création de la connexion a échoué.",
+      "not_ready": "La création de la connexion a échoué."
+    }
+  },
+  "DoSetup": {
+    "accessTitle": "Ce que ce jeton peut faire",
+    "accessHint": "Une portée, en lecture seule.",
+    "scope": "lire les droplets de ce compte, et uniquement les lire",
+    "stored": "Le jeton est chiffré au repos et n’est plus jamais affiché. Le révoquer dans DigitalOcean arrête immédiatement cette connexion, depuis l’autre côté.",
+    "verifyTitle": "Vérifier",
+    "verifyHint": "Un appel en lecture seule — le même que celui de la page des droplets.",
+    "verify": "Vérifier l’accès",
+    "neverTested": "Pas encore vérifié. Ce n’est pas la même chose que « ne fonctionne pas ».",
+    "testedAt": "Vérifié {when}.",
+    "ok": "{count, plural, =0 {Le jeton fonctionne. Aucun droplet dans ce compte.} one {Le jeton fonctionne. Un droplet.} other {Le jeton fonctionne. # droplets.}}",
+    "droplets": "Voir les droplets",
+    "failures": {
+      "no_token": "Aucun jeton lisible pour cette connexion. Cela signifie en général qu’OPSWATCH_SECRET a changé depuis son enregistrement.",
+      "unauthorized": "DigitalOcean a rejeté le jeton. Il a peut-être été révoqué ou régénéré.",
+      "forbidden": "Le jeton fonctionne mais n’a pas le droit de lire les droplets. Il lui faut la portée droplet:read, qui ne peut pas être ajoutée à un jeton existant — créez-en un nouveau.",
+      "rate_limited": "DigitalOcean limite le débit de ce compte. Il autorise 5000 requêtes par heure ; réessayez sous peu.",
+      "unreachable": "Cette installation n’a pas pu joindre DigitalOcean.",
+      "error": "DigitalOcean a renvoyé une erreur."
+    },
+    "errors": {
+      "not_ready": "Ce n’est pas une connexion DigitalOcean.",
+      "name_invalid": "Une erreur s’est produite.",
+      "do_token_invalid": "Une erreur s’est produite.",
+      "account_invalid": "Une erreur s’est produite.",
+      "regions_invalid": "Une erreur s’est produite.",
+      "method_invalid": "Une erreur s’est produite.",
+      "role_arn_invalid": "Une erreur s’est produite.",
+      "role_arn_account_mismatch": "Une erreur s’est produite.",
+      "role_arn_wrong_role": "Une erreur s’est produite.",
+      "keys_invalid": "Une erreur s’est produite.",
+      "wrong_method": "Une erreur s’est produite.",
+      "gcp_project_invalid": "Une erreur s’est produite.",
+      "gcp_project_number_invalid": "Une erreur s’est produite.",
+      "gcp_pool_invalid": "Une erreur s’est produite.",
+      "gcp_provider_invalid": "Une erreur s’est produite.",
+      "gcp_service_account_invalid": "Une erreur s’est produite.",
+      "gcp_regions_invalid": "Une erreur s’est produite."
+    }
+  },
+  "DoDroplets": {
+    "title": "Droplets de {name}",
+    "description": "Ce que rapporte DigitalOcean, lu au moment de l’affichage.",
+    "back": "Retour à la connexion",
+    "listTitle": "Droplets",
+    "listHint": "Tous les droplets visibles avec ce jeton.",
+    "none": "DigitalOcean ne rapporte aucun droplet dans ce compte. C’est une réponse, pas un échec.",
+    "notReported": "non communiqué",
+    "sizeDetail": "{memory} Mo · {vcpus} vCPU",
+    "readNow": "Lu en direct. Rien n’est encore collecté périodiquement pour un compte DigitalOcean, donc aucun chiffre ici n’est périmé et il n’y a pas d’historique derrière.",
+    "columns": {
+      "name": "Droplet",
+      "status": "État",
+      "region": "Région",
+      "size": "Taille",
+      "created": "Créé"
+    },
+    "failures": {
+      "no_token": "Aucun jeton lisible pour cette connexion. Cela signifie en général qu’OPSWATCH_SECRET a changé depuis son enregistrement.",
+      "unauthorized": "DigitalOcean a rejeté le jeton. Il a peut-être été révoqué ou régénéré.",
+      "forbidden": "Le jeton fonctionne mais n’a pas le droit de lire les droplets. Il lui faut la portée droplet:read, qui ne peut pas être ajoutée à un jeton existant — créez-en un nouveau.",
+      "rate_limited": "DigitalOcean limite le débit de ce compte. Il autorise 5000 requêtes par heure ; réessayez sous peu.",
+      "unreachable": "Cette installation n’a pas pu joindre DigitalOcean.",
+      "error": "DigitalOcean a renvoyé une erreur."
     }
   }
 }

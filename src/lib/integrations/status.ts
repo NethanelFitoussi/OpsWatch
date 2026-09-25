@@ -126,10 +126,26 @@ function gcpStatus(db: Db): IntegrationStatus {
   };
 }
 
+/** DigitalOcean, counted apart: an account whose token stopped working is its own problem to fix. */
+function doStatus(db: Db): IntegrationStatus {
+  const accounts = listConnections(db).filter((connection) => connection.provider === 'do');
+  if (accounts.length === 0) return { id: 'do', state: 'not_configured', detailKey: null, values: {}, href: '/accounts' };
+
+  const failing = accounts.filter((connection) => connection.status !== 'ok').length;
+  return {
+    id: 'do',
+    state: failing > 0 ? 'degraded' : 'connected',
+    detailKey: failing > 0 ? 'doFailing' : 'doConnected',
+    values: { accounts: accounts.length, failing },
+    href: '/accounts',
+  };
+}
+
 export function integrationStatuses(db: Db): IntegrationStatus[] {
   const byId: Record<IntegrationId, IntegrationStatus> = {
     aws: awsStatus(db),
     gcp: gcpStatus(db),
+    do: doStatus(db),
     github: githubStatus(db),
     ai: aiStatus(db),
     cloudflare: cloudflareStatus(db),

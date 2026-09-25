@@ -23,7 +23,9 @@ type Purpose =
   /** The secret a Linux host's agent signs its reports with. It can prove who it is; it cannot log in. */
   | 'host-agent'
   /** The private half of the key one Google Cloud connection signs its own OIDC tokens with. */
-  | 'gcp-federation';
+  | 'gcp-federation'
+  /** A DigitalOcean personal access token, scoped to reading droplets and nothing else. */
+  | 'do-token';
 /** Purposes of the values `encrypt` seals: each gets its own key, so one cannot be passed off as another. */
 type EncryptionPurpose = Exclude<Purpose, 'sessions'>;
 

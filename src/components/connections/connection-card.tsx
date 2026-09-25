@@ -1,4 +1,4 @@
-import { ChevronRight, Cloud, CloudCog, GitBranch, Globe, KeyRound, Sparkles, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Cloud, CloudCog, Droplet, GitBranch, Globe, KeyRound, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
@@ -33,6 +33,7 @@ const PILL: Record<ConnectionTone, string> = {
 const PROVIDER_ICONS: Record<IntegrationId, LucideIcon> = {
   aws: Cloud,
   gcp: CloudCog,
+  do: Droplet,
   github: GitBranch,
   ai: Sparkles,
   cloudflare: Globe,

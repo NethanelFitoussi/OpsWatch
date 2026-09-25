@@ -10,6 +10,7 @@ import { disableManagedCollection } from '@/lib/aws/collection';
 import { awsErrorCode } from '@/lib/aws/errors';
 import { quickCreateUrl } from '@/lib/aws/template';
 import { uploadTemplate } from '@/lib/aws/template-upload';
+import { testDoConnection } from '@/lib/do/check';
 import { testGoogleConnection } from '@/lib/gcp/check';
 import { openConnectionKey } from '@/lib/gcp/issuer';
 import { revalidatePath } from 'next/cache';
@@ -18,6 +19,9 @@ import {
   ConnectionNotFoundError,
   createConnection,
   createGoogleConnection,
+  createDoConnection,
+  readDoToken,
+  saveDoTestResult,
   deleteConnection,
   findConnection,
   regenerateExternalId,
@@ -183,6 +187,49 @@ export async function createGoogleConnectionAction(locale: string, _prev: FormSt
   }
   await recordAdminAction({ adminId, action: 'connection_create', subjectType: 'connection', subjectId: id, connectionId: id, result: 'ok' });
   return redirect({ href: `/accounts/${id}`, locale: resolved });
+}
+
+/**
+ * Connects a DigitalOcean account.
+ *
+ * The token is a secret, so unlike every other connection form nothing is echoed back on an error but
+ * the name: a field repopulated with somebody's token is a token in a page's HTML.
+ */
+export async function createDoConnectionAction(locale: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const { locale: resolved, adminId } = await authorize(locale);
+  const values = { name: formString(formData, 'name') };
+  let id: string;
+  try {
+    id = createDoConnection(getDb(), { name: values.name, token: formString(formData, 'token') }, env().OPSWATCH_SECRET).id;
+  } catch (error) {
+    if (error instanceof ConnectionInputError) {
+      await recordAdminAction({ adminId, action: 'connection_create', subjectType: 'connection', result: 'denied', details: { reason: error.code } });
+      return { error: error.code, values };
+    }
+    throw error;
+  }
+  await recordAdminAction({ adminId, action: 'connection_create', subjectType: 'connection', subjectId: id, connectionId: id, result: 'ok' });
+  return redirect({ href: `/accounts/${id}`, locale: resolved });
+}
+
+/** Asks DigitalOcean what this token can read, and writes down the answer. */
+export async function verifyDoAction(locale: string, id: string, _prev: FormState): Promise<FormState> {
+  return auditedAdmin(
+    resolveLocale(locale),
+    'connection_test',
+    'connection',
+    async (): Promise<FormState> => {
+      const db = getDb();
+      const row = findConnection(db, id);
+      if (row === null || row.provider !== 'do') return { error: 'not_ready' };
+
+      const result = await testDoConnection({ token: readDoToken(row, env().OPSWATCH_SECRET), nowMs: Date.now() });
+      saveDoTestResult(db, id, result, result.failure === null ? 'ok' : 'failed');
+      revalidatePath(`/${resolveLocale(locale)}/accounts/${id}`);
+      return {};
+    },
+    { subjectId: id, connectionId: id },
+  );
 }
 
 /**

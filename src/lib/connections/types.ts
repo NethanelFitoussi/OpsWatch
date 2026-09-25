@@ -5,7 +5,7 @@
  * resource was discovered — and not a separate product: an operator investigates a machine or a
  * database, and which cloud it came from is a fact about it rather than a different place to look.
  */
-export const PROVIDERS = ['aws', 'gcp'] as const;
+export const PROVIDERS = ['aws', 'gcp', 'do'] as const;
 export type Provider = (typeof PROVIDERS)[number];
 
 /**
@@ -17,13 +17,16 @@ export type Provider = (typeof PROVIDERS)[number];
  * instance can use the recommended path even when nobody can reach it from the internet, because the
  * provider takes the JWK set by upload rather than fetching it from the issuer.
  */
-export const CONNECTION_METHODS = ['role', 'ambient', 'keys', 'federation'] as const;
+export const CONNECTION_METHODS = ['role', 'ambient', 'keys', 'federation', 'token'] as const;
 export type ConnectionMethod = (typeof CONNECTION_METHODS)[number];
 
 /** Which methods belong to which cloud. A method from the wrong one is not a choice, it is a mistake. */
 export const METHODS_BY_PROVIDER: Record<Provider, readonly ConnectionMethod[]> = {
   aws: ['role', 'ambient', 'keys'],
   gcp: ['federation'],
+  // DigitalOcean has no federation to offer, so a token is the only honest option — and its custom
+  // scopes make it a narrow one: `droplet:read` and nothing else.
+  do: ['token'],
 };
 
 export const CONNECTION_STATUSES = ['draft', 'pending', 'ok', 'degraded', 'failed'] as const;

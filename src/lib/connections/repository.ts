@@ -9,6 +9,7 @@ import type { Db } from '../db/client';
 import { connections, type ConnectionRow } from '../db/schema';
 import type { ConnectionStatus, PermissionTestResult } from './types';
 import type { GcpTestResult } from '../gcp/result';
+import type { DoTestResult } from '../do/result';
 import {
   type AccessKeys,
   accessKeysSchema,
@@ -18,6 +19,7 @@ import {
   gcpRegionsSchema,
   gcpResourceIdSchema,
   gcpServiceAccountSchema,
+  doTokenSchema,
   methodSchema,
   nameSchema,
   parseRoleArn,
@@ -44,6 +46,7 @@ export type ConnectionInputErrorCode =
   | 'wrong_method'
   | 'gcp_project_invalid'
   | 'gcp_regions_invalid'
+  | 'do_token_invalid'
   | 'gcp_project_number_invalid'
   | 'gcp_pool_invalid'
   | 'gcp_provider_invalid'
@@ -175,6 +178,62 @@ export function saveGoogleTestResult(db: Db, id: string, result: GcpTestResult, 
     .where(eq(connections.id, id))
     .returning()
     .get();
+  if (row === undefined) throw new ConnectionNotFoundError(id);
+  return row;
+}
+
+/**
+ * Connects a DigitalOcean account, by personal access token.
+ *
+ * There is no federation to use instead, so a credential is stored — encrypted under its own purpose,
+ * never returned to a page, and asked for with the narrowest scope DigitalOcean offers. `droplet:read`
+ * rather than the `api:read` alias: one of those is "read the droplets", the other is "read
+ * everything in the team", and a product that asks for the second when it uses the first is asking for
+ * access it has no plan for.
+ */
+export function createDoConnection(
+  db: Db,
+  input: { name: string; token: string },
+  secret: string,
+  now: Date = new Date(),
+): ConnectionRow {
+  const name = parseOrThrow(nameSchema, input.name, 'name_invalid');
+  const token = parseOrThrow(doTokenSchema, input.token, 'do_token_invalid');
+
+  return db
+    .insert(connections)
+    .values({
+      id: randomId(),
+      name,
+      provider: 'do',
+      method: 'token',
+      awsAccountId: null,
+      // DigitalOcean's regions come back on the droplets themselves; there is nothing to choose up front.
+      regions: [],
+      doTokenCiphertext: encrypt(token, secret, 'do-token'),
+      // The token has not been tried yet, and having one is not the same as it working.
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+    })
+    .returning()
+    .get();
+}
+
+/** The token, for the one caller that talks to DigitalOcean. Never returned to a page. */
+export function readDoToken(row: ConnectionRow, secret: string): string | null {
+  if (row.doTokenCiphertext === null) return null;
+  try {
+    return decrypt(row.doTokenCiphertext, secret, 'do-token');
+  } catch {
+    // A changed OPSWATCH_SECRET, or a corrupted row. The caller refuses rather than serving a 500.
+    return null;
+  }
+}
+
+/** Writes down what DigitalOcean answered, and what that makes this connection. */
+export function saveDoTestResult(db: Db, id: string, result: DoTestResult, status: ConnectionStatus): ConnectionRow {
+  const row = db.update(connections).set({ doLastTest: result, status, updatedAt: new Date() }).where(eq(connections.id, id)).returning().get();
   if (row === undefined) throw new ConnectionNotFoundError(id);
   return row;
 }
@@ -325,8 +384,10 @@ export function readAccessKeys(row: ConnectionRow, secret: string): AccessKeys {
 
 export function credentialsInputFor(row: ConnectionRow, secret: string): CredentialsInput {
   switch (row.method) {
-    // Google Cloud is reached by exchanging a token OpsWatch signs, not by a stored AWS credential.
+    // Neither of the other clouds is reached with an AWS credential: Google by exchanging a token
+    // OpsWatch signs, DigitalOcean by its own bearer token.
     case 'federation':
+    case 'token':
       throw new ConnectionInputError('not_ready');
     case 'ambient':
       return { method: 'ambient' };

@@ -27,6 +27,14 @@ export const gcpResourceIdSchema = z.string().trim().regex(/^[a-z][a-z0-9-]{2,62
 export const gcpRegionSchema = z.string().trim().regex(/^[a-z]+-[a-z]+[0-9]$/);
 export const gcpRegionsSchema = z.array(gcpRegionSchema).min(1).max(20);
 
+/**
+ * A DigitalOcean personal access token, by shape.
+ *
+ * Long, opaque and prefixed — the shape is checked so an obvious paste error is a message rather than
+ * a call to DigitalOcean, and whether the token is *real* is answered by DigitalOcean.
+ */
+export const doTokenSchema = z.string().trim().min(40).max(256).regex(/^[A-Za-z0-9_-]+$/);
+
 export const gcpServiceAccountSchema = z
   .string()
   .trim()

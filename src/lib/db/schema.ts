@@ -8,6 +8,7 @@ import {
   type PermissionTestResult,
 } from '../connections/types';
 import type { GcpTestResult } from '../gcp/result';
+import type { DoTestResult } from '../do/result';
 
 export const adminUser = sqliteTable('admin_user', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -74,6 +75,13 @@ export const connections = sqliteTable('connections', {
    * holding would get it wrong exactly once.
    */
   gcpLastTest: text('gcp_last_test', { mode: 'json' }).$type<GcpTestResult>(),
+  /*
+   * DigitalOcean, by personal access token. There is no federation to use instead, so a credential is
+   * stored — encrypted under its own purpose, never returned to a page, and asked for with the
+   * narrowest scope the provider offers rather than its read-everything alias.
+   */
+  doTokenCiphertext: text('do_token_ciphertext'),
+  doLastTest: text('do_last_test', { mode: 'json' }).$type<DoTestResult>(),
   status: text('status', { enum: CONNECTION_STATUSES }).notNull(),
   lastTest: text('last_test', { mode: 'json' }).$type<PermissionTestResult>(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),

@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | The owner's own journey, walked end to end as one thing |
+| Current checkpoint | DigitalOcean connected, with the narrowest scope it offers |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
-| Schema | drizzle **0037** — `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -160,6 +160,13 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **DigitalOcean, with the narrowest scope it offers.** A personal access token scoped to
+      `droplet:read`, not the `api:read` alias — DigitalOcean's custom scopes make least privilege
+      available, and asking for read-everything when the product reads one resource is asking for
+      access with no plan for it. The token is encrypted, never returned to a page, and never put back
+      into a field after an error, which is where a token ends up in a page's HTML. The paging
+      constructs its own page numbers rather than following `links.pages.next`: fetching a URL out of
+      a response body is an outbound request somebody else chose
 - [x] **The journey, as one thing.** Connect the account, enrol the machine, the agent reports a
       filling disk and a Redis with no ceiling, the machine is matched to its EC2 instance, the
       account's Health page names it, the rule that would notify exists, and nothing leaves the
@@ -299,7 +306,10 @@ method Google explicitly discourages as the only one on offer.
    and a monitoring surface that is not AWS-shaped.** The rail's ten sections are ten AWS services; a
    unified model (§G) is what both this and DigitalOcean need, and it is a deliberate build rather
    than something to grow one page at a time
-8. DigitalOcean — against current official documentation, never from memory
+8. ~~DigitalOcean~~ — connected with `droplet:read`, droplets readable. **The owner's numbered queue
+   is now complete.** What both new providers need next is the same thing: a monitoring surface whose
+   sections are not ten AWS services (§G). That is a deliberate build, not something to grow one page
+   at a time
 
 P0 correctness, security and data-integrity defects override this order. Serious UX defects override new
 features.

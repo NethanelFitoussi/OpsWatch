@@ -11,6 +11,8 @@ export const CLIENT_NAMESPACES = [
   // The Google Cloud wizard's form and the check button on the connection page.
   'GoogleWizard',
   'GoogleSetup',
+  'DoWizard',
+  'DoSetup',
   'AccountDetail.details',
   'AccountDetail.role',
   'AccountDetail.keys',
