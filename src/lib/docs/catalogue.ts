@@ -65,6 +65,13 @@ export const DOCS: readonly DocGuide[] = [
     keywords: ['forwarder', 'push', 'real-time logs', 'lambda', 'subscription filter', 'managed collection', 'streaming', 'live logs', 'ingest', 'send logs to opswatch'],
   },
 
+  {
+    slug: 'connect-linux',
+    category: 'infrastructure',
+    keywords: ['linux', 'server', 'agent', 'host', 'ubuntu', 'debian', 'vps', 'droplet', 'ssh', 'install agent', 'cpu', 'memory', 'disk', 'redis on a server'],
+    appHref: '/hosts',
+  },
+
   { slug: 'connect-github', category: 'code', keywords: ['github', 'connect github', 'repository', 'commit', 'code', 'deployment', 'map service', 'changed files'] },
 
   { slug: 'history', category: 'data', keywords: ['history', 'historical data', 'save metrics', 'retain', 'retention', 'statistics', 'baseline', 'cost', 'storage', 'backup'] },

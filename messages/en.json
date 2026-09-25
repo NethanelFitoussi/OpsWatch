@@ -20,7 +20,8 @@
       "instances": "Instances",
       "redis": "Redis",
       "kubernetes": "Kubernetes",
-      "docs": "Documentation"
+      "docs": "Documentation",
+      "hosts": "Linux servers"
     },
     "language": {
       "label": "Language",
@@ -3775,7 +3776,10 @@
         "export_download": "Export downloaded",
         "retention_purge": "Retention pass ran",
         "notify_update": "Notification destination changed",
-        "notify_test": "Notification destination tested"
+        "notify_test": "Notification destination tested",
+        "host_enrol": "Linux host enrolled",
+        "host_update": "Linux host updated",
+        "host_remove": "Linux host removed"
       }
     },
     "ai": {
@@ -5644,6 +5648,77 @@
             "label": "Search what arrives"
           }
         }
+      },
+      "connect-linux": {
+        "title": "Connect a Linux server",
+        "summary": "Install a small agent on a machine, and OpsWatch can see its CPU, memory, load, uptime and disks — wherever it runs.",
+        "what": "Cloud discovery finds what the cloud knows about. It does not find Redis installed on an Ubuntu box, a queue worker on a VPS, or a database on a machine under a desk. An agent does: it runs where the data is and reports out, so a machine behind NAT works like any other and OpsWatch never holds a credential that could log in to anything.",
+        "flow": {
+          "0": {
+            "label": "Add a server"
+          },
+          "1": {
+            "label": "Run one command"
+          },
+          "2": {
+            "label": "Agent reports"
+          },
+          "3": {
+            "label": "The machine appears"
+          }
+        },
+        "before": {
+          "0": "A Linux machine you can run commands on as root.",
+          "1": "That machine must be able to reach this OpsWatch over HTTPS. OpsWatch never connects to it.",
+          "2": "OPSWATCH_PUBLIC_URL set on this installation, so the agent has an address to report to."
+        },
+        "steps": {
+          "0": {
+            "title": "Add the server",
+            "body": "Linux servers, then Add a Linux server. Give it a name you will recognise. OpsWatch mints a key for this machine and shows it once."
+          },
+          "1": {
+            "title": "Check what you are about to run",
+            "body": "The command downloads the agent from this OpsWatch — not from the internet — and prints its SHA-256 before installing anything. Compare that with the checksum on the page. The agent is about a hundred lines of shell: /proc reads, one curl, one openssl."
+          },
+          "2": {
+            "title": "Run it on the machine",
+            "body": "As root. It installs the agent, writes the key to /etc/opswatch/agent.conf with mode 600, adds a cron entry, and runs once immediately."
+          },
+          "3": {
+            "title": "Watch it appear",
+            "body": "The machine shows up on the Linux servers page after its first report, usually within a minute, with what it is and what it measured."
+          }
+        },
+        "verify": "The server is listed as Reporting, and its page shows a CPU figure, a memory figure and its filesystems. A server that has been added but has not reported says Waiting for its first report — which is not the same as unhealthy, and not the same as stopped.",
+        "problems": {
+          "0": {
+            "q": "The server stays on “Waiting for its first report”.",
+            "a": "Run /usr/local/bin/opswatch-agent by hand on the machine and read what it prints. The usual causes are a machine that cannot reach OPSWATCH_PUBLIC_URL, and a clock more than a few minutes out — the signature carries a timestamp, so a wrong clock is refused."
+          },
+          "1": {
+            "q": "It says “Stopped reporting”.",
+            "a": "Nothing has arrived recently, so nothing on the page is current. Check the cron entry at /etc/cron.d/opswatch-agent and run the agent by hand. OpsWatch cannot tell an agent that stopped from a machine that is unreachable, and does not guess."
+          },
+          "2": {
+            "q": "CPU says “Not measured” on the first report.",
+            "a": "A CPU percentage is a rate, and a rate needs two readings. The first report has nothing to compare against, so it says so rather than printing the since-boot average as though it were current."
+          },
+          "3": {
+            "q": "Can OpsWatch run commands on the machine?",
+            "a": "No. The agent opens no port and accepts nothing back. The key it holds proves which machine is reporting; it cannot log in, and there is no channel through which OpsWatch could ask a machine to do anything."
+          },
+          "4": {
+            "q": "What does it read?",
+            "a": "The kernel’s own counters — /proc/stat, /proc/meminfo, /proc/loadavg, /proc/uptime — and the output of df. It does not read process environments, file contents or anything you have not seen in the script."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "reading-status",
+            "label": "What the colours mean"
+          }
+        }
       }
     },
     "api": {
@@ -5849,6 +5924,90 @@
     "rotate": {
       "hint": "Issue a new signing secret. The current one stops working immediately, so update the stack parameter straight afterwards — between the two, the forwarder cannot deliver.",
       "submit": "Rotate the signing secret"
+    }
+  },
+  "Hosts": {
+    "title": "Linux servers",
+    "description": "Machines OpsWatch watches directly, wherever they run.",
+    "listTitle": "Your servers",
+    "listHint": "A server is a machine, not an attribute of a cloud account: it may be an EC2 instance, a Droplet, or a box under somebody’s desk.",
+    "none": "No Linux server has been enrolled yet.",
+    "neverReported": "Has never reported",
+    "lastReport": "Reported {when}",
+    "memoryOf": "{used} of {total}",
+    "readGuide": "Connecting a Linux server",
+    "states": {
+      "healthy": "Reporting",
+      "stale": "Stopped reporting",
+      "waiting": "Waiting for its first report",
+      "unknown": "Unknown"
+    },
+    "clouds": {
+      "aws": "AWS EC2",
+      "gcp": "Google Compute Engine",
+      "digitalocean": "DigitalOcean",
+      "unknown": "No cloud detected"
+    },
+    "enrol": {
+      "title": "Add a Linux server",
+      "hint": "You install a small agent on the machine. It reaches out to OpsWatch; OpsWatch never reaches in.",
+      "whatItReads": "The agent reads the kernel’s own counters — CPU, memory, load, uptime and disk usage — and posts them every five minutes.",
+      "whatItCannot": "It opens no port, accepts no commands, and reads no process environments or file contents. The key it holds proves which machine is reporting; it cannot log in or change anything.",
+      "name": "What to call this server",
+      "nameHint": "Something you will recognise. You can change it later.",
+      "create": "Add server",
+      "secretTitle": "Run this on the machine, once",
+      "secretHint": "The key is in this command and will not be shown again. It is saved on the machine in a file only root can read.",
+      "commandLabel": "On the server, as root",
+      "checksum": "The script this downloads has this SHA-256. The command prints the checksum before installing anything, so you can compare the two.",
+      "afterwards": "The server appears here after its first report, usually within a minute.",
+      "errors": {
+        "name_invalid": "Give the server a name of 80 characters or fewer.",
+        "no_public_url": "OPSWATCH_PUBLIC_URL is not set, so there is no address for an agent to report to. Set it and restart.",
+        "not_found": "That server no longer exists."
+      }
+    },
+    "detail": {
+      "title": "Linux server",
+      "description": "What this machine is, and what it last measured.",
+      "back": "All servers",
+      "stateTitle": "State",
+      "neverReportedHint": "This server has not reported yet.",
+      "staleHint": "Nothing has arrived from this machine recently, so nothing on this page is current. The agent may have stopped, or the machine may be unreachable — OpsWatch cannot tell which from here.",
+      "waitingHint": "The agent has not reported yet. Check that the install command finished, and that the machine can reach this OpsWatch.",
+      "machineTitle": "The machine",
+      "machineHint": "As the machine reported itself, on its last run.",
+      "hostname": "Hostname",
+      "os": "Operating system",
+      "kernel": "Kernel",
+      "arch": "Architecture",
+      "cloud": "Runs on",
+      "cloudInstanceId": "Provider’s id",
+      "agentVersion": "Agent",
+      "latestTitle": "Last reading",
+      "latestHint": "One moment, five minutes ago at most. Not an average.",
+      "noReadings": "Nothing has been measured yet.",
+      "notMeasured": "Not measured",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "load": "Load (1 · 5 · 15 min)",
+      "uptime": "Uptime",
+      "days": "{days} days",
+      "disks": "Filesystems",
+      "measuredAt": "Measured {when}.",
+      "renameTitle": "Name",
+      "name": "Name",
+      "save": "Save",
+      "removeTitle": "Remove this server",
+      "removeHint": "OpsWatch forgets this machine.",
+      "remove": "Remove server",
+      "removeReadings": "Every reading from this machine is deleted. This cannot be undone.",
+      "removeAgent": "The agent keeps running on the machine until you remove it there. Its reports are refused from the moment this server is gone.",
+      "errors": {
+        "name_invalid": "Give the server a name of 80 characters or fewer.",
+        "no_public_url": "OPSWATCH_PUBLIC_URL is not set.",
+        "not_found": "That server no longer exists."
+      }
     }
   }
 }

@@ -15,6 +15,9 @@ export const CLIENT_NAMESPACES = [
   'Collection',
   'ErrorPage',
   'GettingStarted.diagram',
+  // The enrol form and the rename form, which are the only client parts of the hosts pages.
+  'Hosts.enrol',
+  'Hosts.detail',
   'Monitoring.client',
   'Monitoring.sources',
   'Monitoring.endpoints',

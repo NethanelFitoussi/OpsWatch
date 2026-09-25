@@ -46,6 +46,10 @@ export const AUDIT_ACTIONS = [
   'incident_dismiss',
   'export_download',
   'retention_purge',
+  // A Linux host: enrolling one mints a signing secret, and removing one destroys its readings.
+  'host_enrol',
+  'host_update',
+  'host_remove',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

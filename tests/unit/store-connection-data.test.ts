@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { hosts as schemaHosts } from '@/lib/db/schema';
 import { getTableName } from 'drizzle-orm';
 import { PURGED_TABLES, purgeConnectionData } from '@/lib/store/connection-data';
 import { insertProblem } from '@/lib/store/problems';
@@ -8,6 +9,7 @@ import { finishRun, startRun } from '@/lib/store/collector';
 import { upsertCheck } from '@/lib/store/synthetics';
 import { recordFamilySnapshot } from '@/lib/store/health';
 import { createDestination, findDestination } from '@/lib/store/notifications';
+import { createHost, findHost } from '@/lib/store/hosts';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
 
@@ -105,6 +107,22 @@ describe('removing everything one connection wrote', () => {
     expect(after?.connectionId).toBeNull();
   });
 
+  it('THE RULING: it unlinks a Linux host rather than deleting the machine’s readings', () => {
+    /*
+     * A host is a machine. It exists whether or not anybody is watching the AWS account it happens to
+     * run in, and its agent keeps reporting either way. Deleting it because an AWS connection went away
+     * would destroy readings from a machine nobody disconnected.
+     */
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'api-prod-03', nowMs: NOW }, 'secret'.padEnd(32, 'x'));
+    db.update(schemaHosts).set({ connectionId: MINE }).where(eq(schemaHosts.id, host.id)).run();
+
+    purgeConnectionData(db, MINE);
+    const after = findHost(db, host.id);
+    expect(after).not.toBeNull();
+    expect(after?.connectionId).toBeNull();
+  });
+
   it('leaves an instance-wide row alone, because it belongs to no connection', () => {
     const db = createTestDb();
     const run = startRun(db, { job: 'compact', connectionId: null, scope: null, startedAt: NOW });
@@ -130,9 +148,10 @@ describe('removing everything one connection wrote', () => {
 
     // The ingestion tables cascade from `aws_collection`, which the purge does name.
     const cascading = ['aws_forwarded_groups', 'ingest_events', 'ingest_stats'];
-    // And one table is deliberately unscoped rather than emptied: a destination is the operator's own
-    // webhook, with a secret shown once, and disconnecting an account must not destroy it.
-    const unscoped = ['notify_destinations'];
+    // Two tables are deliberately unlinked rather than emptied, because neither is the connection's to
+    // destroy: a destination is the operator's own webhook with a secret shown once, and a host is a
+    // machine that exists whether or not anybody watches the AWS account it runs in.
+    const unscoped = ['notify_destinations', 'hosts'];
     expect(inSchema.filter((name) => !purged.includes(name) && !cascading.includes(name) && !unscoped.includes(name))).toEqual([]);
     // And nothing is purged that the schema does not have, which would be a rename nobody finished.
     expect(purged.filter((name) => !inSchema.includes(name))).toEqual([]);

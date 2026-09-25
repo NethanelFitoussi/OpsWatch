@@ -21,6 +21,29 @@ conversation.
 
 A schema, a migration, a placeholder page, a demo fixture or an unused service is **not** `DONE`.
 
+## Linux hosts (2026-09-25)
+
+The owner's marathon queue, items 5 and 6. Cloud discovery finds what the cloud knows about; it never
+finds Redis on an Ubuntu box, a worker on a VPS or a database on a machine under a desk. This is the
+first vertical slice of the host model, complete rather than foundational.
+
+| Decision | Why |
+|---|---|
+| **An agent, not SSH** | SSH needs a credential that can log in to every machine, reachability to each one, and a schedule of its own — and still only sees a host at the moments it looks. An agent runs where the data is and reports out, so a machine behind NAT works like any other and OpsWatch never holds a credential that could change anything. The key it holds signs reports and authorises nothing else |
+| **A host is not inside an AWS connection** | A machine may be an EC2 instance, a Droplet, a GCE VM or a box under a desk. Filing it under an account and region would make the cloud the thing and the machine an attribute of it. Hosts live at `/hosts`, instance-wide, beside Cloudflare and for the same reason |
+| **The same signature as the AWS forwarder** | `v1:<timestamp>:<body>`, HMAC-SHA256, constant-time, fresh in both directions, over the exact bytes received. One scheme in the codebase: a second implementation of a signature is a second chance to get it wrong |
+| **The host comes from the signature, never the body** | An agent says what machine it is; it does not choose which host record to write into. A report whose `machineId` belongs to another host is a stated `conflict`, not a silent move |
+| **A shell script, served by the operator's own OpsWatch** | About a hundred lines: `/proc` reads, one `curl`, one `openssl`. Small enough to read before running as root, which a compiled binary from an unknown build is not. The install command saves it, prints its SHA-256 to compare with the page, and installs only then — nothing is piped from the internet into a root shell |
+| **IMDSv2 for EC2 identity** | A token request first, then the read. IMDSv1 is the one reachable through a server-side request forgery, and asking for a token is what says this is not one |
+| **Three states, never two** | `waiting` (enrolled, agent has not run) is not unhealthy — calling it so trains an operator to ignore the colour. `stale` is "OpsWatch cannot tell you anything current about this machine", which must never look like "fine" |
+| **Every figure nullable** | A CPU percentage is a rate and needs two readings, so the first report has none. `0%` would be a plausible-looking lie |
+
+| Remaining | |
+|---|---|
+| Service discovery (Redis, PostgreSQL, nginx, Docker) | `NOT_STARTED` — the next slice, and the owner's concrete case |
+| Host ↔ EC2 identity correlation | `NOT_STARTED` — the agent already reports `cloudInstanceId`, and `hosts.connection_id` exists for it |
+| History and charts for host metrics | `NOT_STARTED` — samples are stored and bounded; only the latest reading is rendered |
+
 ## Storage and the database (2026-09-25)
 
 The owner's marathon queue, item 4. Settings → **Storage** answers, in one place, what an operator

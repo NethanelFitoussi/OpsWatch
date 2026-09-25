@@ -15,6 +15,7 @@ import {
   incidents,
   installRuleOffers,
   logSources,
+  hosts,
   metricBaselines,
   notifyDestinations,
   problems,
@@ -45,10 +46,17 @@ import {
  * `synthetic_runs`, `deployment_commits`, and the three ingestion tables under `aws_collection`), so
  * they are not listed: deleting the parent takes them.
  *
- * One table is deliberately **not** emptied. A notification destination scoped to this connection is
- * the operator's own webhook, with its own signing secret shown once and never again; deleting a
- * connection must not silently destroy it. Its scope is cleared instead, so it survives as an unscoped
- * destination — visible, still working, and there for the operator to re-scope or remove themselves.
+ * Two tables are deliberately **not** emptied, and for the same reason: they are not the connection's
+ * to destroy.
+ *
+ *   - A **notification destination** scoped to this connection is the operator's own webhook, with a
+ *     signing secret shown once and never again.
+ *   - A **Linux host** matched to this connection is a machine. It exists whether or not anybody is
+ *     watching the AWS account it happens to run in, its agent keeps reporting, and deleting it because
+ *     an AWS connection went away would destroy readings from a machine nobody disconnected.
+ *
+ * Both have their link to the connection cleared instead, so they survive unattached — visible, still
+ * working, and there for the operator to re-scope or remove themselves.
  */
 /**
  * The tables this purge empties, in the order it empties them.
@@ -90,8 +98,9 @@ export function purgeConnectionData(db: Db, connectionId: string): number {
     for (const table of PURGED_TABLES) {
       removed += tx.delete(table).where(eq(table.connectionId, connectionId)).run().changes;
     }
-    // Unscoped rather than deleted: see above.
+    // Unlinked rather than deleted: see above.
     tx.update(notifyDestinations).set({ connectionId: null }).where(eq(notifyDestinations.connectionId, connectionId)).run();
+    tx.update(hosts).set({ connectionId: null }).where(eq(hosts.connectionId, connectionId)).run();
   });
   return removed;
 }

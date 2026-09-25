@@ -1242,3 +1242,81 @@ export const ingestStats = sqliteTable(
 );
 
 export type IngestStatRow = typeof ingestStats.$inferSelect;
+
+/**
+ * A Linux host, and the agent that reports it (§E).
+ *
+ * **Not scoped to an AWS connection.** A machine may be an EC2 instance, a Droplet, a Compute Engine VM
+ * or a server under somebody's desk; filing it under an account and region would make the cloud the
+ * thing and the machine an attribute of it. Where a host *is* an EC2 instance, `cloudInstanceId` is
+ * what the machine reported about itself and `connectionId` is the connection it was matched to — both
+ * nullable, because most of the time OpsWatch has one and not the other.
+ *
+ * The secret is the whole security model: it is minted once, shown once, kept encrypted, and signs
+ * every report. It cannot open a shell, change anything on the machine, or be read back by a page.
+ */
+export const hosts = sqliteTable(
+  'hosts',
+  {
+    id: text('id').primaryKey(),
+    /** What the operator called it. Seeded from the first hostname the agent reported. */
+    name: text('name').notNull(),
+    /** Signs every report. Encrypted under its own purpose, never returned to a page after creation. */
+    secretCiphertext: text('secret_ciphertext').notNull(),
+    /**
+     * `/etc/machine-id`, which survives a rename and does not survive a re-image.
+     *
+     * Unique where present, so one machine cannot quietly become two hosts by being enrolled twice —
+     * and null where the agent could not read it, because a host with no machine id is still a host.
+     */
+    machineId: text('machine_id'),
+    hostname: text('hostname'),
+    os: text('os'),
+    kernel: text('kernel'),
+    arch: text('arch'),
+    cloud: text('cloud'),
+    /** The provider's own id, where the machine could tell OpsWatch one. */
+    cloudInstanceId: text('cloud_instance_id'),
+    /** The AWS connection this host was matched to, on identity AWS gave it — never on a hostname. */
+    connectionId: text('connection_id'),
+    agentVersion: text('agent_version'),
+    /** When the agent first proved it had the secret. Null while the host is still waiting. */
+    enrolledAt: integer('enrolled_at'),
+    lastSeenAt: integer('last_seen_at'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (table) => [uniqueIndex('hosts_machine_id').on(table.machineId), index('hosts_connection').on(table.connectionId)],
+);
+
+export type HostRow = typeof hosts.$inferSelect;
+
+/**
+ * One reading from one host.
+ *
+ * Every figure is nullable: a kernel that does not publish a value, a container that hides one and a
+ * first sample with no previous to difference against are all "not measured", which is a different
+ * answer from zero and is rendered as one.
+ */
+export const hostSamples = sqliteTable(
+  'host_samples',
+  {
+    seq: integer('seq').primaryKey({ autoIncrement: true }),
+    hostId: text('host_id')
+      .notNull()
+      .references(() => hosts.id, { onDelete: 'cascade' }),
+    at: integer('at').notNull(),
+    cpuPercent: real('cpu_percent'),
+    memoryUsedBytes: integer('memory_used_bytes'),
+    memoryTotalBytes: integer('memory_total_bytes'),
+    load1: real('load_1'),
+    load5: real('load_5'),
+    load15: real('load_15'),
+    uptimeSeconds: integer('uptime_seconds'),
+    /** One row per mounted filesystem, as the agent read them. */
+    disks: text('disks', { mode: 'json' }).$type<{ mount: string; usedBytes: number | null; totalBytes: number | null }[]>().notNull(),
+  },
+  (table) => [index('host_samples_host_at').on(table.hostId, table.at)],
+);
+
+export type HostSampleRow = typeof hostSamples.$inferSelect;

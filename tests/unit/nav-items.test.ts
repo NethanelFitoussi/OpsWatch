@@ -20,7 +20,9 @@ describe('navigation items', () => {
       'loadBalancers',
       'alarms',
       'logs',
-      // Instance-scoped, so it sits after the sections that carry a connection and a region.
+      // Instance-scoped, so these sit after the sections that carry a connection and a region. A Linux
+      // machine is not an attribute of an AWS account any more than a Cloudflare zone is.
+      'hosts',
       'cloudflare',
       'gettingStarted',
       // The documentation sits beside the guided setup: one walks you through, the other explains.

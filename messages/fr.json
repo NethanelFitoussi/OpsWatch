@@ -20,7 +20,8 @@
       "instances": "Instances",
       "redis": "Redis",
       "kubernetes": "Kubernetes",
-      "docs": "Documentation"
+      "docs": "Documentation",
+      "hosts": "Serveurs Linux"
     },
     "language": {
       "label": "Langue",
@@ -3775,7 +3776,10 @@
         "export_download": "Export téléchargé",
         "retention_purge": "Passe de rétention exécutée",
         "notify_update": "Destination de notification modifiée",
-        "notify_test": "Destination de notification testée"
+        "notify_test": "Destination de notification testée",
+        "host_enrol": "Hôte Linux enrôlé",
+        "host_update": "Hôte Linux modifié",
+        "host_remove": "Hôte Linux supprimé"
       }
     },
     "ai": {
@@ -5644,6 +5648,77 @@
             "label": "Chercher ce qui arrive"
           }
         }
+      },
+      "connect-linux": {
+        "title": "Connecter un serveur Linux",
+        "summary": "Installez un petit agent sur une machine, et OpsWatch voit son CPU, sa mémoire, sa charge, son uptime et ses disques — où qu’elle tourne.",
+        "what": "La découverte cloud trouve ce que le cloud connaît. Elle ne trouve pas un Redis installé sur une machine Ubuntu, un worker sur un VPS, ni une base sur une machine sous un bureau. Un agent, si : il tourne là où sont les données et transmet vers l’extérieur, de sorte qu’une machine derrière un NAT fonctionne comme les autres et qu’OpsWatch ne détient jamais d’identifiant permettant de se connecter à quoi que ce soit.",
+        "flow": {
+          "0": {
+            "label": "Ajouter un serveur"
+          },
+          "1": {
+            "label": "Exécuter une commande"
+          },
+          "2": {
+            "label": "L’agent transmet"
+          },
+          "3": {
+            "label": "La machine apparaît"
+          }
+        },
+        "before": {
+          "0": "Une machine Linux sur laquelle vous pouvez exécuter des commandes en root.",
+          "1": "Cette machine doit pouvoir joindre cet OpsWatch en HTTPS. OpsWatch ne s’y connecte jamais.",
+          "2": "OPSWATCH_PUBLIC_URL défini sur cette installation, pour que l’agent ait une adresse où transmettre."
+        },
+        "steps": {
+          "0": {
+            "title": "Ajoutez le serveur",
+            "body": "Serveurs Linux, puis Ajouter un serveur Linux. Donnez-lui un nom reconnaissable. OpsWatch génère une clé pour cette machine et l’affiche une seule fois."
+          },
+          "1": {
+            "title": "Vérifiez ce que vous allez exécuter",
+            "body": "La commande télécharge l’agent depuis cet OpsWatch — pas depuis Internet — et affiche son SHA-256 avant toute installation. Comparez-le avec l’empreinte affichée sur la page. L’agent fait une centaine de lignes de shell : des lectures de /proc, un curl, un openssl."
+          },
+          "2": {
+            "title": "Exécutez-la sur la machine",
+            "body": "En root. Elle installe l’agent, écrit la clé dans /etc/opswatch/agent.conf en mode 600, ajoute une entrée cron et s’exécute une fois immédiatement."
+          },
+          "3": {
+            "title": "Regardez-la apparaître",
+            "body": "La machine apparaît sur la page Serveurs Linux après son premier envoi, en général en moins d’une minute, avec ce qu’elle est et ce qu’elle a mesuré."
+          }
+        },
+        "verify": "Le serveur est listé comme Transmet, et sa page affiche un CPU, une mémoire et ses systèmes de fichiers. Un serveur ajouté mais qui n’a pas encore transmis affiche En attente du premier envoi — ce qui n’est ni « en panne » ni « arrêté ».",
+        "problems": {
+          "0": {
+            "q": "Le serveur reste « En attente du premier envoi ».",
+            "a": "Exécutez /usr/local/bin/opswatch-agent à la main sur la machine et lisez la sortie. Les causes habituelles sont une machine qui ne joint pas OPSWATCH_PUBLIC_URL, et une horloge décalée de plus de quelques minutes — la signature porte un horodatage, donc une horloge fausse est refusée."
+          },
+          "1": {
+            "q": "Il affiche « A cessé de transmettre ».",
+            "a": "Rien n’est arrivé récemment : rien sur la page n’est actuel. Vérifiez l’entrée cron dans /etc/cron.d/opswatch-agent et lancez l’agent à la main. OpsWatch ne peut pas distinguer un agent arrêté d’une machine injoignable, et ne devine pas."
+          },
+          "2": {
+            "q": "Le CPU affiche « Non mesuré » au premier envoi.",
+            "a": "Un pourcentage CPU est un taux, et un taux demande deux lectures. Le premier envoi n’a rien à quoi se comparer : il le dit, plutôt que de présenter la moyenne depuis le démarrage comme si elle était actuelle."
+          },
+          "3": {
+            "q": "OpsWatch peut-il exécuter des commandes sur la machine ?",
+            "a": "Non. L’agent n’ouvre aucun port et n’accepte rien en retour. La clé qu’il détient prouve quelle machine transmet ; elle ne permet pas de se connecter, et aucun canal ne permet à OpsWatch de demander quoi que ce soit à une machine."
+          },
+          "4": {
+            "q": "Que lit-il ?",
+            "a": "Les compteurs du noyau — /proc/stat, /proc/meminfo, /proc/loadavg, /proc/uptime — et la sortie de df. Il ne lit ni les environnements de processus, ni le contenu des fichiers, ni rien que vous n’ayez vu dans le script."
+          }
+        },
+        "next": {
+          "0": {
+            "href": "reading-status",
+            "label": "Ce que signifient les couleurs"
+          }
+        }
       }
     },
     "api": {
@@ -5849,6 +5924,90 @@
     "rotate": {
       "hint": "Émettre un nouveau secret de signature. L’actuel cesse immédiatement de fonctionner : mettez à jour le paramètre de la pile juste après — entre les deux, la Lambda ne peut pas livrer.",
       "submit": "Renouveler le secret de signature"
+    }
+  },
+  "Hosts": {
+    "title": "Serveurs Linux",
+    "description": "Machines qu’OpsWatch surveille directement, où qu’elles tournent.",
+    "listTitle": "Vos serveurs",
+    "listHint": "Un serveur est une machine, pas un attribut d’un compte cloud : ce peut être une instance EC2, un Droplet, ou une machine sous un bureau.",
+    "none": "Aucun serveur Linux n’a encore été enrôlé.",
+    "neverReported": "N’a jamais transmis",
+    "lastReport": "Transmis {when}",
+    "memoryOf": "{used} sur {total}",
+    "readGuide": "Connecter un serveur Linux",
+    "states": {
+      "healthy": "Transmet",
+      "stale": "A cessé de transmettre",
+      "waiting": "En attente du premier envoi",
+      "unknown": "Inconnu"
+    },
+    "clouds": {
+      "aws": "AWS EC2",
+      "gcp": "Google Compute Engine",
+      "digitalocean": "DigitalOcean",
+      "unknown": "Aucun cloud détecté"
+    },
+    "enrol": {
+      "title": "Ajouter un serveur Linux",
+      "hint": "Vous installez un petit agent sur la machine. C’est lui qui contacte OpsWatch ; OpsWatch ne se connecte jamais à la machine.",
+      "whatItReads": "L’agent lit les compteurs du noyau — CPU, mémoire, charge, uptime et occupation disque — et les transmet toutes les cinq minutes.",
+      "whatItCannot": "Il n’ouvre aucun port, n’accepte aucune commande, et ne lit ni les environnements de processus ni le contenu des fichiers. La clé qu’il détient prouve quelle machine transmet ; elle ne permet ni de se connecter ni de modifier quoi que ce soit.",
+      "name": "Nom de ce serveur",
+      "nameHint": "Quelque chose que vous reconnaîtrez. Modifiable plus tard.",
+      "create": "Ajouter le serveur",
+      "secretTitle": "À exécuter une fois sur la machine",
+      "secretHint": "La clé est dans cette commande et ne sera plus affichée. Elle est enregistrée sur la machine dans un fichier lisible par root uniquement.",
+      "commandLabel": "Sur le serveur, en root",
+      "checksum": "Le script téléchargé a cette empreinte SHA-256. La commande affiche la somme de contrôle avant toute installation, pour que vous puissiez comparer.",
+      "afterwards": "Le serveur apparaît ici après son premier envoi, en général en moins d’une minute.",
+      "errors": {
+        "name_invalid": "Donnez au serveur un nom de 80 caractères maximum.",
+        "no_public_url": "OPSWATCH_PUBLIC_URL n’est pas défini : aucun agent n’a d’adresse où transmettre. Définissez-le puis redémarrez.",
+        "not_found": "Ce serveur n’existe plus."
+      }
+    },
+    "detail": {
+      "title": "Serveur Linux",
+      "description": "Ce qu’est cette machine, et ce qu’elle a mesuré en dernier.",
+      "back": "Tous les serveurs",
+      "stateTitle": "État",
+      "neverReportedHint": "Ce serveur n’a pas encore transmis.",
+      "staleHint": "Rien n’est arrivé de cette machine récemment : rien sur cette page n’est actuel. L’agent s’est peut-être arrêté, ou la machine est injoignable — OpsWatch ne peut pas le dire d’ici.",
+      "waitingHint": "L’agent n’a pas encore transmis. Vérifiez que la commande d’installation s’est terminée et que la machine peut joindre cet OpsWatch.",
+      "machineTitle": "La machine",
+      "machineHint": "Telle que la machine s’est décrite lors de son dernier envoi.",
+      "hostname": "Nom d’hôte",
+      "os": "Système",
+      "kernel": "Noyau",
+      "arch": "Architecture",
+      "cloud": "Tourne sur",
+      "cloudInstanceId": "Identifiant du fournisseur",
+      "agentVersion": "Agent",
+      "latestTitle": "Dernière mesure",
+      "latestHint": "Un instant, datant de cinq minutes au plus. Pas une moyenne.",
+      "noReadings": "Rien n’a encore été mesuré.",
+      "notMeasured": "Non mesuré",
+      "cpu": "CPU",
+      "memory": "Mémoire",
+      "load": "Charge (1 · 5 · 15 min)",
+      "uptime": "Uptime",
+      "days": "{days} jours",
+      "disks": "Systèmes de fichiers",
+      "measuredAt": "Mesuré {when}.",
+      "renameTitle": "Nom",
+      "name": "Nom",
+      "save": "Enregistrer",
+      "removeTitle": "Supprimer ce serveur",
+      "removeHint": "OpsWatch oublie cette machine.",
+      "remove": "Supprimer le serveur",
+      "removeReadings": "Toutes les mesures de cette machine sont supprimées. C’est irréversible.",
+      "removeAgent": "L’agent continue de tourner sur la machine jusqu’à ce que vous l’y supprimiez. Ses envois sont refusés dès que ce serveur a disparu.",
+      "errors": {
+        "name_invalid": "Donnez au serveur un nom de 80 caractères maximum.",
+        "no_public_url": "OPSWATCH_PUBLIC_URL n’est pas défini.",
+        "not_found": "Ce serveur n’existe plus."
+      }
     }
   }
 }
