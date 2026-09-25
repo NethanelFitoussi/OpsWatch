@@ -96,7 +96,7 @@ export default async function IncidentDetailPage({ params }: Props) {
           <ul className="divide-y">
             {detail.timeline.map((entry, index) => (
               <li key={`${entry.at}-${index}`} className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-sm">
-                <span>{entry.text}</span>
+                <span className="min-w-0 break-words">{entry.text}</span>
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {format.dateTime(new Date(entry.at), { dateStyle: 'short', timeStyle: 'short' })}
                 </span>

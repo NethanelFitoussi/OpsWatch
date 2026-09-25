@@ -93,9 +93,11 @@ export async function HealthSummary({ health, scope, nowMs }: { health: Health; 
           <p className="text-sm text-muted-foreground">{t('noChanges')}</p>
         ) : (
           <ul className="divide-y">
+            {/* Wrapping, and a text that may shrink: the timestamp is `shrink-0`, so without both a
+                long change description pushes it off the right of a 360px screen. */}
             {health.changes.map((change) => (
-              <li key={change.id} className="flex items-baseline justify-between gap-4 py-2 text-sm">
-                <span>{change.text}</span>
+              <li key={change.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
+                <span className="min-w-0 break-words">{change.text}</span>
                 {change.at !== undefined && (
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {format.relativeTime(new Date(change.at), new Date(nowMs))}

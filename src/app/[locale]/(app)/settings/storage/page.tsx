@@ -68,10 +68,12 @@ export default async function StorageSettingsPage({ params }: Props) {
           </div>
           <div className="min-w-0 rounded-lg border p-3 sm:col-span-2">
             <dt className="text-xs text-muted-foreground">{t('persistence')}</dt>
+            {/* The hint belongs *inside* the description: a <p> beside <dt> and <dd> is not a
+                definition list, and a screen reader is told the term has no description. */}
             <dd className={cn('mt-0.5 text-sm font-medium', state.where.persistent ? STATE_TEXT.healthy : STATE_TEXT.critical)}>
               {state.where.persistent ? t('persistent') : t('disposable')}
+              {!state.where.persistent && <span className="mt-1 block text-sm font-normal text-muted-foreground">{t('disposableHint')}</span>}
             </dd>
-            {!state.where.persistent && <p className="mt-1 text-sm text-muted-foreground">{t('disposableHint')}</p>}
           </div>
         </dl>
         <p className="mt-3 text-sm text-muted-foreground">{t('onlyPlace')}</p>

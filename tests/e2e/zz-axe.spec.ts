@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { estateRoutes } from './estate';
 import { MOTO_REGION, ensureMonitoringConnection, login } from './helpers';
 
 /**
@@ -29,38 +30,7 @@ test('THE RULING: the product passes axe at both widths, in both locales, in bot
   test.setTimeout(420_000);
   await login(page);
   const id = await ensureMonitoringConnection(page);
-  const base = `/c/${id}/${MOTO_REGION}`;
-  /*
-   * The estate an operator actually walks through, not a sample: every section's landing page, the two
-   * detail pages this mission rebuilt, the settings a new installation starts in, and the documentation.
-   * §V is a pass over the product, and a pass over four pages would be a claim rather than an audit.
-   */
-  const paths = [
-    `${base}/overview/health`,
-    `${base}/overview/problems`,
-    `${base}/overview/insights`,
-    `${base}/overview/report`,
-    `${base}/alarms/list`,
-    `${base}/alarms/list/opswatch-e2e-high-cpu`,
-    `${base}/alarms/report`,
-    `${base}/containers/services`,
-    `${base}/containers/deployments`,
-    `${base}/databases/instances`,
-    `${base}/load-balancers/list`,
-    `${base}/instances/list`,
-    `${base}/redis/nodes`,
-    `${base}/logs/search`,
-    `${base}/logs/volume`,
-    `${base}/logs/report`,
-    `${base}/errors/groups`,
-    '/settings',
-    '/settings/backup',
-    '/settings/notifications',
-    `/accounts/${id}/collection`,
-    '/docs',
-    '/docs/alarms',
-    '/docs/searching-logs',
-  ];
+  const paths = estateRoutes(id, MOTO_REGION);
 
   const violations: string[] = [];
   for (const size of WIDTHS) {

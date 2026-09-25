@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | MC-12: the audit log names the account, and records the five actions it only promised |
+| Current checkpoint | UX-3: one sweep over the whole estate at 360 px, in both languages |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0033** — `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -145,6 +145,13 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **UX-3 the narrow pass, as a sweep.** 40 routes × 2 locales at 360 px, measuring two failures
+      rather than one: the page scrolling sideways, and an element wider than the screen while an
+      ancestor clips it — which looks like nothing is wrong at all. It found one: the "what changed"
+      list put an unshrinkable timestamp beside a description that could not wrap, so on a narrow
+      screen the time was simply off the edge. The same row exists on the brief and the incident
+      timeline and had the same fault. The sweep shares one route list with the accessibility sweep,
+      so a page added to one is never quietly missing from the other
 - [x] **MC-12 the audit log names the account.** `connection_id` on the row, nullable because signing
       in and changing a setting belong to the installation rather than to an account; a column and a
       per-account filter on the page; and "this installation only" as its own question, since a single

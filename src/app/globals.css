@@ -64,7 +64,13 @@
   --muted-foreground: oklch(0.52 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  /*
+   * Darkened from L=0.577. That passed on white (4.76:1) and failed everywhere it is actually used:
+   * `text-destructive` sits on `bg-destructive/10` in the destructive button and badge, where the
+   * background is a tint of the text's own colour and the contrast falls to 3.99:1. At L=0.50 it is
+   * 4.95:1 on the tint and 5.96:1 on white. Dark mode composites against a dark card and passes.
+   */
+  --destructive: oklch(0.50 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.52 0.17 262);
