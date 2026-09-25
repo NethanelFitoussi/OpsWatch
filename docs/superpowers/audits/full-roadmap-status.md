@@ -38,8 +38,19 @@ first vertical slice of the host model, complete rather than foundational.
 | **Three states, never two** | `waiting` (enrolled, agent has not run) is not unhealthy — calling it so trains an operator to ignore the colour. `stale` is "OpsWatch cannot tell you anything current about this machine", which must never look like "fine" |
 | **Every figure nullable** | A CPU percentage is a rate and needs two readings, so the first report has none. `0%` would be a plausible-looking lie |
 
+| What needs attention | `DONE` for the host pages — a full disk, memory nearly exhausted, and a machine that stopped reporting, each shown with the figure behind it and sorted to the top of the list. A finding outranks the reporting state: a machine that is reporting and out of disk is not a green dot |
+
+**Why host findings are not Problems.** The §4 pipeline — detection, alerts, incidents, reports — is
+scoped to an AWS connection and region, because everything in it so far has been. A host has neither:
+it is a machine, and it exists whether or not anybody watches a cloud account. Filing host findings
+there would mean inventing an AWS environment for a machine that has none, or making
+`problems.connection_id` nullable — which every scoped read would then silently exclude, undoing the
+isolation work of `cd78688` by accident. That change is worth making on purpose, and is the next step
+for hosts; it is not one to smuggle in behind a disk-space check.
+
 | Remaining | |
 |---|---|
+| Host findings as first-class problems | `NOT_STARTED` — needs `problems` to admit instance-wide rows, and every scoped read to say what it means by one |
 | Service discovery (Redis, PostgreSQL, nginx, Docker) | `DONE` — from the listening ports and the processes holding them, with the **evidence shown for every entry**: discovery is a guess, and an operator reading "Redis" is entitled to know how OpsWatch decided. Redis itself is read with `INFO` and an allow-list of fields — no key, no value, `KEYS` never run — and verified against a real Redis 7.4.11, including counting keys across databases and reading `maxmemory: 0` as "no limit" rather than a zero ceiling |
 | Host ↔ EC2 identity correlation | `NOT_STARTED` — the agent already reports `cloudInstanceId`, and `hosts.connection_id` exists for it |
 | History and charts for host metrics | `NOT_STARTED` — samples are stored and bounded; only the latest reading is rendered |

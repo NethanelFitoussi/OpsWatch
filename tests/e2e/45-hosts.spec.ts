@@ -253,3 +253,44 @@ test('the hosts pages render at 360px without horizontal overflow, in both local
     expect(overflow, locale).toBeLessThanOrEqual(0);
   }
 });
+
+test('THE RULING: a full disk is what the list says first, and never a green dot', async ({ page }) => {
+  /*
+   * An operator with twenty machines reads the top of the list, and a full disk on the nineteenth is
+   * the thing they opened the page for. A host that is reporting *and* out of disk is not healthy.
+   */
+  const host = { ...(await enrol(page, 'e2e full disk')), machineId: 'e2e-machine-disk' };
+  const full = {
+    ...REPORT,
+    sample: {
+      ...REPORT.sample,
+      disks: [
+        { mount: '/', usedBytes: 48_000_000_000, totalBytes: 50_000_000_000 },
+        { mount: '/data', usedBytes: 10_000_000_000, totalBytes: 100_000_000_000 },
+      ],
+    },
+  };
+  expect((await report(agent, { ...host, body: { ...full, identity: { ...full.identity, machineId: host.machineId } } })).status()).toBe(202);
+
+  await page.goto('/en/hosts');
+  const row = page.getByRole('listitem').filter({ hasText: 'e2e full disk' });
+  // The figure behind the finding, never a colour on its own.
+  await expect(row).toContainText('/ is 96% full');
+  // And only the filesystem that is actually full: /data at 10% says nothing.
+  await expect(row).not.toContainText('/data');
+
+  // The detail says it above everything the page then goes on to describe.
+  await page.goto(`/en/hosts/${host.hostId}`);
+  await expect(page.locator('main')).toContainText('/ is 96% full');
+});
+
+test('THE RULING: a machine that stopped reporting shows no figures from before the silence', async ({ page }) => {
+  // Nothing in the test stack can advance the clock sixteen minutes, so what is checked here is the
+  // other half of the rule: a host that has never reported invents no fault at all.
+  await enrol(page, 'e2e never reported');
+  await page.goto('/en/hosts');
+  const row = page.getByRole('listitem').filter({ hasText: 'e2e never reported' });
+  await expect(row).toContainText('Waiting for its first report');
+  await expect(row).not.toContainText('% full');
+  await expect(row).not.toContainText('stopped reporting');
+});

@@ -6045,6 +6045,12 @@
       "saveFailed": "Dernier instantané en échec",
       "uptime": "Uptime",
       "howRead": "L’agent exécute INFO et rien d’autre. Il ne lit aucune clé ni aucune valeur, et n’exécute jamais KEYS. Si votre Redis exige un mot de passe, placez-le dans le fichier de configuration de l’agent sur la machine."
+    },
+    "findings": {
+      "stopped_reporting": "A cessé de transmettre — rien sur cette page n’est actuel",
+      "disk_nearly_full": "{subject} est rempli à {percent}%",
+      "disk_full": "{subject} est rempli à {percent}%",
+      "memory_nearly_exhausted": "La mémoire est utilisée à {percent}%"
     }
   }
 }

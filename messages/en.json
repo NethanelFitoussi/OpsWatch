@@ -6045,6 +6045,12 @@
       "saveFailed": "Last snapshot failed",
       "uptime": "Uptime",
       "howRead": "The agent runs INFO and nothing else. It reads no key and no value, and never runs KEYS. Where your Redis needs a password, put it in the agent’s own config file on the machine."
+    },
+    "findings": {
+      "stopped_reporting": "Has stopped reporting — nothing on this page is current",
+      "disk_nearly_full": "{subject} is {percent}% full",
+      "disk_full": "{subject} is {percent}% full",
+      "memory_nearly_exhausted": "Memory is {percent}% used"
     }
   }
 }

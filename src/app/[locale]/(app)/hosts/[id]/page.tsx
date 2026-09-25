@@ -11,6 +11,7 @@ import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
 import { formatMetricValue } from '@/lib/monitoring/shared/format';
+import { hostFindings } from '@/lib/monitoring/shared/host-findings';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { findHost, listSamples, toHost } from '@/lib/store/hosts';
 import { STATE_TEXT, TONE_BORDER } from '@/lib/ui/tones';
@@ -54,6 +55,7 @@ export default async function HostDetailPage({ params }: Props) {
   const nowMs = pageNow();
   const samples = listSamples(getDb(), id, 2);
   const host = toHost(row, samples[0] ?? null, nowMs);
+  const findings = hostFindings(host);
   const notMeasured = t('detail.notMeasured');
   const bytes = (value: number | null) => (value === null ? notMeasured : formatMetricValue(value, 'bytes', locale));
   // Counts read as counts: 184,221 rather than 184221, in whichever grouping the locale uses.
@@ -70,6 +72,19 @@ export default async function HostDetailPage({ params }: Props) {
 
       <MonitoringCard title={t('detail.stateTitle')}>
         <p className={cn('text-sm font-medium', STATE_WORD[host.state])}>{t(`states.${host.state}`)}</p>
+        {/* What needs attention, above everything the page then goes on to describe. */}
+        {findings.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {findings.map((finding) => (
+              <li
+                key={`${finding.kind}:${finding.subject}`}
+                className={cn('text-sm font-medium', finding.level === 'critical' ? STATE_TEXT.critical : STATE_TEXT.warning)}
+              >
+                {t(`findings.${finding.kind}`, { subject: finding.subject, percent: Math.round(finding.percent ?? 0) })}
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="mt-1 text-sm text-muted-foreground">
           {host.lastSeenAt === null ? t('detail.neverReportedHint') : t('lastReport', { when: format.relativeTime(new Date(host.lastSeenAt)) })}
         </p>
