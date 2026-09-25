@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Redis on the box, judged from what it reports about itself |
+| Current checkpoint | The owner's own journey, walked end to end as one thing |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0037** — `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -160,6 +160,12 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **The journey, as one thing.** Connect the account, enrol the machine, the agent reports a
+      filling disk and a Redis with no ceiling, the machine is matched to its EC2 instance, the
+      account's Health page names it, the rule that would notify exists, and nothing leaves the
+      instance because nobody configured anywhere for it to go. Every piece had tests; none of them
+      said whether the *product* worked. `47-journey.spec.ts` walks it, and a product assembled from
+      parts that each pass is exactly the product that does not
 - [x] **Redis on the box is judged, not just displayed.** The agent has collected `INFO` since Redis
       support was added and nothing looked at the figures. Three findings, and the restraint is the
       work: **no `maxmemory` is only worth saying when Redis is already a quarter of the machine**,
