@@ -239,6 +239,13 @@
       "when": 1790343557003,
       "tag": "0033_audit_log_connection",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1790346319029,
+      "tag": "0034_host_region",
+      "breakpoints": true
     }
   ]
 }

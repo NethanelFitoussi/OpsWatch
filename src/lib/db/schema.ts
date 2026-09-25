@@ -1300,6 +1300,14 @@ export const hosts = sqliteTable(
     cloudInstanceId: text('cloud_instance_id'),
     /** The AWS connection this host was matched to, on identity AWS gave it — never on a hostname. */
     connectionId: text('connection_id'),
+    /**
+     * The region the machine was found in, beside the account.
+     *
+     * A connection may read several regions; an instance lives in exactly one. Without this, "which
+     * account" is recorded and "where in it" is not — and every scoped read in this product is keyed by
+     * the pair, so half an answer is not usable by any of them.
+     */
+    region: text('region'),
     agentVersion: text('agent_version'),
     /**
      * What was running when the agent last looked, and what Redis said about itself.

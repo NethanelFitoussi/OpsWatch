@@ -6031,7 +6031,8 @@
       "historyTitle": "The last day",
       "historyHint": "One point per report. The line breaks wherever the agent went quiet — a gap is silence, not a measurement.",
       "load1": "Load (1 min)",
-      "alsoInAws": "This machine is also EC2 instance {instance}, in {connection}"
+      "unlink": "Not this account",
+      "alsoInAws": "This machine is also EC2 instance {instance}, in {connection} ({region})"
     },
     "services": {
       "redis": "Redis",

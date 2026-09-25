@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { MOTO_REGION, ensureMonitoringConnection, login } from './helpers';
+import { MOTO_REGION, createConnection, ensureMonitoringConnection, login } from './helpers';
 
 /**
  * Linux hosts, end to end (§E).
@@ -352,4 +352,52 @@ test('THE RULING: an agent on an EC2 instance is one machine, shown from both si
   // …and the machine side says which account it was found in, now that somebody has looked.
   await expect(page.locator('main')).toContainText(seeded!);
   await expect(page.locator('main')).toContainText('This machine is also EC2 instance');
+});
+
+test('THE RULING: a second connection over the same AWS account does not take the machine', async ({ page }) => {
+  /*
+   * `createConnection` has no uniqueness check on the AWS account id, so the same account can be
+   * connected twice — a configuration the rest of the product already handles. Both connections list
+   * the same instances. An earlier version of the correlation overwrote the link whenever it differed,
+   * so opening either instances page moved the machine to that account: which account owned it, and
+   * therefore which one an audit row or a scoped page attributed it to, depended on which tab was open
+   * last.
+   */
+  const first = await ensureMonitoringConnection(page);
+  await page.goto(`/en/c/${first}/${MOTO_REGION}/instances/list`);
+  await page.locator('main table tbody tr').first().waitFor({ timeout: 20_000 });
+  const seeded = /i-[0-9a-f]{8,}/.exec(await page.locator('main').innerText())?.[0] ?? null;
+  expect(seeded, 'the moto seed should have produced an EC2 instance to match against').not.toBeNull();
+
+  const host = { ...(await enrol(page, 'e2e ec2 sticky')), machineId: 'e2e-machine-sticky' };
+  const body = { ...REPORT, identity: { ...REPORT.identity, machineId: host.machineId, cloud: 'aws', cloudInstanceId: seeded! } };
+  expect((await report(agent, { ...host, body })).status()).toBe(202);
+
+  // The first account to list the instance places the machine, and names the region it is in.
+  await page.goto(`/en/c/${first}/${MOTO_REGION}/instances/list`);
+  await page.locator('main table tbody tr').first().waitFor({ timeout: 20_000 });
+  await page.goto(`/en/hosts/${host.hostId}`);
+  await expect(page.locator('main')).toContainText(`in Moto monitoring (${MOTO_REGION})`);
+
+  // A second connection over the same account lists the same instance and does not take it.
+  const second = await createConnection(page, 'ambient', 'Sticky second', MOTO_REGION);
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.goto(`/en/c/${second}/${MOTO_REGION}/instances/list`);
+  await page.locator('main table tbody tr').first().waitFor({ timeout: 20_000 });
+
+  await page.goto(`/en/hosts/${host.hostId}`);
+  await expect(page.locator('main')).toContainText('in Moto monitoring');
+  await expect(page.locator('main')).not.toContainText('in Sticky second');
+
+  // And a placement that is wrong is not permanent: detaching lets the right account place it.
+  await page.getByRole('button', { name: 'Not this account' }).click();
+  await expect(page.locator('main')).not.toContainText('This machine is also EC2 instance');
+  await page.goto(`/en/c/${second}/${MOTO_REGION}/instances/list`);
+  await page.locator('main table tbody tr').first().waitFor({ timeout: 20_000 });
+  await page.goto(`/en/hosts/${host.hostId}`);
+  await expect(page.locator('main')).toContainText('in Sticky second');
+
+  await page.goto(`/en/accounts/${second}`);
+  await page.getByRole('button', { name: 'Remove connection' }).click();
 });

@@ -8,7 +8,7 @@ import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
 import type { ActionState } from '@/lib/forms/action-state';
 import { formString } from '@/lib/forms/form-data';
-import { createHost, deleteHost, renameHost } from '@/lib/store/hosts';
+import { createHost, deleteHost, findHost, renameHost, unlinkHostFromConnection } from '@/lib/store/hosts';
 
 /**
  * Enrolling a Linux host, renaming one, and removing one.
@@ -45,6 +45,30 @@ export async function renameHostAction(locale: string, id: string, _prev: HostSt
     revalidatePath(`/${resolveLocale(locale)}/hosts/${id}`);
     return {};
   });
+}
+
+/**
+ * Detaches a machine from the AWS account it was placed in.
+ *
+ * The placement is sticky on purpose — two connections over one AWS account would otherwise pass the
+ * machine back and forth on every render — so there has to be a way to undo one that is wrong. Clearing
+ * it lets the account that can actually see the instance place it again the next time it lists them.
+ */
+export async function unlinkHostAction(locale: string, id: string, _prev: HostState): Promise<HostState> {
+  return auditedAdmin(
+    resolveLocale(locale),
+    'host_update',
+    'host',
+    async (): Promise<HostState> => {
+      const before = findHost(getDb(), id);
+      if (before === null) return { error: 'not_found' };
+      unlinkHostFromConnection(getDb(), id, Date.now());
+      revalidatePath(`/${resolveLocale(locale)}/hosts/${id}`);
+      return {};
+    },
+    // Recorded against the account it is leaving, which is the account a reviewer is reading.
+    { subjectId: id, connectionId: findHost(getDb(), id)?.connectionId ?? null },
+  );
 }
 
 export async function deleteHostAction(requestedLocale: string, id: string): Promise<void> {

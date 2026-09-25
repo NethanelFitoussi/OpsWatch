@@ -19,8 +19,8 @@ import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { findHost, listSamples, toHost } from '@/lib/store/hosts';
 import { STATE_TEXT, TONE_BORDER } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
-import { deleteHostAction, renameHostAction } from '../actions';
-import { RenameHostForm } from '../host-forms';
+import { deleteHostAction, renameHostAction, unlinkHostAction } from '../actions';
+import { RenameHostForm, UnlinkHostForm } from '../host-forms';
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -134,14 +134,22 @@ export default async function HostDetailPage({ params }: Props) {
           * not the account, and says only what it knows.
           */}
         {connection !== null && host.cloudInstanceId !== null && (
-          <p className="mt-3 text-sm">
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
             <Link
-              href={`/c/${connection.id}/${connection.regions[0]}/instances/list`}
-              className="font-medium text-primary underline-offset-4 hover:underline"
+              // The machine's own region, not the connection's first: a connection may read several,
+              // and the instance is in exactly one of them.
+              href={`/c/${connection.id}/${host.region ?? connection.regions[0]}/instances/list`}
+              className="min-w-0 font-medium text-primary underline-offset-4 hover:underline"
             >
-              {t('detail.alsoInAws', { connection: connection.name, instance: host.cloudInstanceId })}
+              {t('detail.alsoInAws', {
+                connection: connection.name,
+                instance: host.cloudInstanceId,
+                region: host.region ?? connection.regions[0],
+              })}
             </Link>
-          </p>
+            {/* The placement is sticky, so there has to be a way to undo one that is wrong. */}
+            <UnlinkHostForm action={unlinkHostAction.bind(null, locale, host.id)} />
+          </div>
         )}
       </MonitoringCard>
 

@@ -6031,7 +6031,8 @@
       "historyTitle": "Les dernières 24 heures",
       "historyHint": "Un point par envoi. La ligne s’interrompt là où l’agent s’est tu — un trou est un silence, pas une mesure.",
       "load1": "Charge (1 min)",
-      "alsoInAws": "Cette machine est aussi l’instance EC2 {instance}, dans {connection}"
+      "unlink": "Pas ce compte",
+      "alsoInAws": "Cette machine est aussi l’instance EC2 {instance}, dans {connection} ({region})"
     },
     "services": {
       "redis": "Redis",

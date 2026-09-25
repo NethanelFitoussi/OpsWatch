@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | UX-3: one sweep over the whole estate at 360 px, in both languages |
+| Current checkpoint | Where a machine lives: the region beside the account, and a placement that does not bounce |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
-| Schema | drizzle **0033** — `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Schema | drizzle **0034** — `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -78,6 +78,10 @@ losing the whole conversation loses no plan.
   mouse (axe `scrollable-region-focusable`, WCAG 2.1 A). `components/ui/table.tsx` does it; four
   hand-rolled containers did not. `scrollable-regions.test.ts` holds it statically, with a written list
   of the regions axe exempts because their focusable children are unconditional.
+- **The same AWS account may be connected twice.** `createConnection` has no uniqueness check on
+  `awsAccountId`, at the schema level or in code, and the rest of the product treats two connections
+  over one account as a supported configuration. Anything that matches on what an account *contains* —
+  an instance id, a log group — must therefore be deterministic about which connection wins.
 - **A test that skips itself is a test that is not run.** `45-hosts` read `main` straight after a
   navigation, got the Suspense fallback and skipped on "no instance found" for days. Prefer waiting and
   asserting over `test.skip` on a condition the page controls.
@@ -145,6 +149,14 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **Where a machine lives.** `hosts` recorded which account matched it and nowhere in it, though a
+      connection may read several regions and an instance is in exactly one — and every scoped read in
+      this product is keyed by the pair, so half an answer is unusable by all of them. `hosts.region`
+      is written with the link. The link is **sticky** now: `createConnection` has no uniqueness check
+      on the AWS account id, so one account can be connected twice, both connections list the same
+      instance, and a link that overwrote whatever it found moved the machine to whichever instances
+      page was rendered last. A placement that is wrong is undone from the host page rather than being
+      permanent
 - [x] **UX-3 the narrow pass, as a sweep.** 40 routes × 2 locales at 360 px, measuring two failures
       rather than one: the page scrolling sideways, and an element wider than the screen while an
       ancestor clips it — which looks like nothing is wrong at all. It found one: the "what changed"

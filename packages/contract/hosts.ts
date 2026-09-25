@@ -160,6 +160,8 @@ export const hostSchema = z.object({
   arch: z.string().nullable(),
   cloud: hostCloudSchema,
   cloudInstanceId: z.string().nullable(),
+  /** The AWS region the machine was found in, once an account's instance list has matched it. */
+  region: z.string().nullable().default(null),
   agentVersion: z.string().nullable(),
   /** When the agent first proved it had the secret. `null` while the host is still waiting. */
   enrolledAt: epochSchema.nullable(),

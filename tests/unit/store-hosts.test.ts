@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { HOST_STALE_AFTER_MS } from '@opswatch/contract';
 import {
@@ -8,6 +9,7 @@ import {
   hostSecret,
   hostsByCloudInstance,
   linkHostToConnection,
+  unlinkHostFromConnection,
   hostState,
   listHosts,
   listSamples,
@@ -15,6 +17,7 @@ import {
   recordReport,
   toHost,
 } from '@/lib/store/hosts';
+import { hosts as schemaHosts } from '@/lib/db/schema';
 import { createTestDb } from '../helpers/db';
 
 /**
@@ -321,18 +324,60 @@ describe('THE RULING: one machine, two sources — matched on identity, never on
     // reading a table into a stream of updates.
     const db = createTestDb();
     const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
-    expect(linkHostToConnection(db, host.id, 'c1', NOW)).toBe(true);
-    expect(linkHostToConnection(db, host.id, 'c1', NOW + 1000)).toBe(false);
+    expect(linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW)).toBe(true);
+    expect(linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW + 1000)).toBe(false);
     expect(findHost(db, host.id)?.connectionId).toBe('c1');
   });
 
-  it('follows the machine when it moves to another account, rather than keeping a stale link', () => {
-    // An instance restored into a different account is still one machine; the newest evidence wins.
+  it('records the region beside the account, because every scoped read is keyed by the pair', () => {
     const db = createTestDb();
     const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
-    linkHostToConnection(db, host.id, 'c1', NOW);
-    expect(linkHostToConnection(db, host.id, 'c2', NOW + 1000)).toBe(true);
-    expect(findHost(db, host.id)?.connectionId).toBe('c2');
+    linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW);
+    expect(findHost(db, host.id)).toMatchObject({ connectionId: 'c1', region: 'eu-west-1' });
+  });
+
+  it('THE RULING: a second connection over the same AWS account does not take the machine', () => {
+    /*
+     * Nothing stops an operator connecting one AWS account twice — `createConnection` has no
+     * uniqueness check on the account id, and two connections over one account is a configuration the
+     * rest of this product already handles. Both list the same instance. An earlier version overwrote
+     * the link whenever it differed, so the machine moved from one account to the other every time
+     * either instances page was rendered: which account owned it depended on which tab was open last.
+     */
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW);
+
+    expect(linkHostToConnection(db, host.id, 'c2', 'eu-west-1', NOW + 1000)).toBe(false);
+    expect(findHost(db, host.id)?.connectionId).toBe('c1');
+    // …and rendering the first account's page again does not write either.
+    expect(linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW + 2000)).toBe(false);
+  });
+
+  it('fills in a region that was never recorded, without moving the machine', () => {
+    // Links written before the region column existed name an account and nowhere in it.
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW);
+    db.update(schemaHosts).set({ region: null }).where(eq(schemaHosts.id, host.id)).run();
+
+    expect(linkHostToConnection(db, host.id, 'c1', 'eu-west-2', NOW + 1000)).toBe(true);
+    expect(findHost(db, host.id)).toMatchObject({ connectionId: 'c1', region: 'eu-west-2' });
+  });
+
+  it('can be detached, so a link that is wrong is not permanent', () => {
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    linkHostToConnection(db, host.id, 'c1', 'eu-west-1', NOW);
+
+    expect(unlinkHostFromConnection(db, host.id, NOW + 1000)).toBe(true);
+    expect(findHost(db, host.id)).toMatchObject({ connectionId: null, region: null });
+    // Detaching twice is not an error, and it is not a write either.
+    expect(unlinkHostFromConnection(db, host.id, NOW + 2000)).toBe(false);
+
+    // And the account that can actually see the instance may now place it.
+    expect(linkHostToConnection(db, host.id, 'c2', 'us-east-1', NOW + 3000)).toBe(true);
+    expect(findHost(db, host.id)).toMatchObject({ connectionId: 'c2', region: 'us-east-1' });
   });
 
   it('says nothing when asked about no instances at all', () => {

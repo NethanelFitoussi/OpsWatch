@@ -200,11 +200,42 @@ export function hostsByCloudInstance(db: Db, instanceIds: readonly string[]): Ma
  * instances to learn the same thing.
  *
  * Only written when it changes, so rendering a page is not a write.
+ *
+ * **The first account to find a machine keeps it, and the region is recorded with it.** Nothing stops an
+ * operator connecting the same AWS account twice — `createConnection` has no uniqueness check on the
+ * account id, and two connections over one account is a configuration the rest of this product already
+ * handles. Both would list the same instance, so a link that overwrote whatever it found would move the
+ * machine from one account to the other every time either page was rendered, for ever. Which account a
+ * machine belongs to would then depend on which tab was open last.
+ *
+ * A link that turns out to be wrong is not stuck: removing the connection clears it (`purgeConnectionData`
+ * unlinks hosts rather than deleting them), and the host page says which account and region it is in.
  */
-export function linkHostToConnection(db: Db, hostId: string, connectionId: string, nowMs: number): boolean {
+/**
+ * Detaches a machine from the account it was placed in.
+ *
+ * The link is sticky, so there has to be a way to undo one that is wrong — an instance restored into a
+ * different account, or two connections over the same account where the first to render won. Clearing it
+ * lets the next account that can see the instance place it, which is the only evidence OpsWatch has.
+ */
+export function unlinkHostFromConnection(db: Db, hostId: string, nowMs: number): boolean {
   const row = findHost(db, hostId);
-  if (row === null || row.connectionId === connectionId) return false;
-  db.update(hosts).set({ connectionId, updatedAt: nowMs }).where(eq(hosts.id, hostId)).run();
+  if (row === null || row.connectionId === null) return false;
+  db.update(hosts).set({ connectionId: null, region: null, updatedAt: nowMs }).where(eq(hosts.id, hostId)).run();
+  return true;
+}
+
+export function linkHostToConnection(db: Db, hostId: string, connectionId: string, region: string, nowMs: number): boolean {
+  const row = findHost(db, hostId);
+  if (row === null) return false;
+  // Already placed. Re-placing it is how it would bounce between two connections on one account.
+  if (row.connectionId !== null) {
+    // …unless the region was never recorded, which is every link written before this column existed.
+    if (row.connectionId !== connectionId || row.region !== null) return false;
+    db.update(hosts).set({ region, updatedAt: nowMs }).where(eq(hosts.id, hostId)).run();
+    return true;
+  }
+  db.update(hosts).set({ connectionId, region, updatedAt: nowMs }).where(eq(hosts.id, hostId)).run();
   return true;
 }
 
@@ -243,6 +274,7 @@ export function toHost(row: HostRow, latest: HostSampleRow | null, nowMs: number
     arch: row.arch,
     cloud: (row.cloud as Host['cloud']) ?? 'unknown',
     cloudInstanceId: row.cloudInstanceId,
+    region: row.region,
     agentVersion: row.agentVersion,
     enrolledAt: row.enrolledAt,
     lastSeenAt: row.lastSeenAt,

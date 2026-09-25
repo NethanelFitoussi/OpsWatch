@@ -53,7 +53,7 @@ export async function Ec2Table({ scope, range, nowMs, search }: { scope: Monitor
    */
   const db = getDb();
   const agents = hostsByCloudInstance(db, instances.map((instance) => instance.id));
-  for (const host of agents.values()) linkHostToConnection(db, host.id, scope.connectionId, nowMs);
+  for (const host of agents.values()) linkHostToConnection(db, host.id, scope.connectionId, scope.region, nowMs);
 
   const queries = instances.flatMap((instance, i) => instanceQueries(instance.id, `i${i}`));
   const metrics = await getMetricSeries(target.data, queries, timeWindow(range, nowMs));

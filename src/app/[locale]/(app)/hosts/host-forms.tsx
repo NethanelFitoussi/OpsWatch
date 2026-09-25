@@ -79,3 +79,27 @@ export function RenameHostForm({ action, name }: { action: FormAction<HostState>
     </form>
   );
 }
+
+/**
+ * Detaches a machine from the AWS account it was placed in.
+ *
+ * A quiet control beside the link rather than a card of its own: it is a correction, not a decision an
+ * operator comes to this page to make.
+ */
+export function UnlinkHostForm({ action }: { action: FormAction<HostState> }) {
+  const t = useTranslations('Hosts.detail');
+  const [state, formAction] = useActionState(action, {});
+
+  return (
+    <form action={formAction} className="flex items-baseline gap-2">
+      <SubmitButton variant="ghost" size="xs">
+        {t('unlink')}
+      </SubmitButton>
+      {state.error !== undefined && (
+        <span role="alert" className="text-sm text-destructive">
+          {t(`errors.${state.error}`)}
+        </span>
+      )}
+    </form>
+  );
+}
