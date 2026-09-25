@@ -62,7 +62,7 @@ export async function LogVolumeCard({ scope, range, nowMs }: { scope: Monitoring
       {truncated && <p className="mt-1 text-sm text-muted-foreground">{t('truncated', { covered })}</p>}
       {forever > 0 && <p className="mt-1 text-sm">{t('foreverCount', { count: forever })}</p>}
 
-      <div className="mt-3 overflow-x-auto">
+      <div className="mt-3">
         <Table>
           <TableHeader>
             <TableRow>

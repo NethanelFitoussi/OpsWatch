@@ -60,7 +60,7 @@ export async function ApiReference() {
 
       <DocSection title={t('errorsTitle')}>
         <p className="text-sm text-muted-foreground">{t('errorsBody')}</p>
-        <div className="mt-3 overflow-x-auto">
+        <div tabIndex={0} className="mt-3 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
@@ -84,7 +84,7 @@ export async function ApiReference() {
 
       <DocSection title={t('endpointsTitle')}>
         <p className="text-sm text-muted-foreground">{t('endpointsBody', { count: API_ROUTES.length })}</p>
-        <div className="mt-3 overflow-x-auto">
+        <div tabIndex={0} className="mt-3 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">

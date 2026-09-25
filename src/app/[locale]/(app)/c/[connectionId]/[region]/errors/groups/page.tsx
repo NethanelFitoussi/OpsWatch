@@ -29,7 +29,7 @@ export default async function ErrorsPage({ params }: Props) {
   const query = { connectionId: context.scope.connectionId, scope: context.scope.region };
 
   const state = errorCollectionState(db, query);
-  const budget = budgetState(db, nowMs, env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY);
+  const budget = budgetState(db, nowMs, env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY, context.scope.connectionId);
 
   if (state !== 'enabled') {
     return (
@@ -52,8 +52,10 @@ export default async function ErrorsPage({ params }: Props) {
       {/* The budget stopping is a fact worth stating: otherwise the list simply looks quiet. */}
       {budget.exhausted && (
         <MonitoringCard title={t('title')}>
-          <p className="text-sm">{t('budgetStopped')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{t('budgetHint')}</p>
+          {/* Which of the two stops it was: this account's own share, or the installation's cap
+              spent by another account. The operator's remedy differs. */}
+          <p className="text-sm">{t(budget.stoppedByInstance ? 'budgetStoppedInstance' : 'budgetStopped')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t(budget.stoppedByInstance ? 'budgetHintInstance' : 'budgetHint')}</p>
         </MonitoringCard>
       )}
       <WhatsNew sets={sets} scope={context.scope} nowMs={nowMs} />

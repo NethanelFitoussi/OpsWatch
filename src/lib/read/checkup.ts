@@ -43,7 +43,7 @@ export function checkupInput(db: Db, query: { connectionId: string; scope: strin
   const sources = listLogSources(db, query.connectionId, query.scope);
   const runs = lastRuns(db, RECENT_RUNS);
   const budgetGb = context.logsBudgetGbPerDay;
-  const budget = budgetState(db, context.nowMs, budgetGb);
+  const budget = budgetState(db, context.nowMs, budgetGb, query.connectionId);
 
   return {
     permissions:
@@ -70,7 +70,9 @@ export function checkupInput(db: Db, query: { connectionId: string; scope: strin
     logsBudget: {
       exhausted: budget.exhausted,
       scannedGb: budget.bytesScanned / BYTES_PER_GB,
-      limitGb: budgetGb,
+      // This account's share, not the installation's cap: the figure beside it is this account's spend.
+      limitGb: budget.budgetBytes / BYTES_PER_GB,
+      stoppedByInstance: budget.stoppedByInstance,
     },
     collector: { neverRan: runs.length === 0, failingJobs: failingJobs(runs) },
     template: { version: connection?.templateVersion ?? null, current: TEMPLATE_VERSION },

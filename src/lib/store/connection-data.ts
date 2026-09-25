@@ -15,6 +15,7 @@ import {
   incidents,
   installRuleOffers,
   logSources,
+  logsUsage,
   hosts,
   metricBaselines,
   notifyDestinations,
@@ -85,6 +86,9 @@ export const PURGED_TABLES = [
     installRuleOffers,
     metricBaselines,
     savedLogSearches,
+    // The account's Logs Insights spend. Left behind it would keep holding a share of today's budget
+    // for an account nobody is querying any more.
+    logsUsage,
     // Nullable columns: an instance-wide row has no connection and must survive.
     events,
     collectorRuns,

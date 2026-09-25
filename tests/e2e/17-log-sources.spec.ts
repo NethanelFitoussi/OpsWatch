@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ensureMonitoringConnection, login, monitoringUrl } from './helpers';
+import { MOTO_REGION, createConnection, ensureMonitoringConnection, login, monitoringUrl } from './helpers';
 
 /**
  * Errors → Log sources (§18, §9.5).
@@ -38,7 +38,7 @@ test('the page opens without an AWS call and says what is configured', async ({ 
 test('§9.5 — the cost is stated before the decision, not after it', async ({ page }) => {
   await page.goto(sourcesUrl());
   const main = await page.locator('main').innerText();
-  expect(main).toMatch(/Scanned today: [\d.]+ GB of \d+ GB/);
+  expect(main).toMatch(/Scanned today: [\d.]+ GB of [\d.]+ GB/);
   expect(main).toContain('billed per gigabyte scanned');
   expect(main).toContain('hard stop, not a warning');
 });
@@ -117,6 +117,59 @@ test('a saved source appears, survives a reload, and changes what Errors says', 
   await expect(page.getByText('Saved.')).toBeVisible();
   await page.reload();
   await expect(page.locator('main')).toContainText('Not collecting');
+});
+
+test('THE RULING: a second connected account gets a share of the budget, and the page says so', async ({ page }) => {
+  /*
+   * The budget used to be one instance-wide pot spent in whatever order the collections ran. Two
+   * accounts therefore raced for it: the one that ran first could spend the whole day before the other
+   * had scanned a byte, every day, and no page said who had spent it.
+   *
+   * So the number on this page has to change the moment a second account starts reading logs — and it
+   * has to explain itself, because a limit that silently halves is worse than one that does not move.
+   */
+  await page.goto(sourcesUrl());
+  await page.getByLabel('Log group', { exact: true }).fill('/aws/ecs/opswatch-budget-a');
+  await page.selectOption('#preset', 'json');
+  await page.locator('#enabled').check();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  // One account reading logs: the cap is the cap, and there is no share to explain.
+  const alone = await page.locator('main').innerText();
+  const limit = /Scanned today: [\d.]+ GB of ([\d.]+) GB/.exec(alone)?.[1] ?? null;
+  expect(limit).not.toBeNull();
+  expect(alone).not.toContain('is divided evenly between');
+
+  const second = await createConnection(page, 'ambient', 'Budget sharing', MOTO_REGION);
+  // A connection that has not been tested has no monitoring pages yet: they send the operator back to
+  // the connection to finish setting it up.
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.goto(monitoringUrl(second, 'errors', 'sources'));
+  await page.getByLabel('Log group', { exact: true }).fill('/aws/ecs/opswatch-budget-b');
+  await page.selectOption('#preset', 'json');
+  await page.locator('#enabled').check();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  await page.goto(sourcesUrl());
+  const shared = await page.locator('main').innerText();
+  expect(shared).toContain('is divided evenly between the 2 connected accounts');
+  // Halved, and stated: the operator's bill does not grow because they connected a second account.
+  expect(shared).toContain(`Scanned today: 0.00 GB of ${(Number(limit) / 2).toFixed(2)} GB`);
+
+  // Put it back, so the accounts the rest of the suite uses are the ones it expects.
+  await page.goto(monitoringUrl(second, 'errors', 'sources'));
+  await page.getByLabel('Log group', { exact: true }).fill('/aws/ecs/opswatch-budget-b');
+  await page.locator('#enabled').uncheck();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+  await page.goto(sourcesUrl());
+  await page.getByLabel('Log group', { exact: true }).fill('/aws/ecs/opswatch-budget-a');
+  await page.locator('#enabled').uncheck();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
 });
 
 test('Log sources needs a session', async ({ page, context }) => {

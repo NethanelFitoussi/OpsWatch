@@ -43,7 +43,7 @@ export async function runEndpointsAction(
   // §9.5 is a hard stop, so it is checked before the query rather than after the bill.
   const budgetGb = env().OPSWATCH_LOGS_BUDGET_GB_PER_DAY;
   const nowMs = Date.now();
-  if (budgetState(db, nowMs, budgetGb).exhausted) return { error: 'budget_exhausted' };
+  if (budgetState(db, nowMs, budgetGb, connectionId).exhausted) return { error: 'budget_exhausted' };
 
   const hours = Number(formString(formData, 'hours'));
   const windowHours = (WINDOW_CHOICES as readonly number[]).includes(hours) ? hours : 3;
@@ -59,7 +59,7 @@ export async function runEndpointsAction(
   if (!result.ok) return { error: 'query_failed' };
 
   // Recorded whatever the rows turned out to be: a scan costs its budget even when it matched nothing.
-  recordScan(db, nowMs, result.data.bytesScanned);
+  recordScan(db, nowMs, connectionId, result.data.bytesScanned);
 
   return {
     rows: result.data.rows,

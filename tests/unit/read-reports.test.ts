@@ -550,8 +550,8 @@ describe('REP-6 — the logs report', () => {
 
   it('counts what was scanned, against the period before', () => {
     const db = createTestDb();
-    recordScan(db, NOW - 2 * DAY, 3 * BYTES_PER_GB);
-    recordScan(db, NOW - 9 * DAY, BYTES_PER_GB);
+    recordScan(db, NOW - 2 * DAY, env.connectionId, 3 * BYTES_PER_GB);
+    recordScan(db, NOW - 9 * DAY, env.connectionId, BYTES_PER_GB);
 
     const figures = sectionOf(readReport(db, logs, context), 'logsSpend')?.figures ?? [];
     expect(figures.find((one) => one.id === 'gbScanned')).toMatchObject({ value: 3, previous: 1, delta: 2 });
@@ -560,8 +560,8 @@ describe('REP-6 — the logs report', () => {
 
   it('THE RULING: a day the budget stopped collection is reported, because that day only looks quiet', () => {
     const db = createTestDb();
-    recordScan(db, NOW - 2 * DAY, BYTES_PER_GB);
-    recordBudgetStop(db, NOW - 2 * DAY);
+    recordScan(db, NOW - 2 * DAY, env.connectionId, BYTES_PER_GB);
+    recordBudgetStop(db, NOW - 2 * DAY, env.connectionId);
 
     const stops = (sectionOf(readReport(db, logs, context), 'logsSpend')?.figures ?? []).find((one) => one.id === 'budgetStops');
     // Errors went uncollected for the rest of that day, and a quiet errors section then is not a calm one.

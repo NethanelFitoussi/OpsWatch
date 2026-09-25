@@ -61,8 +61,8 @@ function seeded() {
     at: NOW - 2 * DAY, count: 10, instances: 1,
   });
 
-  recordScan(db, NOW - 2 * DAY, 3 * BYTES_PER_GB);
-  recordBudgetStop(db, NOW - 2 * DAY);
+  recordScan(db, NOW - 2 * DAY, env.connectionId, 3 * BYTES_PER_GB);
+  recordBudgetStop(db, NOW - 2 * DAY, env.connectionId);
 
   const check = upsertCheck(db, { ...env, name: 'home', url: 'https://example.com/home', enabled: true, assertions: [] }, NOW);
   recordRun(db, { checkId: check.id, at: NOW - 2 * DAY, ok: true, totalMs: 120, assertionResults: [] });

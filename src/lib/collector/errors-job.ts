@@ -62,9 +62,9 @@ export async function runErrorsJob(input: ErrorsJobInput): Promise<JobOutcome> {
   // Nothing opted in: the job did nothing and cost nothing, and says so rather than looking like a failure.
   if (sources.length === 0) return { covered: 0, total: 0 };
 
-  const budget = budgetState(input.db, input.nowMs, input.budgetGbPerDay);
+  const budget = budgetState(input.db, input.nowMs, input.budgetGbPerDay, input.connectionId);
   if (budget.exhausted) {
-    recordBudgetStop(input.db, input.nowMs);
+    recordBudgetStop(input.db, input.nowMs, input.connectionId);
     // Truncated, not failed: the job worked exactly as configured. The number it covered is the honest zero.
     return { covered: 0, total: sources.length, truncated: true };
   }
@@ -78,8 +78,8 @@ export async function runErrorsJob(input: ErrorsJobInput): Promise<JobOutcome> {
     // twice, with the second copy billed per gigabyte scanned.
     if (isForwarded(input.db, input.connectionId, input.scope, source.logGroup)) continue;
     // Re-checked between sources: one busy group can exhaust the day's budget on its own.
-    if (budgetState(input.db, input.nowMs, input.budgetGbPerDay).exhausted) {
-      recordBudgetStop(input.db, input.nowMs);
+    if (budgetState(input.db, input.nowMs, input.budgetGbPerDay, input.connectionId).exhausted) {
+      recordBudgetStop(input.db, input.nowMs, input.connectionId);
       return { covered, total: sources.length, truncated: true };
     }
     const scanned = await collectOne(input, target.data, source);
@@ -110,12 +110,12 @@ async function collectOne(input: ErrorsJobInput, target: AwsTarget, source: LogS
 
     if (results.data.status === 'Complete') {
       // Recorded before the rows are parsed, so a scan always costs its budget even if parsing then fails.
-      recordScan(input.db, input.nowMs, results.data.statistics.bytesScanned);
+      recordScan(input.db, input.nowMs, input.connectionId, results.data.statistics.bytesScanned);
       ingest(input, source, results.data.rows);
       return true;
     }
     if (results.data.status !== 'Scheduled' && results.data.status !== 'Running') {
-      recordScan(input.db, input.nowMs, results.data.statistics.bytesScanned);
+      recordScan(input.db, input.nowMs, input.connectionId, results.data.statistics.bytesScanned);
       return false;
     }
     await sleep(POLL_INTERVAL_MS);

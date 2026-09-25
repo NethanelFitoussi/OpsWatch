@@ -2375,8 +2375,10 @@
       "noneEnabledHint": "Switch one on and OpsWatch will start grouping its errors within fifteen minutes.",
       "empty": "No errors have been collected from the log groups you switched on.",
       "emptyHint": "OpsWatch reads them every fifteen minutes.",
-      "budgetStopped": "Error collection stopped for today because it reached its scanning budget.",
-      "budgetHint": "It resumes tomorrow. Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY to scan more, knowing that CloudWatch bills per gigabyte."
+      "budgetStopped": "Error collection stopped for today because this account reached its scanning budget.",
+      "budgetHint": "It resumes tomorrow. Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY to scan more, knowing that CloudWatch bills per gigabyte.",
+      "budgetStoppedInstance": "Error collection stopped for today because the installation reached its scanning budget, spent by the other connected accounts.",
+      "budgetHintInstance": "This account had budget of its own left. It resumes tomorrow, when every account starts from its own share again."
     },
     "report": {
       "title": "Report",
@@ -2439,7 +2441,7 @@
       "export": "Export as Markdown",
       "sectionNote": {
         "families": "Problems opened in each family, against the period before.",
-        "logsSpend": "Across this whole OpsWatch installation, not only this environment: the daily budget belongs to the installation. On a day the budget stopped, error collection did not run for the rest of it — so a quiet errors section on such a day is not a calm one.",
+        "logsSpend": "Across this whole connected account, not only this region: the daily budget belongs to the account. On a day the budget stopped, error collection did not run for the rest of it — so a quiet errors section on such a day is not a calm one.",
         "logSources": "What OpsWatch reads errors out of. Not a figure about this period, so there is nothing to compare it with."
       }
     },
@@ -2467,6 +2469,7 @@
         "errors_not_collected": "No log group is switched on, so no errors are being collected",
         "history_off": "Historical collection is off, so there are no baselines, SLOs or long-term reports",
         "logs_budget_exhausted": "Today’s log scanning budget is used up ({scanned} of {limit} GB)",
+        "logs_budget_instance_exhausted": "The installation’s log scanning budget is used up for today, spent by the other connected accounts; this account had {limit} GB of its own left",
         "collector_never_ran": "The collector has never run, so nothing has been measured",
         "collector_job_failing": "{count, plural, one {One job is} other {# jobs are}} failing: {jobs}",
         "template_outdated": "The CloudFormation stack is version {version}; the current one is {current}",
@@ -2486,6 +2489,7 @@
         "errors_not_collected": "Choose the log groups to read in Errors, Log sources.",
         "history_off": "Turn it on in Settings, Data & history, where its cost is stated first.",
         "logs_budget_exhausted": "Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY, or wait until tomorrow.",
+        "logs_budget_instance_exhausted": "Raise OPSWATCH_LOGS_BUDGET_GB_PER_DAY so every account’s share grows, or wait until tomorrow.",
         "collector_never_ran": "Check System status; the collector starts with the server.",
         "collector_job_failing": "Open System status to see what each job reported.",
         "template_outdated": "Update the stack from the connection page to unlock the newer checks."
@@ -2502,6 +2506,7 @@
       "privacy": "OpsWatch stores where to look in a log line — the field paths below — and never the log content itself. Lines stay in CloudWatch.",
       "cost": "What this costs",
       "budget": "Scanned today: {scanned} GB of {limit} GB. {remaining} GB left.",
+      "budgetShare": "That is this account’s share: the installation’s {instanceLimit} GB a day is divided evenly between the {shares} connected accounts that read logs, so one busy account cannot spend it all before another has collected anything.",
       "budgetExhausted": "Today’s budget is used up, so no further log queries will run until tomorrow.",
       "costHint": "CloudWatch Logs Insights is billed per gigabyte scanned. OPSWATCH_LOGS_BUDGET_GB_PER_DAY is a hard stop, not a warning.",
       "configured": "Configured sources",
@@ -2573,6 +2578,7 @@
       "cost": "What a query costs",
       "why": "This page runs nothing until you ask it to. Every run scans logs, and scanning is what CloudWatch charges for.",
       "budget": "Scanned today: {scanned} GB of {limit} GB. {remaining} GB left.",
+      "budgetShare": "That is this account’s share: the installation’s {instanceLimit} GB a day is divided evenly between the {shares} connected accounts that read logs, so one busy account cannot spend it all before another has collected anything.",
       "costHint": "CloudWatch Logs Insights is billed per gigabyte scanned. OPSWATCH_LOGS_BUDGET_GB_PER_DAY is a hard stop, not a warning.",
       "noSources": "No log group is switched on, so there is nothing to query.",
       "noSourcesHint": "Choose the log groups to read in Errors, Log sources. That is not the same as your application having no slow endpoints.",

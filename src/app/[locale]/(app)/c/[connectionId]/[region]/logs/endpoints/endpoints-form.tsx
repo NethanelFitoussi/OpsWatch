@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { SourcesView } from '@/lib/read/log-sources';
 import type { FormAction } from '@/lib/forms/action-state';
 import type { EndpointsState } from './actions';
 import { WINDOW_CHOICES } from './window-choices';
@@ -37,7 +38,7 @@ export function EndpointsForm({
 }: {
   action: FormAction<EndpointsState>;
   enabledSources: string[];
-  budget: { scannedGb: number; limitGb: number; remainingGb: number; exhausted: boolean };
+  budget: SourcesView['budget'];
   /** The mapping the operator already configured for error collection, if it names a route field. */
   suggested: { routeField: string; durationField: string } | null;
 }) {
@@ -65,10 +66,18 @@ export function EndpointsForm({
           <p className="mt-2 text-sm">
             {t('budget', {
               scanned: budget.scannedGb.toFixed(2),
-              limit: budget.limitGb,
+              // Two decimals like the figures either side of it: a share is rarely a whole number,
+              // and "0.00 GB of 0.5 GB. 0.50 GB left" reads like three different units.
+              limit: budget.limitGb.toFixed(2),
               remaining: Math.max(0, budget.remainingGb).toFixed(2),
             })}
           </p>
+          {/* Only when there is a share to explain: on a one-account installation the cap is the cap. */}
+          {budget.shares > 1 && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t('budgetShare', { shares: budget.shares, instanceLimit: budget.instanceLimitGb })}
+            </p>
+          )}
           <p className="mt-1 text-xs text-muted-foreground">{t('costHint')}</p>
         </CardContent>
       </Card>
@@ -158,7 +167,9 @@ export function EndpointsForm({
                     <p className="mt-2 text-sm font-medium">{t('samplesTitle')}</p>
                     <ul className="mt-1 space-y-1">
                       {(state.samples ?? []).map((line, index) => (
-                        <li key={index} className="overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs whitespace-pre">
+                        // A sample log line is usually wider than a phone, and nothing in it is focusable.
+                        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+                        <li key={index} tabIndex={0} className="overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs whitespace-pre focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                           {line}
                         </li>
                       ))}
@@ -167,7 +178,7 @@ export function EndpointsForm({
                 )}
               </div>
             ) : (
-              <div className="mt-3 overflow-x-auto">
+              <div className="mt-3">
                 <Table>
                   <TableHeader>
                     <TableRow>

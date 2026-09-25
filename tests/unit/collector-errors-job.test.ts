@@ -33,48 +33,48 @@ const line = (over: Record<string, unknown> = {}) =>
 describe('the budget is a hard stop, not a warning (§9.5)', () => {
   it('starts each UTC day at zero', () => {
     const db = createTestDb();
-    const usage = readUsage(db, NOW);
+    const usage = readUsage(db, NOW, 'c1');
     expect({ scanned: usage.bytesScanned, queries: usage.queries }).toEqual({ scanned: 0, queries: 0 });
-    expect(budgetState(db, NOW, 1).exhausted).toBe(false);
+    expect(budgetState(db, NOW, 1, 'c1').exhausted).toBe(false);
   });
 
   it('measures what AWS reported as scanned, and adds it up across queries', () => {
     const db = createTestDb();
-    recordScan(db, NOW, 100);
-    recordScan(db, NOW, 250);
-    const state = budgetState(db, NOW, 1);
+    recordScan(db, NOW, 'c1', 100);
+    recordScan(db, NOW, 'c1', 250);
+    const state = budgetState(db, NOW, 1, 'c1');
     expect(state.bytesScanned).toBe(350);
-    expect(readUsage(db, NOW).queries).toBe(2);
+    expect(readUsage(db, NOW, 'c1').queries).toBe(2);
   });
 
   it('is exhausted exactly at the budget, not after it', () => {
     const db = createTestDb();
-    recordScan(db, NOW, BYTES_PER_GB - 1);
-    expect(budgetState(db, NOW, 1).exhausted).toBe(false);
-    recordScan(db, NOW, 1);
-    expect(budgetState(db, NOW, 1).exhausted).toBe(true);
-    expect(budgetState(db, NOW, 1).remainingBytes).toBe(0);
+    recordScan(db, NOW, 'c1', BYTES_PER_GB - 1);
+    expect(budgetState(db, NOW, 1, 'c1').exhausted).toBe(false);
+    recordScan(db, NOW, 'c1', 1);
+    expect(budgetState(db, NOW, 1, 'c1').exhausted).toBe(true);
+    expect(budgetState(db, NOW, 1, 'c1').remainingBytes).toBe(0);
   });
 
   it('treats a budget of zero as "never touch Logs Insights", which is a real choice', () => {
     const db = createTestDb();
-    expect(budgetState(db, NOW, 0).exhausted).toBe(true);
+    expect(budgetState(db, NOW, 0, 'c1').exhausted).toBe(true);
   });
 
   it('resets the next day, and yesterday stays readable', () => {
     const db = createTestDb();
-    recordScan(db, NOW, BYTES_PER_GB);
-    expect(budgetState(db, NOW, 1).exhausted).toBe(true);
+    recordScan(db, NOW, 'c1', BYTES_PER_GB);
+    expect(budgetState(db, NOW, 1, 'c1').exhausted).toBe(true);
     const tomorrow = NOW + 24 * 60 * 60_000;
-    expect(budgetState(db, tomorrow, 1).exhausted).toBe(false);
+    expect(budgetState(db, tomorrow, 1, 'c1').exhausted).toBe(false);
     // Settings shows yesterday's spend, so an operator can see what this actually costs.
-    expect(usageForDay(db, NOW)?.bytesScanned).toBe(BYTES_PER_GB);
+    expect(usageForDay(db, NOW, 'c1')?.bytesScanned).toBe(BYTES_PER_GB);
   });
 
   it('records why it stopped, so a reader is not left wondering where the errors went', () => {
     const db = createTestDb();
-    recordBudgetStop(db, NOW);
-    expect(budgetState(db, NOW, 1).stoppedAt).toBe(NOW);
+    recordBudgetStop(db, NOW, 'c1');
+    expect(budgetState(db, NOW, 1, 'c1').stoppedAt).toBe(NOW);
   });
 
   it('uses UTC days, so an instance does not get two budgets at a timezone edge', () => {

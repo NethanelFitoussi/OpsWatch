@@ -413,17 +413,18 @@ function familiesSection(db: Db, query: ReportQuery, windows: ReturnType<typeof 
 /**
  * What searching logs cost, and what that cost stopped (the Logs report).
  *
- * **Instance-wide.** `logs_usage` is keyed by the UTC day and nothing else, because the budget it exists
- * for belongs to the installation rather than to one environment. Splitting it per environment here would
- * be inventing a split the data does not hold, so the figure is reported as what it is.
+ * **For the whole connected account, not one region.** `logs_usage` is keyed by the UTC day and the
+ * account, because the bill and the budget share belong to the account rather than to one of its regions.
+ * Splitting it per region here would be inventing a split the data does not hold, so the figure is
+ * reported as what it is.
  *
  * `stoppedDays` is the figure that matters most and is the easiest to miss: on a day the hard stop was
  * reached, error collection did not run for the rest of it. Errors look quiet on such a day, and quiet is
  * exactly what an operator must not read as calm.
  */
-function logsSpendSection(db: Db, windows: ReturnType<typeof windowsFor>): ReportSection {
-  const now = usageBetween(db, windows.period);
-  const before = usageBetween(db, windows.previous);
+function logsSpendSection(db: Db, query: ReportQuery, windows: ReturnType<typeof windowsFor>): ReportSection {
+  const now = usageBetween(db, query.connectionId, windows.period);
+  const before = usageBetween(db, query.connectionId, windows.previous);
   // Nothing recorded in either window means no query has ever run, not a spend of zero gigabytes.
   if (now.days === 0 && before.days === 0) return unavailableSection('logsSpend', 'not_collected');
 
@@ -493,7 +494,7 @@ export function readReport(db: Db, query: ReportQuery, context: ReportContext): 
   if (query.section === 'logs') {
     // A logs report is about what was read out of logs and what reading them cost — not about one
     // infrastructure family, which it has none of.
-    sections.push(errorsSection(db, query, windows), logSourcesSection(db, query), logsSpendSection(db, windows));
+    sections.push(errorsSection(db, query, windows), logSourcesSection(db, query), logsSpendSection(db, query, windows));
     return { generatedAt: context.nowMs, section: query.section, period: { id: query.period, ...windows.period }, previousPeriod: windows.previous, sections };
   }
 

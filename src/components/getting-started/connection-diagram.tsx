@@ -52,7 +52,7 @@ export function ConnectionDiagram() {
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">{t('hint')}</p>
       {/* Below 640 px the labels would be too small to read: the diagram keeps that width and scrolls sideways. */}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+      <div tabIndex={0} className="-mx-4 overflow-x-auto px-4 pb-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:mx-0 sm:px-0">
         <svg viewBox="0 0 760 340" className="h-auto w-full min-w-[640px]" role="group" aria-label={t('title')}>
           <defs>
             <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">

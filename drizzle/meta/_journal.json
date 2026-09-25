@@ -225,6 +225,13 @@
       "when": 1790336293108,
       "tag": "0031_military_doctor_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1790340599368,
+      "tag": "0032_logs_usage_per_connection",
+      "breakpoints": true
     }
   ]
 }

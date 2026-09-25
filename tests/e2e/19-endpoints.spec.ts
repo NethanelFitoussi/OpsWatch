@@ -46,7 +46,7 @@ test('it runs nothing on load, and says what a query would cost', async ({ page 
 
   const main = await page.locator('main').innerText();
   expect(main).toContain('runs nothing until you ask it to');
-  expect(main).toMatch(/Scanned today: [\d.]+ GB of \d+ GB/);
+  expect(main).toMatch(/Scanned today: [\d.]+ GB of [\d.]+ GB/);
   expect(main).toContain('hard stop, not a warning');
   // No results table before a run: an empty one would look like an answer.
   expect(main).not.toContain('p95');

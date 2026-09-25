@@ -2375,7 +2375,9 @@
       "noneEnabledHint": "Activez-en un et OpsWatch regroupera ses erreurs sous quinze minutes.",
       "empty": "Aucune erreur n'a été collectée dans les groupes de journaux que vous avez activés.",
       "emptyHint": "OpsWatch les lit toutes les quinze minutes.",
-      "budgetStopped": "La collecte d'erreurs s'est arrêtée pour aujourd'hui : elle a atteint son budget d'analyse.",
+      "budgetStopped": "La collecte d'erreurs s'est arrêtée pour aujourd'hui : ce compte a atteint son budget d'analyse.",
+      "budgetStoppedInstance": "La collecte d'erreurs s'est arrêtée pour aujourd'hui : l'installation a atteint son budget d'analyse, dépensé par les autres comptes connectés.",
+      "budgetHintInstance": "Il restait du budget à ce compte. La collecte reprend demain, quand chaque compte repart de sa propre part.",
       "budgetHint": "Elle reprend demain. Augmentez OPSWATCH_LOGS_BUDGET_GB_PER_DAY pour analyser davantage, en sachant que CloudWatch facture au gigaoctet."
     },
     "report": {
@@ -2439,7 +2441,7 @@
       "export": "Exporter en Markdown",
       "sectionNote": {
         "families": "Problèmes ouverts dans chaque famille, comparés à la période précédente.",
-        "logsSpend": "Pour toute cette installation d’OpsWatch, pas seulement cet environnement : le budget quotidien appartient à l’installation. Un jour où le budget a stoppé la collecte, les erreurs n’ont plus été lues ; une section Erreurs calme ce jour-là ne l’est donc pas vraiment.",
+        "logsSpend": "Pour tout ce compte connecté, pas seulement cette région : le budget quotidien appartient au compte. Un jour où le budget a stoppé la collecte, les erreurs n’ont plus été lues ; une section Erreurs calme ce jour-là ne l’est donc pas vraiment.",
         "logSources": "Ce dans quoi OpsWatch lit les erreurs. Ce n’est pas un chiffre de période, il n’y a donc rien à comparer."
       }
     },
@@ -2467,6 +2469,7 @@
         "errors_not_collected": "Aucun groupe de journaux n’est activé : aucune erreur n’est collectée",
         "history_off": "La collecte d’historique est désactivée : ni références, ni SLO, ni rapports de long terme",
         "logs_budget_exhausted": "Le budget de scan des journaux du jour est épuisé ({scanned} sur {limit} Go)",
+        "logs_budget_instance_exhausted": "Le budget de scan des journaux de l’installation est épuisé pour aujourd’hui, dépensé par les autres comptes connectés ; il restait {limit} Go à ce compte",
         "collector_never_ran": "Le collecteur n’a jamais fonctionné : rien n’a été mesuré",
         "collector_job_failing": "{count, plural, one {Une tâche échoue} other {# tâches échouent}} : {jobs}",
         "template_outdated": "La pile CloudFormation est en version {version} ; la version actuelle est {current}",
@@ -2486,6 +2489,7 @@
         "errors_not_collected": "Choisissez les groupes de journaux à lire dans Erreurs, Sources.",
         "history_off": "Activez-la dans Paramètres, Données et historique, où son coût est indiqué d’abord.",
         "logs_budget_exhausted": "Augmentez OPSWATCH_LOGS_BUDGET_GB_PER_DAY, ou attendez demain.",
+        "logs_budget_instance_exhausted": "Augmentez OPSWATCH_LOGS_BUDGET_GB_PER_DAY pour agrandir la part de chaque compte, ou attendez demain.",
         "collector_never_ran": "Consultez l’État du système ; le collecteur démarre avec le serveur.",
         "collector_job_failing": "Ouvrez l’État du système pour voir ce que chaque tâche a signalé.",
         "template_outdated": "Mettez à jour la pile depuis la page de connexion pour débloquer les vérifications récentes."
@@ -2502,6 +2506,7 @@
       "privacy": "OpsWatch enregistre où chercher dans une ligne de journal — les chemins ci-dessous — jamais le contenu. Les lignes restent dans CloudWatch.",
       "cost": "Ce que cela coûte",
       "budget": "Scanné aujourd’hui : {scanned} Go sur {limit} Go. Reste {remaining} Go.",
+      "budgetShare": "C’est la part de ce compte : les {instanceLimit} Go par jour de l’installation sont répartis à parts égales entre les {shares} comptes connectés qui lisent des journaux, pour qu’un compte très actif ne dépense pas tout avant qu’un autre ait collecté quoi que ce soit.",
       "budgetExhausted": "Le budget du jour est épuisé : aucune requête de journaux ne sera lancée avant demain.",
       "costHint": "CloudWatch Logs Insights est facturé au gigaoctet scanné. OPSWATCH_LOGS_BUDGET_GB_PER_DAY est un arrêt ferme, pas un avertissement.",
       "configured": "Sources configurées",
@@ -2573,6 +2578,7 @@
       "cost": "Ce que coûte une requête",
       "why": "Cette page ne lance rien tant que vous ne le demandez pas. Chaque exécution scanne des journaux, et c’est le scan que CloudWatch facture.",
       "budget": "Scanné aujourd’hui : {scanned} Go sur {limit} Go. Reste {remaining} Go.",
+      "budgetShare": "C’est la part de ce compte : les {instanceLimit} Go par jour de l’installation sont répartis à parts égales entre les {shares} comptes connectés qui lisent des journaux, pour qu’un compte très actif ne dépense pas tout avant qu’un autre ait collecté quoi que ce soit.",
       "costHint": "CloudWatch Logs Insights est facturé au gigaoctet scanné. OPSWATCH_LOGS_BUDGET_GB_PER_DAY est un arrêt ferme, pas un avertissement.",
       "noSources": "Aucun groupe de journaux n’est activé : il n’y a rien à interroger.",
       "noSourcesHint": "Choisissez les groupes à lire dans Erreurs, Sources de journaux. Ce n’est pas la même chose que l’absence de points d’accès lents.",

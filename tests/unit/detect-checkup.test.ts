@@ -30,7 +30,7 @@ const healthy = (over: Partial<CheckupInput> = {}): CheckupInput => ({
   ],
   logSources: { total: 4, enabled: 2 },
   history: { enabled: true },
-  logsBudget: { exhausted: false, scannedGb: 1, limitGb: 5 },
+  logsBudget: { exhausted: false, scannedGb: 1, limitGb: 5, stoppedByInstance: false },
   collector: { neverRan: false, failingJobs: [] },
   template: { version: 1, current: 1 },
   ...over,
@@ -134,12 +134,27 @@ describe('what is and is not being collected', () => {
   });
 
   it('rates an exhausted logs budget as critical, because it is a hard stop that hides data', () => {
-    const outcomes = collectionChecks(healthy({ logsBudget: { exhausted: true, scannedGb: 5, limitGb: 5 } }));
+    const outcomes = collectionChecks(healthy({ logsBudget: { exhausted: true, scannedGb: 5, limitGb: 5, stoppedByInstance: false } }));
     expect(byId(outcomes, 'logs_budget_exhausted')).toMatchObject({
       state: 'finding',
       severity: 'critical',
       values: { scanned: 5, limit: 5 },
     });
+  });
+
+  it('THE RULING: an account stopped by somebody else’s spending is told that, not told it spent it', () => {
+    // "Today's budget is used up (0.00 of 5 GB)" is a contradiction, and it is exactly what this
+    // account saw: its own spend beside a limit it never reached.
+    const outcomes = collectionChecks(
+      healthy({ logsBudget: { exhausted: true, scannedGb: 0, limitGb: 5, stoppedByInstance: true } }),
+    );
+    expect(byId(outcomes, 'logs_budget_instance_exhausted')).toMatchObject({
+      state: 'finding',
+      severity: 'critical',
+      values: { limit: 5 },
+    });
+    // And not the other one, which would read as this account having spent its own share.
+    expect(byId(outcomes, 'logs_budget_exhausted')).toBeUndefined();
   });
 
   it('cannot judge a budget that was never configured, and says so rather than passing it', () => {

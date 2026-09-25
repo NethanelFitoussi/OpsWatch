@@ -36,7 +36,16 @@ export type ConfiguredSource = {
 export type SourcesView = {
   sources: ConfiguredSource[];
   enabled: number;
-  budget: { scannedGb: number; limitGb: number; remainingGb: number; exhausted: boolean };
+  budget: {
+    scannedGb: number;
+    /** This account's share of the day, which is the whole cap when it is the only one reading logs. */
+    limitGb: number;
+    remainingGb: number;
+    exhausted: boolean;
+    /** How many accounts the installation's cap is divided between. */
+    shares: number;
+    instanceLimitGb: number;
+  };
 };
 
 function toConfigured(row: LogSourceRow): ConfiguredSource {
@@ -54,15 +63,17 @@ function toConfigured(row: LogSourceRow): ConfiguredSource {
 
 export function readSources(db: Db, query: { connectionId: string; scope: string }, context: { nowMs: number; budgetGbPerDay: number }): SourcesView {
   const rows = listLogSources(db, query.connectionId, query.scope);
-  const budget = budgetState(db, context.nowMs, context.budgetGbPerDay);
+  const budget = budgetState(db, context.nowMs, context.budgetGbPerDay, query.connectionId);
   return {
     sources: rows.map(toConfigured),
     enabled: rows.filter((row) => row.enabled).length,
     budget: {
       scannedGb: budget.bytesScanned / BYTES_PER_GB,
-      limitGb: context.budgetGbPerDay,
+      limitGb: budget.budgetBytes / BYTES_PER_GB,
       remainingGb: budget.remainingBytes / BYTES_PER_GB,
       exhausted: budget.exhausted,
+      shares: budget.shares,
+      instanceLimitGb: context.budgetGbPerDay,
     },
   };
 }

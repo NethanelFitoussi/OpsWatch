@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { FormAction } from '@/lib/forms/action-state';
 import { MAPPABLE_FIELDS, SOURCE_PRESETS, presetById, type FieldMapValues } from '@/lib/errors/source-presets';
-import type { ConfiguredSource } from '@/lib/read/log-sources';
+import type { ConfiguredSource, SourcesView } from '@/lib/read/log-sources';
 import type { SearchState, SourceState } from './actions';
 
 const SELECT_CLASS = 'h-9 w-full max-w-xs rounded-md border bg-background px-2 text-sm';
@@ -31,7 +31,7 @@ export function SourcesForm({
   save: FormAction<SourceState>;
   search: FormAction<SearchState>;
   sources: ConfiguredSource[];
-  budget: { scannedGb: number; limitGb: number; remainingGb: number; exhausted: boolean };
+  budget: SourcesView['budget'];
 }) {
   const t = useTranslations('Monitoring.sources');
   const [saveState, saveAction] = useActionState(save, {});
@@ -67,10 +67,18 @@ export function SourcesForm({
           <p className="text-sm">
             {t('budget', {
               scanned: budget.scannedGb.toFixed(2),
-              limit: budget.limitGb,
+              // Two decimals like the figures either side of it: a share is rarely a whole number,
+              // and "0.00 GB of 0.5 GB. 0.50 GB left" reads like three different units.
+              limit: budget.limitGb.toFixed(2),
               remaining: Math.max(0, budget.remainingGb).toFixed(2),
             })}
           </p>
+          {/* Only when there is a share to explain: on a one-account installation the cap is the cap. */}
+          {budget.shares > 1 && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t('budgetShare', { shares: budget.shares, instanceLimit: budget.instanceLimitGb })}
+            </p>
+          )}
           {budget.exhausted && <p className="mt-1 text-sm">{t('budgetExhausted')}</p>}
           <p className="mt-1 text-xs text-muted-foreground">{t('costHint')}</p>
         </CardContent>

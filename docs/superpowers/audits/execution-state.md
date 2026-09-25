@@ -9,10 +9,10 @@ restated.
 
 | | |
 |---|---|
-| Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Host charts: the last day, with the gaps left as gaps |
-| Last green gates | tsc 0 · eslint 0 · **2414 unit** · **412 e2e** · `roadmap:check` 0 |
-| Schema | drizzle **0031** — `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
+| Current checkpoint | MC-10: the Logs Insights budget is shared between accounts instead of raced for |
+| Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
+| Schema | drizzle **0032** — `logs_usage` keyed by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -61,7 +61,9 @@ losing the whole conversation loses no plan.
 - **next-intl does not throw for a missing message — it renders the key path.** A dot inside a key is a
   path separator, so a flat key `"opened.critical"` is unreachable. Three guards hold this now:
   `message-keys.test.ts` (no dotted keys, EN/FR parity, no empty strings), `report-message-keys.test.ts`
-  (every key a report *composes at run time* has a message) and the browser sweep in `40-visual-qa`.
+  (every key a report *composes at run time* has a message), `message-namespaces.test.ts` (every
+  literal `t('…')` resolves **in the namespace its component binds**, which is the one a correctly
+  spelled key filed in the wrong place slips past) and the browser sweep in `40-visual-qa`.
 - **A detector has no locale**, so it stores ids (`metricKey`, `subjectKind`, `subjectName`) and
   `expandValues` turns them into words at render. Writing a sentence into the database would freeze one
   language into every row a French reader ever sees.
@@ -69,6 +71,16 @@ losing the whole conversation loses no plan.
   `Period` and `Statistic` are null at the top level, and `Dimensions: []` must not win over the
   dimensions inside `Metrics[].MetricStat`.
 - `values` is a SQLite reserved word; raw SQL referencing it fails to parse.
+- **drizzle-kit generates a table rebuild by selecting every new column out of the old table**, including
+  the column being added — which fails on any database that already has rows. Read the generated SQL
+  before trusting it. `migration-logs-usage.test.ts` runs 0032 against a real pre-0032 database.
+- **A region that scrolls sideways needs `tabIndex={0}`** or columns past the edge exist only for a
+  mouse (axe `scrollable-region-focusable`, WCAG 2.1 A). `components/ui/table.tsx` does it; four
+  hand-rolled containers did not. `scrollable-regions.test.ts` holds it statically, with a written list
+  of the regions axe exempts because their focusable children are unconditional.
+- **A test that skips itself is a test that is not run.** `45-hosts` read `main` straight after a
+  navigation, got the Suspense fallback and skipped on "no instance found" for days. Prefer waiting and
+  asserting over `test.skip` on a condition the page controls.
 - Only `lib/db/**` and `lib/store/**` may import drizzle; `lib/monitoring/shared/**` must stay
   client-safe (no `node:crypto`).
 - §33.1: the contract is **additive-only**. New exports go in `PROMISED_VALUES`.
@@ -121,6 +133,18 @@ losing the whole conversation loses no plan.
       documented format; the one-click path explains what it needs instead of vanishing; the 28-checkbox
       region grid on the connection page is one line with a disclosure; the account card says which
       connections are forwarding logs, because connected and forwarding are different things
+- [x] **One machine seen from both sides.** An agent that reports a `cloudInstanceId` is matched to the
+      EC2 instance of that id, in one query for the whole table rather than one per row, and each side
+      links to the other. On the id AWS gave it, never on the hostname: two machines can share one
+- [x] **MC-10 the logs budget is per account.** `logs_usage` was keyed by the UTC day alone, so two
+      connected accounts raced for one pot: whichever collection ran first could spend the whole day's
+      cap before the other had scanned a byte, every day, with no page saying who spent it. The cap
+      still belongs to the installation — connecting a second account must not double the operator's
+      bill — but it is divided evenly between the accounts with an enabled log source, and an account
+      stops at its own share **or** at the installation's cap, whichever comes first. The page says
+      which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
+      of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
+      finding now
 - [x] **Multiple AWS connections, MC-1..MC-8.** The audit is a table in `full-roadmap-status.md`; the
       three that matter most were a cross-account delete (`deleteCheck` took an id alone), silent
       cross-connection data loss (the forwarded-record id did not name the connection, so two
@@ -139,9 +163,9 @@ The page now says that instead of hiding the button.
 
 ## Next, in priority order (the owner's marathon queue)
 
-1. ~~Multiple AWS accounts~~ — MC-1..MC-8 and MC-11 done; MC-9 is honest but still one region per
-   connection. **MC-9 (per-region collection stacks), MC-10 (per-connection logs budget) and MC-12
-   (a connection on the audit log) remain**
+1. ~~Multiple AWS accounts~~ — MC-1..MC-8, MC-10 and MC-11 done; MC-9 is honest but still one region
+   per connection. **MC-9 (per-region collection stacks) and MC-12 (a connection on the audit log)
+   remain**
 2. ~~One-click CloudFormation onboarding~~ — the documented URL format and an honest explanation of what
    the button needs. It cannot be made bucket-free: the console fetches templates only from S3
 3. ~~Safe disconnect~~ — done. **Stack identity is still not tracked for the base stack**: the collection
@@ -149,10 +173,11 @@ The page now says that instead of hiding the button.
    version rather than read from the stack
 4. ~~Storage and database setup~~ — done, with the migration button deliberately absent. An external
    PostgreSQL backend is the next real step there, and it is a build rather than a setting
-5. ~~Linux host architecture, MVP, service discovery, Redis, findings~~ — done. **Next for hosts, in
-   order: host↔EC2 correlation on `cloudInstanceId` (`hosts.connection_id` exists for it); host
-   findings as first-class Problems, which needs `problems` to admit instance-wide rows**
-6. Unified host/cloud identity (an agent on EC2 must not duplicate the discovered instance)
+5. ~~Linux host architecture, MVP, service discovery, Redis, findings, host↔EC2 correlation~~ — done.
+   **Next for hosts: host findings as first-class Problems, which needs `problems` to admit
+   instance-wide rows**
+6. ~~Unified host/cloud identity~~ — an agent on EC2 is matched to its instance and shown from both
+   sides. Still open: the same for GCE and DigitalOcean, which have no discovery to match against yet
 7. Google Cloud, then DigitalOcean — against current official documentation, never from memory
 
 P0 correctness, security and data-integrity defects override this order. Serious UX defects override new

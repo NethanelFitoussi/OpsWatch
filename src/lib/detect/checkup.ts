@@ -50,7 +50,14 @@ export type CheckupInput = {
   logSources: { total: number; enabled: number };
   history: { enabled: boolean };
   /** Today's Logs Insights usage against the hard stop, or null when no budget is configured. */
-  logsBudget: { exhausted: boolean; scannedGb: number; limitGb: number } | null;
+  logsBudget: {
+    exhausted: boolean;
+    scannedGb: number;
+    /** This account's share of the day, which is the whole cap when it is the only one reading logs. */
+    limitGb: number;
+    /** True when the installation's cap stopped it while this account still had share left. */
+    stoppedByInstance: boolean;
+  } | null;
   collector: { neverRan: boolean; failingJobs: readonly string[] };
   /** The CloudFormation template the connection was created with, against the current one. */
   template: { version: number | null; current: number };
@@ -138,14 +145,18 @@ export function collectionChecks(input: CheckupInput): CheckOutcome[] {
   if (input.logsBudget === null) {
     outcomes.push(notRun('logs_budget', 'not_collected'));
   } else if (input.logsBudget.exhausted) {
+    // Two different facts, and saying the wrong one is worse than saying nothing: "used up (0.00 of
+    // 5 GB)" is a contradiction, and it is what this account sees when another one spent the cap.
     outcomes.push(
-      finding('logs_budget_exhausted', 'critical', {
-        scanned: input.logsBudget.scannedGb,
-        limit: input.logsBudget.limitGb,
-      }),
+      input.logsBudget.stoppedByInstance
+        ? finding('logs_budget_instance_exhausted', 'critical', { limit: input.logsBudget.limitGb })
+        : finding('logs_budget_exhausted', 'critical', {
+            scanned: input.logsBudget.scannedGb,
+            limit: input.logsBudget.limitGb,
+          }),
     );
   } else {
-    outcomes.push(clear('logs_budget_exhausted'));
+    outcomes.push(clear('logs_budget_exhausted'), clear('logs_budget_instance_exhausted'));
   }
 
   return outcomes;

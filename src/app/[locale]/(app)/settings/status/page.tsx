@@ -70,7 +70,7 @@ export default async function SystemStatusPage({ params }: Props) {
       </MonitoringCard>
 
       <MonitoringCard title={t('jobs')}>
-        <div className="overflow-x-auto">
+        <div tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">

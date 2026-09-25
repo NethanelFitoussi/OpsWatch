@@ -74,8 +74,10 @@ export async function ReportView({
       );
     }
 
+    // A region that scrolls sideways must be reachable by keyboard, or the columns past the edge
+    // exist only for a mouse. The shared <Table> does this itself; this one is hand-rolled.
     return (
-      <div className="overflow-x-auto">
+      <div tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">

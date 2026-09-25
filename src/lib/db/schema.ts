@@ -785,12 +785,21 @@ export const logsUsage = sqliteTable(
   'logs_usage',
   {
     /** The UTC day, as epoch milliseconds at midnight. */
-    day: integer('day').primaryKey(),
+    day: integer('day').notNull(),
+    /**
+     * Which connected account did the spending.
+     *
+     * Part of the key rather than a column beside it: the day used to be the whole key, and one busy
+     * account then spent the whole installation's budget before another account's collection had run at
+     * all — silently, for the rest of every day, with nothing on the page to say which account did it.
+     */
+    connectionId: text('connection_id').notNull(),
     bytesScanned: integer('bytes_scanned').notNull(),
     queries: integer('queries').notNull(),
     /** Set when the budget stopped the job that day, so the reason is visible rather than inferred. */
     stoppedAt: integer('stopped_at'),
   },
+  (table) => [primaryKey({ columns: [table.day, table.connectionId] })],
 );
 
 export type LogsUsageRow = typeof logsUsage.$inferSelect;

@@ -87,7 +87,7 @@ describe('what the page reads', () => {
     expect(view.budget).toMatchObject({ limitGb: 5, exhausted: false });
     expect(view.budget.remainingGb).toBeCloseTo(5, 6);
 
-    recordScan(db, NOW, 5 * 1024 ** 3);
+    recordScan(db, NOW, env.connectionId, 5 * 1024 ** 3);
     const spent = readSources(db, env, context);
     expect(spent.budget.exhausted).toBe(true);
     expect(spent.budget.scannedGb).toBeCloseTo(5, 6);
