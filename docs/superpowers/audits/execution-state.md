@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | A machine's trouble, on the page that asks what is wrong with the account |
+| Current checkpoint | Machine alerting: a full disk on the box now tells somebody |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0034** — `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -152,6 +152,15 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **A machine that is in trouble tells somebody.** `machine` is a fourth alert condition beside
+      `problem`, `synthetic` and `slo`, covering the four kinds an agent can find. The conditions
+      partition the kinds, so a machine finding cannot also match a problem rule and be announced twice.
+      Candidates come from the same pure `hostFindings` the page draws, so the alert and the page can
+      never disagree. The alert has no problem row and points at the machine instead — without that
+      branch the one alert most worth acting on landed the operator on a list of every alert there is.
+      Found while wiring it: `alertLabels.title` stripped an `Insights.` prefix and rendered anything
+      else as its own key path, and its `try/catch` never ran because next-intl does not throw — a
+      title key outside that namespace would have printed `Hosts.findings.disk_full` onto the page
 - [x] **A machine's trouble, where the operator asks.** The owner's case is Redis on an Ubuntu EC2
       instance, where a full disk is invisible to every AWS API there is — and the agent's figure lived
       only on the Machines page, so "what is wrong in production" answered about the account and not

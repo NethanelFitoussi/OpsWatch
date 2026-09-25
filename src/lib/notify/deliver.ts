@@ -67,9 +67,17 @@ export function reportUrl(connectionId: string, scope: string): string | null {
 }
 
 /** The absolute link into this installation, or null when no public URL is configured. */
-export function alertUrl(connectionId: string, scope: string, problemId: string | null): string | null {
+export function alertUrl(connectionId: string, scope: string, problemId: string | null, hostId: string | null = null): string | null {
   const base = env().OPSWATCH_PUBLIC_URL;
   if (base === undefined || base.length === 0) return null;
-  const path = problemId === null ? `/c/${connectionId}/${scope}/overview/alerts` : `/c/${connectionId}/${scope}/overview/problems/${problemId}`;
+  // The thing the alert is about, in order of how specific it is: a problem, a machine, or the list.
+  // A machine has no problem row — `problems` is keyed to an AWS environment — so without this branch
+  // the one alert an operator most needs to act on would land them on a page of every alert there is.
+  const path =
+    problemId !== null
+      ? `/c/${connectionId}/${scope}/overview/problems/${problemId}`
+      : hostId !== null
+        ? `/hosts/${hostId}`
+        : `/c/${connectionId}/${scope}/overview/alerts`;
   return `${base.replace(/\/$/, '')}${path}`;
 }

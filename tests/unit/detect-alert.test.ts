@@ -108,14 +108,14 @@ describe('§15.1 — the rules an installation starts with', () => {
     expect(INSTALL_RULES.length).toBeGreaterThan(0);
     // There is no other channel to choose, which is how the promise is kept rather than remembered.
     for (const installed of INSTALL_RULES) {
-      expect(['problem', 'synthetic', 'slo']).toContain(installed.condition);
+      expect(['problem', 'synthetic', 'slo', 'machine']).toContain(installed.condition);
       expect(installed.name).toBeTruthy();
     }
   });
 
   it('covers critical problems and the two synthetic cases §15 names', () => {
     const names = INSTALL_RULES.map((installed) => installed.name);
-    expect(names).toEqual(['critical_problems', 'synthetic_down', 'certificate_expiring', 'slo_burn']);
+    expect(names).toEqual(['critical_problems', 'synthetic_down', 'certificate_expiring', 'slo_burn', 'machine_critical']);
   });
 
   it('each one would actually match something', () => {
@@ -124,6 +124,7 @@ describe('§15.1 — the rules an installation starts with', () => {
       candidate({ kind: 'synthetic_down', severity: 'critical' }),
       candidate({ kind: 'cert_expiring', severity: 'warning' }),
       candidate({ kind: 'slo_burn_slow', severity: 'warning' }),
+      candidate({ kind: 'disk_full', severity: 'critical' }),
     ];
     for (const [index, installed] of INSTALL_RULES.entries()) {
       const asRule = rule({ id: `install-${index}`, condition: installed.condition, minSeverity: installed.minSeverity, kinds: installed.kinds });

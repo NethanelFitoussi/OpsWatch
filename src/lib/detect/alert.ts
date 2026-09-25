@@ -23,7 +23,7 @@ export function meetsSeverity(severity: AlertSeverity, minimum: AlertSeverity): 
 export type Rule = {
   id: string;
   enabled: boolean;
-  condition: 'problem' | 'synthetic' | 'slo';
+  condition: 'problem' | 'synthetic' | 'slo' | 'machine';
   minSeverity: AlertSeverity;
   /** Empty means every kind this condition covers. */
   kinds: readonly string[];
@@ -31,11 +31,13 @@ export type Rule = {
 };
 
 export type Candidate = {
-  /** The problem or check this is about. */
+  /** The problem, check, objective or machine this is about. */
   subjectKey: string;
   kind: string;
   severity: AlertSeverity;
   problemId: string | null;
+  /** The machine this is about, where it is about one: what the alert links to instead of a problem. */
+  hostId?: string | null;
   titleKey: string;
   values: Record<string, string | number>;
 };
@@ -51,10 +53,21 @@ export const SYNTHETIC_KINDS = ['synthetic_down', 'synthetic_slow', 'cert_expiri
 /** §19's two burn rates, as alert kinds. A `slo` rule covers these and nothing else. */
 const SLO_BURN_KINDS = ['slo_burn_fast', 'slo_burn_slow'] as const;
 
+/**
+ * What an agent on a Linux host can find, as alert kinds.
+ *
+ * A `machine` rule covers these and nothing else. They are their own condition rather than more
+ * `problem` kinds because the two are measured by different things and an operator turns them on for
+ * different reasons: a `problem` rule is about what AWS reports, and a machine rule is about a box
+ * AWS cannot see inside.
+ */
+export const MACHINE_KINDS = ['stopped_reporting', 'disk_full', 'disk_nearly_full', 'memory_nearly_exhausted'] as const;
+
 /** Which condition a kind belongs to. Every kind belongs to exactly one, which is what stops overlap. */
 function conditionOf(kind: string): Rule['condition'] {
   if ((SYNTHETIC_KINDS as readonly string[]).includes(kind)) return 'synthetic';
   if ((SLO_BURN_KINDS as readonly string[]).includes(kind)) return 'slo';
+  if ((MACHINE_KINDS as readonly string[]).includes(kind)) return 'machine';
   return 'problem';
 }
 
@@ -112,4 +125,10 @@ export const INSTALL_RULES: readonly { name: string; condition: Rule['condition'
   // §19's multi-window burn. `warning` rather than `critical`, because the slow burn is the one that gives
   // anybody time to act and a critical floor would drop exactly half of what §19 asks for.
   { name: 'slo_burn', condition: 'slo', minSeverity: 'warning', kinds: [] },
+  /*
+   * `critical` rather than `warning`: a machine that has stopped reporting and a disk past 95% are the
+   * two that cannot wait, and a disk at 86% every night would train an operator to ignore the rest. A
+   * warning floor is one edit away for anybody who wants it.
+   */
+  { name: 'machine_critical', condition: 'machine', minSeverity: 'critical', kinds: [] },
 ];

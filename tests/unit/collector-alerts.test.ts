@@ -26,7 +26,7 @@ describe('§15.1 — the rules an installation starts with', () => {
     const db = createTestDb();
     runAlertCycle(db, env, [], NOW);
     const rules = listRules(db, env.connectionId, env.scope);
-    expect(rules.map((rule) => rule.name)).toEqual(['certificate_expiring', 'critical_problems', 'slo_burn', 'synthetic_down']);
+    expect(rules.map((rule) => rule.name)).toEqual(['certificate_expiring', 'critical_problems', 'machine_critical', 'slo_burn', 'synthetic_down']);
     // §15: nothing leaves the instance, so there is no other channel to choose.
     for (const rule of rules) expect(rule.channels).toEqual(['in_app']);
   });

@@ -92,3 +92,19 @@ test('§15.2 — the page says what acknowledging does, and what it does not', a
     expect(main).toContain('the problem is still there');
   }
 });
+
+test('THE RULING: a machine can be alerted on, as an ordinary rule beside the rest', async ({ page }) => {
+  /*
+   * A disk could fill on the box running somebody's Redis and the only way to find out was to open the
+   * Machines page. The rule that changes that is not a second alerting system: it sits in the same
+   * list, is turned off the same way, and goes through the same cooldown and acknowledgement.
+   */
+  await page.goto(url());
+  await expect(page.locator('main')).toContainText('A machine reports trouble');
+
+  // Not a raw key, and not English, for a French reader.
+  await page.goto(url().replace('/en/', '/fr/'));
+  const french = await page.locator('main').innerText();
+  expect(french).toContain('Une machine signale un problème');
+  expect(french).not.toMatch(/Monitoring\.|Insights\./);
+});

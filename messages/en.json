@@ -2797,6 +2797,7 @@
       "waitingHint": "That is not the same as nothing being wrong. The first collector cycle will tell you.",
       "since": "since {when}",
       "suppressed": "{count, plural, one {1 further fire suppressed by the cooldown} other {# further fires suppressed by the cooldown}}",
+      "untitled": "An alert with no title",
       "status": {
         "firing": "Firing",
         "acknowledged": "Acknowledged",
@@ -2809,7 +2810,8 @@
         "critical_problems": "Any critical problem",
         "synthetic_down": "A synthetic check goes down",
         "certificate_expiring": "A certificate is expiring",
-        "slo_burn": "An objective is burning its error budget"
+        "slo_burn": "An objective is burning its error budget",
+        "machine_critical": "A machine reports trouble"
       },
       "enabled": "on",
       "disabled": "off",
@@ -3418,6 +3420,10 @@
       "cert_expiring": "{name}'s certificate expires in {days, plural, one {# day} other {# days}}.",
       "slo_burn_fast": "{name} is burning its error budget {rate}× faster than it can afford, measured over the last {hours, plural, one {hour} other {# hours}}.",
       "slo_burn_slow": "{name} has been burning its error budget {rate}× faster than it can afford over the last {hours, plural, one {hour} other {# hours}}.",
+      "machine_stopped_reporting": "{name} has stopped reporting",
+      "machine_disk_full": "{name}: {subject} is {percent}% full",
+      "machine_disk_nearly_full": "{name}: {subject} is {percent}% full",
+      "machine_memory_nearly_exhausted": "{name}: memory is {percent}% used",
       "alarm_firing_on": "{metric} crossed its alarm threshold on {subject}.",
       "alarm_firing_metric": "{metric} crossed its alarm threshold."
     },

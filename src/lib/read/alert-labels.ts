@@ -18,13 +18,17 @@ export async function alertLabels(locale: string): Promise<AlertLabels> {
   const lookup = (key: string) => (root.has(key) ? root(key) : null);
   return {
     title: (key, values) => {
-      try {
-        // The stored key is `Insights.messages.x`; the namespace is already bound, so the prefix goes.
-        // The ids the detector stored become words here, in this reader's language.
-        return insights(key.replace(/^Insights\./, ''), expandValues(values, lookup));
-      } catch {
-        return key;
-      }
+      // The ids the detector stored become words here, in this reader's language.
+      const expanded = expandValues(values, lookup);
+      // `has` rather than a try/catch, because next-intl does not throw for a missing message — it
+      // returns the key path, and the catch below never ran. An alert whose title key was not under
+      // `Insights` rendered as `Hosts.findings.disk_full` on the page, which is a message key in front
+      // of an operator: the one thing §T says may never happen.
+      const inside = key.replace(/^Insights\./, '');
+      if (insights.has(inside)) return insights(inside, expanded);
+      if (root.has(key)) return root(key, expanded);
+      // Nothing to render it with. The key is not a sentence, so it is not shown as one.
+      return alerts('untitled');
     },
     suppressed: (count) => alerts('suppressed', { count }),
   };

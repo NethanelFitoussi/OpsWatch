@@ -243,7 +243,7 @@ export const auditLog = sqliteTable(
 
 export type AuditLogRow = typeof auditLog.$inferSelect;
 
-export const ALERT_CONDITIONS = ['problem', 'synthetic', 'slo'] as const;
+export const ALERT_CONDITIONS = ['problem', 'synthetic', 'slo', 'machine'] as const;
 export const ALERT_CHANNELS = ['in_app'] as const;
 
 /**

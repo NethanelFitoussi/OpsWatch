@@ -16,6 +16,7 @@ import {
   suppressAlert,
   toRule,
 } from '../store/alerts';
+import { machineCandidates } from './machine-alerts';
 import { sloBurnCandidates } from './slo-burn';
 
 /**
@@ -57,7 +58,7 @@ function queueForDestinations(
       subject: candidate.subjectKey,
       environment: `${context.connectionId}:${context.scope}`,
       firedAt: nowMs,
-      url: alertUrl(context.connectionId, context.scope, candidate.problemId),
+      url: alertUrl(context.connectionId, context.scope, candidate.problemId, candidate.hostId ?? null),
     };
     queueDelivery(db, { destinationId: destination.id, alertId: alert.id, payload, nowMs });
   }
@@ -92,7 +93,9 @@ export function runAlertCycle(
 
   // §19's burn alerts are candidates like any other: they go through the same rules, the same cooldown and
   // the same acknowledgement, rather than being a second alerting system beside the first.
-  const candidates = [...live.map(toCandidate), ...sloBurnCandidates(db, context, nowMs)];
+  // Machines placed in this environment are candidates on the same terms: an agent's disk reading goes
+  // through the same rules, cooldown and acknowledgement as a CloudWatch metric does.
+  const candidates = [...live.map(toCandidate), ...sloBurnCandidates(db, context, nowMs), ...machineCandidates(db, context, nowMs)];
 
   for (const candidate of candidates) {
     for (const rule of rules) {

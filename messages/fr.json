@@ -2797,6 +2797,7 @@
       "waitingHint": "Ce n’est pas la même chose que l’absence de problème. Le premier cycle du collecteur vous le dira.",
       "since": "depuis {when}",
       "suppressed": "{count, plural, one {1 déclenchement supplémentaire supprimé par le délai de garde} other {# déclenchements supplémentaires supprimés par le délai de garde}}",
+      "untitled": "Une alerte sans titre",
       "status": {
         "firing": "Active",
         "acknowledged": "Acquittée",
@@ -2809,7 +2810,8 @@
         "critical_problems": "Tout problème critique",
         "synthetic_down": "Une vérification synthétique tombe",
         "certificate_expiring": "Un certificat expire",
-        "slo_burn": "Un objectif consomme son budget d'erreur"
+        "slo_burn": "Un objectif consomme son budget d'erreur",
+        "machine_critical": "Une machine signale un problème"
       },
       "enabled": "activée",
       "disabled": "désactivée",
@@ -3418,6 +3420,10 @@
       "cert_expiring": "Le certificat de {name} expire dans {days, plural, one {# jour} other {# jours}}.",
       "slo_burn_fast": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre, mesuré sur {hours, plural, one {la dernière heure} other {les # dernières heures}}.",
       "slo_burn_slow": "{name} consomme son budget d'erreur {rate}× plus vite qu'il ne peut se le permettre sur {hours, plural, one {la dernière heure} other {les # dernières heures}}.",
+      "machine_stopped_reporting": "{name} ne transmet plus",
+      "machine_disk_full": "{name} : {subject} est rempli à {percent}%",
+      "machine_disk_nearly_full": "{name} : {subject} est rempli à {percent}%",
+      "machine_memory_nearly_exhausted": "{name} : la mémoire est utilisée à {percent}%",
       "alarm_firing_on": "{metric} a franchi son seuil d’alarme sur {subject}.",
       "alarm_firing_metric": "{metric} a franchi son seuil d’alarme."
     },
