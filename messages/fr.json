@@ -168,8 +168,7 @@
       "keys": {
         "title": "Clés d'accès",
         "description": "Collez une clé d'accès pour un test rapide en local. Déconseillé en production."
-      },
-      "agentReports": "Un agent OpsWatch transmet depuis cette instance"
+      }
     },
     "name": "Nom de la connexion",
     "namePlaceholder": "Production",
@@ -3276,7 +3275,8 @@
         "type": "Type",
         "zone": "Zone",
         "cpu": "CPU"
-      }
+      },
+      "agentReports": "Un agent OpsWatch transmet depuis cette instance"
     },
     "redis": {
       "title": "Vue d'ensemble Redis",

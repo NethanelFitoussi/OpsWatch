@@ -168,8 +168,7 @@
       "keys": {
         "title": "Access keys",
         "description": "Paste an access key for a quick local test. Not recommended in production."
-      },
-      "agentReports": "An OpsWatch agent reports from inside this instance"
+      }
     },
     "name": "Connection name",
     "namePlaceholder": "Production",
@@ -3276,7 +3275,8 @@
         "type": "Type",
         "zone": "Zone",
         "cpu": "CPU"
-      }
+      },
+      "agentReports": "An OpsWatch agent reports from inside this instance"
     },
     "redis": {
       "title": "Redis overview",
