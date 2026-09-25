@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | MC-9: a collection stack is a thing in a region, not one per account |
+| Current checkpoint | Foreign keys during a migration. **In flight, uncommitted: the Google Cloud connection** (schema, the OIDC issuer) |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0035** — `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -71,6 +71,11 @@ losing the whole conversation loses no plan.
   `Period` and `Statistic` are null at the top level, and `Dimensions: []` must not win over the
   dimensions inside `Metrics[].MetricStat`.
 - `values` is a SQLite reserved word; raw SQL referencing it fails to parse.
+- **A table rebuild during a migration deletes that table's cascading children**, unless foreign keys
+  are off *around the migrator*. drizzle-kit writes `PRAGMA foreign_keys=OFF` into every rebuild it
+  generates and it has never done anything: the migrator runs each file inside a transaction, and
+  SQLite ignores that pragma inside one. `createDb` sets it where it takes effect;
+  `migration-foreign-keys.test.ts` owns no migration and holds the property directly.
 - **drizzle-kit generates a table rebuild by selecting every new column out of the old table**, including
   the column being added — which fails on any database that already has rows. Read the generated SQL
   before trusting it. `migration-logs-usage.test.ts` runs 0032 against a real pre-0032 database.
@@ -213,11 +218,19 @@ losing the whole conversation loses no plan.
 
 | What | Source |
 |---|---|
+| Google Cloud, workload identity federation | `docs.cloud.google.com/iam/docs/workload-identity-federation` and `.../workload-identity-federation-with-other-providers` — an external workload exchanges a token from its own OIDC issuer for a short-lived Google access token, through a **workload identity pool** and a **provider**, optionally impersonating a service account. The issuer **does not have to be reachable by Google**: `gcloud iam workload-identity-pools providers create-oidc --jwk-json-path` uploads the JWK set directly (max 8 keys), "when the IdP's OIDC metadata endpoint URL isn't publicly accessible". The token needs `aud` = `https://iam.googleapis.com/projects/<number>/locations/global/workloadIdentityPools/<pool>/providers/<provider>`, `exp` in the future, `iat` in the past, and `exp - iat` at most 24 hours |
+| Google Cloud, service account keys | `docs.cloud.google.com/iam/docs/best-practices-service-accounts` — "We recommend that you avoid using service account keys whenever possible", in this order: workload identity federation, then impersonation with user credentials, then keys as a last resort. The named risk is **non-repudiation**: "if the service account is authenticated with a service account key, there is no reliable way to tell who used the key" |
+| Google Cloud, read-only roles | `roles/monitoring.viewer` carries `monitoring.timeSeries.list`, which is what reading metrics needs (`docs.cloud.google.com/monitoring/access-control`); `roles/compute.viewer` for reading instances |
 | CloudFormation quick-create links | `docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stacks-quick-create-links.html` — `templateURL` **must** be an Amazon S3 URL in one of three regional forms; the path is `#/stacks/create/review`; `param_<Name>` pre-fills non-`NoEcho` parameters; the console host is regional |
 
 The consequence for a self-hosted product, and the reason the one-click path needs a bucket: the
 CloudFormation console will not fetch a template from anywhere but S3, so OpsWatch cannot serve its own.
 The page now says that instead of hiding the button.
+
+The consequence for Google Cloud, and it is the opposite one: the keyless path Google recommends **is**
+available to a self-hosted instance that nobody can reach from the internet, because the JWK set is
+uploaded to the provider rather than fetched from the issuer. Assuming otherwise would have shipped the
+method Google explicitly discourages as the only one on offer.
 
 ## Next, in priority order (the owner's marathon queue)
 

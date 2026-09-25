@@ -27,7 +27,27 @@ export function createDb(filename: string): Db {
   sqlite.pragma('foreign_keys = ON');
   const db = drizzle({ client: sqlite, schema });
   if (filename !== ':memory:') backupBeforeMigrating(db, path.dirname(filename));
-  migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  /*
+   * Foreign keys off while the schema changes, and on again immediately afterwards.
+   *
+   * SQLite cannot alter a column, so making one nullable means building a new table, dropping the old
+   * one and renaming. `connections` is the parent of four cascading children, and `DROP TABLE` with
+   * foreign keys enabled performs the cascade — it would take the operator's managed-collection
+   * consent and ingest secret with it and report success.
+   *
+   * drizzle-kit knows this and writes `PRAGMA foreign_keys=OFF` into every rebuild it generates. It
+   * has never done anything: the migrator runs each file inside a transaction (see
+   * `sqlite-core/dialect.js`), and SQLite ignores that pragma inside one. Setting it here, outside the
+   * transaction, is the only place it takes effect. `migration-connection-provider.test.ts` runs a real
+   * upgrade over a database with children in it and fails if they go.
+   */
+  sqlite.pragma('foreign_keys = OFF');
+  try {
+    migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  } finally {
+    // In a `finally` because a migration that throws must not leave the process running unprotected.
+    sqlite.pragma('foreign_keys = ON');
+  }
   return db;
 }
 
