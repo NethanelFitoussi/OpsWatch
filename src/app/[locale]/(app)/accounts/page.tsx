@@ -83,9 +83,13 @@ export default async function AccountsPage({ params }: Props) {
         </Card>
       )}
 
-      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {/* `minmax(0,1fr)`, not `1fr`: a grid track sized `1fr` still refuses to go below its content's
+          min-content width, and a card holding a `truncate` line — which is `white-space: nowrap` —
+          contributes that whole line. At 360px the card then grew past the screen, and the longer
+          the language the further: 41px in English, 119px in French. */}
+      <ul className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[repeat(2,minmax(0,1fr))] xl:grid-cols-[repeat(3,minmax(0,1fr))] 2xl:grid-cols-[repeat(4,minmax(0,1fr))]">
         {views.map((c) => (
-          <li key={c.id}>
+          <li key={c.id} className="min-w-0">
             <ConnectionCard
               integration="aws"
               scope="connection"
@@ -115,7 +119,12 @@ export default async function AccountsPage({ params }: Props) {
                 )
               }
               facts={[
-                { label: t('accountId'), value: `${c.awsAccountId} · ${t(`methods.${c.method}`)}` },
+                {
+                  // The account or the project, whichever this connection is to: a Google row showing an
+                  // empty account id would read as an AWS account whose number nobody filled in.
+                  label: c.provider === 'gcp' ? t('projectId') : t('accountId'),
+                  value: `${c.awsAccountId ?? c.gcpProjectId ?? ''} · ${t(`methods.${c.method}`)}`,
+                },
                 { label: t('regions'), value: c.regions.join(', ') },
                 {
                   label: t('tested'),

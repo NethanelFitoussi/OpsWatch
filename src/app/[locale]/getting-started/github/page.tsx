@@ -5,7 +5,7 @@ import { IntegrationGuideBody } from '@/components/getting-started/integration-g
 import { localizedTitle } from '@/i18n/metadata';
 import { getCurrentAdminId } from '@/lib/auth/current';
 import { getDb } from '@/lib/db/client';
-import { setupPath } from '@/lib/integrations/guides';
+import { GUIDE_CHAPTERS, setupPath } from '@/lib/integrations/guides';
 import { integrationStatuses } from '@/lib/integrations/status';
 
 export const dynamic = 'force-dynamic';
@@ -15,8 +15,7 @@ type Props = { params: Promise<{ locale: string }> };
 export const generateMetadata = localizedTitle('GettingStarted.github.metaTitle');
 
 /** The chain this guide exists to explain: service → repository → deployment → commit → files → problem. */
-const STEPS = ['token', 'store', 'verify', 'discover', 'map'] as const;
-const FAILURES = ['unauthorized', 'forbidden', 'rateLimited', 'noRepositories', 'wrongBranch'] as const;
+const { steps: STEPS, failures: FAILURES } = GUIDE_CHAPTERS['github'];
 
 export default async function GithubGuidePage({ params }: Props) {
   const { locale } = await params;

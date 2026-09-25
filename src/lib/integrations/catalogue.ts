@@ -10,7 +10,7 @@
  * OpsWatch will be allowed to read is asking for a decision nobody has the information to make.
  */
 
-export const INTEGRATIONS = ['aws', 'github', 'ai', 'cloudflare', 'google'] as const;
+export const INTEGRATIONS = ['aws', 'gcp', 'github', 'ai', 'cloudflare', 'google'] as const;
 export type IntegrationId = (typeof INTEGRATIONS)[number];
 
 /**
@@ -45,6 +45,9 @@ export type IntegrationSpec = {
 
 export const INTEGRATION_SPECS: Record<IntegrationId, IntegrationSpec> = {
   aws: { id: 'aws', href: '/accounts/new/aws', credentials: 'aws-connection', available: true, connectable: true },
+  // No credential of Google's is stored: the connection signs its own token and exchanges it, so what
+  // is kept is a project number and the names of a pool and a provider, all of them public.
+  gcp: { id: 'gcp', href: '/accounts/new/gcp', credentials: 'aws-connection', available: true, connectable: true },
   github: { id: 'github', href: '/settings/repositories', credentials: 'stored', available: true, connectable: true },
   ai: { id: 'ai', href: '/settings/ai', credentials: 'stored', available: true, connectable: true },
   cloudflare: { id: 'cloudflare', href: '/settings/cloudflare', credentials: 'stored', available: true, connectable: true },

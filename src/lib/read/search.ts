@@ -61,10 +61,12 @@ function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string
       kind: 'connection',
       id: connection.id,
       title: connection.name,
-      context: `${labels.kind('connection')} · ${connection.awsAccountId}`,
+      // The account or project it is, whichever this connection has. Never an empty gap where the
+      // other cloud's identifier would be.
+      context: `${labels.kind('connection')} · ${connection.awsAccountId ?? connection.gcpProjectId ?? ''}`,
       href: `/accounts/${connection.id}`,
       // An operator often remembers the account number rather than the name they gave it.
-      terms: [connection.awsAccountId, ...connection.regions],
+      terms: [connection.awsAccountId ?? connection.gcpProjectId ?? '', ...connection.regions],
     });
   }
 

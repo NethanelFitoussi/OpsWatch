@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Foreign keys during a migration. **In flight, uncommitted: the Google Cloud connection** (schema, the OIDC issuer) |
+| Current checkpoint | The Google Cloud connection: a project read without holding a key to it |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
-| Schema | drizzle **0035** — `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Schema | drizzle **0037** — `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -157,6 +157,14 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **Google Cloud, connected without a key.** Google's own guidance is to avoid service account
+      keys — the risk it names is non-repudiation, "no reliable way to tell who used the key" — so
+      OpsWatch stores no Google credential at all: each connection gets its own signing key, mints a
+      five-minute token and exchanges it at the Security Token Service. The objection for a
+      self-hosted product does not hold: `--jwk-json-path` uploads the key set to the provider, so an
+      instance nobody can reach from the internet can still use the recommended method. Two audiences
+      that look like one string are not (`https://iam.googleapis.com/…` in the JWT, `//iam.googleapis.com/…`
+      in the exchange). **No monitoring pages yet**, and the roadmap says so
 - [x] **MC-9 a collection stack is a thing in a region.** `aws_collection` held one `forwarder_arn`
       for a whole account, and a subscription filter can only target a Lambda in its own region — so an
       account reading three regions could forward from one, and the other two would have pointed at a
@@ -248,7 +256,9 @@ method Google explicitly discourages as the only one on offer.
    instance-wide rows**
 6. ~~Unified host/cloud identity~~ — an agent on EC2 is matched to its instance and shown from both
    sides. Still open: the same for GCE and DigitalOcean, which have no discovery to match against yet
-7. Google Cloud, then DigitalOcean — against current official documentation, never from memory
+7. ~~Google Cloud~~ — connected, keylessly, against the current documentation. **Next for it: read
+   something.** Instances and metrics, which needs the monitoring pages to stop being AWS-shaped
+8. DigitalOcean — against current official documentation, never from memory
 
 P0 correctness, security and data-integrity defects override this order. Serious UX defects override new
 features.

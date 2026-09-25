@@ -1,4 +1,4 @@
-import { ChevronRight, Cloud, GitBranch, Globe, KeyRound, Sparkles, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Cloud, CloudCog, GitBranch, Globe, KeyRound, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
@@ -32,6 +32,7 @@ const PILL: Record<ConnectionTone, string> = {
 /** One glyph per provider, so a wall of cards is scannable before any of it is read. */
 const PROVIDER_ICONS: Record<IntegrationId, LucideIcon> = {
   aws: Cloud,
+  gcp: CloudCog,
   github: GitBranch,
   ai: Sparkles,
   cloudflare: Globe,
@@ -117,7 +118,10 @@ export function ConnectionCard({
               </Link>
             )}
           </CardTitle>
-          <span className={cn('mt-1 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase', PILL[tone])}>
+          {/* Not `shrink-0`: a state label is a sentence in some languages — French says "Configuration
+              incomplète" where English says "Draft" — and a pill that refuses to give way pushes the
+              whole card off the side of a 360px screen. It yields and wraps; the title truncates. */}
+          <span className={cn('mt-1 min-w-0 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide break-words uppercase', PILL[tone])}>
             {stateLabel}
           </span>
         </div>

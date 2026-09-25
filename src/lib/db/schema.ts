@@ -3,9 +3,11 @@ import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from
 import type { TokenAudience } from '@opswatch/contract';
 import {
   CONNECTION_METHODS,
+  PROVIDERS,
   CONNECTION_STATUSES,
   type PermissionTestResult,
 } from '../connections/types';
+import type { GcpTestResult } from '../gcp/result';
 
 export const adminUser = sqliteTable('admin_user', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -34,13 +36,44 @@ export const sessions = sqliteTable('sessions', {
 export const connections = sqliteTable('connections', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
+  /** Which cloud. `aws` for every connection that existed before there was a second one. */
+  provider: text('provider', { enum: PROVIDERS }).notNull().default('aws'),
   method: text('method', { enum: CONNECTION_METHODS }).notNull(),
-  awsAccountId: text('aws_account_id').notNull(),
+  /** The AWS account. Null on a connection to another cloud, which does not have one. */
+  awsAccountId: text('aws_account_id'),
   regions: text('regions', { mode: 'json' }).$type<string[]>().notNull(),
   roleArn: text('role_arn'),
   externalId: text('external_id'),
   templateVersion: integer('template_version'),
   accessKeyCiphertext: text('access_key_ciphertext'),
+  /*
+   * Google Cloud, by workload identity federation. No credential of Google's is stored: OpsWatch signs
+   * a short-lived token with its own key and exchanges it, so what is kept here is only where to send
+   * that exchange — all of it public, none of it a secret.
+   */
+  gcpProjectId: text('gcp_project_id'),
+  gcpProjectNumber: text('gcp_project_number'),
+  gcpPoolId: text('gcp_pool_id'),
+  gcpProviderId: text('gcp_provider_id'),
+  /** The service account to impersonate, where one is used. Direct access without one is also valid. */
+  gcpServiceAccount: text('gcp_service_account'),
+  /**
+   * The signing key this connection's tokens are minted with, encrypted under its own purpose.
+   *
+   * One key per connection rather than one per installation: the operator uploads a connection's public
+   * key to that connection's workload identity provider, so a key withdrawn in Google stops exactly one
+   * connection and nothing else. The private half never leaves this row; the public half is served, as a
+   * public key should be.
+   */
+  gcpKeyCiphertext: text('gcp_key_ciphertext'),
+  /**
+   * What Google last answered, kept apart from `last_test`.
+   *
+   * A separate column rather than a union in one: the AWS result is a list of AWS services, the Google
+   * one is a federation outcome and two role checks, and a reader that had to ask which shape it was
+   * holding would get it wrong exactly once.
+   */
+  gcpLastTest: text('gcp_last_test', { mode: 'json' }).$type<GcpTestResult>(),
   status: text('status', { enum: CONNECTION_STATUSES }).notNull(),
   lastTest: text('last_test', { mode: 'json' }).$type<PermissionTestResult>(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),

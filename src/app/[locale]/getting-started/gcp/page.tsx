@@ -12,18 +12,18 @@ export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ locale: string }> };
 
-export const generateMetadata = localizedTitle('GettingStarted.ai.metaTitle');
+export const generateMetadata = localizedTitle('GettingStarted.gcp.metaTitle');
 
-/** The four bands an answer is read in: observed evidence → correlations → hypothesis → what would settle it. */
-const { steps: STEPS, failures: FAILURES } = GUIDE_CHAPTERS['ai'];
+/** The chain this guide exists to explain: a key → trust → two roles → short-lived tokens. */
+const { steps: STEPS, failures: FAILURES } = GUIDE_CHAPTERS['gcp'];
 
-export default async function AiGuidePage({ params }: Props) {
+export default async function GoogleCloudGuidePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations('GettingStarted.ai');
+  const t = await getTranslations('GettingStarted.gcp');
   const hub = await getTranslations('GettingStarted.hub');
   const signedIn = (await getCurrentAdminId()) !== null;
-  const status = integrationStatuses(getDb()).find((one) => one.id === 'ai');
+  const status = integrationStatuses(getDb()).find((one) => one.id === 'gcp');
   const state = status?.state ?? 'not_configured';
 
   return (
@@ -33,10 +33,10 @@ export default async function AiGuidePage({ params }: Props) {
         subtitle={t('subtitle')}
         state={state}
         stateLabel={hub(`states.${state}`)}
-        primary={{ href: setupPath('ai'), label: t(state === 'connected' ? 'manageCta' : 'cta') }}
+        primary={{ href: setupPath('gcp'), label: t(state === 'connected' ? 'manageCta' : 'cta') }}
         secondary={{ href: '/getting-started', label: hub('backToGuides') }}
       >
-        <IntegrationGuideBody namespace="GettingStarted.ai" chain={{ count: 4, label: t('chainLabel') }} steps={STEPS} failures={FAILURES} />
+        <IntegrationGuideBody namespace="GettingStarted.gcp" chain={{ count: 4, label: t('chainLabel') }} steps={STEPS} failures={FAILURES} />
       </GuideLayout>
     </AppShell>
   );

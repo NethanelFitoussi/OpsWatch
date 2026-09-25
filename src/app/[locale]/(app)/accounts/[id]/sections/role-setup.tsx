@@ -39,7 +39,7 @@ export async function RoleIdentityAndTemplate({ view, locale, error }: SectionPr
           )}
       </SectionCard>
 
-      <SectionCard step={2} title={t('deployTitle')} description={t('deployHelp', { account: view.awsAccountId })} contentClassName="space-y-5">
+      <SectionCard step={2} title={t('deployTitle')} description={t('deployHelp', { account: view.awsAccountId ?? '' })} contentClassName="space-y-5">
           {view.templateOutdated && (
             <Alert><AlertDescription>{t('outdated')}</AlertDescription></Alert>
           )}
@@ -118,7 +118,8 @@ export async function RoleArnCard({ view, locale }: SectionProps) {
    * It is still saved and still validated: the account and the role name are checked before it is
    * stored, and only the permission test can say whether the role is really there.
    */
-  const expected = roleArnFor(view.awsAccountId, view.id, partitionOf(view.regions[0]));
+  // Reached only for an AWS connection: the sections above it are rendered for one.
+  const expected = roleArnFor(view.awsAccountId ?? '', view.id, partitionOf(view.regions[0]));
 
   return (
     <SectionCard step={3} title={t('roleArnTitle')} description={t('roleArnHelp')} contentClassName="space-y-4">

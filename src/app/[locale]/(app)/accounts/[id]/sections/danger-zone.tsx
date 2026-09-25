@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { CodeBlock } from '@/components/code-block';
 import { Button } from '@/components/ui/button';
 import { SectionCard } from '@/components/section-card';
+import type { Provider } from '@/lib/connections/types';
 import type { AppLocale } from '@/i18n/routing';
 import { deleteCollectionCommand } from '@/lib/aws/collection-template';
 import { deleteStackCommand, stacksConsoleUrl } from '@/lib/aws/template';
@@ -32,11 +33,13 @@ export async function DangerZone({
   locale,
   region,
   managed = false,
+  provider = 'aws',
 }: {
   connectionId: string;
   locale: AppLocale;
   region: string;
   managed?: boolean;
+  provider?: Provider;
 }) {
   const t = await getTranslations('AccountDetail.danger');
   return (
@@ -64,6 +67,15 @@ export async function DangerZone({
         </ul>
       </div>
 
+      {/* What stays behind in the cloud, which is a different sentence for each of them: a Google
+          connection has no CloudFormation stack to delete, and telling somebody to delete one would
+          send them looking for a thing that does not exist. */}
+      {provider === 'gcp' ? (
+        <div>
+          <p className="text-sm font-medium">{t('googleKeeps')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('googleKeepsHint')}</p>
+        </div>
+      ) : (
       <div>
         <p className="text-sm font-medium">{t('awsKeeps')}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t('cannotDelete')}</p>
@@ -91,6 +103,7 @@ export async function DangerZone({
           </a>
         </p>
       </div>
+      )}
     </SectionCard>
   );
 }

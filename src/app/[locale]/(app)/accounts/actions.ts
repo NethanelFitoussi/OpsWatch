@@ -3,22 +3,27 @@
 import { redirect as nextRedirect } from 'next/navigation';
 import { redirect } from '@/i18n/navigation';
 import { resolveLocale, type AppLocale } from '@/i18n/routing';
-import { recordAdminAction } from '@/lib/auth/audited';
+import { auditedAdmin, recordAdminAction } from '@/lib/auth/audited';
 import { requireAdmin } from '@/lib/auth/current';
 import type { AuditAction } from '@/lib/store/audit';
 import { disableManagedCollection } from '@/lib/aws/collection';
 import { awsErrorCode } from '@/lib/aws/errors';
 import { quickCreateUrl } from '@/lib/aws/template';
 import { uploadTemplate } from '@/lib/aws/template-upload';
+import { testGoogleConnection } from '@/lib/gcp/check';
+import { openConnectionKey } from '@/lib/gcp/issuer';
+import { revalidatePath } from 'next/cache';
 import {
   ConnectionInputError,
   ConnectionNotFoundError,
   createConnection,
+  createGoogleConnection,
   deleteConnection,
   findConnection,
   regenerateExternalId,
   setAccessKeys,
   setNameAndRegions,
+  saveGoogleTestResult,
   setRoleArn,
   type ConnectionInputErrorCode,
 } from '@/lib/connections/repository';
@@ -138,6 +143,83 @@ export async function saveAccessKeysAction(locale: string, id: string, _prev: Fo
 
 export async function regenerateExternalIdAction(locale: string, id: string): Promise<void> {
   await mutateConnection(locale, 'credential_rotate', () => ({ values: null, mutate: (db) => regenerateExternalId(db, id) }));
+}
+
+/**
+ * Connects a Google Cloud project.
+ *
+ * Nothing secret is submitted, so nothing is echoed back that should not be: every field is a name the
+ * operator can read off their own console. The connection is created in `draft` — it has a key, and it
+ * has not proved anything yet, and those are different states.
+ */
+export async function createGoogleConnectionAction(locale: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const { locale: resolved, adminId } = await authorize(locale);
+  const values = { name: formString(formData, 'name') };
+  let id: string;
+  try {
+    id = createGoogleConnection(
+      getDb(),
+      {
+        name: values.name,
+        projectId: formString(formData, 'projectId'),
+        projectNumber: formString(formData, 'projectNumber'),
+        poolId: formString(formData, 'poolId'),
+        providerId: formString(formData, 'providerId'),
+        serviceAccount: formString(formData, 'serviceAccount'),
+      },
+      env().OPSWATCH_SECRET,
+    ).id;
+  } catch (error) {
+    if (error instanceof ConnectionInputError) {
+      await recordAdminAction({ adminId, action: 'connection_create', subjectType: 'connection', result: 'denied', details: { reason: error.code } });
+      return { error: error.code, values };
+    }
+    throw error;
+  }
+  await recordAdminAction({ adminId, action: 'connection_create', subjectType: 'connection', subjectId: id, connectionId: id, result: 'ok' });
+  return redirect({ href: `/accounts/${id}`, locale: resolved });
+}
+
+/**
+ * Asks Google what this connection can read, and writes down the answer.
+ *
+ * It never changes anything in the project — two reads, with `maxResults=1` — and it never throws for
+ * a refusal: "Google would not accept the token" is the most likely outcome while somebody is still
+ * setting this up, and it belongs on the page rather than in a 500.
+ */
+export async function verifyGoogleAction(locale: string, id: string, _prev: FormState): Promise<FormState> {
+  return auditedAdmin(
+    resolveLocale(locale),
+    'connection_test',
+    'connection',
+    async (): Promise<FormState> => {
+      const db = getDb();
+      const row = findConnection(db, id);
+      if (row === null || row.provider !== 'gcp') return { error: 'not_ready' };
+
+      const result = await testGoogleConnection({
+        connectionId: row.id,
+        projectId: row.gcpProjectId ?? '',
+        target: {
+          projectNumber: row.gcpProjectNumber ?? '',
+          poolId: row.gcpPoolId ?? '',
+          providerId: row.gcpProviderId ?? '',
+          serviceAccount: row.gcpServiceAccount,
+        },
+        key: row.gcpKeyCiphertext === null ? null : openConnectionKey(row.gcpKeyCiphertext, env().OPSWATCH_SECRET),
+        baseUrl: env().OPSWATCH_PUBLIC_URL,
+        nowMs: Date.now(),
+      });
+
+      // Usable when something can actually be read. Every check denied is a connection that
+      // authenticated and cannot see anything, which is not a working connection.
+      const readable = result.checks.filter((check) => check.status === 'ok').length;
+      saveGoogleTestResult(db, id, result, readable === 0 ? 'failed' : readable < result.checks.length ? 'degraded' : 'ok');
+      revalidatePath(`/${resolveLocale(locale)}/accounts/${id}`);
+      return {};
+    },
+    { subjectId: id, connectionId: id },
+  );
 }
 
 export async function launchStackAction(requestedLocale: string, id: string): Promise<void> {

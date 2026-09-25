@@ -13,6 +13,7 @@ import { deadLetterQueueUrl, deleteCollectionCommand, deployCollectionCommand } 
 import { describeDeadLetters } from '@/lib/aws/forwarder-health';
 import { resolveTarget } from '@/lib/monitoring/target';
 import { findConnection } from '@/lib/connections/repository';
+import { awsAccountOf } from '@/lib/connections/types';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
 import { FORWARDER_VERSION } from '@/lib/ingest/forwarder-version';
@@ -64,6 +65,10 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const db = getDb();
   const row = findConnection(db, id);
   if (!row) notFound();
+  // Managed collection is a CloudFormation stack in an AWS account. A connection to another cloud has
+  // no such thing, and a page about one would be a page about nothing.
+  const aws = awsAccountOf(row);
+  if (aws === null) notFound();
 
   const t = await getTranslations('Collection');
   const format = await getFormatter();
@@ -87,7 +92,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
   // The one number OpsWatch cannot know from its own counters: a batch that never arrived left no trace
   // here. Read only once this region's stack is verified, so a region with none makes no AWS call.
-  const deadLetters = stack.stackState === 'verified' ? await readDeadLetters(row.id, region, row.awsAccountId) : null;
+  const deadLetters = stack.stackState === 'verified' ? await readDeadLetters(row.id, region, aws.awsAccountId) : null;
 
   const state = forwarderState({
     managed: collection.managed,

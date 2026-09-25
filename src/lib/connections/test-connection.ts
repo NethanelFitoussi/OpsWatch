@@ -2,6 +2,7 @@ import 'server-only';
 import type { AwsCredentialIdentity } from '@smithy/types';
 import type { CredentialResolver } from '../aws/credentials';
 import { awsErrorCode } from '../aws/errors';
+import { awsAccountOf } from './types';
 import type { OpsWatchIdentityError } from '../aws/identity-errors';
 import { runPermissionTest, type PermissionTestInput } from '../aws/permissions';
 import { DecryptionError } from '../crypto';
@@ -44,7 +45,9 @@ export async function testConnection(
     return result;
   }
 
-  const result = await runTest({ expectedAccountId: row.awsAccountId, regions: row.regions, credentials, now });
+  const aws = awsAccountOf(row);
+  if (aws === null) throw new ConnectionInputError('not_ready');
+  const result = await runTest({ expectedAccountId: aws.awsAccountId, regions: row.regions, credentials, now });
   saveTestResult(db, id, result, now());
   return result;
 }

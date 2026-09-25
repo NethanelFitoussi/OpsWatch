@@ -114,7 +114,8 @@
     "methods": {
       "role": "IAM role",
       "ambient": "Running on AWS",
-      "keys": "Access keys"
+      "keys": "Access keys",
+      "federation": "Workload identity federation"
     },
     "provider": {
       "aws": "AWS",
@@ -133,7 +134,8 @@
     "manageOther": "Manage",
     "allIntegrations": "See all integrations",
     "tested": "Tested",
-    "collectionOn": "Forwarding logs"
+    "collectionOn": "Forwarding logs",
+    "projectId": "Project"
   },
   "Services": {
     "ecs": "Amazon ECS",
@@ -248,7 +250,9 @@
       "cannotDelete": "Everything. OpsWatch reads with a read-only role, so it cannot delete its own stack — that is what makes the role safe to give it. Delete the stacks yourself, with these commands or in the console.",
       "collectionStackFirst": "The collection stack first: it holds the subscription filters that invoke the forwarder.",
       "baseStack": "Then the base stack, which holds the read-only role:",
-      "openConsole": "Open CloudFormation in {region}"
+      "openConsole": "Open CloudFormation in {region}",
+      "googleKeeps": "What stays in your Google Cloud project",
+      "googleKeepsHint": "Everything. OpsWatch never had a credential there and created nothing — the pool, the provider and the role bindings are yours, and only you can remove them. Removing this connection makes its key useless; deleting the provider in Google does the same from the other side."
     },
     "details": {
       "title": "Connection details",
@@ -260,7 +264,8 @@
       "untested": "The last permission test did not cover {regions}. Run it again to find out what OpsWatch can read there.",
       "regionsChosen": "{count, plural, one {Reading # region} other {Reading # regions}}: {regions}",
       "regionsChange": "Change which regions"
-    }
+    },
+    "projectLine": "Google Cloud project {project}"
   },
   "Checklist": {
     "title": "Permission test",
@@ -687,13 +692,15 @@
         "aws": "AWS",
         "github": "GitHub",
         "cloudflare": "Cloudflare",
-        "ai": "AI provider"
+        "ai": "AI provider",
+        "gcp": "Google Cloud"
       },
       "unlocks": {
         "aws": "Services, databases, load balancers, alarms, logs, errors and deployments. This is the monitoring itself.",
         "github": "Turns a stack frame into a link to the file it came from, and tells you which commits a deployment carried.",
         "cloudflare": "Traffic, cache and security events at the edge, for the zones you choose.",
-        "ai": "Optional. Lets a model narrate what OpsWatch already measured. Nothing else depends on it."
+        "ai": "Optional. Lets a model narrate what OpsWatch already measured. Nothing else depends on it.",
+        "gcp": "The instances in a project and the metrics Google already collects for them."
       },
       "states": {
         "connected": "Connected",
@@ -712,7 +719,9 @@
         "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
         "cloudflareNoZones": "The token is verified but no zone is chosen, so nothing is read yet.",
         "cloudflare_untested": "A token is saved but has never been verified.",
-        "cloudflare_failed": "The last verification failed. Check the token's scope in Cloudflare."
+        "cloudflare_failed": "The last verification failed. Check the token's scope in Cloudflare.",
+        "gcpConnected": "{projects, plural, one {One project} other {# projects}} connected",
+        "gcpFailing": "{failing} of {projects} projects cannot be read"
       },
       "readGuide": "Read the guide",
       "setUp": "Set it up",
@@ -1081,7 +1090,123 @@
     "aws": {
       "metaTitle": "Getting started"
     },
-    "allGuides": "All guides"
+    "allGuides": "All guides",
+    "gcp": {
+      "metaTitle": "Connect Google Cloud",
+      "title": "Connect Google Cloud",
+      "subtitle": "Read a project without giving OpsWatch a key to it.",
+      "cta": "Connect Google Cloud",
+      "manageCta": "Manage the connection",
+      "chainLabel": "How a Google Cloud connection is made",
+      "chain": {
+        "0": {
+          "title": "A key of its own",
+          "detail": "OpsWatch generates a signing key for the connection and shows you the public half."
+        },
+        "1": {
+          "title": "Trust",
+          "detail": "You tell Google to trust tokens signed by that key, by creating a workload identity pool and provider."
+        },
+        "2": {
+          "title": "Two roles",
+          "detail": "You grant compute.viewer and monitoring.viewer. Until you do, OpsWatch can prove who it is and read nothing."
+        },
+        "3": {
+          "title": "Short-lived tokens",
+          "detail": "OpsWatch signs a token, exchanges it for one of Google's that lasts an hour, and reads."
+        }
+      },
+      "unlocks": {
+        "title": "What connecting Google Cloud adds",
+        "intro": "The instances in a project and the metrics Google already collects for them, beside everything else OpsWatch watches — rather than in another tab."
+      },
+      "before": {
+        "title": "Before you start",
+        "intro": "A project, and permission to change its IAM. No key to create, and none to store.",
+        "needTerm": "What you need",
+        "needDetail": "A Google Cloud project, its project number as well as its ID, and enough access to create a workload identity pool and grant two roles.",
+        "costTerm": "What it costs",
+        "costDetail": "Nothing to set up. Workload identity federation is free, and the two reads OpsWatch makes are within Google's included API allowance."
+      },
+      "permissions": {
+        "title": "What OpsWatch is allowed to do",
+        "intro": "Read the project, through two of Google's own predefined read-only roles. It cannot start, stop or change anything, and there is no code in it that could.",
+        "grantTerm": "What to grant",
+        "grantDetail": "roles/compute.viewer and roles/monitoring.viewer, to the federated identity or to a service account it impersonates — whichever your organisation reviews.",
+        "guaranteeTitle": "What it cannot do",
+        "guaranteeDetail": "Start, stop or change anything. Both roles are read-only, and OpsWatch holds no credential that could be used for more.",
+        "whyTerm": "Why two roles and not one",
+        "whyDetail": "Instances and metrics are separate services in Google Cloud with separate permissions. Asking for a single broader role would be asking for more than OpsWatch uses."
+      },
+      "steps": {
+        "title": "Setting it up",
+        "methodTitle": "One method, because it is the one Google recommends",
+        "methodIntro": "Workload identity federation. A self-hosted OpsWatch can use it even when nobody can reach it from the internet, because the public key is uploaded to Google rather than fetched from you.",
+        "name": {
+          "title": "Name the project",
+          "purpose": "So OpsWatch knows where to send the exchange.",
+          "body": "Its ID and its number — Google uses both, and the trust settings want the number. Nothing here is a secret."
+        },
+        "keys": {
+          "title": "Save the key",
+          "purpose": "It is what Google will trust.",
+          "body": "OpsWatch shows the public half of the connection's key as a JSON file. Save it next to where you will run the commands."
+        },
+        "pool": {
+          "title": "Create the pool and provider",
+          "purpose": "This is the trust.",
+          "body": "OpsWatch prints the two gcloud commands, with your names already in them. Run them yourself — OpsWatch has no access to the project and cannot run them for you."
+        },
+        "grant": {
+          "title": "Grant the two roles",
+          "purpose": "Trust is not access.",
+          "body": "Until this runs, the exchange works and every read is refused. That is a normal state to pass through, and the check below names it."
+        },
+        "verify": {
+          "title": "Check it",
+          "purpose": "So you know, rather than assume.",
+          "body": "OpsWatch makes two read-only calls and says which role arrived. A role that has not is named, not hidden behind a red badge."
+        }
+      },
+      "states": {
+        "title": "What the states mean",
+        "intro": "A connection that authenticated is not a connection that can read anything.",
+        "goodTerm": "Connected",
+        "goodDetail": "The token was exchanged and both roles answered. OpsWatch can read the project.",
+        "degradedTerm": "Degraded",
+        "degradedDetail": "One role arrived and the other did not. OpsWatch says which, because that is the one sentence that tells you what to fix."
+      },
+      "failures": {
+        "title": "When it does not work",
+        "intro": "Four of these are normal while you are still setting it up.",
+        "exchange": {
+          "title": "Google would not exchange the token",
+          "fix": "The pool or provider name does not match. Check them against the audience shown on the connection page."
+        },
+        "impersonation": {
+          "title": "The service account was refused",
+          "fix": "The roles/iam.workloadIdentityUser binding on the service account is missing. It is the first command on the grant step."
+        },
+        "denied": {
+          "title": "A role says refused",
+          "fix": "That role has not arrived yet. Re-run its binding, and remember IAM changes can take a minute."
+        },
+        "noPublicUrl": {
+          "title": "There is no issuer to name",
+          "fix": "Set OPSWATCH_PUBLIC_URL. The token has to say where it came from, and Google checks it against the provider."
+        },
+        "unreachable": {
+          "title": "This instance could not reach Google",
+          "fix": "OpsWatch needs outbound HTTPS to sts.googleapis.com and googleapis.com. Nothing needs to reach in."
+        }
+      },
+      "manage": {
+        "title": "Afterwards",
+        "intro": "The connection can be removed from either side, and neither leaves anything behind that matters.",
+        "disconnectTitle": "Removing it",
+        "disconnectDetail": "Removing the connection in OpsWatch deletes its key and everything it read. Deleting the provider in Google stops it from the other side. Either is enough; nothing is left in your project that could be used."
+      }
+    }
   },
   "IdentityErrors": {
     "title": "AWS error: {code}.",
@@ -4145,7 +4270,8 @@
       "github": "GitHub",
       "ai": "AI provider",
       "cloudflare": "Cloudflare",
-      "google": "Google sign-in"
+      "google": "Google sign-in",
+      "gcp": "Google Cloud"
     },
     "states": {
       "connected": "Connected",
@@ -4158,13 +4284,15 @@
       "github": "Links a stack frame to the file it came from, and tells you which commits a deployment carried.",
       "ai": "Optional. Lets a model narrate what OpsWatch already measured, for Ask OpsWatch and investigations.",
       "cloudflare": "Traffic, cache and security events at the edge, for the zones you choose.",
-      "google": "Signing in with a Google account instead of a password."
+      "google": "Signing in with a Google account instead of a password.",
+      "gcp": "The instances in a project and the metrics Google already collects for them."
     },
     "access": {
       "aws": "A read-only IAM role, ambient credentials, or access keys. The CloudFormation template lists every action it grants.",
       "github": "Repository contents, read-only. OpsWatch never writes to your code and has no code that could.",
       "ai": "Your API key, used only for questions you ask. OpsWatch is complete without it.",
-      "cloudflare": "An API token scoped to the zones you pick, read-only."
+      "cloudflare": "An API token scoped to the zones you pick, read-only.",
+      "gcp": "Two read-only roles, compute.viewer and monitoring.viewer. No service account key is created or stored — OpsWatch signs its own short-lived token instead."
     },
     "detail": {
       "awsConnected": "{accounts, plural, one {# account connected} other {# accounts connected}}",
@@ -4177,7 +4305,9 @@
       "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
       "cloudflareNoZones": "verified, no zone chosen yet",
       "cloudflare_untested": "saved, not verified",
-      "cloudflare_failed": "the last verification failed"
+      "cloudflare_failed": "the last verification failed",
+      "gcpConnected": "{projects, plural, one {One project} other {# projects}} connected",
+      "gcpFailing": "{failing} of {projects} projects cannot be read"
     },
     "signIn": "Signing in with Google",
     "signInHint": "Google is an authentication provider, not something OpsWatch reads from. It is configured in the environment rather than here, and the Integrations page shows whether it is on.",
@@ -6089,6 +6219,109 @@
       "disk_nearly_full": "{subject} is {percent}% full",
       "disk_full": "{subject} is {percent}% full",
       "memory_nearly_exhausted": "Memory is {percent}% used"
+    }
+  },
+  "GoogleWizard": {
+    "title": "Connect a Google Cloud project",
+    "description": "OpsWatch reads the project. It never holds a credential for it.",
+    "accessTitle": "What OpsWatch will be able to read",
+    "accessHint": "These two roles and nothing else. Both are read-only, and both are Google's own predefined roles rather than something OpsWatch asks you to write.",
+    "roles": {
+      "compute": "the instances in the project, so OpsWatch can see what is running",
+      "monitoring": "the metrics Google already collects, so it can see how they are doing"
+    },
+    "noKey": "No service account key is created, downloaded or stored. Google's own guidance is to avoid those keys — it says there is no reliable way to tell who used one — so OpsWatch signs a short-lived token with its own key instead, and every call it makes is attributable to this connection.",
+    "formTitle": "The project",
+    "formHint": "Names only. Nothing on this form is a secret, and nothing here grants anything on its own — the next page has the commands that do.",
+    "name": "Connection name",
+    "nameHint": "What you will call it in OpsWatch. Anything you like.",
+    "projectId": "Project ID",
+    "projectIdHint": "The one that looks like a name, such as my-project-123.",
+    "projectNumber": "Project number",
+    "projectNumberHint": "The one that is all digits. Google uses both, and the trust settings need this one.",
+    "poolId": "Workload identity pool",
+    "poolIdHint": "What you will call the pool you are about to create. The next page uses this name in its commands.",
+    "providerId": "Provider",
+    "providerIdHint": "What you will call the provider inside that pool.",
+    "serviceAccount": "Service account to impersonate (optional)",
+    "serviceAccountHint": "Leave blank to grant the roles to the federated identity directly. Fill it in if your organisation reviews access by service account — name@project.iam.gserviceaccount.com.",
+    "submit": "Create connection",
+    "errors": {
+      "name_invalid": "Give the connection a name.",
+      "gcp_project_invalid": "That is not a project ID. It starts with a letter and holds lowercase letters, digits and hyphens.",
+      "gcp_project_number_invalid": "The project number is all digits.",
+      "gcp_pool_invalid": "A pool name starts with a letter and holds lowercase letters, digits and hyphens.",
+      "gcp_provider_invalid": "A provider name starts with a letter and holds lowercase letters, digits and hyphens.",
+      "gcp_service_account_invalid": "That is not a service account address. It ends in .iam.gserviceaccount.com.",
+      "method_invalid": "Something went wrong creating the connection.",
+      "account_invalid": "Something went wrong creating the connection.",
+      "regions_invalid": "Something went wrong creating the connection.",
+      "role_arn_invalid": "Something went wrong creating the connection.",
+      "role_arn_account_mismatch": "Something went wrong creating the connection.",
+      "role_arn_wrong_role": "Something went wrong creating the connection.",
+      "keys_invalid": "Something went wrong creating the connection.",
+      "wrong_method": "Something went wrong creating the connection.",
+      "not_ready": "Something went wrong creating the connection."
+    }
+  },
+  "GoogleSetup": {
+    "accessTitle": "What OpsWatch can read",
+    "accessHint": "These two roles and nothing else, both read-only.",
+    "roles": {
+      "compute": "the instances in the project",
+      "monitoring": "the metrics Google already collects"
+    },
+    "noKeyTitle": "There is no key to leak",
+    "noKeyHint": "OpsWatch holds no Google credential. It signs a short-lived token with a key of its own and exchanges it, which is what Google recommends instead of a service account key. Withdrawing the key below in Google stops this connection and nothing else.",
+    "keysTitle": "Save this key",
+    "keysHint": "The public half of this connection's signing key. The private half never leaves this instance.",
+    "keysSaveAs": "Save it as opswatch-keys.json, next to where you will run the commands below.",
+    "keysOrFetch": "If your OpsWatch is reachable from the internet you can point Google at {url} instead, and skip the file.",
+    "noKey": "This connection's key cannot be read. That usually means OPSWATCH_SECRET has changed since it was created; remove the connection and create it again.",
+    "noPublicUrl": "OPSWATCH_PUBLIC_URL is not set, so there is no issuer to name. Set it and reload this page.",
+    "poolTitle": "Create the pool and the provider",
+    "poolHint": "Run these in your own shell, with your own Google identity. OpsWatch has no access to this project yet and cannot run them for you.",
+    "grantTitle": "Grant the two roles",
+    "grantHint": "Until this runs, OpsWatch can prove who it is and read nothing.",
+    "verifyTitle": "Check it",
+    "verifyHint": "Two read-only calls to your project, asking whether each role arrived.",
+    "verify": "Check access",
+    "audience": "This connection's audience",
+    "neverTested": "Not checked yet. That is not the same as not working.",
+    "testedAt": "Checked {when}.",
+    "federation": {
+      "invalid_target": "The project, pool or provider names are not valid Google names. Remove the connection and create it again.",
+      "no_key": "This connection has no signing key that can be read.",
+      "no_public_url": "OPSWATCH_PUBLIC_URL is not set, so the token has no issuer to name.",
+      "exchange_refused": "Google would not exchange the token. The pool or the provider does not match what this connection sends.",
+      "impersonation_refused": "Google exchanged the token but refused the service account. It is usually the roles/iam.workloadIdentityUser binding above.",
+      "unreachable": "This instance could not reach Google."
+    },
+    "checks": {
+      "compute": "Instances",
+      "monitoring": "Metrics"
+    },
+    "status": {
+      "ok": "readable",
+      "denied": "refused — the role has not arrived",
+      "error": "could not be read"
+    },
+    "errors": {
+      "not_ready": "This is not a Google Cloud connection.",
+      "name_invalid": "Something went wrong.",
+      "account_invalid": "Something went wrong.",
+      "regions_invalid": "Something went wrong.",
+      "method_invalid": "Something went wrong.",
+      "role_arn_invalid": "Something went wrong.",
+      "role_arn_account_mismatch": "Something went wrong.",
+      "role_arn_wrong_role": "Something went wrong.",
+      "keys_invalid": "Something went wrong.",
+      "wrong_method": "Something went wrong.",
+      "gcp_project_invalid": "Something went wrong.",
+      "gcp_project_number_invalid": "Something went wrong.",
+      "gcp_pool_invalid": "Something went wrong.",
+      "gcp_provider_invalid": "Something went wrong.",
+      "gcp_service_account_invalid": "Something went wrong."
     }
   }
 }

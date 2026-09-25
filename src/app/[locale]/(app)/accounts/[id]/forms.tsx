@@ -114,3 +114,25 @@ export function ConnectionDetailsForm({
     </form>
   );
 }
+
+/**
+ * Asks Google what this connection can read.
+ *
+ * A button rather than something that happens on its own: the check costs two API calls in somebody
+ * else's project, and it is only useful once they have finished the steps above it.
+ */
+export function VerifyGoogleForm({ action }: { action: FormAction<FormState> }) {
+  const t = useTranslations('GoogleSetup');
+  const [state, formAction] = useActionState(action, {});
+
+  return (
+    <form action={formAction} className="flex flex-wrap items-center gap-3">
+      <SubmitButton>{t('verify')}</SubmitButton>
+      {state.error !== undefined && (
+        <p role="alert" className="text-sm text-destructive">
+          {t(`errors.${state.error}`)}
+        </p>
+      )}
+    </form>
+  );
+}

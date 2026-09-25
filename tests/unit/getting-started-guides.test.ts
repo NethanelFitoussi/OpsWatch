@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import en from '../../messages/en.json';
 import fr from '../../messages/fr.json';
-import { GUIDED, guidePath, hasGuide, setupPath } from '@/lib/integrations/guides';
+import { GUIDED, GUIDE_CHAPTERS, guidePath, hasGuide, setupPath } from '@/lib/integrations/guides';
 import { INTEGRATIONS, INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
 
 /**
@@ -86,5 +86,50 @@ describe('the copy each guide carries', () => {
     expect(hub.title).toBe('Connect the systems you use');
     // Not "connect AWS to start using OpsWatch": AWS is one integration among several.
     expect(hub.intro).toContain('none of them is required');
+  });
+});
+
+describe('a guide never shows a reader a message key', () => {
+  /*
+   * `IntegrationGuideBody` builds its keys at render — `steps.${id}.title`, `failures.${id}.fix`, and
+   * a fixed set besides — which puts them out of reach of the guard that checks literal `t('…')`
+   * lookups. next-intl does not throw for a missing message; it renders the key path. A new guide
+   * spelled two of them differently and printed `GettingStarted.gcp.permissions.guaranteeTitle` onto
+   * the page, and nothing failed until somebody measured the width of the paragraph it was in.
+   */
+  const FIXED = [
+    'unlocks.title', 'unlocks.intro',
+    'before.title', 'before.intro', 'before.needTerm', 'before.needDetail', 'before.costTerm', 'before.costDetail',
+    'permissions.title', 'permissions.intro', 'permissions.grantTerm', 'permissions.grantDetail',
+    'permissions.guaranteeTitle', 'permissions.guaranteeDetail', 'permissions.whyTerm', 'permissions.whyDetail',
+    'steps.title', 'steps.methodTitle', 'steps.methodIntro',
+    'states.title', 'states.intro', 'states.goodTerm', 'states.goodDetail', 'states.degradedTerm', 'states.degradedDetail',
+    'failures.title', 'failures.intro',
+    'manage.title', 'manage.intro', 'manage.disconnectTitle', 'manage.disconnectDetail',
+  ];
+
+  const at = (tree: unknown, path: string): unknown =>
+    path.split('.').reduce<unknown>((node, step) => (typeof node === 'object' && node !== null ? (node as Record<string, unknown>)[step] : undefined), tree);
+
+  it('THE RULING: every key every guide renders exists, in both languages', () => {
+    const missing: string[] = [];
+    for (const id of GUIDED) {
+      const { steps, failures } = GUIDE_CHAPTERS[id];
+      // A guide with no chapters does not use this body, so it has nothing to be missing.
+      if (steps.length === 0 && failures.length === 0) continue;
+
+      const keys = [
+        ...FIXED,
+        ...steps.flatMap((step) => [`steps.${step}.title`, `steps.${step}.purpose`, `steps.${step}.body`]),
+        ...failures.flatMap((failure) => [`failures.${failure}.title`, `failures.${failure}.fix`]),
+        ...[0, 1, 2, 3].flatMap((index) => [`chain.${index}.title`, `chain.${index}.detail`]),
+      ];
+      for (const key of keys) {
+        for (const [locale, messages] of [['en', en], ['fr', fr]] as const) {
+          if (typeof at(messages, `GettingStarted.${id}.${key}`) !== 'string') missing.push(`${locale} GettingStarted.${id}.${key}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
   });
 });

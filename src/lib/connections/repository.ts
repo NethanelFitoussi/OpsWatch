@@ -7,16 +7,22 @@ import { roleNameFor } from '../aws/template';
 import { DecryptionError, decrypt, encrypt, randomId, randomToken } from '../crypto';
 import type { Db } from '../db/client';
 import { connections, type ConnectionRow } from '../db/schema';
-import type { PermissionTestResult } from './types';
+import type { ConnectionStatus, PermissionTestResult } from './types';
+import type { GcpTestResult } from '../gcp/result';
 import {
   type AccessKeys,
   accessKeysSchema,
   accountIdSchema,
+  gcpProjectIdSchema,
+  gcpProjectNumberSchema,
+  gcpResourceIdSchema,
+  gcpServiceAccountSchema,
   methodSchema,
   nameSchema,
   parseRoleArn,
   regionsSchema,
 } from './validation';
+import { generateConnectionKey, sealConnectionKey } from '../gcp/issuer';
 
 export class ConnectionNotFoundError extends Error {
   constructor(id: string) {
@@ -35,6 +41,11 @@ export type ConnectionInputErrorCode =
   | 'role_arn_wrong_role'
   | 'keys_invalid'
   | 'wrong_method'
+  | 'gcp_project_invalid'
+  | 'gcp_project_number_invalid'
+  | 'gcp_pool_invalid'
+  | 'gcp_provider_invalid'
+  | 'gcp_service_account_invalid'
   | 'not_ready';
 
 export class ConnectionInputError extends Error {
@@ -47,7 +58,18 @@ export class ConnectionInputError extends Error {
 /** What pages may show about a connection: no ciphertext, only a hint of the access key ID. */
 export type ConnectionView = Pick<
   ConnectionRow,
-  'id' | 'name' | 'method' | 'awsAccountId' | 'regions' | 'roleArn' | 'externalId' | 'status' | 'lastTest' | 'updatedAt'
+  | 'id'
+  | 'name'
+  | 'provider'
+  | 'method'
+  | 'awsAccountId'
+  | 'gcpProjectId'
+  | 'regions'
+  | 'roleArn'
+  | 'externalId'
+  | 'status'
+  | 'lastTest'
+  | 'updatedAt'
 > & {
   templateOutdated: boolean;
   accessKeyHint: string | null;
@@ -88,6 +110,69 @@ export function createConnection(
     })
     .returning()
     .get();
+}
+
+/**
+ * Connects a Google Cloud project, by workload identity federation.
+ *
+ * No Google credential is stored, because none is needed: the connection is given its own signing key
+ * and proves who it is with a token it mints. What is kept here is where to send that token, all of
+ * which is public — a project number, a pool, a provider, and the service account to impersonate if
+ * the operator chose to use one.
+ *
+ * The key is generated here rather than on first use, so the operator can be shown the public half
+ * immediately: they cannot finish the setup in Google without it.
+ */
+export function createGoogleConnection(
+  db: Db,
+  input: { name: string; projectId: string; projectNumber: string; poolId: string; providerId: string; serviceAccount: string },
+  secret: string,
+  now: Date = new Date(),
+): ConnectionRow {
+  const name = parseOrThrow(nameSchema, input.name, 'name_invalid');
+  const gcpProjectId = parseOrThrow(gcpProjectIdSchema, input.projectId, 'gcp_project_invalid');
+  const gcpProjectNumber = parseOrThrow(gcpProjectNumberSchema, input.projectNumber, 'gcp_project_number_invalid');
+  const gcpPoolId = parseOrThrow(gcpResourceIdSchema, input.poolId, 'gcp_pool_invalid');
+  const gcpProviderId = parseOrThrow(gcpResourceIdSchema, input.providerId, 'gcp_provider_invalid');
+  // Optional: federating straight to a resource, without impersonating anything, is equally valid.
+  const trimmed = input.serviceAccount.trim();
+  const gcpServiceAccount = trimmed === '' ? null : parseOrThrow(gcpServiceAccountSchema, trimmed, 'gcp_service_account_invalid');
+
+  return db
+    .insert(connections)
+    .values({
+      id: randomId(),
+      name,
+      provider: 'gcp',
+      method: 'federation',
+      awsAccountId: null,
+      // A Google connection has no AWS regions, and an empty list says so rather than implying one.
+      regions: [],
+      gcpProjectId,
+      gcpProjectNumber,
+      gcpPoolId,
+      gcpProviderId,
+      gcpServiceAccount,
+      gcpKeyCiphertext: sealConnectionKey(generateConnectionKey(), secret),
+      // Nothing has been proved yet: the operator still has to create the pool and grant the roles.
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+    })
+    .returning()
+    .get();
+}
+
+/** Writes down what Google answered, and what that makes this connection. */
+export function saveGoogleTestResult(db: Db, id: string, result: GcpTestResult, status: ConnectionStatus): ConnectionRow {
+  const row = db
+    .update(connections)
+    .set({ gcpLastTest: result, status, updatedAt: new Date() })
+    .where(eq(connections.id, id))
+    .returning()
+    .get();
+  if (row === undefined) throw new ConnectionNotFoundError(id);
+  return row;
 }
 
 export function listConnections(db: Db): ConnectionRow[] {
@@ -236,6 +321,9 @@ export function readAccessKeys(row: ConnectionRow, secret: string): AccessKeys {
 
 export function credentialsInputFor(row: ConnectionRow, secret: string): CredentialsInput {
   switch (row.method) {
+    // Google Cloud is reached by exchanging a token OpsWatch signs, not by a stored AWS credential.
+    case 'federation':
+      throw new ConnectionInputError('not_ready');
     case 'ambient':
       return { method: 'ambient' };
     case 'keys':
@@ -265,8 +353,10 @@ export function toView(row: ConnectionRow, secret: string): ConnectionView {
   return {
     id: row.id,
     name: row.name,
+    provider: row.provider,
     method: row.method,
     awsAccountId: row.awsAccountId,
+    gcpProjectId: row.gcpProjectId,
     regions: row.regions,
     roleArn: row.roleArn,
     externalId: row.externalId,

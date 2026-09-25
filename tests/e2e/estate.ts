@@ -48,6 +48,8 @@ export function estateRoutes(connectionId: string, region: string): string[] {
     '/settings/repositories',
     '/settings/status',
     '/settings/storage',
+    '/getting-started/gcp',
+    '/accounts/new/gcp',
     '/docs',
     '/docs/alarms',
     '/docs/searching-logs',

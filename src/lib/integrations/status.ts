@@ -105,9 +105,31 @@ function googleStatus(): IntegrationStatus {
   };
 }
 
+/**
+ * Google Cloud, counted apart from AWS.
+ *
+ * They share the connections table and nothing else an operator cares about: a Google project that
+ * cannot be read is not an AWS account that cannot be read, and rolling them into one number would
+ * make "one of your two accounts is failing" unanswerable.
+ */
+function gcpStatus(db: Db): IntegrationStatus {
+  const projects = listConnections(db).filter((connection) => connection.provider === 'gcp');
+  if (projects.length === 0) return { id: 'gcp', state: 'not_configured', detailKey: null, values: {}, href: '/accounts' };
+
+  const failing = projects.filter((connection) => connection.status !== 'ok').length;
+  return {
+    id: 'gcp',
+    state: failing > 0 ? 'degraded' : 'connected',
+    detailKey: failing > 0 ? 'gcpFailing' : 'gcpConnected',
+    values: { projects: projects.length, failing },
+    href: '/accounts',
+  };
+}
+
 export function integrationStatuses(db: Db): IntegrationStatus[] {
   const byId: Record<IntegrationId, IntegrationStatus> = {
     aws: awsStatus(db),
+    gcp: gcpStatus(db),
     github: githubStatus(db),
     ai: aiStatus(db),
     cloudflare: cloudflareStatus(db),

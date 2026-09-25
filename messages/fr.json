@@ -114,7 +114,8 @@
     "methods": {
       "role": "Rôle IAM",
       "ambient": "Exécution sur AWS",
-      "keys": "Clés d'accès"
+      "keys": "Clés d'accès",
+      "federation": "Fédération d’identité de charge de travail"
     },
     "provider": {
       "aws": "AWS",
@@ -133,7 +134,8 @@
     "manageOther": "Gérer",
     "allIntegrations": "Voir toutes les intégrations",
     "tested": "Testé",
-    "collectionOn": "Transfert de journaux actif"
+    "collectionOn": "Transfert de journaux actif",
+    "projectId": "Projet"
   },
   "Services": {
     "ecs": "Amazon ECS",
@@ -248,7 +250,9 @@
       "cannotDelete": "Tout. OpsWatch lit avec un rôle en lecture seule : il ne peut donc pas supprimer sa propre pile — c’est précisément ce qui rend ce rôle sûr à accorder. Supprimez les piles vous-même, avec ces commandes ou dans la console.",
       "collectionStackFirst": "La pile de collecte d’abord : elle contient les filtres d’abonnement qui invoquent le forwarder.",
       "baseStack": "Puis la pile de base, qui contient le rôle en lecture seule :",
-      "openConsole": "Ouvrir CloudFormation dans {region}"
+      "openConsole": "Ouvrir CloudFormation dans {region}",
+      "googleKeeps": "Ce qui reste dans votre projet Google Cloud",
+      "googleKeepsHint": "Tout. OpsWatch n’y a jamais eu d’identifiant et n’y a rien créé — le pool, le fournisseur et les liaisons de rôles sont à vous, et vous seul pouvez les retirer. Supprimer cette connexion rend sa clé inutile ; supprimer le fournisseur dans Google fait de même depuis l’autre côté."
     },
     "details": {
       "title": "Détails de la connexion",
@@ -260,7 +264,8 @@
       "untested": "Le dernier test de permissions ne couvrait pas {regions}. Relancez-le pour savoir ce qu'OpsWatch peut y lire.",
       "regionsChosen": "{count, plural, one {# région lue} other {# régions lues}} : {regions}",
       "regionsChange": "Changer les régions"
-    }
+    },
+    "projectLine": "Projet Google Cloud {project}"
   },
   "Checklist": {
     "title": "Test des permissions",
@@ -687,13 +692,15 @@
         "aws": "AWS",
         "github": "GitHub",
         "cloudflare": "Cloudflare",
-        "ai": "Fournisseur d'IA"
+        "ai": "Fournisseur d'IA",
+        "gcp": "Google Cloud"
       },
       "unlocks": {
         "aws": "Services, bases de données, répartiteurs de charge, alarmes, journaux, erreurs et déploiements. C'est la surveillance elle-même.",
         "github": "Transforme une ligne de pile en lien vers le fichier dont elle provient, et indique quels commits un déploiement portait.",
         "cloudflare": "Trafic, cache et événements de sécurité en périphérie, pour les zones que vous choisissez.",
-        "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré. Rien d'autre n'en dépend."
+        "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré. Rien d'autre n'en dépend.",
+        "gcp": "Les instances d’un projet et les métriques que Google collecte déjà pour elles."
       },
       "states": {
         "connected": "Connecté",
@@ -712,7 +719,9 @@
         "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
         "cloudflareNoZones": "Le jeton est vérifié mais aucune zone n'est choisie : rien n'est encore lu.",
         "cloudflare_untested": "Un jeton est enregistré mais n'a jamais été vérifié.",
-        "cloudflare_failed": "La dernière vérification a échoué. Vérifiez la portée du jeton dans Cloudflare."
+        "cloudflare_failed": "La dernière vérification a échoué. Vérifiez la portée du jeton dans Cloudflare.",
+        "gcpConnected": "{projects, plural, one {Un projet} other {# projets}} connectés",
+        "gcpFailing": "{failing} projets sur {projects} sont illisibles"
       },
       "readGuide": "Lire le guide",
       "setUp": "Configurer",
@@ -1081,7 +1090,123 @@
     "aws": {
       "metaTitle": "Premiers pas"
     },
-    "allGuides": "Tous les guides"
+    "allGuides": "Tous les guides",
+    "gcp": {
+      "metaTitle": "Connecter Google Cloud",
+      "title": "Connecter Google Cloud",
+      "subtitle": "Lire un projet sans donner de clé à OpsWatch.",
+      "cta": "Connecter Google Cloud",
+      "manageCta": "Gérer la connexion",
+      "chainLabel": "Comment se fait une connexion Google Cloud",
+      "chain": {
+        "0": {
+          "title": "Une clé à elle",
+          "detail": "OpsWatch génère une clé de signature pour la connexion et vous en montre la moitié publique."
+        },
+        "1": {
+          "title": "La confiance",
+          "detail": "Vous demandez à Google de faire confiance aux jetons signés par cette clé, en créant un pool et un fournisseur."
+        },
+        "2": {
+          "title": "Deux rôles",
+          "detail": "Vous accordez compute.viewer et monitoring.viewer. Avant cela, OpsWatch prouve qui il est et ne lit rien."
+        },
+        "3": {
+          "title": "Jetons de courte durée",
+          "detail": "OpsWatch signe un jeton, l’échange contre un jeton Google valable une heure, et lit."
+        }
+      },
+      "unlocks": {
+        "title": "Ce qu’apporte une connexion Google Cloud",
+        "intro": "Les instances d’un projet et les métriques que Google collecte déjà pour elles, à côté de tout ce qu’OpsWatch surveille par ailleurs — plutôt que dans un autre onglet."
+      },
+      "before": {
+        "title": "Avant de commencer",
+        "intro": "Un projet, et le droit d’en modifier l’IAM. Aucune clé à créer, aucune à conserver.",
+        "needTerm": "Ce qu’il vous faut",
+        "needDetail": "Un projet Google Cloud, son numéro autant que son ID, et assez de droits pour créer un pool d’identités et accorder deux rôles.",
+        "costTerm": "Ce que cela coûte",
+        "costDetail": "Rien à la mise en place. La fédération d’identité est gratuite et les deux lectures d’OpsWatch tiennent dans le quota d’API inclus."
+      },
+      "permissions": {
+        "title": "Ce qu’OpsWatch a le droit de faire",
+        "intro": "Lire le projet, via deux rôles prédéfinis de Google en lecture seule. Il ne peut rien démarrer, arrêter ni modifier, et aucun code en lui ne le pourrait.",
+        "grantTerm": "Ce qu’il faut accorder",
+        "grantDetail": "roles/compute.viewer et roles/monitoring.viewer, à l’identité fédérée ou à un compte de service qu’elle emprunte — selon ce que votre organisation revoit.",
+        "guaranteeTitle": "Ce qu’il ne peut pas faire",
+        "guaranteeDetail": "Démarrer, arrêter ou modifier quoi que ce soit. Les deux rôles sont en lecture seule, et OpsWatch ne détient aucun identifiant qui permettrait davantage.",
+        "whyTerm": "Pourquoi deux rôles et pas un",
+        "whyDetail": "Les instances et les métriques sont des services distincts dans Google Cloud, avec des permissions distinctes. Demander un seul rôle plus large reviendrait à demander plus qu’OpsWatch n’utilise."
+      },
+      "steps": {
+        "title": "La mise en place",
+        "methodTitle": "Une seule méthode, parce que c’est celle que Google recommande",
+        "methodIntro": "La fédération d’identité de charge de travail. Une installation auto-hébergée peut l’utiliser même si personne ne peut la joindre depuis Internet, car la clé publique est déposée chez Google plutôt que récupérée chez vous.",
+        "name": {
+          "title": "Nommez le projet",
+          "purpose": "Pour qu’OpsWatch sache où envoyer l’échange.",
+          "body": "Son ID et son numéro — Google utilise les deux, et les réglages de confiance demandent le numéro. Rien ici n’est un secret."
+        },
+        "keys": {
+          "title": "Enregistrez la clé",
+          "purpose": "C’est ce à quoi Google fera confiance.",
+          "body": "OpsWatch affiche la moitié publique de la clé sous forme de fichier JSON. Enregistrez-le là où vous lancerez les commandes."
+        },
+        "pool": {
+          "title": "Créez le pool et le fournisseur",
+          "purpose": "C’est la confiance.",
+          "body": "OpsWatch affiche les deux commandes gcloud, vos noms déjà dedans. Lancez-les vous-même — OpsWatch n’a aucun accès au projet et ne peut pas le faire pour vous."
+        },
+        "grant": {
+          "title": "Accordez les deux rôles",
+          "purpose": "La confiance n’est pas l’accès.",
+          "body": "Avant cela, l’échange fonctionne et toutes les lectures sont refusées. C’est un état normal par lequel on passe, et la vérification le nomme."
+        },
+        "verify": {
+          "title": "Vérifiez",
+          "purpose": "Pour savoir, plutôt que supposer.",
+          "body": "OpsWatch fait deux appels en lecture seule et dit quel rôle est arrivé. Un rôle manquant est nommé, pas caché derrière un badge rouge."
+        }
+      },
+      "states": {
+        "title": "Ce que veulent dire les états",
+        "intro": "Une connexion authentifiée n’est pas une connexion qui peut lire quoi que ce soit.",
+        "goodTerm": "Connectée",
+        "goodDetail": "Le jeton a été échangé et les deux rôles ont répondu. OpsWatch peut lire le projet.",
+        "degradedTerm": "Dégradée",
+        "degradedDetail": "Un rôle est arrivé, l’autre non. OpsWatch dit lequel, car c’est la seule phrase qui indique quoi corriger."
+      },
+      "failures": {
+        "title": "Quand cela ne marche pas",
+        "intro": "Quatre de ces cas sont normaux pendant la mise en place.",
+        "exchange": {
+          "title": "Google a refusé d’échanger le jeton",
+          "fix": "Le nom du pool ou du fournisseur ne correspond pas. Comparez-les à l’audience affichée sur la page de la connexion."
+        },
+        "impersonation": {
+          "title": "Le compte de service a été refusé",
+          "fix": "La liaison roles/iam.workloadIdentityUser manque sur le compte de service. C’est la première commande de l’étape d’attribution."
+        },
+        "denied": {
+          "title": "Un rôle indique « refusé »",
+          "fix": "Ce rôle n’est pas encore arrivé. Relancez sa liaison, sachant qu’un changement IAM peut prendre une minute."
+        },
+        "noPublicUrl": {
+          "title": "Il n’y a pas d’émetteur à nommer",
+          "fix": "Définissez OPSWATCH_PUBLIC_URL. Le jeton doit dire d’où il vient, et Google le compare au fournisseur."
+        },
+        "unreachable": {
+          "title": "Cette installation n’a pas pu joindre Google",
+          "fix": "OpsWatch a besoin d’un accès HTTPS sortant vers sts.googleapis.com et googleapis.com. Rien n’a besoin d’entrer."
+        }
+      },
+      "manage": {
+        "title": "Ensuite",
+        "intro": "La connexion peut être retirée des deux côtés, et ni l’un ni l’autre ne laisse quoi que ce soit d’important.",
+        "disconnectTitle": "La retirer",
+        "disconnectDetail": "La supprimer dans OpsWatch efface sa clé et tout ce qu’elle a lu. Supprimer le fournisseur dans Google l’arrête de l’autre côté. L’un ou l’autre suffit ; rien d’utilisable ne reste dans votre projet."
+      }
+    }
   },
   "IdentityErrors": {
     "title": "Erreur AWS : {code}.",
@@ -4145,7 +4270,8 @@
       "github": "GitHub",
       "ai": "Fournisseur d'IA",
       "cloudflare": "Cloudflare",
-      "google": "Connexion Google"
+      "google": "Connexion Google",
+      "gcp": "Google Cloud"
     },
     "states": {
       "connected": "Connecté",
@@ -4158,13 +4284,15 @@
       "github": "Relie une ligne de pile au fichier dont elle provient, et indique quels commits un déploiement portait.",
       "ai": "Facultatif. Permet à un modèle de raconter ce qu'OpsWatch a déjà mesuré, pour Demander à OpsWatch et les investigations.",
       "cloudflare": "Trafic, cache et événements de sécurité en périphérie, pour les zones que vous choisissez.",
-      "google": "Se connecter avec un compte Google plutôt qu'avec un mot de passe."
+      "google": "Se connecter avec un compte Google plutôt qu'avec un mot de passe.",
+      "gcp": "Les instances d’un projet et les métriques que Google collecte déjà pour elles."
     },
     "access": {
       "aws": "Un rôle IAM en lecture seule, des identifiants ambiants, ou des clés d'accès. Le modèle CloudFormation liste chaque action accordée.",
       "github": "Le contenu des dépôts, en lecture seule. OpsWatch n'écrit jamais dans votre code et n'a aucun code qui le pourrait.",
       "ai": "Votre clé d'API, utilisée uniquement pour les questions que vous posez. OpsWatch est complet sans elle.",
-      "cloudflare": "Un jeton d'API limité aux zones que vous choisissez, en lecture seule."
+      "cloudflare": "Un jeton d'API limité aux zones que vous choisissez, en lecture seule.",
+      "gcp": "Deux rôles en lecture seule, compute.viewer et monitoring.viewer. Aucune clé de compte de service n’est créée ni conservée — OpsWatch signe son propre jeton de courte durée."
     },
     "detail": {
       "awsConnected": "{accounts, plural, one {# compte connecté} other {# comptes connectés}}",
@@ -4177,7 +4305,9 @@
       "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
       "cloudflareNoZones": "vérifié, aucune zone choisie",
       "cloudflare_untested": "enregistré, non vérifié",
-      "cloudflare_failed": "la dernière vérification a échoué"
+      "cloudflare_failed": "la dernière vérification a échoué",
+      "gcpConnected": "{projects, plural, one {Un projet} other {# projets}} connectés",
+      "gcpFailing": "{failing} projets sur {projects} sont illisibles"
     },
     "signIn": "Se connecter avec Google",
     "signInHint": "Google est un fournisseur d'authentification, pas un système qu'OpsWatch lit. Il se configure dans l'environnement plutôt qu'ici, et la page Intégrations indique s'il est actif.",
@@ -6089,6 +6219,109 @@
       "disk_nearly_full": "{subject} est rempli à {percent}%",
       "disk_full": "{subject} est rempli à {percent}%",
       "memory_nearly_exhausted": "La mémoire est utilisée à {percent}%"
+    }
+  },
+  "GoogleWizard": {
+    "title": "Connecter un projet Google Cloud",
+    "description": "OpsWatch lit le projet. Il ne détient jamais d’identifiant pour celui-ci.",
+    "accessTitle": "Ce qu’OpsWatch pourra lire",
+    "accessHint": "Ces deux rôles et rien d’autre. Tous deux en lecture seule, et tous deux des rôles prédéfinis de Google plutôt qu’un rôle qu’OpsWatch vous demanderait d’écrire.",
+    "roles": {
+      "compute": "les instances du projet, pour voir ce qui tourne",
+      "monitoring": "les métriques que Google collecte déjà, pour voir comment elles se portent"
+    },
+    "noKey": "Aucune clé de compte de service n’est créée, téléchargée ni conservée. Google recommande lui-même d’éviter ces clés — il indique qu’on ne peut pas savoir de façon fiable qui s’en est servi — donc OpsWatch signe un jeton de courte durée avec sa propre clé, et chaque appel est attribuable à cette connexion.",
+    "formTitle": "Le projet",
+    "formHint": "Uniquement des noms. Rien ici n’est un secret et rien n’accorde quoi que ce soit : les commandes qui le font sont sur la page suivante.",
+    "name": "Nom de la connexion",
+    "nameHint": "Le nom que vous lui donnerez dans OpsWatch. Comme vous voulez.",
+    "projectId": "ID du projet",
+    "projectIdHint": "Celui qui ressemble à un nom, par exemple mon-projet-123.",
+    "projectNumber": "Numéro du projet",
+    "projectNumberHint": "Celui qui n’est composé que de chiffres. Google utilise les deux, et les réglages de confiance demandent celui-ci.",
+    "poolId": "Pool d’identités de charge de travail",
+    "poolIdHint": "Le nom que vous donnerez au pool que vous allez créer. Les commandes de la page suivante s’en servent.",
+    "providerId": "Fournisseur",
+    "providerIdHint": "Le nom que vous donnerez au fournisseur dans ce pool.",
+    "serviceAccount": "Compte de service à emprunter (facultatif)",
+    "serviceAccountHint": "Laissez vide pour accorder les rôles directement à l’identité fédérée. Renseignez-le si votre organisation revoit les accès par compte de service — nom@projet.iam.gserviceaccount.com.",
+    "submit": "Créer la connexion",
+    "errors": {
+      "name_invalid": "Donnez un nom à la connexion.",
+      "gcp_project_invalid": "Ce n’est pas un ID de projet. Il commence par une lettre et contient des minuscules, des chiffres et des tirets.",
+      "gcp_project_number_invalid": "Le numéro de projet n’est composé que de chiffres.",
+      "gcp_pool_invalid": "Un nom de pool commence par une lettre et contient des minuscules, des chiffres et des tirets.",
+      "gcp_provider_invalid": "Un nom de fournisseur commence par une lettre et contient des minuscules, des chiffres et des tirets.",
+      "gcp_service_account_invalid": "Ce n’est pas une adresse de compte de service. Elle se termine par .iam.gserviceaccount.com.",
+      "method_invalid": "La création de la connexion a échoué.",
+      "account_invalid": "La création de la connexion a échoué.",
+      "regions_invalid": "La création de la connexion a échoué.",
+      "role_arn_invalid": "La création de la connexion a échoué.",
+      "role_arn_account_mismatch": "La création de la connexion a échoué.",
+      "role_arn_wrong_role": "La création de la connexion a échoué.",
+      "keys_invalid": "La création de la connexion a échoué.",
+      "wrong_method": "La création de la connexion a échoué.",
+      "not_ready": "La création de la connexion a échoué."
+    }
+  },
+  "GoogleSetup": {
+    "accessTitle": "Ce qu’OpsWatch peut lire",
+    "accessHint": "Ces deux rôles et rien d’autre, tous deux en lecture seule.",
+    "roles": {
+      "compute": "les instances du projet",
+      "monitoring": "les métriques que Google collecte déjà"
+    },
+    "noKeyTitle": "Il n’y a aucune clé à faire fuiter",
+    "noKeyHint": "OpsWatch ne détient aucun identifiant Google. Il signe un jeton de courte durée avec une clé qui lui est propre et l’échange, ce que Google recommande à la place d’une clé de compte de service. Retirer la clé ci-dessous dans Google arrête cette connexion et rien d’autre.",
+    "keysTitle": "Enregistrez cette clé",
+    "keysHint": "La moitié publique de la clé de signature de cette connexion. La moitié privée ne quitte jamais cette installation.",
+    "keysSaveAs": "Enregistrez-la sous opswatch-keys.json, là où vous lancerez les commandes ci-dessous.",
+    "keysOrFetch": "Si votre OpsWatch est joignable depuis Internet, vous pouvez pointer Google vers {url} et vous passer du fichier.",
+    "noKey": "La clé de cette connexion est illisible. Cela signifie en général qu’OPSWATCH_SECRET a changé depuis sa création ; supprimez la connexion et recréez-la.",
+    "noPublicUrl": "OPSWATCH_PUBLIC_URL n’est pas défini, il n’y a donc pas d’émetteur à nommer. Définissez-le puis rechargez cette page.",
+    "poolTitle": "Créez le pool et le fournisseur",
+    "poolHint": "Lancez ces commandes dans votre propre shell, avec votre propre identité Google. OpsWatch n’a encore aucun accès à ce projet et ne peut pas les lancer pour vous.",
+    "grantTitle": "Accordez les deux rôles",
+    "grantHint": "Tant que ceci n’est pas fait, OpsWatch peut prouver qui il est et ne lit rien.",
+    "verifyTitle": "Vérifier",
+    "verifyHint": "Deux appels en lecture seule à votre projet, pour savoir si chaque rôle est bien arrivé.",
+    "verify": "Vérifier l’accès",
+    "audience": "L’audience de cette connexion",
+    "neverTested": "Pas encore vérifié. Ce n’est pas la même chose que « ne fonctionne pas ».",
+    "testedAt": "Vérifié {when}.",
+    "federation": {
+      "invalid_target": "Les noms de projet, de pool ou de fournisseur ne sont pas des noms Google valides. Supprimez la connexion et recréez-la.",
+      "no_key": "Cette connexion n’a pas de clé de signature lisible.",
+      "no_public_url": "OPSWATCH_PUBLIC_URL n’est pas défini, le jeton n’a donc pas d’émetteur à nommer.",
+      "exchange_refused": "Google a refusé d’échanger le jeton. Le pool ou le fournisseur ne correspond pas à ce que cette connexion envoie.",
+      "impersonation_refused": "Google a échangé le jeton mais a refusé le compte de service. C’est en général la liaison roles/iam.workloadIdentityUser ci-dessus.",
+      "unreachable": "Cette installation n’a pas pu joindre Google."
+    },
+    "checks": {
+      "compute": "Instances",
+      "monitoring": "Métriques"
+    },
+    "status": {
+      "ok": "lisible",
+      "denied": "refusé — le rôle n’est pas arrivé",
+      "error": "lecture impossible"
+    },
+    "errors": {
+      "not_ready": "Ce n’est pas une connexion Google Cloud.",
+      "name_invalid": "Une erreur s’est produite.",
+      "account_invalid": "Une erreur s’est produite.",
+      "regions_invalid": "Une erreur s’est produite.",
+      "method_invalid": "Une erreur s’est produite.",
+      "role_arn_invalid": "Une erreur s’est produite.",
+      "role_arn_account_mismatch": "Une erreur s’est produite.",
+      "role_arn_wrong_role": "Une erreur s’est produite.",
+      "keys_invalid": "Une erreur s’est produite.",
+      "wrong_method": "Une erreur s’est produite.",
+      "gcp_project_invalid": "Une erreur s’est produite.",
+      "gcp_project_number_invalid": "Une erreur s’est produite.",
+      "gcp_pool_invalid": "Une erreur s’est produite.",
+      "gcp_provider_invalid": "Une erreur s’est produite.",
+      "gcp_service_account_invalid": "Une erreur s’est produite."
     }
   }
 }

@@ -21,6 +21,7 @@ import { AmbientSection } from './sections/ambient-section';
 import { DangerZone } from './sections/danger-zone';
 import { IdentitySkeleton } from './sections/identity-skeleton';
 import { KeysSection } from './sections/keys-section';
+import { GoogleSetup } from './sections/google-setup';
 import { RoleArnCard, RoleIdentityAndTemplate } from './sections/role-setup';
 import { TestButton } from './test-button';
 
@@ -65,63 +66,77 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         title={view.name}
         description={
           <>
-            {tAccounts(`methods.${view.method}`)} · {t('accountLine', { account: view.awsAccountId, regions: view.regions.join(', ') })}
+            {tAccounts(`methods.${view.method}`)} ·{' '}
+            {/* A project or an account, whichever this connection has — never a gap where the other
+                cloud's identifier would be. */}
+            {row.provider === 'gcp'
+              ? t('projectLine', { project: row.gcpProjectId ?? '' })
+              : t('accountLine', { account: view.awsAccountId ?? '', regions: view.regions.join(', ') })}
           </>
         }
         actions={<ConnectionStatusBadge status={view.status} />}
       />
 
-      <SectionCard title={t('details.title')} description={t('details.description')}>
-        <ConnectionDetailsForm
-          action={saveConnectionDetailsAction.bind(null, locale, view.id)}
-          name={view.name}
-          regions={view.regions}
-        />
-      </SectionCard>
-
-      {view.method === 'role' && (
+      {/* Everything below is about one cloud or the other. A Google connection has no role to set up,
+          no permission checklist of AWS services and no CloudFormation stack, and showing those empty
+          would be describing a thing that is not there. */}
+      {row.provider === 'gcp' ? (
+        <GoogleSetup row={row} locale={locale} baseUrl={env().OPSWATCH_PUBLIC_URL} />
+      ) : (
         <>
-          <Suspense fallback={<IdentitySkeleton cards={2} />}>
-            <RoleIdentityAndTemplate view={view} locale={locale} error={error} />
+        <SectionCard title={t('details.title')} description={t('details.description')}>
+          <ConnectionDetailsForm
+            action={saveConnectionDetailsAction.bind(null, locale, view.id)}
+            name={view.name}
+            regions={view.regions}
+          />
+        </SectionCard>
+
+        {view.method === 'role' && (
+          <>
+            <Suspense fallback={<IdentitySkeleton cards={2} />}>
+              <RoleIdentityAndTemplate view={view} locale={locale} error={error} />
+            </Suspense>
+            <RoleArnCard view={view} locale={locale} />
+          </>
+        )}
+
+        {view.method === 'keys' && <KeysSection view={view} locale={locale} />}
+
+        {view.method === 'ambient' && (
+          <Suspense fallback={<IdentitySkeleton />}>
+            <AmbientSection region={view.regions[0]} />
           </Suspense>
-          <RoleArnCard view={view} locale={locale} />
+        )}
+
+        <SectionCard id="permissions" className="scroll-mt-20" title={tChecklist('title')} action={view.status !== 'draft' && <TestButton connectionId={view.id} />}>
+          {/* A region added since the last test is a region the test never looked at. The badge cannot say
+              that, so the card does — in words, before the checklist that would otherwise look complete. */}
+          {untested.length > 0 && <p className="mb-3 text-sm text-amber-700 dark:text-amber-400">{t('details.untested', { regions: untested.join(', ') })}</p>}
+          <PermissionChecklist result={view.lastTest} account={view.awsAccountId ?? ''} />
+        </SectionCard>
+
+        {/*
+          * Where this account's data goes, on the account page rather than behind an advanced menu.
+          *
+          * It is a privacy decision before it is a technical one, and an operator should be able to answer
+          * "is anything leaving my AWS account" without opening anything.
+          */}
+        <SectionCard title={tCollection('mode.title')} description={tCollection('mode.hint')}>
+          <p className="text-sm">
+            <strong className="font-medium">{collection.managed ? tCollection('mode.managed') : tCollection('mode.direct')}</strong>
+            <span className="block text-muted-foreground">{collection.managed ? tCollection('mode.managedHint') : tCollection('mode.directHint')}</span>
+          </p>
+          <p className="mt-3">
+            <Link href={`/accounts/${view.id}/collection`} className="text-sm text-primary underline-offset-4 hover:underline">
+              {collection.managed ? tCollection('manage') : tCollection('setUp')}
+            </Link>
+          </p>
+        </SectionCard>
         </>
       )}
 
-      {view.method === 'keys' && <KeysSection view={view} locale={locale} />}
-
-      {view.method === 'ambient' && (
-        <Suspense fallback={<IdentitySkeleton />}>
-          <AmbientSection region={view.regions[0]} />
-        </Suspense>
-      )}
-
-      <SectionCard id="permissions" className="scroll-mt-20" title={tChecklist('title')} action={view.status !== 'draft' && <TestButton connectionId={view.id} />}>
-        {/* A region added since the last test is a region the test never looked at. The badge cannot say
-            that, so the card does — in words, before the checklist that would otherwise look complete. */}
-        {untested.length > 0 && <p className="mb-3 text-sm text-amber-700 dark:text-amber-400">{t('details.untested', { regions: untested.join(', ') })}</p>}
-        <PermissionChecklist result={view.lastTest} account={view.awsAccountId} />
-      </SectionCard>
-
-      {/*
-        * Where this account's data goes, on the account page rather than behind an advanced menu.
-        *
-        * It is a privacy decision before it is a technical one, and an operator should be able to answer
-        * "is anything leaving my AWS account" without opening anything.
-        */}
-      <SectionCard title={tCollection('mode.title')} description={tCollection('mode.hint')}>
-        <p className="text-sm">
-          <strong className="font-medium">{collection.managed ? tCollection('mode.managed') : tCollection('mode.direct')}</strong>
-          <span className="block text-muted-foreground">{collection.managed ? tCollection('mode.managedHint') : tCollection('mode.directHint')}</span>
-        </p>
-        <p className="mt-3">
-          <Link href={`/accounts/${view.id}/collection`} className="text-sm text-primary underline-offset-4 hover:underline">
-            {collection.managed ? tCollection('manage') : tCollection('setUp')}
-          </Link>
-        </p>
-      </SectionCard>
-
-      <DangerZone connectionId={view.id} locale={locale} region={view.regions[0]} managed={collection.managed} />
+      <DangerZone connectionId={view.id} locale={locale} region={view.regions[0] ?? ''} managed={collection.managed} provider={row.provider} />
     </PageBody>
   );
 }

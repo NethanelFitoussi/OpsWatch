@@ -7,8 +7,37 @@
  */
 import { INTEGRATION_SPECS, type IntegrationId } from './catalogue';
 
-export const GUIDED = ['aws', 'github', 'cloudflare', 'ai'] as const satisfies readonly IntegrationId[];
+export const GUIDED = ['aws', 'gcp', 'github', 'cloudflare', 'ai'] as const satisfies readonly IntegrationId[];
 export type GuidedIntegration = (typeof GUIDED)[number];
+
+/**
+ * The steps and failures each guide walks through, as data rather than as a constant in a page.
+ *
+ * `IntegrationGuideBody` builds its message keys from these at render, which put them out of reach of
+ * the guard that checks literal `t('…')` lookups — and a guide missing one renders the key path itself
+ * onto the page. It happened: a new guide spelled two of them differently and printed
+ * `GettingStarted.gcp.permissions.guaranteeTitle` to a reader. Here, `getting-started-guides.test.ts`
+ * can see them and check every key of every guide in both languages.
+ */
+export const GUIDE_CHAPTERS: Record<GuidedIntegration, { steps: readonly string[]; failures: readonly string[] }> = {
+  aws: { steps: [], failures: [] },
+  gcp: {
+    steps: ['name', 'keys', 'pool', 'grant', 'verify'],
+    failures: ['exchange', 'impersonation', 'denied', 'noPublicUrl', 'unreachable'],
+  },
+  github: {
+    steps: ['token', 'store', 'verify', 'discover', 'map'],
+    failures: ['unauthorized', 'forbidden', 'rateLimited', 'noRepositories', 'wrongBranch'],
+  },
+  cloudflare: {
+    steps: ['token', 'store', 'verify', 'discover', 'choose'],
+    failures: ['unauthorized', 'forbidden', 'rateLimited', 'noZones', 'nothingAppears'],
+  },
+  ai: {
+    steps: ['choose', 'key', 'store', 'test', 'ask'],
+    failures: ['unauthorized', 'rateLimited', 'refusedEndpoint', 'noEvidence', 'timeout'],
+  },
+};
 
 export function guidePath(id: GuidedIntegration): string {
   return `/getting-started/${id}`;
