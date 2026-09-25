@@ -4,7 +4,7 @@ import { randomId } from '../crypto';
 import type { AlertRow, ProblemRow } from '../db/schema';
 import { alertUrl } from '../notify/deliver';
 import type { AlertPayload } from '../notify/payload';
-import { listDestinations, queueDelivery } from '../store/notifications';
+import { destinationsFor, queueDelivery } from '../store/notifications';
 import { decide, ruleMatches, type Candidate } from '../detect/alert';
 import {
   ensureInstallRules,
@@ -41,7 +41,10 @@ function queueForDestinations(
   candidate: Candidate,
   nowMs: number,
 ): number {
-  const destinations = listDestinations(db).filter((destination) => destination.enabled);
+  // This environment's destinations, not the installation's. An unscoped destination still receives
+  // everything — that is what a single-account installation means — but a destination that names an
+  // account receives only that account's alerts, so one tenant's problems cannot reach another's endpoint.
+  const destinations = destinationsFor(db, context.connectionId).filter((destination) => destination.enabled);
   for (const destination of destinations) {
     const payload: AlertPayload = {
       id: randomId(),

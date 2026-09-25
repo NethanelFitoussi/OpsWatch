@@ -286,6 +286,19 @@ export const notifyDestinations = sqliteTable('notify_destinations', {
   id: text('id').primaryKey(),
   kind: text('kind', { enum: NOTIFY_KINDS }).notNull(),
   name: text('name').notNull(),
+  /**
+   * Which AWS connection's alerts this destination receives, or `null` for all of them.
+   *
+   * `null` is the default and the whole meaning of a single-account installation: one endpoint, every
+   * alert. It stops being right the moment a second account is connected for somebody else — an
+   * unscoped destination then receives Client A's problems at Client B's endpoint, which is one
+   * tenant's data arriving at another's, not a preference.
+   *
+   * Not a foreign key: deleting a connection must not silently delete the operator's webhook. The
+   * purge on disconnect clears the column instead, so the destination survives as an unscoped one and
+   * the operator can see it and decide.
+   */
+  connectionId: text('connection_id'),
   url: text('url').notNull(),
   secretCiphertext: text('secret_ciphertext').notNull(),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),

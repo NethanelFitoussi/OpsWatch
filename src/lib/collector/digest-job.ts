@@ -8,7 +8,7 @@ import type { WeeklyReportPayload } from '../notify/payload';
 import { hasBeenRead } from '../read/health';
 import { readReport } from '../read/reports';
 import { markDigestSent, readDigestSettings } from '../store/digest-settings';
-import { listDestinations, queueDelivery } from '../store/notifications';
+import { destinationsFor, listDestinations, queueDelivery } from '../store/notifications';
 import type { JobOutcome } from './runner';
 
 /**
@@ -34,14 +34,18 @@ export async function runDigestJob({ db, nowMs }: { db: Db; nowMs: number }): Pr
   const settings = readDigestSettings(db);
   if (!digestIsDue(settings, nowMs)) return { covered: 0, total: 0 };
 
-  const destinations = listDestinations(db).filter((destination) => destination.enabled);
-  if (destinations.length === 0) return { covered: 0, total: 0 };
+  // Nowhere at all to send is still the early exit; which of them each environment reaches is decided
+  // per environment below.
+  if (listDestinations(db).filter((destination) => destination.enabled).length === 0) return { covered: 0, total: 0 };
 
   const environments = listConnections(db).flatMap((connection) =>
     connection.regions.map((region) => ({ connectionId: connection.id, scope: region })),
   );
 
   let queued = 0;
+  // What could have been sent, counted the same way it is sent: per environment, over the destinations
+  // that environment actually reaches.
+  let possible = 0;
   for (const environment of environments) {
     // Nothing has been read here, so there is nothing to summarise. A report over an unread environment is
     // all zeroes, and a zero nobody measured is the one thing this product refuses to send.
@@ -59,7 +63,11 @@ export async function runDigestJob({ db, nowMs }: { db: Db; nowMs: number }): Pr
       url: reportUrl(environment.connectionId, environment.scope),
     };
 
-    for (const destination of destinations) {
+    // This environment's destinations. The weekly summary names the account it is about, so sending it
+    // to an endpoint that belongs to a different client would be that client's data, not a preference.
+    const theirs = destinationsFor(db, environment.connectionId).filter((one) => one.enabled);
+    possible += theirs.length;
+    for (const destination of theirs) {
       queueDelivery(db, { destinationId: destination.id, alertId: payload.id, payload, nowMs });
       queued += 1;
     }
@@ -68,5 +76,5 @@ export async function runDigestJob({ db, nowMs }: { db: Db; nowMs: number }): Pr
   // Recorded whatever was queued, including nothing: an installation with a connection nobody has read
   // must not retry every cycle for the rest of the chosen hour.
   markDigestSent(db, nowMs);
-  return { covered: queued, total: environments.length * destinations.length };
+  return { covered: queued, total: possible };
 }

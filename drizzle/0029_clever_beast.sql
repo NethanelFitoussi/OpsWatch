@@ -1,0 +1,1 @@
+ALTER TABLE `notify_destinations` ADD `connection_id` text;

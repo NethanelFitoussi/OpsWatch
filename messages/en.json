@@ -3959,7 +3959,8 @@
         "timeout": "The receiver did not answer in time.",
         "network": "OpsWatch could not reach that URL.",
         "invalid_day": "Choose a day of the week.",
-        "invalid_hour": "Choose an hour between 00:00 and 23:00 UTC."
+        "invalid_hour": "Choose an hour between 00:00 and 23:00 UTC.",
+        "connection_unknown": "That connection is not one this installation has."
       },
       "digest": {
         "title": "Weekly summary",
@@ -3980,7 +3981,12 @@
           "5": "Friday",
           "6": "Saturday"
         }
-      }
+      },
+      "scope": "Which connection’s alerts",
+      "scopeAll": "Every connection",
+      "scopeHint": "An endpoint that receives everything is right when one team watches every account. Choose a connection when this endpoint belongs to one client and must not see another’s problems.",
+      "receivesAll": "Receives alerts from every connection",
+      "receivesOne": "Receives alerts from {name} only"
     },
     "backup": {
       "title": "Backup & restore",
@@ -5699,9 +5705,10 @@
       "hint": "A second stack, separate from the one that connects the account.",
       "download": "Download the collection template:",
       "downloadLink": "opswatch-collection.yaml",
-      "deploy": "Deploy it, pasting the secret when asked:",
+      "deploy": "Deploy it in {region}, pasting the secret when asked:",
       "verifyStep": "Copy the ForwarderArn output back here and verify it.",
-      "noSecretInTemplate": "The template contains no secret. It can be read, diffed and kept; the secret is supplied when you deploy and lives only in the function’s environment."
+      "noSecretInTemplate": "The template contains no secret. It can be read, diffed and kept; the secret is supplied when you deploy and lives only in the function’s environment.",
+      "oneRegionOnly": "This forwards log groups in {region} only. A CloudWatch subscription filter can reach a Lambda in its own region and nowhere else, so nothing in {others} is forwarded by this stack."
     },
     "forwarder": {
       "title": "Forwarder",

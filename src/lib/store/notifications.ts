@@ -21,6 +21,18 @@ export function listDestinations(db: Db): DestinationView[] {
   return db.select().from(notifyDestinations).all().map(toView);
 }
 
+/**
+ * The destinations one environment's alerts may reach: the unscoped ones, plus that connection's own.
+ *
+ * Unscoped destinations are the default and the whole meaning of a single-account installation — one
+ * endpoint, every alert. Filtering here rather than at the caller is what stops the other case: with a
+ * second AWS account connected for somebody else, every enabled destination used to receive every
+ * environment's alerts, so Client A's problems arrived at Client B's endpoint.
+ */
+export function destinationsFor(db: Db, connectionId: string): DestinationView[] {
+  return listDestinations(db).filter((destination) => destination.connectionId === null || destination.connectionId === connectionId);
+}
+
 export function findDestination(db: Db, id: string): DestinationView | null {
   const row = db.select().from(notifyDestinations).where(eq(notifyDestinations.id, id)).get();
   return row === undefined ? null : toView(row);
@@ -34,7 +46,7 @@ export function findDestination(db: Db, id: string): DestinationView | null {
  */
 export function createDestination(
   db: Db,
-  input: { name: string; url: string },
+  input: { name: string; url: string; connectionId?: string | null },
   secret: string,
   nowMs: number,
 ): { destination: DestinationView; signingSecret: string } {
@@ -46,6 +58,9 @@ export function createDestination(
       kind: 'webhook',
       name: input.name,
       url: input.url,
+      // `null` unless the operator chose an account: one endpoint for everything is the right default
+      // for the installation that has one account, which is most of them.
+      connectionId: input.connectionId ?? null,
       secretCiphertext: encrypt(signingSecret, secret, 'webhook'),
       enabled: true,
       createdAt: nowMs,

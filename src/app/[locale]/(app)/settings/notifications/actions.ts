@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { resolveLocale } from '@/i18n/routing';
 import { auditedAdmin } from '@/lib/auth/audited';
+import { listConnections } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
 import type { ActionState } from '@/lib/forms/action-state';
@@ -22,7 +23,7 @@ import { createDestination, deleteDestination, findDestination, recordAttempt, s
  */
 
 export type NotifyState = ActionState<
-  'name_invalid' | 'url_invalid' | 'not_found' | 'http' | 'timeout' | 'network',
+  'name_invalid' | 'url_invalid' | 'connection_unknown' | 'not_found' | 'http' | 'timeout' | 'network',
   { signingSecret?: string; tested?: boolean }
 >;
 
@@ -53,7 +54,24 @@ export async function createDestinationAction(locale: string, _prev: NotifyState
     const url = urlSchema.safeParse(formString(formData, 'url'));
     if (!url.success) return { error: 'url_invalid' };
 
-    const { signingSecret } = createDestination(getDb(), { name: name.data, url: url.data }, env().OPSWATCH_SECRET, Date.now());
+    /*
+     * Which account's alerts this endpoint receives. Empty means all of them, which is the default and
+     * the whole meaning of an installation with one AWS account.
+     *
+     * Checked against what this installation has rather than stored as typed: a destination scoped to a
+     * connection nobody has would receive nothing at all, silently, for ever.
+     */
+    const connectionId = formString(formData, 'connectionId').trim();
+    if (connectionId !== '' && !listConnections(getDb()).some((connection) => connection.id === connectionId)) {
+      return { error: 'connection_unknown' };
+    }
+
+    const { signingSecret } = createDestination(
+      getDb(),
+      { name: name.data, url: url.data, connectionId: connectionId === '' ? null : connectionId },
+      env().OPSWATCH_SECRET,
+      Date.now(),
+    );
     revalidatePath(`/${resolveLocale(locale)}/settings/notifications`);
     // Shown once. A page that could read it again is a page that could leak it.
     return { signingSecret };

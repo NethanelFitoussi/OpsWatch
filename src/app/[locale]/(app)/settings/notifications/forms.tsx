@@ -16,7 +16,9 @@ import type { DigestState, NotifyState } from './actions';
  * it will not be shown again. It is never read from the database by a page — the only accessor is the
  * delivery path.
  */
-export function CreateDestinationForm({ action }: { action: FormAction<NotifyState> }) {
+export type DestinationScope = { id: string; name: string };
+
+export function CreateDestinationForm({ action, connections }: { action: FormAction<NotifyState>; connections: DestinationScope[] }) {
   const t = useTranslations('Settings.notifications');
   const [state, formAction] = useActionState(action, {});
 
@@ -27,6 +29,24 @@ export function CreateDestinationForm({ action }: { action: FormAction<NotifySta
         <FormField id="name" label={t('name')} required maxLength={80} />
         <FormField id="url" label={t('url')} type="url" placeholder="https://example.com/opswatch" required maxLength={2048} hint={t('urlHint')} />
       </div>
+      {/* Only worth asking once there is more than one account: with one, "all of them" is the only
+          answer, and a select with a single entry is a question nobody needs to be asked. */}
+      {connections.length > 1 && (
+        <div className="max-w-md space-y-1">
+          <label htmlFor="connectionId" className="text-sm font-medium">
+            {t('scope')}
+          </label>
+          <select id="connectionId" name="connectionId" defaultValue="" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+            <option value="">{t('scopeAll')}</option>
+            {connections.map((connection) => (
+              <option key={connection.id} value={connection.id}>
+                {connection.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{t('scopeHint')}</p>
+        </div>
+      )}
       <SubmitButton>{t('create')}</SubmitButton>
 
       {state.signingSecret !== undefined && (

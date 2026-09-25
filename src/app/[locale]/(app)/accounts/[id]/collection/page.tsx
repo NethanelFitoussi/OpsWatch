@@ -72,7 +72,19 @@ export default async function CollectionPage({ params }: Props) {
   const nowMs = pageNow();
   const traffic = readIngestTraffic(db, row.id, nowMs - TRAFFIC_WINDOW_MS);
   const publicUrl = env().OPSWATCH_PUBLIC_URL?.replace(/\/$/, '');
+  /*
+   * The region managed collection is set up in.
+   *
+   * One region, and the first of the connection's, because `aws_collection` holds one forwarder ARN per
+   * connection — and a CloudWatch subscription filter can only target a Lambda in its own region. So a
+   * connection watched in several regions can forward from one of them.
+   *
+   * That is a real limitation, and the page says so below rather than letting an operator assume every
+   * region is covered. Making it per region is a schema change (the stack identity belongs to a region,
+   * the consent belongs to the account) and is recorded as MC-9 in the roadmap.
+   */
   const region = row.regions[0] ?? 'us-east-1';
+  const otherRegions = row.regions.filter((one) => one !== region);
 
   // The one number OpsWatch cannot know from its own counters: a batch that never arrived left no trace
   // here. Read only once the stack is verified, so an account with the feature off makes no AWS call.
@@ -128,10 +140,18 @@ export default async function CollectionPage({ params }: Props) {
                 </a>
               </li>
               <li>
-                {t('install.deploy')}
+                {t('install.deploy', { region })}
                 <div className="mt-2">
                   <CodeBlock value={deployCollectionCommand(row.id, region)} />
                 </div>
+                {/* Said rather than left to be discovered: a subscription filter can only reach a Lambda
+                    in its own region, so the other regions of this connection are not forwarded. An
+                    operator who assumed otherwise would be waiting for logs that can never arrive. */}
+                {otherRegions.length > 0 && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t('install.oneRegionOnly', { region, others: otherRegions.join(', ') })}
+                  </p>
+                )}
               </li>
               <li>{t('install.verifyStep')}</li>
             </ol>

@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Multiple AWS connections — MC-1..MC-8 |
-| Last green gates | tsc 0 · eslint 0 · **2370 unit** · **393 e2e** · `roadmap:check` 0 |
-| Schema | drizzle 0028. No migration added this checkpoint |
+| Current checkpoint | Multiple AWS connections — MC-11 (notification tenancy) and MC-9's honesty |
+| Last green gates | tsc 0 · eslint 0 · **2375 unit** · **394 e2e** · `roadmap:check` 0 |
+| Schema | drizzle **0029** — `notify_destinations.connection_id`, nullable, existing rows keep `null` (unscoped), so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -95,8 +95,9 @@ losing the whole conversation loses no plan.
 
 ## Next, in priority order (the owner's marathon queue)
 
-1. ~~Multiple AWS accounts~~ — MC-1..MC-8 done; **MC-9..MC-12 remain**: per-region managed collection,
-   a per-connection logs budget, per-connection notification destinations, and a connection on the audit log
+1. ~~Multiple AWS accounts~~ — MC-1..MC-8 and MC-11 done; MC-9 is honest but still one region per
+   connection. **MC-9 (per-region collection stacks), MC-10 (per-connection logs budget) and MC-12
+   (a connection on the audit log) remain**
 2. One-click CloudFormation onboarding (prefilled stack URL; the operator creates the stack)
 3. Safe disconnect / removal / update, with stack identity tracked rather than inferred from names
 4. Storage and database setup, with a migration flow that shows versions and pending work first

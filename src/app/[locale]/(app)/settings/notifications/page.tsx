@@ -5,6 +5,7 @@ import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/code-block';
+import { listConnections } from '@/lib/connections/repository';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
@@ -32,6 +33,9 @@ export default async function NotificationsSettingsPage({ params }: Props) {
   const t = await getTranslations('Settings.notifications');
   const format = await getFormatter();
   const destinations = listDestinations(getDb());
+  // Offered as a scope only when there is more than one: with one account, "all of them" is the only
+  // answer there is.
+  const connections = listConnections(getDb());
   const digest = readDigestSettings(getDb());
 
   const example = JSON.stringify(
@@ -85,7 +89,10 @@ export default async function NotificationsSettingsPage({ params }: Props) {
       </MonitoringCard>
 
       <MonitoringCard title={t('addTitle')} description={t('addHint')}>
-        <CreateDestinationForm action={createDestinationAction.bind(null, locale)} />
+        <CreateDestinationForm
+          action={createDestinationAction.bind(null, locale)}
+          connections={connections.map((connection) => ({ id: connection.id, name: connection.name }))}
+        />
       </MonitoringCard>
 
       <MonitoringCard title={t('listTitle')}>
@@ -102,6 +109,15 @@ export default async function NotificationsSettingsPage({ params }: Props) {
                   </span>
                 </div>
                 <p className="font-mono text-xs break-all text-muted-foreground">{destination.url}</p>
+                {/* What this endpoint receives. Shown always, because "everything" is the answer that
+                    matters most once a second account is connected for somebody else. */}
+                <p className="text-xs text-muted-foreground">
+                  {destination.connectionId === null
+                    ? t('receivesAll')
+                    : t('receivesOne', {
+                        name: connections.find((connection) => connection.id === destination.connectionId)?.name ?? destination.connectionId,
+                      })}
+                </p>
                 {/* What happened last time, so a destination that quietly stopped working is visible. */}
                 <p className="text-sm">
                   {destination.lastResult === null ? (

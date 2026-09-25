@@ -1,9 +1,15 @@
 import { eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// `alertUrl` builds the link a webhook carries from the instance's public URL, so queueing one needs
+// the environment. Nothing here encrypts with this secret; `createDestination` is given its own.
+const SECRET = 'test-secret'.padEnd(32, 'x');
+vi.mock('@/lib/env', () => ({ env: () => ({ OPSWATCH_SECRET: SECRET, OPSWATCH_PUBLIC_URL: 'https://opswatch.example' }) }));
 import { runAlertCycle, toCandidate } from '@/lib/collector/alerts';
 import { acknowledgeAlert, ensureInstallRules, listAlerts, listRules, setRuleEnabled } from '@/lib/store/alerts';
 import { INSTALL_RULES } from '@/lib/detect/alert';
 import { alertRules } from '@/lib/db/schema';
+import { createDestination, setDestinationEnabled } from '@/lib/store/notifications';
 import { insertProblem } from '@/lib/store/problems';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
@@ -148,5 +154,56 @@ describe('which problems alert at all', () => {
     runAlertCycle(db, env, [problem], NOW);
     expect(listAlerts(db, env.connectionId, env.scope, 10)[0]?.titleKey).toBe(problem.titleKey);
     expect(toCandidate(problem).subjectKey).toBe(problem.key);
+  });
+});
+
+describe('THE RULING: one account’s alerts never reach another account’s endpoint', () => {
+  /*
+   * A webhook destination belongs to the installation, and the alert rules belong to an environment. So
+   * the rule engine was scoped and the delivery was not: with Client A and Client B connected to one
+   * OpsWatch, every enabled destination received every environment's alerts. That is one tenant's data
+   * arriving at another's endpoint, not a preference.
+   *
+   * `null` remains the default and the whole meaning of a single-account installation: one endpoint,
+   * every alert. What changed is that a destination may now name an account, and then receives only it.
+   */
+  const secret = 'secret'.padEnd(32, 'x');
+  const other = { connectionId: 'c2', scope: 'eu-west-1' };
+
+  const fire = (db: ReturnType<typeof createTestDb>, where: { connectionId: string; scope: string }, key: string) =>
+    runAlertCycle(db, where, [seed(db, key, { ...where })], NOW);
+
+  it('sends an unscoped destination everything, which is what one account means', () => {
+    const db = createTestDb();
+    createDestination(db, { name: 'ops', url: 'https://example.com/hook' }, secret, NOW);
+
+    expect(fire(db, env, 'a1').queued).toBe(1);
+    expect(fire(db, other, 'b1').queued).toBe(1);
+  });
+
+  it('sends a scoped destination only its own account’s alerts', () => {
+    const db = createTestDb();
+    createDestination(db, { name: 'client-a', url: 'https://example.com/a', connectionId: env.connectionId }, secret, NOW);
+
+    expect(fire(db, env, 'a1').queued).toBe(1);
+    // The other account fires too — and reaches nowhere, because nothing of theirs is listening.
+    expect(fire(db, other, 'b1').queued).toBe(0);
+  });
+
+  it('sends each client theirs and no more, with both connected at once', () => {
+    const db = createTestDb();
+    createDestination(db, { name: 'client-a', url: 'https://example.com/a', connectionId: env.connectionId }, secret, NOW);
+    createDestination(db, { name: 'client-b', url: 'https://example.com/b', connectionId: other.connectionId }, secret, NOW);
+
+    // One each, never two: the failure this replaces queued every alert to every endpoint.
+    expect(fire(db, env, 'a1').queued).toBe(1);
+    expect(fire(db, other, 'b1').queued).toBe(1);
+  });
+
+  it('never queues to a destination that is switched off, scoped or not', () => {
+    const db = createTestDb();
+    const { destination } = createDestination(db, { name: 'ops', url: 'https://example.com/hook' }, secret, NOW);
+    setDestinationEnabled(db, destination.id, false);
+    expect(fire(db, env, 'a1').queued).toBe(0);
   });
 });

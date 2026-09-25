@@ -16,6 +16,7 @@ import {
   installRuleOffers,
   logSources,
   metricBaselines,
+  notifyDestinations,
   problems,
   savedLogSearches,
   serviceRepositories,
@@ -43,6 +44,11 @@ import {
  * Children cascade from their parents (`problem_evidence`, `incident_timeline`, `error_occurrences`,
  * `synthetic_runs`, `deployment_commits`, and the three ingestion tables under `aws_collection`), so
  * they are not listed: deleting the parent takes them.
+ *
+ * One table is deliberately **not** emptied. A notification destination scoped to this connection is
+ * the operator's own webhook, with its own signing secret shown once and never again; deleting a
+ * connection must not silently destroy it. Its scope is cleared instead, so it survives as an unscoped
+ * destination — visible, still working, and there for the operator to re-scope or remove themselves.
  */
 /**
  * The tables this purge empties, in the order it empties them.
@@ -84,6 +90,8 @@ export function purgeConnectionData(db: Db, connectionId: string): number {
     for (const table of PURGED_TABLES) {
       removed += tx.delete(table).where(eq(table.connectionId, connectionId)).run().changes;
     }
+    // Unscoped rather than deleted: see above.
+    tx.update(notifyDestinations).set({ connectionId: null }).where(eq(notifyDestinations.connectionId, connectionId)).run();
   });
   return removed;
 }

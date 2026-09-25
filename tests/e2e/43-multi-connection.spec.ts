@@ -167,3 +167,35 @@ test('the switcher names the account the page is about, and no account when ther
   await page.getByRole('menuitem', { name: MOTO_REGION }).last().click();
   await expect(page).toHaveURL(/\/c\/[0-9a-f]{12}\/us-east-1\/overview\/health/);
 });
+
+test('THE RULING: a webhook can belong to one client, and says which', async ({ page }) => {
+  /*
+   * An alert rule belongs to an environment and a destination belonged to the installation, so the
+   * engine was scoped and the delivery was not: every enabled endpoint received every environment's
+   * alerts. With two clients in one OpsWatch that is one client's problems arriving at another's
+   * endpoint — not a preference.
+   */
+  await page.goto('/en/settings/notifications');
+  await page.getByLabel('Name').fill('Client B pager');
+  await page.getByLabel('URL').fill('https://example.com/client-b');
+  // The question is only asked once there is more than one account, which is the case here.
+  await page.getByLabel('Which connection’s alerts').selectOption(second);
+  await page.getByRole('button', { name: 'Add destination' }).click();
+
+  // The secret is shown once, and the list says what this endpoint will receive.
+  await expect(page.getByText('Your signing secret')).toBeVisible();
+  await expect(page.locator('main')).toContainText(`Receives alerts from ${SECOND} only`);
+
+  // An unscoped one still receives everything, which is what a single-account installation means.
+  await page.getByLabel('Name').fill('Everything');
+  await page.getByLabel('URL').fill('https://example.com/all');
+  await page.getByRole('button', { name: 'Add destination' }).click();
+  await expect(page.locator('main')).toContainText('Receives alerts from every connection');
+
+  // Tidy up: a destination left behind would receive every later spec's alerts.
+  for (const name of ['Client B pager', 'Everything']) {
+    const row = page.getByRole('listitem').filter({ hasText: name });
+    await row.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.locator('main')).not.toContainText(name);
+  }
+});

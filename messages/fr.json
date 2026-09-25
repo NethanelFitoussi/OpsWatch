@@ -3959,7 +3959,8 @@
         "timeout": "Le destinataire n'a pas répondu à temps.",
         "network": "OpsWatch n'a pas pu joindre cette URL.",
         "invalid_day": "Choisissez un jour de la semaine.",
-        "invalid_hour": "Choisissez une heure entre 00:00 et 23:00 UTC."
+        "invalid_hour": "Choisissez une heure entre 00:00 et 23:00 UTC.",
+        "connection_unknown": "Cette connexion n’existe pas dans cette installation."
       },
       "digest": {
         "title": "Résumé hebdomadaire",
@@ -3980,7 +3981,12 @@
           "5": "Vendredi",
           "6": "Samedi"
         }
-      }
+      },
+      "scope": "Les alertes de quelle connexion",
+      "scopeAll": "Toutes les connexions",
+      "scopeHint": "Un point de réception qui reçoit tout convient quand une équipe surveille tous les comptes. Choisissez une connexion quand ce point appartient à un client et ne doit pas voir les problèmes d’un autre.",
+      "receivesAll": "Reçoit les alertes de toutes les connexions",
+      "receivesOne": "Reçoit uniquement les alertes de {name}"
     },
     "backup": {
       "title": "Sauvegarde et restauration",
@@ -5699,9 +5705,10 @@
       "hint": "Une seconde pile, distincte de celle qui connecte le compte.",
       "download": "Téléchargez le modèle de collecte :",
       "downloadLink": "opswatch-collection.yaml",
-      "deploy": "Déployez-le en collant le secret quand il est demandé :",
+      "deploy": "Déployez-le dans {region}, en collant le secret quand il est demandé :",
       "verifyStep": "Recopiez la sortie ForwarderArn ici et vérifiez-la.",
-      "noSecretInTemplate": "Le modèle ne contient aucun secret. Il peut être lu, comparé et conservé ; le secret est fourni au déploiement et ne vit que dans l’environnement de la fonction."
+      "noSecretInTemplate": "Le modèle ne contient aucun secret. Il peut être lu, comparé et conservé ; le secret est fourni au déploiement et ne vit que dans l’environnement de la fonction.",
+      "oneRegionOnly": "Cela transfère uniquement les groupes de journaux de {region}. Un filtre d’abonnement CloudWatch ne peut atteindre qu’une Lambda de sa propre région, donc rien dans {others} n’est transféré par cette pile."
     },
     "forwarder": {
       "title": "Lambda de transfert",

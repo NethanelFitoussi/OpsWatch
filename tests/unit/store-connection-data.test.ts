@@ -7,6 +7,7 @@ import { appendEvent } from '@/lib/store/events';
 import { finishRun, startRun } from '@/lib/store/collector';
 import { upsertCheck } from '@/lib/store/synthetics';
 import { recordFamilySnapshot } from '@/lib/store/health';
+import { createDestination, findDestination } from '@/lib/store/notifications';
 import { createTestDb } from '../helpers/db';
 import { newProblem } from '../helpers/detect';
 
@@ -88,6 +89,22 @@ describe('removing everything one connection wrote', () => {
     }
   });
 
+  it('THE RULING: it unscopes the operator’s webhook rather than deleting it', () => {
+    /*
+     * A destination carries a signing secret that was shown once and can never be read again. Deleting
+     * the connection it was scoped to must not take it: the operator would lose an endpoint they set up,
+     * silently, as a side effect of disconnecting an account.
+     */
+    const db = createTestDb();
+    const { destination } = createDestination(db, { name: 'client-b', url: 'https://example.com/hook', connectionId: MINE }, 'secret'.padEnd(32, 'x'), NOW);
+
+    purgeConnectionData(db, MINE);
+    const after = findDestination(db, destination.id);
+    expect(after).not.toBeNull();
+    // It now receives everything, which is visible on the page and the operator's to change.
+    expect(after?.connectionId).toBeNull();
+  });
+
   it('leaves an instance-wide row alone, because it belongs to no connection', () => {
     const db = createTestDb();
     const run = startRun(db, { job: 'compact', connectionId: null, scope: null, startedAt: NOW });
@@ -111,9 +128,12 @@ describe('removing everything one connection wrote', () => {
     const inSchema = tablesWithConnectionId(db);
     const purged: string[] = PURGED_TABLES.map((table) => getTableName(table)).sort();
 
-    // The four ingestion tables cascade from `aws_collection`, which the purge does name.
+    // The ingestion tables cascade from `aws_collection`, which the purge does name.
     const cascading = ['aws_forwarded_groups', 'ingest_events', 'ingest_stats'];
-    expect(inSchema.filter((name) => !purged.includes(name) && !cascading.includes(name))).toEqual([]);
+    // And one table is deliberately unscoped rather than emptied: a destination is the operator's own
+    // webhook, with a secret shown once, and disconnecting an account must not destroy it.
+    const unscoped = ['notify_destinations'];
+    expect(inSchema.filter((name) => !purged.includes(name) && !cascading.includes(name) && !unscoped.includes(name))).toEqual([]);
     // And nothing is purged that the schema does not have, which would be a rename nobody finished.
     expect(purged.filter((name) => !inSchema.includes(name))).toEqual([]);
   });
