@@ -2266,6 +2266,14 @@
       },
       "confirmationsValue": "confirmé par {count, plural, one {# relevé} other {# relevés}}"
     },
+    "machines": {
+      "title": "Machines de ce compte",
+      "description": "{count, plural, one {Une machine} other {# machines}} exécutant un agent OpsWatch, rattachées à une instance de cette région. Une machine qu’OpsWatch n’a rattachée à aucune instance n’apparaît pas ici — voir Machines.",
+      "waiting": "En attente de son premier rapport",
+      "nothingFound": "Rien à signaler",
+      "needsAttention": "À examiner",
+      "notAlerts": "Lu depuis le dernier relevé de chaque machine au moment de l’affichage. Ce ne sont pas des problèmes : ils ne peuvent pas être acquittés, n’ouvrent pas d’incident et aucune règle d’alerte ne les déclenche — rien concernant une machine n’est encore notifié."
+    },
     "health": {
       "title": "Santé",
       "description": "Si cet environnement est sain, et ce qu'OpsWatch n'a pas pu vérifier.",

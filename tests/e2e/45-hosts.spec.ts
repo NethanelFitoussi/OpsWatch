@@ -401,3 +401,47 @@ test('THE RULING: a second connection over the same AWS account does not take th
   await page.goto(`/en/accounts/${second}`);
   await page.getByRole('button', { name: 'Remove connection' }).click();
 });
+
+test('THE RULING: a machine inside the account shows up where the operator asks what is wrong', async ({ page }) => {
+  /*
+   * The owner's own case is Redis on an Ubuntu EC2 instance. A full disk on that box is invisible to
+   * every AWS API there is: no CloudWatch metric, no alarm, nothing. The agent measures it, and until
+   * now the figure lived only on the Machines page — so an operator asking "what is wrong in
+   * production" was shown everything about the account and nothing about the machines inside it.
+   *
+   * It must also say what it is not. Nothing here is a Problem: it cannot be acknowledged, it opens no
+   * incident, and no alert rule matches it. A card that looked like the Problems list would promise a
+   * notification that is not coming.
+   */
+  const connectionId = await ensureMonitoringConnection(page);
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/instances/list`);
+  await page.locator('main table tbody tr').first().waitFor({ timeout: 20_000 });
+  const seeded = /i-[0-9a-f]{8,}/.exec(await page.locator('main').innerText())?.[0] ?? null;
+  expect(seeded, 'the moto seed should have produced an EC2 instance to match against').not.toBeNull();
+
+  const host = { ...(await enrol(page, 'e2e redis box')), machineId: 'e2e-machine-in-env' };
+  const full = { ...REPORT.sample, disks: [{ mount: '/', usedBytes: 49_000_000_000, totalBytes: 50_000_000_000 }] };
+  const body = {
+    ...REPORT,
+    identity: { ...REPORT.identity, machineId: host.machineId, cloud: 'aws', cloudInstanceId: seeded! },
+    sample: full,
+  };
+  expect((await report(agent, { ...host, body })).status()).toBe(202);
+
+  // Placed by the account that can see the instance…
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/instances/list`);
+  await page.locator('main table tbody tr').first().waitFor({ timeout: 20_000 });
+
+  // …and then visible on that environment's Health page, with the figure behind it.
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/overview/health`);
+  const machines = page
+    .locator('[data-slot="card"]')
+    .filter({ has: page.getByRole('heading', { name: 'Machines in this account' }) });
+  await expect(machines).toContainText('e2e redis box');
+  await expect(machines).toContainText('/ is 98% full');
+  // Said where it is read: this is not a problem and nothing will be notified about it.
+  await expect(machines).toContainText('no alert rule matches them');
+
+  await machines.getByRole('link', { name: 'e2e redis box' }).click();
+  await expect(page).toHaveURL(new RegExp(`/hosts/${host.hostId}$`));
+});

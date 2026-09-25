@@ -307,6 +307,26 @@ export function listHosts(db: Db, nowMs: number): Host[] {
   return listHostRows(db).map((row) => toHost(row, listSamples(db, row.id, 1)[0] ?? null, nowMs));
 }
 
+/**
+ * The machines placed in one AWS account and region.
+ *
+ * Both halves of the key, because every scoped surface in this product is keyed by the pair and an
+ * account-wide answer on a region's page would name machines in regions it is not about.
+ *
+ * A machine OpsWatch has not placed — nothing has listed the instance it runs on, or it runs on no
+ * cloud at all — is in no environment and is returned by nothing here. That is a real gap and the
+ * pages that use this say so rather than implying they cover every machine.
+ */
+export function hostsInEnvironment(db: Db, connectionId: string, region: string, nowMs: number): Host[] {
+  const rows = db
+    .select()
+    .from(hosts)
+    .where(and(eq(hosts.connectionId, connectionId), eq(hosts.region, region)))
+    .orderBy(hosts.name)
+    .all();
+  return rows.map((row) => toHost(row, listSamples(db, row.id, 1)[0] ?? null, nowMs));
+}
+
 /** Hosts whose agent has reported inside the window, for anything that needs live machines only. */
 export function freshHosts(db: Db, nowMs: number): HostRow[] {
   return db.select().from(hosts).where(gte(hosts.lastSeenAt, nowMs - HOST_STALE_AFTER_MS)).all();

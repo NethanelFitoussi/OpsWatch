@@ -8,6 +8,7 @@ import {
   hostClaiming,
   hostSecret,
   hostsByCloudInstance,
+  hostsInEnvironment,
   linkHostToConnection,
   unlinkHostFromConnection,
   hostState,
@@ -382,5 +383,42 @@ describe('THE RULING: one machine, two sources — matched on identity, never on
 
   it('says nothing when asked about no instances at all', () => {
     expect(hostsByCloudInstance(createTestDb(), []).size).toBe(0);
+  });
+});
+
+describe('the machines placed in one account and region', () => {
+  const placed = (db: ReturnType<typeof createTestDb>, name: string, connectionId: string | null, region: string | null) => {
+    const { host } = createHost(db, { name, nowMs: NOW }, SECRET);
+    if (connectionId !== null) db.update(schemaHosts).set({ connectionId, region }).where(eq(schemaHosts.id, host.id)).run();
+    return host;
+  };
+
+  it('THE RULING: it answers for one environment, not for one account', () => {
+    // A connection may read several regions. An account-wide answer on a region's page would name
+    // machines in regions that page is not about, which is the mistake the region column exists to stop.
+    const db = createTestDb();
+    placed(db, 'in eu-west-1', 'c1', 'eu-west-1');
+    placed(db, 'in us-east-1', 'c1', 'us-east-1');
+    placed(db, 'another account', 'c2', 'eu-west-1');
+
+    expect(hostsInEnvironment(db, 'c1', 'eu-west-1', NOW).map((host) => host.name)).toEqual(['in eu-west-1']);
+  });
+
+  it('leaves out a machine nothing has placed, rather than guessing at one', () => {
+    const db = createTestDb();
+    placed(db, 'unplaced', null, null);
+    // Placed in an account but never in a region: half an answer, and not one a scoped page can use.
+    placed(db, 'account only', 'c1', null);
+
+    expect(hostsInEnvironment(db, 'c1', 'eu-west-1', NOW)).toEqual([]);
+  });
+
+  it('carries the last reading, so the page states a figure rather than a verdict', () => {
+    const db = createTestDb();
+    const host = placed(db, 'reporting', 'c1', 'eu-west-1');
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample({ cpuPercent: 42 }), atMs: NOW });
+
+    const [found] = hostsInEnvironment(db, 'c1', 'eu-west-1', NOW);
+    expect(found.latest?.cpuPercent).toBe(42);
   });
 });

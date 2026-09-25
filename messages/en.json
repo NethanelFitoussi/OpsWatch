@@ -2266,6 +2266,14 @@
       },
       "confirmationsValue": "confirmed by {count, plural, one {# reading} other {# readings}}"
     },
+    "machines": {
+      "title": "Machines in this account",
+      "description": "{count, plural, one {One machine} other {# machines}} running an OpsWatch agent, matched to an instance in this region. A machine OpsWatch has not matched to an instance is not here — see Machines.",
+      "waiting": "Waiting for its first report",
+      "nothingFound": "Nothing found",
+      "needsAttention": "Needs attention",
+      "notAlerts": "Read from each machine’s last reading when this page is drawn. These are not problems: they cannot be acknowledged, they do not open an incident, and no alert rule matches them — nothing about a machine is notified yet."
+    },
     "health": {
       "title": "Health",
       "description": "Whether this environment is healthy, and what OpsWatch could not check.",

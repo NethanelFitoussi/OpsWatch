@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Where a machine lives: the region beside the account, and a placement that does not bounce |
+| Current checkpoint | A machine's trouble, on the page that asks what is wrong with the account |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0034** — `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -82,6 +82,9 @@ losing the whole conversation loses no plan.
   `awsAccountId`, at the schema level or in code, and the rest of the product treats two connections
   over one account as a supported configuration. Anything that matches on what an account *contains* —
   an instance id, a log group — must therefore be deterministic about which connection wins.
+- **A connection id is twelve random hex characters**, so a test asserting "no timestamp in this URL"
+  with `\d{10,}` over the whole href fails on the day an id happens to hold ten digits in a row
+  (`f2956924662e` did). Assert against the part of the URL the claim is about.
 - **A test that skips itself is a test that is not run.** `45-hosts` read `main` straight after a
   navigation, got the Suspense fallback and skipped on "no instance found" for days. Prefer waiting and
   asserting over `test.skip` on a condition the page controls.
@@ -149,6 +152,17 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **A machine's trouble, where the operator asks.** The owner's case is Redis on an Ubuntu EC2
+      instance, where a full disk is invisible to every AWS API there is — and the agent's figure lived
+      only on the Machines page, so "what is wrong in production" answered about the account and not
+      about the machines inside it. The Health page of the account and region a machine was placed in
+      now lists it, worst first, each finding with the figure behind it. **Read at render, not written
+      as a Problem**: that table is keyed to an AWS environment by a column that cannot be null, and
+      making it nullable turns every scoped read into a tri-state where one missed predicate leaks or
+      hides rows. The card says what it is not — nothing there is acknowledged, opens an incident or
+      matches an alert rule — because one that looked like the Problems list would promise a
+      notification that is not coming. **Alerting on a machine remains the next step**, and needs
+      `alert_rules` to admit a rule that is not about one AWS environment
 - [x] **Where a machine lives.** `hosts` recorded which account matched it and nowhere in it, though a
       connection may read several regions and an instance is in exactly one — and every scoped read in
       this product is keyed by the pair, so half an answer is unusable by all of them. `hosts.region`

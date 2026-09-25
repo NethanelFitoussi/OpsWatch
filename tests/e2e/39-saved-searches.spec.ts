@@ -114,8 +114,14 @@ test('THE RULING: only a relative range is stored, so a saved search still means
   await page.goto(logs());
   const href = await page.getByRole('link', { name: 'Last day' }).getAttribute('href');
   expect(href).toContain('range=24h');
-  // No absolute window anywhere in what was stored: it would be a bookmark to a moment that never returns.
-  expect(href).not.toMatch(/start|end|from=|to=|\d{10,}/);
+  /*
+   * No absolute window anywhere in what was stored: it would be a bookmark to a moment that never
+   * returns. Checked against the **query string**, not the whole href — the path holds a connection id
+   * of twelve random hex characters, and one that happens to contain ten digits in a row (`f2956924662e`
+   * did) failed this on a timestamp that was never there.
+   */
+  const query = href?.split('?')[1] ?? '';
+  expect(query).not.toMatch(/start|end|from=|to=|\d{10,}/);
 });
 
 test('saving needs a session, and an anonymous post changes nothing', async ({ page, context, playwright, baseURL }) => {
