@@ -3550,7 +3550,10 @@
       "machine_disk_nearly_full": "{name}: {subject} is {percent}% full",
       "machine_memory_nearly_exhausted": "{name}: memory is {percent}% used",
       "alarm_firing_on": "{metric} crossed its alarm threshold on {subject}.",
-      "alarm_firing_metric": "{metric} crossed its alarm threshold."
+      "alarm_firing_metric": "{metric} crossed its alarm threshold.",
+      "machine_redis_no_memory_limit": "{name}: Redis has no memory limit and is using {percent}% of the machine",
+      "machine_redis_near_memory_limit": "{name}: Redis is at {percent}% of its memory limit",
+      "machine_redis_last_save_failed": "{name}: Redis could not write its last background save"
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services of {cluster} run fewer tasks than desired.",
@@ -6218,7 +6221,10 @@
       "stopped_reporting": "Has stopped reporting — nothing on this page is current",
       "disk_nearly_full": "{subject} is {percent}% full",
       "disk_full": "{subject} is {percent}% full",
-      "memory_nearly_exhausted": "Memory is {percent}% used"
+      "memory_nearly_exhausted": "Memory is {percent}% used",
+      "redis_no_memory_limit": "Redis has no memory limit and is using {percent}% of this machine",
+      "redis_near_memory_limit": "Redis is at {percent}% of its own memory limit",
+      "redis_last_save_failed": "Redis reports that its last background save failed"
     },
     "guidance": {
       "title": "What to check",
@@ -6268,6 +6274,33 @@
           "redis": "Redis is running here. Check whether it is writing snapshots or an append-only file to this filesystem, and how large they have grown — <code>dir</code> and <code>dbfilename</code> in its config say where.",
           "docker": "Docker is running here. Images, stopped containers and unused volumes accumulate; <code>docker system df</code> says how much they hold."
         }
+      },
+      "redis_no_memory_limit": {
+        "checks": {
+          "0": "Whether it is deliberate. On a machine that exists to run Redis, the machine's memory is the limit — and that is a decision, not a mistake.",
+          "1": "What happens when it reaches the machine's: with no <code>maxmemory</code>, Redis does not evict, so the kernel picks a process to kill and it is often Redis itself.",
+          "2": "Setting one, if it is not deliberate: <code>maxmemory</code> and a <code>maxmemory-policy</code> together decide what Redis gives up first, rather than leaving it to the kernel.",
+          "3": "Whether the growth is data you meant to keep. A cache with no expiry set on its keys grows without limit whatever the machine has."
+        },
+        "services": {}
+      },
+      "redis_near_memory_limit": {
+        "checks": {
+          "0": "Which policy is set: <code>redis-cli CONFIG GET maxmemory-policy</code>. <code>noeviction</code> means writes start failing rather than keys being dropped.",
+          "1": "Whether it is already evicting: <code>evicted_keys</code> in <code>INFO stats</code> counts them since Redis started.",
+          "2": "Whether keys have an expiry. A cache whose entries never expire reaches any limit eventually.",
+          "3": "Whether the limit is still the right one for what this Redis now holds."
+        },
+        "services": {}
+      },
+      "redis_last_save_failed": {
+        "checks": {
+          "0": "Why, in Redis's own log — it records the reason it could not write the snapshot.",
+          "1": "Whether the filesystem it saves to has room. A failed save and a full disk are usually the same incident.",
+          "2": "Whether the directory is writable by the user Redis runs as: <code>dir</code> in its config says which directory.",
+          "3": "What this costs you if Redis restarts before the next successful save — everything written since the last one that worked."
+        },
+        "services": {}
       }
     }
   },

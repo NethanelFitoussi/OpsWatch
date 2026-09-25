@@ -32,6 +32,9 @@ const BASE: Record<HostFindingKind, number> = {
   disk_nearly_full: 5,
   memory_nearly_exhausted: 4,
   stopped_reporting: 4,
+  redis_no_memory_limit: 4,
+  redis_near_memory_limit: 4,
+  redis_last_save_failed: 4,
 };
 
 /** Which discovered services add a step to which finding, and nothing beyond what was actually found. */

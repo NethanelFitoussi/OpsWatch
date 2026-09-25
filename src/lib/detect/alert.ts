@@ -61,7 +61,15 @@ const SLO_BURN_KINDS = ['slo_burn_fast', 'slo_burn_slow'] as const;
  * different reasons: a `problem` rule is about what AWS reports, and a machine rule is about a box
  * AWS cannot see inside.
  */
-export const MACHINE_KINDS = ['stopped_reporting', 'disk_full', 'disk_nearly_full', 'memory_nearly_exhausted'] as const;
+export const MACHINE_KINDS = [
+  'stopped_reporting',
+  'disk_full',
+  'disk_nearly_full',
+  'memory_nearly_exhausted',
+  'redis_no_memory_limit',
+  'redis_near_memory_limit',
+  'redis_last_save_failed',
+] as const;
 
 /** Which condition a kind belongs to. Every kind belongs to exactly one, which is what stops overlap. */
 function conditionOf(kind: string): Rule['condition'] {

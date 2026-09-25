@@ -38,6 +38,9 @@ const TITLE: Record<string, string> = {
   disk_full: 'Insights.messages.machine_disk_full',
   disk_nearly_full: 'Insights.messages.machine_disk_nearly_full',
   memory_nearly_exhausted: 'Insights.messages.machine_memory_nearly_exhausted',
+  redis_no_memory_limit: 'Insights.messages.machine_redis_no_memory_limit',
+  redis_near_memory_limit: 'Insights.messages.machine_redis_near_memory_limit',
+  redis_last_save_failed: 'Insights.messages.machine_redis_last_save_failed',
 };
 
 export function machineCandidates(db: Db, context: MachineContext, nowMs: number): Candidate[] {

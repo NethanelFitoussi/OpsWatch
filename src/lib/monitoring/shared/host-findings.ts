@@ -19,7 +19,15 @@ import type { Host, HostDisk } from '@opswatch/contract';
  * size is unknown is not a disk that is full.
  */
 
-export type HostFindingKind = 'stopped_reporting' | 'disk_nearly_full' | 'disk_full' | 'memory_nearly_exhausted';
+export type HostFindingKind =
+  | 'stopped_reporting'
+  | 'disk_nearly_full'
+  | 'disk_full'
+  | 'memory_nearly_exhausted'
+  /** Redis may grow until the kernel intervenes, and it is using enough of the machine to matter. */
+  | 'redis_no_memory_limit'
+  | 'redis_near_memory_limit'
+  | 'redis_last_save_failed';
 export type HostFindingLevel = 'warning' | 'critical';
 
 export type HostFinding = {
@@ -36,6 +44,18 @@ export const DISK_WARNING_PERCENT = 85;
 export const DISK_CRITICAL_PERCENT = 95;
 /** Memory is noisier than disk, so the bar is higher before it is worth a word. */
 export const MEMORY_WARNING_PERCENT = 92;
+
+/**
+ * Redis without a `maxmemory` is only worth saying when Redis is actually big on this machine.
+ *
+ * No limit is a legitimate configuration — on a box that exists to run Redis, the machine's memory
+ * *is* the limit, and an operator who chose that does not need telling every day. It becomes worth a
+ * word when the two facts meet: no ceiling, and enough of the machine already used that reaching the
+ * machine's own is a plausible afternoon.
+ */
+export const REDIS_SHARE_WARNING_PERCENT = 25;
+/** How close to its own limit Redis gets before eviction stops being hypothetical. */
+export const REDIS_LIMIT_WARNING_PERCENT = 90;
 
 const percentOf = (used: number | null, total: number | null): number | null =>
   used === null || total === null || total <= 0 ? null : (used / total) * 100;
@@ -56,6 +76,43 @@ function diskFinding(disk: HostDisk): HostFinding | null {
  * however old the silence is, and listing "disk 91% full" beside it would present a stale figure as a
  * current one. A host that has never reported produces none — there is nothing to have found.
  */
+/**
+ * What Redis says about itself, judged only where the figures allow it.
+ *
+ * Three things, and deliberately not a fourth. `evictedKeys` is a counter since Redis started, so a
+ * number above zero says it evicted *at some point*, not that it is evicting now — and OpsWatch keeps
+ * no previous value to turn it into a rate. Reporting it would be a figure that looks like a problem
+ * and is not one, which is worse than silence.
+ */
+function redisFindings(host: Host): HostFinding[] {
+  const redis = host.redis;
+  if (redis === null) return [];
+  const findings: HostFinding[] = [];
+  const name = 'Redis';
+
+  // Redis told us its last background save failed. No inference, no threshold: it said so.
+  if (redis.lastSaveOk === false) {
+    findings.push({ kind: 'redis_last_save_failed', level: 'warning', subject: name, percent: null });
+  }
+
+  const used = redis.usedMemoryBytes;
+  const limit = redis.maxMemoryBytes;
+  if (used !== null && limit !== null && limit > 0) {
+    const percent = (used / limit) * 100;
+    if (percent >= REDIS_LIMIT_WARNING_PERCENT) {
+      findings.push({ kind: 'redis_near_memory_limit', level: 'warning', subject: name, percent });
+    }
+  } else if (used !== null && host.latest?.memoryTotalBytes != null && host.latest.memoryTotalBytes > 0) {
+    // No limit set. Only worth saying once Redis is a large enough share of the machine that the
+    // machine's own memory becoming the ceiling is a real prospect rather than a theoretical one.
+    const share = (used / host.latest.memoryTotalBytes) * 100;
+    if (share >= REDIS_SHARE_WARNING_PERCENT) {
+      findings.push({ kind: 'redis_no_memory_limit', level: 'warning', subject: name, percent: share });
+    }
+  }
+  return findings;
+}
+
 export function hostFindings(host: Host): HostFinding[] {
   if (host.state === 'stale') {
     return [{ kind: 'stopped_reporting', level: 'critical', subject: host.name, percent: null }];
@@ -63,6 +120,7 @@ export function hostFindings(host: Host): HostFinding[] {
   if (host.latest === null) return [];
 
   const findings = host.latest.disks.flatMap((disk) => diskFinding(disk) ?? []);
+  findings.push(...redisFindings(host));
   const memory = percentOf(host.latest.memoryUsedBytes, host.latest.memoryTotalBytes);
   if (memory !== null && memory >= MEMORY_WARNING_PERCENT) {
     findings.push({ kind: 'memory_nearly_exhausted', level: 'warning', subject: host.name, percent: memory });

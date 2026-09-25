@@ -3550,7 +3550,10 @@
       "machine_disk_nearly_full": "{name} : {subject} est rempli à {percent}%",
       "machine_memory_nearly_exhausted": "{name} : la mémoire est utilisée à {percent}%",
       "alarm_firing_on": "{metric} a franchi son seuil d’alarme sur {subject}.",
-      "alarm_firing_metric": "{metric} a franchi son seuil d’alarme."
+      "alarm_firing_metric": "{metric} a franchi son seuil d’alarme.",
+      "machine_redis_no_memory_limit": "{name} : Redis n’a pas de limite de mémoire et utilise {percent}% de la machine",
+      "machine_redis_near_memory_limit": "{name} : Redis est à {percent}% de sa limite de mémoire",
+      "machine_redis_last_save_failed": "{name} : Redis n’a pas pu écrire sa dernière sauvegarde en arrière-plan"
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services de {cluster} exécutent moins de tâches que souhaité.",
@@ -6218,7 +6221,10 @@
       "stopped_reporting": "A cessé de transmettre — rien sur cette page n’est actuel",
       "disk_nearly_full": "{subject} est rempli à {percent}%",
       "disk_full": "{subject} est rempli à {percent}%",
-      "memory_nearly_exhausted": "La mémoire est utilisée à {percent}%"
+      "memory_nearly_exhausted": "La mémoire est utilisée à {percent}%",
+      "redis_no_memory_limit": "Redis n’a pas de limite de mémoire et utilise {percent}% de cette machine",
+      "redis_near_memory_limit": "Redis est à {percent}% de sa propre limite de mémoire",
+      "redis_last_save_failed": "Redis signale que sa dernière sauvegarde en arrière-plan a échoué"
     },
     "guidance": {
       "title": "Que vérifier",
@@ -6268,6 +6274,33 @@
           "redis": "Redis tourne ici. Vérifiez s’il écrit des instantanés ou un fichier append-only sur ce système de fichiers, et leur taille — <code>dir</code> et <code>dbfilename</code> dans sa configuration indiquent où.",
           "docker": "Docker tourne ici. Images, conteneurs arrêtés et volumes inutilisés s’accumulent ; <code>docker system df</code> indique ce qu’ils occupent."
         }
+      },
+      "redis_no_memory_limit": {
+        "checks": {
+          "0": "Si c’est volontaire. Sur une machine dédiée à Redis, la mémoire de la machine est la limite — c’est une décision, pas une erreur.",
+          "1": "Ce qui se passe quand il atteint celle de la machine : sans <code>maxmemory</code>, Redis n’évince rien, donc le noyau choisit un processus à tuer et c’est souvent Redis lui-même.",
+          "2": "En définir une, si ce n’est pas volontaire : <code>maxmemory</code> et une <code>maxmemory-policy</code> décident ensemble ce que Redis abandonne en premier, plutôt que de laisser le noyau choisir.",
+          "3": "Si cette croissance correspond à des données que vous vouliez garder. Un cache dont les clés n’expirent pas grandit sans limite, quelle que soit la machine."
+        },
+        "services": {}
+      },
+      "redis_near_memory_limit": {
+        "checks": {
+          "0": "Quelle politique est définie : <code>redis-cli CONFIG GET maxmemory-policy</code>. <code>noeviction</code> signifie que les écritures échouent au lieu que des clés soient supprimées.",
+          "1": "S’il évince déjà : <code>evicted_keys</code> dans <code>INFO stats</code> les compte depuis le démarrage de Redis.",
+          "2": "Si les clés ont une expiration. Un cache dont les entrées n’expirent jamais finit par atteindre n’importe quelle limite.",
+          "3": "Si la limite est encore la bonne pour ce que ce Redis contient aujourd’hui."
+        },
+        "services": {}
+      },
+      "redis_last_save_failed": {
+        "checks": {
+          "0": "Pourquoi, dans le journal de Redis — il indique la raison pour laquelle l’instantané n’a pas pu être écrit.",
+          "1": "Si le système de fichiers de destination a de la place. Une sauvegarde échouée et un disque plein sont souvent le même incident.",
+          "2": "Si le répertoire est accessible en écriture à l’utilisateur sous lequel tourne Redis : <code>dir</code> dans sa configuration indique lequel.",
+          "3": "Ce que cela coûte si Redis redémarre avant la prochaine sauvegarde réussie — tout ce qui a été écrit depuis la dernière qui a fonctionné."
+        },
+        "services": {}
       }
     }
   },
