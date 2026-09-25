@@ -5711,6 +5711,10 @@
           "4": {
             "q": "What does it read?",
             "a": "The kernel’s own counters — /proc/stat, /proc/meminfo, /proc/loadavg, /proc/uptime — and the output of df. It does not read process environments, file contents or anything you have not seen in the script."
+          },
+          "5": {
+            "q": "How does it know Redis is running?",
+            "a": "From a listening port and the name of the process holding it — and the page says exactly that, for every service it found. It is a guess, and OpsWatch shows you the guess rather than presenting it as a fact it checked. Where redis-cli is on the machine, the agent also runs INFO, which describes the server and never its contents: no key is read, no value is read, and KEYS is never run. If your Redis needs a password, put OPSWATCH_REDIS_PASSWORD in /etc/opswatch/agent.conf beside the key."
           }
         },
         "next": {
@@ -6007,7 +6011,40 @@
         "name_invalid": "Give the server a name of 80 characters or fewer.",
         "no_public_url": "OPSWATCH_PUBLIC_URL is not set.",
         "not_found": "That server no longer exists."
-      }
+      },
+      "servicesTitle": "What is running",
+      "servicesHint": "Found by the agent from the ports that are listening and the processes holding them. Each entry says how.",
+      "noServices": "The agent looked and found nothing it recognises."
+    },
+    "services": {
+      "redis": "Redis",
+      "postgres": "PostgreSQL",
+      "mysql": "MySQL or MariaDB",
+      "nginx": "nginx",
+      "apache": "Apache",
+      "docker": "Docker",
+      "other": "Something listening"
+    },
+    "redis": {
+      "title": "Redis",
+      "hint": "What Redis says about itself. Read with INFO, which describes the server and never its contents.",
+      "version": "Version",
+      "memory": "Memory",
+      "noLimit": "{used}, no limit set",
+      "clients": "Clients",
+      "ops": "Operations per second",
+      "hitRate": "Hit rate",
+      "noLookups": "Nothing looked up yet",
+      "evictions": "Keys evicted",
+      "keys": "Keys",
+      "role": "Role",
+      "roleValue": "{role}, {replicas, plural, =0 {no replicas} one {# replica} other {# replicas}}",
+      "persistence": "Persistence",
+      "aofOn": "Append-only file on",
+      "saveOk": "Last snapshot succeeded",
+      "saveFailed": "Last snapshot failed",
+      "uptime": "Uptime",
+      "howRead": "The agent runs INFO and nothing else. It reads no key and no value, and never runs KEYS. Where your Redis needs a password, put it in the agent’s own config file on the machine."
     }
   }
 }

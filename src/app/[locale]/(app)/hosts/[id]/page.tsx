@@ -56,6 +56,8 @@ export default async function HostDetailPage({ params }: Props) {
   const host = toHost(row, samples[0] ?? null, nowMs);
   const notMeasured = t('detail.notMeasured');
   const bytes = (value: number | null) => (value === null ? notMeasured : formatMetricValue(value, 'bytes', locale));
+  // Counts read as counts: 184,221 rather than 184221, in whichever grouping the locale uses.
+  const count = (value: number | null) => (value === null ? notMeasured : format.number(value));
 
   return (
     <PageBody>
@@ -143,6 +145,84 @@ export default async function HostDetailPage({ params }: Props) {
           </>
         )}
       </MonitoringCard>
+
+      <MonitoringCard title={t('detail.servicesTitle')} description={t('detail.servicesHint')}>
+        {host.services.length === 0 ? (
+          // Two different answers, and the state tells them apart: an agent that looked and found
+          // nothing, or an agent that has not reported at all.
+          <p className="text-sm text-muted-foreground">{host.lastSeenAt === null ? t('detail.noReadings') : t('detail.noServices')}</p>
+        ) : (
+          <ul className="divide-y">
+            {host.services.map((service) => (
+              <li key={`${service.kind}:${service.port ?? service.name}`} className="py-3 first:pt-0 last:pb-0">
+                <p className="text-sm font-medium">
+                  {t(`services.${service.kind}`)}
+                  {service.version !== null && <span className="ml-2 font-normal text-muted-foreground">{service.version}</span>}
+                </p>
+                {/* How OpsWatch concluded this, in the agent's own words. Discovery is a guess made
+                    from a listening port and a process name, and an operator is entitled to know it. */}
+                <p className="mt-0.5 text-xs text-muted-foreground">{service.evidence}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </MonitoringCard>
+
+      {host.redis !== null && (
+        <MonitoringCard title={t('redis.title')} description={t('redis.hint')}>
+          <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Fact label={t('redis.version')} value={host.redis.version ?? notMeasured} />
+            <Fact
+              label={t('redis.memory')}
+              value={
+                host.redis.usedMemoryBytes === null
+                  ? notMeasured
+                  : host.redis.maxMemoryBytes === null
+                    ? // No limit is a real answer, and a common one. It is not "0 of 0".
+                      t('redis.noLimit', { used: bytes(host.redis.usedMemoryBytes) })
+                    : t('memoryOf', { used: bytes(host.redis.usedMemoryBytes), total: bytes(host.redis.maxMemoryBytes) })
+              }
+            />
+            <Fact label={t('redis.clients')} value={count(host.redis.connectedClients)} />
+            <Fact label={t('redis.ops')} value={count(host.redis.opsPerSecond)} />
+            <Fact
+              label={t('redis.hitRate')}
+              value={(() => {
+                const hits = host.redis?.keyspaceHits ?? null;
+                const misses = host.redis?.keyspaceMisses ?? null;
+                if (hits === null || misses === null) return notMeasured;
+                // Nothing has been looked up yet, so there is no rate — not a rate of zero.
+                if (hits + misses === 0) return t('redis.noLookups');
+                return `${((hits / (hits + misses)) * 100).toFixed(1)}%`;
+              })()}
+            />
+            <Fact label={t('redis.evictions')} value={count(host.redis.evictedKeys)} />
+            {/* A count of keys, never a key. Nothing here reads what is stored. */}
+            <Fact label={t('redis.keys')} value={count(host.redis.keys)} />
+            <Fact
+              label={t('redis.role')}
+              value={
+                host.redis.role === null
+                  ? notMeasured
+                  : t('redis.roleValue', { role: host.redis.role, replicas: host.redis.connectedReplicas ?? 0 })
+              }
+            />
+            <Fact
+              label={t('redis.persistence')}
+              value={
+                host.redis.lastSaveOk === null && host.redis.aofEnabled === null
+                  ? notMeasured
+                  : t(host.redis.aofEnabled === true ? 'redis.aofOn' : host.redis.lastSaveOk === true ? 'redis.saveOk' : 'redis.saveFailed')
+              }
+            />
+            <Fact
+              label={t('redis.uptime')}
+              value={host.redis.uptimeSeconds === null ? notMeasured : t('detail.days', { days: Math.floor(host.redis.uptimeSeconds / 86400) })}
+            />
+          </dl>
+          <p className="mt-3 text-xs text-muted-foreground">{t('redis.howRead')}</p>
+        </MonitoringCard>
+      )}
 
       <MonitoringCard title={t('detail.renameTitle')}>
         <RenameHostForm action={renameHostAction.bind(null, locale, host.id)} name={host.name} />

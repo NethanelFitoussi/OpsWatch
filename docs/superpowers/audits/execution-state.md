@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Linux hosts: the agent, the enrolment, the ingestion, the pages |
-| Last green gates | tsc 0 · eslint 0 · **2396 unit** · **407 e2e** · `roadmap:check` 0 |
-| Schema | drizzle **0030** — `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Current checkpoint | Service discovery on a host, and Redis-on-Ubuntu |
+| Last green gates | tsc 0 · eslint 0 · **2401 unit** · **408 e2e** · `roadmap:check` 0 |
+| Schema | drizzle **0031** — `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -91,6 +91,10 @@ losing the whole conversation loses no plan.
 - [x] **INV-1** `/api/v1/investigations/{id}`: §7's three bands, derived from the problem
 - [x] **UX-6** axe over 24 routes × 2 widths × 2 locales × 2 themes, zero WCAG 2.1 A/AA violations
 - [x] **UX-7** dark mode verified, including the failure no accessibility rule names
+- [x] **Service discovery, and Redis on Ubuntu** — the owner's concrete case. Services come from the
+      listening ports and the processes holding them, each with the sentence the agent wrote explaining
+      how it concluded that. Redis is read with `INFO` and an allow-list: no key, no value, never
+      `KEYS`. Verified against a real Redis 7.4.11 before it was wired to a page
 - [x] **Linux hosts, first vertical slice.** An agent the operator installs, not SSH: it runs where the
       data is and reports out, so a machine behind NAT works and OpsWatch holds no credential that could
       log in. Same signature scheme as the AWS forwarder. A host is instance-wide, not inside an AWS
@@ -136,9 +140,9 @@ The page now says that instead of hiding the button.
    version rather than read from the stack
 4. ~~Storage and database setup~~ — done, with the migration button deliberately absent. An external
    PostgreSQL backend is the next real step there, and it is a build rather than a setting
-5. ~~Linux host architecture and MVP~~ — done. **Next: service discovery on a host (Redis, PostgreSQL,
-   nginx, Docker), then Redis-on-Ubuntu as the owner's concrete case**, then host↔EC2 correlation on
-   `cloudInstanceId`, then charts over the samples already being stored
+5. ~~Linux host architecture, MVP, service discovery and Redis~~ — done. **Next: host↔EC2 correlation on
+   `cloudInstanceId` (`hosts.connection_id` exists for it), then charts over the samples already being
+   stored, then problems raised from host readings**
 6. Unified host/cloud identity (an agent on EC2 must not duplicate the discovered instance)
 7. Google Cloud, then DigitalOcean — against current official documentation, never from memory
 

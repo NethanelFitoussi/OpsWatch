@@ -195,3 +195,96 @@ describe('bounds and removal', () => {
     expect(toHost(host, null, NOW).latest).toBeNull();
   });
 });
+
+describe('what is running on a host', () => {
+  const service = (over: Record<string, unknown> = {}) => ({
+    kind: 'redis' as const,
+    name: 'redis-server',
+    port: 6379,
+    version: null,
+    evidence: 'Listening on port 6379, held by a process called redis-server',
+    ...over,
+  });
+
+  const redis = (over: Record<string, unknown> = {}) => ({
+    version: '7.4.11',
+    uptimeSeconds: 900,
+    connectedClients: 3,
+    usedMemoryBytes: 1_137_664,
+    maxMemoryBytes: null,
+    evictedKeys: 0,
+    keyspaceHits: 90,
+    keyspaceMisses: 10,
+    keys: 4,
+    opsPerSecond: 12,
+    role: 'master',
+    connectedReplicas: 0,
+    lastSaveOk: true,
+    aofEnabled: false,
+    ...over,
+  });
+
+  it('keeps what the agent found, with the evidence it gave', () => {
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), services: [service()], redis: redis(), atMs: NOW });
+
+    const [one] = listHosts(db, NOW);
+    expect(one.services).toHaveLength(1);
+    // The sentence the agent wrote, not one the server invented: discovery is a guess, and the page
+    // has to be able to say how it was made.
+    expect(one.services[0].evidence).toContain('Listening on port 6379');
+    expect(one.redis?.version).toBe('7.4.11');
+    expect(one.redis?.keys).toBe(4);
+  });
+
+  it('THE RULING: an agent that did not look does not blank what the last one found', () => {
+    /*
+     * `undefined` and `[]` are different answers. An older agent sends nothing because it cannot look;
+     * a current one that looked and found nothing sends an empty list. Treating the first as the second
+     * would empty the page every time an out-of-date machine reported.
+     */
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), services: [service()], redis: redis(), atMs: NOW });
+
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), atMs: NOW + 1000 });
+    const [kept] = listHosts(db, NOW + 1000);
+    expect(kept.services).toHaveLength(1);
+    expect(kept.redis).not.toBeNull();
+  });
+
+  it('THE RULING: an agent that looked and found nothing clears it', () => {
+    // Redis was uninstalled. A page still showing it would be showing something that is not there.
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), services: [service()], redis: redis(), atMs: NOW });
+
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), services: [], atMs: NOW + 1000 });
+    const [cleared] = listHosts(db, NOW + 1000);
+    expect(cleared.services).toEqual([]);
+  });
+
+  it('drops a stored service that no longer matches the schema rather than rendering it', () => {
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    // What an older build might have written. It is parsed back, not trusted.
+    recordReport(db, {
+      hostId: host.id,
+      identity: identity(),
+      sample: sample(),
+      services: [service(), { nonsense: true } as unknown as ReturnType<typeof service>],
+      atMs: NOW,
+    });
+    expect(listHosts(db, NOW)[0].services).toHaveLength(1);
+  });
+
+  it('says Redis has no memory limit rather than a limit of zero', () => {
+    // `maxmemory: 0` is how Redis says "no limit", and rendering it as a 0-byte ceiling would read as a
+    // server that may use nothing at all.
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), redis: redis({ maxMemoryBytes: null }), atMs: NOW });
+    expect(listHosts(db, NOW)[0].redis?.maxMemoryBytes).toBeNull();
+  });
+});

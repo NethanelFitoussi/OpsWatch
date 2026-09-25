@@ -100,7 +100,16 @@ export const POST = publicApiRoute({
     // And a machine id that changed is a different machine, which is an enrolment rather than a report.
     if (machineId !== undefined && host.machineId !== null && host.machineId !== machineId) return apiFailure('conflict');
 
-    recordReport(db, { hostId: host.id, identity: parsed.data.identity, sample: parsed.data.sample, atMs: nowMs });
+    recordReport(db, {
+      hostId: host.id,
+      identity: parsed.data.identity,
+      sample: parsed.data.sample,
+      // Passed through only when present: an older agent that does not look for services must not
+      // blank what the last one found, and one that looked and found none must clear it.
+      ...(parsed.data.services === undefined ? {} : { services: parsed.data.services }),
+      ...(parsed.data.redis === undefined ? {} : { redis: parsed.data.redis }),
+      atMs: nowMs,
+    });
     // Bounded here rather than by a job: one machine reporting every five minutes must not be able to
     // fill a self-hoster's disk between nightly passes.
     pruneSamples(db, host.id);

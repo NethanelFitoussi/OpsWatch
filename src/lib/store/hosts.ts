@@ -1,6 +1,16 @@
 import 'server-only';
 import { and, desc, eq, gte, lt } from 'drizzle-orm';
-import { HOST_STALE_AFTER_MS, type Host, type HostIdentity, type HostSample, type HostState } from '@opswatch/contract';
+import {
+  HOST_STALE_AFTER_MS,
+  hostServiceSchema,
+  redisFactsSchema,
+  type Host,
+  type HostIdentity,
+  type HostSample,
+  type HostService,
+  type HostState,
+  type RedisFacts,
+} from '@opswatch/contract';
 import { decrypt, encrypt, randomId, randomToken } from '../crypto';
 import type { Db } from '../db/client';
 import { hostSamples, hosts, type HostRow, type HostSampleRow } from '../db/schema';
@@ -91,7 +101,16 @@ export function hostClaiming(db: Db, machineId: string): HostRow | null {
  */
 export function recordReport(
   db: Db,
-  input: { hostId: string; identity: HostIdentity; sample: Omit<HostSample, 'at'>; atMs: number },
+  input: {
+    hostId: string;
+    identity: HostIdentity;
+    sample: Omit<HostSample, 'at'>;
+    /** What was running when the agent looked. `undefined` from an agent too old to look. */
+    services?: HostService[];
+    /** Redis's own figures, where one was found and could be asked. */
+    redis?: RedisFacts;
+    atMs: number;
+  },
 ): void {
   db.transaction((tx) => {
     const existing = tx.select().from(hosts).where(eq(hosts.id, input.hostId)).get();
@@ -107,6 +126,15 @@ export function recordReport(
         cloud: input.identity.cloud ?? null,
         cloudInstanceId: input.identity.cloudInstanceId ?? null,
         agentVersion: input.identity.agentVersion ?? null,
+        /*
+         * Only overwritten when the agent looked.
+         *
+         * An older agent that does not report services sends nothing, and keeping what the last one
+         * found is better than blanking the page — but an agent that looked and found none sends an
+         * empty list, and that must clear it. `undefined` and `[]` are different answers.
+         */
+        services: input.services === undefined ? (existing?.services ?? null) : input.services,
+        redis: input.redis === undefined ? (existing?.redis ?? null) : input.redis,
         // The first report is the enrolment: it is the moment the agent proved it holds the secret.
         enrolledAt: existing?.enrolledAt ?? input.atMs,
         lastSeenAt: input.atMs,
@@ -203,6 +231,13 @@ export function toHost(row: HostRow, latest: HostSampleRow | null, nowMs: number
             uptimeSeconds: latest.uptimeSeconds,
             disks: latest.disks,
           },
+    // Parsed back rather than trusted: the column is JSON an older build may have written, and a row
+    // that no longer matches the schema is dropped rather than rendered.
+    services: (row.services ?? []).flatMap((one) => {
+      const parsed = hostServiceSchema.safeParse(one);
+      return parsed.success ? [parsed.data] : [];
+    }),
+    redis: row.redis === null ? null : (redisFactsSchema.safeParse(row.redis).data ?? null),
   };
 }
 

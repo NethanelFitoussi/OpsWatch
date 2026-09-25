@@ -5711,6 +5711,10 @@
           "4": {
             "q": "Que lit-il ?",
             "a": "Les compteurs du noyau — /proc/stat, /proc/meminfo, /proc/loadavg, /proc/uptime — et la sortie de df. Il ne lit ni les environnements de processus, ni le contenu des fichiers, ni rien que vous n’ayez vu dans le script."
+          },
+          "5": {
+            "q": "Comment sait-il que Redis tourne ?",
+            "a": "À partir d’un port en écoute et du nom du processus qui le détient — et la page le dit exactement, pour chaque service trouvé. C’est une supposition, et OpsWatch vous la montre comme telle plutôt que de la présenter comme un fait vérifié. Si redis-cli est présent sur la machine, l’agent exécute aussi INFO, qui décrit le serveur et jamais son contenu : aucune clé n’est lue, aucune valeur n’est lue, et KEYS n’est jamais exécuté. Si votre Redis exige un mot de passe, placez OPSWATCH_REDIS_PASSWORD dans /etc/opswatch/agent.conf à côté de la clé."
           }
         },
         "next": {
@@ -6007,7 +6011,40 @@
         "name_invalid": "Donnez au serveur un nom de 80 caractères maximum.",
         "no_public_url": "OPSWATCH_PUBLIC_URL n’est pas défini.",
         "not_found": "Ce serveur n’existe plus."
-      }
+      },
+      "servicesTitle": "Ce qui tourne",
+      "servicesHint": "Trouvé par l’agent à partir des ports en écoute et des processus qui les détiennent. Chaque entrée dit comment.",
+      "noServices": "L’agent a cherché et n’a rien reconnu."
+    },
+    "services": {
+      "redis": "Redis",
+      "postgres": "PostgreSQL",
+      "mysql": "MySQL ou MariaDB",
+      "nginx": "nginx",
+      "apache": "Apache",
+      "docker": "Docker",
+      "other": "Quelque chose en écoute"
+    },
+    "redis": {
+      "title": "Redis",
+      "hint": "Ce que Redis dit de lui-même. Lu avec INFO, qui décrit le serveur et jamais son contenu.",
+      "version": "Version",
+      "memory": "Mémoire",
+      "noLimit": "{used}, aucune limite définie",
+      "clients": "Clients",
+      "ops": "Opérations par seconde",
+      "hitRate": "Taux de succès",
+      "noLookups": "Aucune lecture pour l’instant",
+      "evictions": "Clés évincées",
+      "keys": "Clés",
+      "role": "Rôle",
+      "roleValue": "{role}, {replicas, plural, =0 {aucun réplica} one {# réplica} other {# réplicas}}",
+      "persistence": "Persistance",
+      "aofOn": "Fichier append-only actif",
+      "saveOk": "Dernier instantané réussi",
+      "saveFailed": "Dernier instantané en échec",
+      "uptime": "Uptime",
+      "howRead": "L’agent exécute INFO et rien d’autre. Il ne lit aucune clé ni aucune valeur, et n’exécute jamais KEYS. Si votre Redis exige un mot de passe, placez-le dans le fichier de configuration de l’agent sur la machine."
     }
   }
 }

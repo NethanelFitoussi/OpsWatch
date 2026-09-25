@@ -35,6 +35,26 @@ const REPORT = {
     uptimeSeconds: 864_000,
     disks: [{ mount: '/', usedBytes: 12_000_000_000, totalBytes: 50_000_000_000 }],
   },
+  services: [
+    { kind: 'redis', name: 'redis-server', port: 6379, version: null, evidence: 'Listening on port 6379, held by a process called redis-server' },
+    { kind: 'nginx', name: 'nginx', port: 443, version: null, evidence: 'Listening on port 443, held by a process called nginx' },
+  ],
+  redis: {
+    version: '7.4.11',
+    uptimeSeconds: 900_000,
+    connectedClients: 4,
+    usedMemoryBytes: 1_137_664,
+    maxMemoryBytes: null,
+    evictedKeys: 0,
+    keyspaceHits: 900,
+    keyspaceMisses: 100,
+    keys: 4,
+    opsPerSecond: 12,
+    role: 'master',
+    connectedReplicas: 0,
+    lastSaveOk: true,
+    aofEnabled: false,
+  },
 };
 
 /** One signed report, exactly as the agent builds it: `v1:<timestamp>:<body>`, HMAC-SHA256. */
@@ -116,6 +136,31 @@ test('THE RULING: a host is enrolled, reports, and appears with what it measured
   await expect(main).toContainText('i-0e2e00000000');
   await expect(main).toContainText('AWS EC2');
   await expect(main).toContainText('/');
+});
+
+test('THE RULING: a discovered service says how it was discovered', async ({ page }) => {
+  /*
+   * Discovery is a guess made from a listening port and the name of the process holding it. An
+   * operator reading "Redis" on a page is entitled to know that is how OpsWatch decided — and the
+   * sentence is the agent's own, not a paraphrase the server invented.
+   */
+  const host = { ...(await enrol(page, 'e2e services')), machineId: 'e2e-machine-services' };
+  expect((await report(agent, host)).status()).toBe(202);
+
+  await page.goto(`/en/hosts/${host.hostId}`);
+  const main = page.locator('main');
+  await expect(main).toContainText('Redis');
+  await expect(main).toContainText('Listening on port 6379, held by a process called redis-server');
+  await expect(main).toContainText('nginx');
+
+  // Redis's own figures, read with INFO — which describes the server and never its contents.
+  await expect(main).toContainText('7.4.11');
+  // No limit is a real answer and a common one; "0 of 0" would not be.
+  await expect(main).toContainText('no limit set');
+  // 900 hits out of 1000 lookups.
+  await expect(main).toContainText('90.0%');
+  await expect(main).toContainText('master, no replicas');
+  await expect(main).toContainText('reads no key and no value');
 });
 
 test('THE RULING: a report that cannot prove who it is changes nothing', async ({ page }) => {

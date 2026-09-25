@@ -129,8 +129,75 @@ DISKS=$(df -P -B1 -x tmpfs -x devtmpfs -x overlay -x squashfs 2>/dev/null | awk 
 
 json_escape() { printf '%s' "$1" | sed 's/\\\\/\\\\\\\\/g; s/"/\\\\"/g'; }
 
+# --- what is running ------------------------------------------------------------------------------
+# Which ports are listening, and which process holds each one. 'ss' is on every modern distribution;
+# where it is missing, this step is simply skipped rather than guessed at.
+#
+# This is a guess, and every entry says how it was made — an operator reading "Redis" on a page is
+# entitled to know OpsWatch concluded it from a process name and a port, not from asking Redis.
+SERVICES=""
+add_service() { # kind name port version evidence
+  SERVICES="$SERVICES\${SERVICES:+,}{\\"kind\\":\\"$1\\",\\"name\\":\\"$(json_escape "$2")\\",\\"port\\":$3,\\"version\\":$4,\\"evidence\\":\\"$(json_escape "$5")\\"}"
+}
+
+if command -v ss >/dev/null 2>&1; then
+  # One line per listening TCP socket: the local address and the process that holds it. No addresses
+  # of anything connecting *to* it — who talks to this machine is not OpsWatch's business.
+  ss -ltnpH 2>/dev/null | awk '{print $4, $NF}' | sort -u | while IFS=' ' read -r addr proc; do
+    port=\${addr##*:}
+    case "$port" in ''|*[!0-9]*) continue;; esac
+    # The process name is the first quoted field of ss's users:(("name",pid=...)) column. Split on the
+    # quote rather than matched with a backreference: fewer characters to get wrong in three languages.
+    name=$(printf '%s' "$proc" | awk -F'"' '{print $2}')
+    [ -z "$name" ] && name="port $port"
+    case "$name" in
+      redis*)   printf 'redis\t%s\t%s\n' "$name" "$port";;
+      postgres) printf 'postgres\t%s\t%s\n' "$name" "$port";;
+      mysqld|mariadbd) printf 'mysql\t%s\t%s\n' "$name" "$port";;
+      nginx)    printf 'nginx\t%s\t%s\n' "$name" "$port";;
+      apache2|httpd) printf 'apache\t%s\t%s\n' "$name" "$port";;
+      dockerd)  printf 'docker\t%s\t%s\n' "$name" "$port";;
+    esac
+  done > /tmp/opswatch-services.$$ 2>/dev/null || true
+
+  while IFS='\t' read -r kind name port; do
+    [ -z "$kind" ] && continue
+    add_service "$kind" "$name" "$port" null "Listening on port $port, held by a process called $name"
+  done < /tmp/opswatch-services.$$
+  rm -f /tmp/opswatch-services.$$
+fi
+
+# Docker does not have to be listening on a port to be running, so it is looked for separately.
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  DOCKER_V=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "")
+  add_service docker docker null "$([ -n "$DOCKER_V" ] && printf '"%s"' "$(json_escape "$DOCKER_V")" || echo null)" \\
+    "The docker command answered on this machine"
+fi
+
+# --- Redis, where there is one --------------------------------------------------------------------
+# 'INFO' and nothing else. It returns no key and no value: it is the one command that describes the
+# server rather than its contents, which is why it is the only one this agent runs. A password, where
+# Redis needs one, comes from the agent's own config file — never from a prompt, never from anywhere
+# this script could read it out of Redis itself.
+REDIS_JSON=""
+if command -v redis-cli >/dev/null 2>&1; then
+  REDIS_INFO=$(redis-cli \${OPSWATCH_REDIS_PASSWORD:+-a "$OPSWATCH_REDIS_PASSWORD"} --no-auth-warning \\
+    -t 2 INFO 2>/dev/null || echo "")
+  if [ -n "$REDIS_INFO" ]; then
+    rfield() { printf '%s' "$REDIS_INFO" | awk -F: -v k="$1" '$1==k {gsub(/[\\r]/,"",$2); print $2; exit}'; }
+    rnum() { v=$(rfield "$1"); case "$v" in ''|*[!0-9.]*) echo null;; *) echo "$v";; esac; }
+    rstr() { v=$(rfield "$1"); [ -n "$v" ] && printf '"%s"' "$(json_escape "$v")" || echo null; }
+    # Keys are counted across every database. A count is not a key, and no key name is read.
+    RKEYS=$(printf '%s' "$REDIS_INFO" | awk -F'keys=' '/^db[0-9]+:/ {split($2,a,","); n+=a[1]} END {print (n==""?"null":n)}')
+    RMAX=$(rnum maxmemory); [ "$RMAX" = "0" ] && RMAX=null
+    RSAVE=$(rfield rdb_last_bgsave_status); case "$RSAVE" in ok) RSAVE=true;; "") RSAVE=null;; *) RSAVE=false;; esac
+    RAOF=$(rfield aof_enabled); case "$RAOF" in 1) RAOF=true;; 0) RAOF=false;; *) RAOF=null;; esac
+    REDIS_JSON=",\\"redis\\":{\\"version\\":$(rstr redis_version),\\"uptimeSeconds\\":$(rnum uptime_in_seconds),\\"connectedClients\\":$(rnum connected_clients),\\"usedMemoryBytes\\":$(rnum used_memory),\\"maxMemoryBytes\\":$RMAX,\\"evictedKeys\\":$(rnum evicted_keys),\\"keyspaceHits\\":$(rnum keyspace_hits),\\"keyspaceMisses\\":$(rnum keyspace_misses),\\"keys\\":$RKEYS,\\"opsPerSecond\\":$(rnum instantaneous_ops_per_sec),\\"role\\":$(rstr role),\\"connectedReplicas\\":$(rnum connected_slaves),\\"lastSaveOk\\":$RSAVE,\\"aofEnabled\\":$RAOF}"
+  fi
+fi
+
 BODY=$(cat <<JSON
-{"identity":{"hostname":"$(json_escape "$HOSTNAME")","machineId":"$(json_escape "$MACHINE_ID")","os":"$(json_escape "$OS")","kernel":"$(json_escape "$KERNEL")","arch":"$(json_escape "$ARCH")","cloud":"$CLOUD","cloudInstanceId":"$(json_escape "$CLOUD_ID")","agentVersion":"$AGENT_VERSION"},"sample":{"cpuPercent":$CPU_PERCENT,"memoryUsedBytes":\${MEM_USED:-null},"memoryTotalBytes":\${MEM_TOTAL:-null},"load1":$L1,"load5":$L5,"load15":$L15,"uptimeSeconds":\${UPTIME:-null},"disks":[$DISKS]}}
+{"identity":{"hostname":"$(json_escape "$HOSTNAME")","machineId":"$(json_escape "$MACHINE_ID")","os":"$(json_escape "$OS")","kernel":"$(json_escape "$KERNEL")","arch":"$(json_escape "$ARCH")","cloud":"$CLOUD","cloudInstanceId":"$(json_escape "$CLOUD_ID")","agentVersion":"$AGENT_VERSION"},"sample":{"cpuPercent":$CPU_PERCENT,"memoryUsedBytes":\${MEM_USED:-null},"memoryTotalBytes":\${MEM_TOTAL:-null},"load1":$L1,"load5":$L5,"load15":$L15,"uptimeSeconds":\${UPTIME:-null},"disks":[$DISKS]},"services":[$SERVICES]$REDIS_JSON}
 JSON
 )
 

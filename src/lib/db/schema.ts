@@ -1280,6 +1280,16 @@ export const hosts = sqliteTable(
     /** The AWS connection this host was matched to, on identity AWS gave it — never on a hostname. */
     connectionId: text('connection_id'),
     agentVersion: text('agent_version'),
+    /**
+     * What was running when the agent last looked, and what Redis said about itself.
+     *
+     * The latest state rather than a history: "which services are on this machine" is a question about
+     * now, and keeping a row per service per report would store the same answer 288 times a day. A
+     * service that disappears disappears, which is the honest rendering of an agent that no longer
+     * finds it.
+     */
+    services: text('services', { mode: 'json' }).$type<unknown[]>(),
+    redis: text('redis', { mode: 'json' }).$type<Record<string, unknown>>(),
     /** When the agent first proved it had the secret. Null while the host is still waiting. */
     enrolledAt: integer('enrolled_at'),
     lastSeenAt: integer('last_seen_at'),

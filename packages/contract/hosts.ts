@@ -63,6 +63,66 @@ export const hostSampleSchema = z.object({
 });
 export type HostSample = z.infer<typeof hostSampleSchema>;
 
+/**
+ * The services an agent can recognise on a host.
+ *
+ * A deliberately short list of things an operator would want to know are running, not an inventory of
+ * every process. `other` exists so a listening port OpsWatch does not recognise is still reported as
+ * something listening rather than silently dropped.
+ */
+export const HOST_SERVICE_KINDS = ['redis', 'postgres', 'mysql', 'nginx', 'apache', 'docker', 'other'] as const;
+export type HostServiceKind = (typeof HOST_SERVICE_KINDS)[number];
+export const hostServiceKindSchema = lenientEnum(HOST_SERVICE_KINDS, 'other');
+
+/**
+ * One service the agent found.
+ *
+ * **`evidence` is not decoration.** Discovery is a guess made from a listening port and the name of the
+ * process holding it, and an operator looking at "Redis" on a page is entitled to know how OpsWatch
+ * decided that. It is one short sentence the agent writes — never a paraphrase the server invents.
+ */
+export const hostServiceSchema = z.object({
+  kind: hostServiceKindSchema,
+  /** What it calls itself: the process name, or the port where there is nothing better. */
+  name: z.string().max(120),
+  port: z.number().int().nullable(),
+  /** As the service reported it, where it could be asked without credentials. */
+  version: z.string().max(80).nullable(),
+  /** How the agent concluded this. Shown to the operator verbatim. */
+  evidence: z.string().max(200),
+});
+export type HostService = z.infer<typeof hostServiceSchema>;
+
+/**
+ * What Redis says about itself, from `INFO`.
+ *
+ * An allow-list, and that is the whole point: `INFO` is safe to run and returns no key and no value,
+ * but forwarding all of it would send an operator's replication topology and client addresses to a
+ * database for no reason. These are the fields somebody diagnosing Redis actually reads.
+ *
+ * Every one is nullable. A field this build of Redis does not publish is not zero.
+ */
+export const redisFactsSchema = z.object({
+  version: z.string().max(40).nullable(),
+  uptimeSeconds: nullableNumberSchema,
+  connectedClients: nullableNumberSchema,
+  usedMemoryBytes: nullableNumberSchema,
+  /** What Redis was told it may use. `null` means no limit is set, which is a real and common answer. */
+  maxMemoryBytes: nullableNumberSchema,
+  evictedKeys: nullableNumberSchema,
+  keyspaceHits: nullableNumberSchema,
+  keyspaceMisses: nullableNumberSchema,
+  /** Keys across every database, which is a count and never a key. */
+  keys: nullableNumberSchema,
+  opsPerSecond: nullableNumberSchema,
+  role: z.string().max(20).nullable(),
+  connectedReplicas: nullableNumberSchema,
+  /** Whether the last background save succeeded, as Redis reports it. */
+  lastSaveOk: z.boolean().nullable(),
+  aofEnabled: z.boolean().nullable(),
+});
+export type RedisFacts = z.infer<typeof redisFactsSchema>;
+
 /** What the machine says it is. Reported by the agent, never inferred by the server. */
 export const hostIdentitySchema = z.object({
   hostname: z.string().max(253),
@@ -82,6 +142,10 @@ export type HostIdentity = z.infer<typeof hostIdentitySchema>;
 export const hostReportSchema = z.object({
   identity: hostIdentitySchema,
   sample: hostSampleSchema.omit({ at: true }),
+  /** Optional, so an older agent that does not look for services is still a valid report. */
+  services: z.array(hostServiceSchema).max(50).optional(),
+  /** Present only when Redis was found *and* could be asked. Absent is a real answer. */
+  redis: redisFactsSchema.optional(),
 });
 export type HostReport = z.infer<typeof hostReportSchema>;
 
@@ -102,6 +166,10 @@ export const hostSchema = z.object({
   lastSeenAt: epochSchema.nullable(),
   /** The most recent reading, or `null` when nothing has been reported. */
   latest: hostSampleSchema.nullable(),
+  /** What was running when the agent last looked. Empty until an agent that looks has reported. */
+  services: z.array(hostServiceSchema).default([]),
+  /** Redis's own figures, where one was found and could be asked. */
+  redis: redisFactsSchema.nullable().default(null),
 });
 export type Host = z.infer<typeof hostSchema>;
 
