@@ -10,6 +10,9 @@ import { getMetricSeries, latestValue, seriesById, type MetricSeries } from '@/l
 import { NO_VALUE } from '@/lib/monitoring/shared/format';
 import { timeWindow, type TimeRange } from '@/lib/monitoring/shared/time-range';
 import { resolveTarget } from '@/lib/monitoring/target';
+import { Link } from '@/i18n/navigation';
+import { getDb } from '@/lib/db/client';
+import { hostsByCloudInstance, linkHostToConnection } from '@/lib/store/hosts';
 import { STATE_FILL } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +38,22 @@ export async function Ec2Table({ scope, range, nowMs, search }: { scope: Monitor
   if (instances.length === 0) {
     return <p className="text-sm text-muted-foreground">{needle.length === 0 ? t('none') : t('noneMatching')}</p>;
   }
+
+  /*
+   * Which of these machines also has an OpsWatch agent on it.
+   *
+   * Matched on the id AWS gave the instance, which the agent reads from the instance metadata service
+   * and reports about itself — never on a hostname, because two machines can share one and merging them
+   * would attribute one machine's readings to another.
+   *
+   * The match happens here because this is where the evidence already is: this page has just listed the
+   * account's instances, so it costs one indexed read and no AWS call. A job doing the same would have
+   * to fetch every connection's instances to learn what this page already knows. The link is written
+   * only when it changes, so rendering is not a write.
+   */
+  const db = getDb();
+  const agents = hostsByCloudInstance(db, instances.map((instance) => instance.id));
+  for (const host of agents.values()) linkHostToConnection(db, host.id, scope.connectionId, nowMs);
 
   const queries = instances.flatMap((instance, i) => instanceQueries(instance.id, `i${i}`));
   const metrics = await getMetricSeries(target.data, queries, timeWindow(range, nowMs));
@@ -70,8 +89,20 @@ export async function Ec2Table({ scope, range, nowMs, search }: { scope: Monitor
             return (
               <TableRow key={instance.id}>
                 <TableCell>
-                  <span className="font-medium">{instance.name}</span>
-                  {instance.name !== instance.id && <span className="ml-2 font-mono text-xs text-muted-foreground">{instance.id}</span>}
+                  <span className="block font-medium">{instance.name}</span>
+                  {/* Its own line: side by side they run together for a screen reader and for anybody
+                      copying the cell, because a margin is not a separator in the text. */}
+                  {instance.name !== instance.id && <span className="block font-mono text-xs text-muted-foreground">{instance.id}</span>}
+                  {/* One machine, two sources: what AWS knows about the instance, and what the agent
+                      sees from inside it. Said here so nobody enrols a machine twice by not knowing. */}
+                  {agents.has(instance.id) && (
+                    <Link
+                      href={`/hosts/${agents.get(instance.id)!.id}`}
+                      className="mt-0.5 block text-xs font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {t('agentReports')}
+                    </Link>
+                  )}
                 </TableCell>
                 <TableCell>
                   <span className="flex items-center gap-2">

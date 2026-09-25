@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
+import { findConnection } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import { formatMetricValue } from '@/lib/monitoring/shared/format';
 import { MetricChart } from '@/components/monitoring/metric-chart';
@@ -60,6 +61,9 @@ export default async function HostDetailPage({ params }: Props) {
   const samples = listSamples(getDb(), id, 288);
   const host = toHost(row, samples[0] ?? null, nowMs);
   const findings = hostFindings(host);
+  // The AWS connection this machine was found in, where one has been. Null until somebody opens the
+  // instances page of the account that holds it — OpsWatch does not go looking across every account.
+  const connection = row.connectionId === null ? null : findConnection(getDb(), row.connectionId);
 
   // Only what was actually measured: a metric this kernel never published has no chart rather than an
   // empty box implying one should be there.
@@ -121,6 +125,24 @@ export default async function HostDetailPage({ params }: Props) {
           <Fact label={t('detail.cloudInstanceId')} value={host.cloudInstanceId ?? notMeasured} />
           <Fact label={t('detail.agentVersion')} value={host.agentVersion ?? notMeasured} />
         </dl>
+        {/*
+          * One machine, two sources.
+          *
+          * The link is written when the instances page of the AWS account holding this instance is
+          * rendered — matched on the id AWS gave it, which the agent read from the instance metadata
+          * service, never on a hostname. Until somebody looks at that account OpsWatch has the id and
+          * not the account, and says only what it knows.
+          */}
+        {connection !== null && host.cloudInstanceId !== null && (
+          <p className="mt-3 text-sm">
+            <Link
+              href={`/c/${connection.id}/${connection.regions[0]}/instances/list`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {t('detail.alsoInAws', { connection: connection.name, instance: host.cloudInstanceId })}
+            </Link>
+          </p>
+        )}
       </MonitoringCard>
 
       <MonitoringCard title={t('detail.latestTitle')} description={t('detail.latestHint')}>

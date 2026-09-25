@@ -168,7 +168,8 @@
       "keys": {
         "title": "Access keys",
         "description": "Paste an access key for a quick local test. Not recommended in production."
-      }
+      },
+      "agentReports": "An OpsWatch agent reports from inside this instance"
     },
     "name": "Connection name",
     "namePlaceholder": "Production",
@@ -6017,7 +6018,8 @@
       "noServices": "The agent looked and found nothing it recognises.",
       "historyTitle": "The last day",
       "historyHint": "One point per report. The line breaks wherever the agent went quiet — a gap is silence, not a measurement.",
-      "load1": "Load (1 min)"
+      "load1": "Load (1 min)",
+      "alsoInAws": "This machine is also EC2 instance {instance}, in {connection}"
     },
     "services": {
       "redis": "Redis",

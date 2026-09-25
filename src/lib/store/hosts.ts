@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, desc, eq, gte, lt } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lt } from 'drizzle-orm';
 import {
   HOST_STALE_AFTER_MS,
   hostServiceSchema,
@@ -177,6 +177,35 @@ export function pruneSamples(db: Db, hostId: string, keep = HOST_SAMPLE_LIMIT): 
     .get();
   if (oldest === undefined) return 0;
   return db.delete(hostSamples).where(and(eq(hostSamples.hostId, hostId), lt(hostSamples.at, oldest.at))).run().changes;
+}
+
+/**
+ * The hosts whose agents report one of these cloud instance ids, keyed by that id.
+ *
+ * One indexed read rather than one per instance, because the caller is rendering a table.
+ */
+export function hostsByCloudInstance(db: Db, instanceIds: readonly string[]): Map<string, HostRow> {
+  if (instanceIds.length === 0) return new Map();
+  const rows = db.select().from(hosts).where(inArray(hosts.cloudInstanceId, [...instanceIds])).all();
+  return new Map(rows.flatMap((row) => (row.cloudInstanceId === null ? [] : [[row.cloudInstanceId, row] as const])));
+}
+
+/**
+ * Records which AWS connection a host's machine was found in.
+ *
+ * **Matched on the id the provider gave the machine, never on a hostname** — two machines can share a
+ * hostname, and merging them would attribute one's readings to the other. The link is written where the
+ * evidence already is: the instances page has just listed that account's instances, so the match costs
+ * one indexed read and no AWS call of its own. A correlation job would have to fetch every connection's
+ * instances to learn the same thing.
+ *
+ * Only written when it changes, so rendering a page is not a write.
+ */
+export function linkHostToConnection(db: Db, hostId: string, connectionId: string, nowMs: number): boolean {
+  const row = findHost(db, hostId);
+  if (row === null || row.connectionId === connectionId) return false;
+  db.update(hosts).set({ connectionId, updatedAt: nowMs }).where(eq(hosts.id, hostId)).run();
+  return true;
 }
 
 /**

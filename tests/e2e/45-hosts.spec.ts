@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { login } from './helpers';
+import { MOTO_REGION, ensureMonitoringConnection, login } from './helpers';
 
 /**
  * Linux hosts, end to end (§E).
@@ -318,4 +318,38 @@ test('a host that has never reported has no charts at all', async ({ page }) => 
   const host = await enrol(page, 'e2e uncharted');
   await page.goto(`/en/hosts/${host.hostId}`);
   await expect(page.locator('main')).not.toContainText('The last day');
+});
+
+test('THE RULING: an agent on an EC2 instance is one machine, shown from both sides', async ({ page }) => {
+  /*
+   * Cloud discovery and an agent are two sources for one machine. Without the match an operator sees
+   * the instance in AWS and a separate "host" with the same name, and has no way to know they are the
+   * same box — which is how somebody ends up enrolling it twice.
+   *
+   * The match is on the id AWS gave the instance, which the agent reads from the instance metadata
+   * service. Never on a hostname: two machines can share one.
+   */
+  const connectionId = await ensureMonitoringConnection(page);
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/instances/list`);
+  // The table is behind a Suspense boundary: reading `main` straight after the navigation reads
+  // "Loading…" and finds no instance, which is how this spec quietly skipped itself for a while.
+  const rows = page.locator('main table tbody tr');
+  await rows.first().waitFor({ timeout: 20_000 });
+  const seeded = /i-[0-9a-f]{8,}/.exec(await page.locator('main').innerText())?.[0] ?? null;
+  expect(seeded, 'the moto seed should have produced an EC2 instance to match against').not.toBeNull();
+
+  const host = { ...(await enrol(page, 'e2e ec2 agent')), machineId: 'e2e-machine-ec2' };
+  const body = { ...REPORT, identity: { ...REPORT.identity, machineId: host.machineId, cloud: 'aws', cloudInstanceId: seeded! } };
+  expect((await report(agent, { ...host, body })).status()).toBe(202);
+
+  // The AWS side offers the way in…
+  await page.goto(`/en/c/${connectionId}/${MOTO_REGION}/instances/list`);
+  const link = page.getByRole('link', { name: 'An OpsWatch agent reports from inside this instance' });
+  await expect(link).toBeVisible();
+  await link.click();
+  await expect(page).toHaveURL(new RegExp(`/hosts/${host.hostId}$`));
+
+  // …and the machine side says which account it was found in, now that somebody has looked.
+  await expect(page.locator('main')).toContainText(seeded!);
+  await expect(page.locator('main')).toContainText('This machine is also EC2 instance');
 });

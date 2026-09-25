@@ -3,8 +3,11 @@ import { HOST_STALE_AFTER_MS } from '@opswatch/contract';
 import {
   createHost,
   deleteHost,
+  findHost,
   hostClaiming,
   hostSecret,
+  hostsByCloudInstance,
+  linkHostToConnection,
   hostState,
   listHosts,
   listSamples,
@@ -286,5 +289,53 @@ describe('what is running on a host', () => {
     const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
     recordReport(db, { hostId: host.id, identity: identity(), sample: sample(), redis: redis({ maxMemoryBytes: null }), atMs: NOW });
     expect(listHosts(db, NOW)[0].redis?.maxMemoryBytes).toBeNull();
+  });
+});
+
+describe('THE RULING: one machine, two sources — matched on identity, never on a name', () => {
+  it('finds the host reporting from an instance, by the id the provider gave it', () => {
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'api-prod-03', nowMs: NOW }, SECRET);
+    recordReport(db, { hostId: host.id, identity: identity({ cloudInstanceId: 'i-0abc123' }), sample: sample(), atMs: NOW });
+
+    const found = hostsByCloudInstance(db, ['i-0abc123', 'i-0nothing']);
+    expect(found.get('i-0abc123')?.id).toBe(host.id);
+    expect(found.has('i-0nothing')).toBe(false);
+  });
+
+  it('never matches on a hostname, however suggestive', () => {
+    /*
+     * Two machines can be called api-prod-03. Merging them would attribute one machine's CPU, memory
+     * and disks to another — and the operator would have no way to see that it had happened.
+     */
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    recordReport(db, { hostId: host.id, identity: identity({ cloudInstanceId: undefined }), sample: sample(), atMs: NOW });
+
+    // The hostname is api-prod-03 and so is the instance's Name tag; there is still no match.
+    expect(hostsByCloudInstance(db, ['api-prod-03']).size).toBe(0);
+  });
+
+  it('writes the link once, and not again on every render', () => {
+    // The instances page calls this each time it draws. A page that wrote on every render would turn
+    // reading a table into a stream of updates.
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    expect(linkHostToConnection(db, host.id, 'c1', NOW)).toBe(true);
+    expect(linkHostToConnection(db, host.id, 'c1', NOW + 1000)).toBe(false);
+    expect(findHost(db, host.id)?.connectionId).toBe('c1');
+  });
+
+  it('follows the machine when it moves to another account, rather than keeping a stale link', () => {
+    // An instance restored into a different account is still one machine; the newest evidence wins.
+    const db = createTestDb();
+    const { host } = createHost(db, { name: 'a', nowMs: NOW }, SECRET);
+    linkHostToConnection(db, host.id, 'c1', NOW);
+    expect(linkHostToConnection(db, host.id, 'c2', NOW + 1000)).toBe(true);
+    expect(findHost(db, host.id)?.connectionId).toBe('c2');
+  });
+
+  it('says nothing when asked about no instances at all', () => {
+    expect(hostsByCloudInstance(createTestDb(), []).size).toBe(0);
   });
 });
