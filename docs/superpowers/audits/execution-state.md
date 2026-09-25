@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | §M: every read of a growing table is bounded, and stays that way |
+| Current checkpoint | A machine in trouble says what to check, about what is actually on it |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0037** — `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -160,6 +160,14 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **What to check, for a machine.** A finding said what was wrong and stopped there. The worst
+      finding now carries an investigation — deterministic and written down, like the metric
+      catalogue's, because a model paraphrasing "the disk is nearly full" differently on each render
+      would be worse than the figure it replaced. It says what to **check**, never what is wrong:
+      OpsWatch read one figure from one machine and knows no cause. And the steps are for *this*
+      machine — the Redis step appears because the agent found Redis listening, and a step about
+      Docker on a box without it teaches an operator to skim, which is how the step that mattered gets
+      missed. The owner's own case, a filling disk on a Redis box, is the one it answers best
 - [x] **§M every store read is bounded.** An audit of all 48 unlimited `.all()` reads and of every
       `await` inside a loop. The store turned out healthy — reads are windowed, capped where they are
       written (`MAX_COMMITS = 10`), or over sets an operator creates by hand; the provider loops are

@@ -445,3 +445,34 @@ test('THE RULING: a machine inside the account shows up where the operator asks 
   await machines.getByRole('link', { name: 'e2e redis box' }).click();
   await expect(page).toHaveURL(new RegExp(`/hosts/${host.hostId}$`));
 });
+
+test('THE RULING: a machine in trouble says what to check, and only about what is on it', async ({ page }) => {
+  /*
+   * A finding tells an operator what is wrong. It is not much use unless it also tells them where to
+   * look — and the owner's own case is Redis on an Ubuntu box, where a filling disk is usually the
+   * snapshot or the append-only file. Saying so is the difference between a monitoring tool and a
+   * tool somebody can act on.
+   */
+  const host = { ...(await enrol(page, 'e2e guidance')), machineId: 'e2e-machine-guidance' };
+  const full = { ...REPORT.sample, disks: [{ mount: '/', usedBytes: 49_000_000_000, totalBytes: 50_000_000_000 }] };
+  const body = { ...REPORT, identity: { ...REPORT.identity, machineId: host.machineId }, sample: full };
+  expect((await report(agent, { ...host, body })).status()).toBe(202);
+
+  await page.goto(`/en/hosts/${host.hostId}`);
+  const main = await page.locator('main').innerText();
+  expect(main).toContain('What to check');
+  expect(main).toContain('sudo du -xh');
+  // The seeded report says Redis and nginx are listening, so the Redis step belongs here…
+  expect(main).toContain('Redis is running here');
+  // …and Docker, which the agent did not find, does not.
+  expect(main).not.toContain('Docker is running here');
+
+  // It says what to check, not what is wrong: OpsWatch read one figure and knows no cause.
+  expect(main).toContain('not a diagnosis of why');
+
+  // In French too, and never a key path.
+  await page.goto(`/fr/hosts/${host.hostId}`);
+  const french = await page.locator('main').innerText();
+  expect(french).toContain('Que vérifier');
+  expect(french).not.toMatch(/Hosts\.guidance/);
+});

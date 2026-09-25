@@ -6219,6 +6219,56 @@
       "disk_nearly_full": "{subject} is {percent}% full",
       "disk_full": "{subject} is {percent}% full",
       "memory_nearly_exhausted": "Memory is {percent}% used"
+    },
+    "guidance": {
+      "title": "What to check",
+      "hint": "OpsWatch read one figure from this machine. These are things to look at, not a diagnosis of why.",
+      "disk_full": {
+        "checks": {
+          "0": "Which directory is holding it: <code>sudo du -xh --max-depth=1 / | sort -h | tail</code>, then the same one level down.",
+          "1": "Log files that nobody rotates. <code>/var/log</code> is the usual one, and a service writing its own log elsewhere is the usual surprise.",
+          "2": "Deleted files a process still has open — they keep their space until it closes them: <code>sudo lsof +L1</code>.",
+          "3": "Package caches and old kernels, which are safe to clear and often large.",
+          "4": "Whether the filesystem is the one you think. A full <code>/</code> and an empty <code>/data</code> look identical from an application's point of view until a write fails."
+        },
+        "services": {
+          "redis": "Redis is running here. Check whether it is writing snapshots or an append-only file to this filesystem, and how large they have grown — <code>dir</code> and <code>dbfilename</code> in its config say where.",
+          "docker": "Docker is running here. Images, stopped containers and unused volumes accumulate; <code>docker system df</code> says how much they hold."
+        }
+      },
+      "memory_nearly_exhausted": {
+        "checks": {
+          "0": "What is holding it: <code>ps -eo pid,comm,rss --sort=-rss | head</code>.",
+          "1": "Whether the kernel has already killed something for it — <code>dmesg -T | grep -i oom</code> — which would explain a service that restarted for no apparent reason.",
+          "2": "Whether there is swap, and whether it is being used. A machine with none goes from fine to killing processes with nothing in between.",
+          "3": "Whether the figure is cache rather than use. Linux counts page cache as used until something else needs it, and <code>free -h</code> separates them."
+        },
+        "services": {
+          "redis": "Redis is running here. Check its <code>used_memory</code> against its <code>maxmemory</code> — with no limit set it will keep growing until the kernel intervenes, and the machine's memory is the only ceiling."
+        }
+      },
+      "stopped_reporting": {
+        "checks": {
+          "0": "Whether the machine is up at all. This says only that nothing has arrived from it.",
+          "1": "Whether the agent is still scheduled: its cron entry, and <code>/etc/opswatch/agent.conf</code>.",
+          "2": "Whether the machine can still reach this OpsWatch — a firewall change or a rotated address stops reports without touching the machine.",
+          "3": "Whether the secret still matches. A machine removed and re-enrolled here has a new one, and the old agent's reports are refused."
+        },
+        "services": {}
+      },
+      "disk_nearly_full": {
+        "checks": {
+          "0": "Which directory is holding it: <code>sudo du -xh --max-depth=1 / | sort -h | tail</code>, then the same one level down.",
+          "1": "Log files that nobody rotates. <code>/var/log</code> is the usual one, and a service writing its own log elsewhere is the usual surprise.",
+          "2": "Deleted files a process still has open — they keep their space until it closes them: <code>sudo lsof +L1</code>.",
+          "3": "Package caches and old kernels, which are safe to clear and often large.",
+          "4": "Whether the filesystem is the one you think. A full <code>/</code> and an empty <code>/data</code> look identical from an application's point of view until a write fails."
+        },
+        "services": {
+          "redis": "Redis is running here. Check whether it is writing snapshots or an append-only file to this filesystem, and how large they have grown — <code>dir</code> and <code>dbfilename</code> in its config say where.",
+          "docker": "Docker is running here. Images, stopped containers and unused volumes accumulate; <code>docker system df</code> says how much they hold."
+        }
+      }
     }
   },
   "GoogleWizard": {

@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { SectionCard } from '@/components/section-card';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
+import type { ReactNode } from 'react';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { findConnection } from '@/lib/connections/repository';
@@ -14,6 +15,7 @@ import { getDb } from '@/lib/db/client';
 import { formatMetricValue } from '@/lib/monitoring/shared/format';
 import { MetricChart } from '@/components/monitoring/metric-chart';
 import { hostFindings } from '@/lib/monitoring/shared/host-findings';
+import { hostGuidance } from '@/lib/monitoring/shared/host-guidance';
 import { hasReadings, hostSeries } from '@/lib/monitoring/shared/host-series';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { findHost, listSamples, toHost } from '@/lib/store/hosts';
@@ -25,6 +27,11 @@ import { RenameHostForm, UnlinkHostForm } from '../host-forms';
 type Props = { params: Promise<{ locale: string; id: string }> };
 
 export const generateMetadata = localizedTitle('Hosts.detail.title');
+
+/** A command, shown as one. Breakable, because a pipeline is longer than a phone is wide. */
+const code = (chunks: ReactNode) => (
+  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs break-all">{chunks}</code>
+);
 
 const STATE_WORD = { healthy: STATE_TEXT.healthy, stale: STATE_TEXT.stale, waiting: STATE_TEXT.unknown, unknown: STATE_TEXT.unknown } as const;
 
@@ -50,6 +57,7 @@ export default async function HostDetailPage({ params }: Props) {
   const { locale } = await initProtectedRoute(params);
   const { id } = await params;
   const t = await getTranslations('Hosts');
+  const tGuidance = await getTranslations('Hosts.guidance');
   const format = await getFormatter();
 
   const row = findHost(getDb(), id);
@@ -61,6 +69,8 @@ export default async function HostDetailPage({ params }: Props) {
   const samples = listSamples(getDb(), id, 288);
   const host = toHost(row, samples[0] ?? null, nowMs);
   const findings = hostFindings(host);
+  // The worst one: a machine has one thing wrong with it, not one per filesystem.
+  const guidance = hostGuidance(findings[0] ?? { kind: 'stopped_reporting', level: 'critical', subject: '', percent: null }, host);
   // The AWS connection this machine was found in, where one has been. Null until somebody opens the
   // instances page of the account that holds it — OpsWatch does not go looking across every account.
   const connection = row.connectionId === null ? null : findConnection(getDb(), row.connectionId);
@@ -110,9 +120,37 @@ export default async function HostDetailPage({ params }: Props) {
         <p className="mt-1 text-sm text-muted-foreground">
           {host.lastSeenAt === null ? t('detail.neverReportedHint') : t('lastReport', { when: format.relativeTime(new Date(host.lastSeenAt)) })}
         </p>
+
         {host.state === 'stale' && <p className="mt-2 text-sm">{t('detail.staleHint')}</p>}
         {host.state === 'waiting' && <p className="mt-2 text-sm">{t('detail.waitingHint')}</p>}
       </MonitoringCard>
+
+      {/*
+        * What to check, for the worst finding only.
+        *
+        * One investigation rather than one per finding: a machine whose disk is full on two
+        * filesystems has one thing wrong with it, and two identical lists would be a page telling
+        * somebody to run the same commands twice. The worst is what `hostFindings` sorts to the front.
+        *
+        * Deterministic and written down, never generated — and it says what to check, not what is
+        * wrong. OpsWatch read one figure from one machine; it does not know why the disk filled.
+        */}
+      {findings.length > 0 && (
+        <MonitoringCard title={tGuidance('title')} description={tGuidance('hint')}>
+          {/* A command is rendered as one. These were written with backticks, which nothing parses —
+              so the reader saw the backticks and had to work out which part to type. */}
+          <ol className="list-decimal space-y-2 pl-5 text-sm">
+            {Array.from({ length: guidance.checks }, (_, index) => (
+              <li key={index}>{tGuidance.rich(`${guidance.id}.checks.${index}`, { code })}</li>
+            ))}
+            {/* Only what the agent actually found running here. A step about Redis on a machine with
+                no Redis is a step that teaches an operator to skim the list. */}
+            {guidance.services.map((service) => (
+              <li key={service}>{tGuidance.rich(`${guidance.id}.services.${service}`, { code })}</li>
+            ))}
+          </ol>
+        </MonitoringCard>
+      )}
 
       <MonitoringCard title={t('detail.machineTitle')} description={t('detail.machineHint')}>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

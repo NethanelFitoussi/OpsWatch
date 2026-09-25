@@ -6219,6 +6219,56 @@
       "disk_nearly_full": "{subject} est rempli à {percent}%",
       "disk_full": "{subject} est rempli à {percent}%",
       "memory_nearly_exhausted": "La mémoire est utilisée à {percent}%"
+    },
+    "guidance": {
+      "title": "Que vérifier",
+      "hint": "OpsWatch a lu un chiffre sur cette machine. Voici des pistes à examiner, pas un diagnostic de la cause.",
+      "disk_full": {
+        "checks": {
+          "0": "Quel répertoire l’occupe : <code>sudo du -xh --max-depth=1 / | sort -h | tail</code>, puis le même un niveau plus bas.",
+          "1": "Des fichiers de journal que personne ne fait tourner. <code>/var/log</code> est le cas habituel, et un service qui écrit son propre journal ailleurs est la surprise habituelle.",
+          "2": "Des fichiers supprimés qu’un processus garde ouverts — leur espace n’est rendu qu’à la fermeture : <code>sudo lsof +L1</code>.",
+          "3": "Les caches de paquets et les anciens noyaux, sans risque à supprimer et souvent volumineux.",
+          "4": "Que le système de fichiers est bien celui que vous croyez. Un <code>/</code> plein et un <code>/data</code> vide sont indiscernables du point de vue d’une application jusqu’à l’échec d’une écriture."
+        },
+        "services": {
+          "redis": "Redis tourne ici. Vérifiez s’il écrit des instantanés ou un fichier append-only sur ce système de fichiers, et leur taille — <code>dir</code> et <code>dbfilename</code> dans sa configuration indiquent où.",
+          "docker": "Docker tourne ici. Images, conteneurs arrêtés et volumes inutilisés s’accumulent ; <code>docker system df</code> indique ce qu’ils occupent."
+        }
+      },
+      "memory_nearly_exhausted": {
+        "checks": {
+          "0": "Ce qui la retient : <code>ps -eo pid,comm,rss --sort=-rss | head</code>.",
+          "1": "Si le noyau a déjà tué un processus pour cela — <code>dmesg -T | grep -i oom</code> — ce qui expliquerait un service redémarré sans raison apparente.",
+          "2": "S’il y a du swap, et s’il est utilisé. Une machine sans swap passe de « tout va bien » à « des processus sont tués » sans étape intermédiaire.",
+          "3": "Si le chiffre correspond au cache plutôt qu’à l’usage. Linux compte le cache de pages comme utilisé tant que rien d’autre n’en a besoin, et <code>free -h</code> les distingue."
+        },
+        "services": {
+          "redis": "Redis tourne ici. Comparez son <code>used_memory</code> à son <code>maxmemory</code> — sans limite définie, il continuera de croître jusqu’à ce que le noyau intervienne, la mémoire de la machine étant le seul plafond."
+        }
+      },
+      "stopped_reporting": {
+        "checks": {
+          "0": "Si la machine est seulement allumée. Ceci indique uniquement que rien n’en est arrivé.",
+          "1": "Si l’agent est toujours planifié : son entrée cron, et <code>/etc/opswatch/agent.conf</code>.",
+          "2": "Si la machine peut encore joindre cet OpsWatch — un changement de pare-feu ou une adresse modifiée arrête les rapports sans toucher à la machine.",
+          "3": "Si le secret correspond toujours. Une machine supprimée puis réinscrite ici en a un nouveau, et les rapports de l’ancien agent sont refusés."
+        },
+        "services": {}
+      },
+      "disk_nearly_full": {
+        "checks": {
+          "0": "Quel répertoire l’occupe : <code>sudo du -xh --max-depth=1 / | sort -h | tail</code>, puis le même un niveau plus bas.",
+          "1": "Des fichiers de journal que personne ne fait tourner. <code>/var/log</code> est le cas habituel, et un service qui écrit son propre journal ailleurs est la surprise habituelle.",
+          "2": "Des fichiers supprimés qu’un processus garde ouverts — leur espace n’est rendu qu’à la fermeture : <code>sudo lsof +L1</code>.",
+          "3": "Les caches de paquets et les anciens noyaux, sans risque à supprimer et souvent volumineux.",
+          "4": "Que le système de fichiers est bien celui que vous croyez. Un <code>/</code> plein et un <code>/data</code> vide sont indiscernables du point de vue d’une application jusqu’à l’échec d’une écriture."
+        },
+        "services": {
+          "redis": "Redis tourne ici. Vérifiez s’il écrit des instantanés ou un fichier append-only sur ce système de fichiers, et leur taille — <code>dir</code> et <code>dbfilename</code> dans sa configuration indiquent où.",
+          "docker": "Docker tourne ici. Images, conteneurs arrêtés et volumes inutilisés s’accumulent ; <code>docker system df</code> indique ce qu’ils occupent."
+        }
+      }
     }
   },
   "GoogleWizard": {
