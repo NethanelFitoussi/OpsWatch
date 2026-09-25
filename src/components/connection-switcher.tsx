@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
  *     could only be entered through one of them. Each region is its own entry.
  */
 
-export type ShellConnection = Pick<ConnectionRow, 'id' | 'name' | 'regions' | 'status'>;
+export type ShellConnection = Pick<ConnectionRow, 'id' | 'name' | 'provider' | 'regions' | 'status'>;
 
 export function ConnectionSwitcher({ connections }: { connections: ShellConnection[] }) {
   const t = useTranslations('Shell');
@@ -58,7 +58,13 @@ export function ConnectionSwitcher({ connections }: { connections: ShellConnecti
       <DropdownMenuContent align="start" className="w-72">
         <DropdownMenuLabel>{t('account')}</DropdownMenuLabel>
         {connections.map((c) => {
-          const usable = isUsableStatus(c.status);
+          /*
+            * A region is a destination only where the sections behind it exist. Every one of them is a
+            * page about an AWS service, so a Google or DigitalOcean connection offering `eu-west-1`
+            * here would be offering a page that then asks AWS about an account that is not there.
+            * It links to its own connection page, which is where what it can show actually lives.
+            */
+          const usable = c.provider === 'aws' && isUsableStatus(c.status);
           return (
             <div key={c.id}>
               <DropdownMenuLabel className="pb-0 text-xs font-medium text-muted-foreground">{c.name}</DropdownMenuLabel>
@@ -78,7 +84,7 @@ export function ConnectionSwitcher({ connections }: { connections: ShellConnecti
               ) : (
                 <DropdownMenuItem asChild>
                   <Link href={`/accounts/${c.id}`} className="text-muted-foreground">
-                    {t('notMonitorable')}
+                    {c.provider === 'aws' ? t('notMonitorable') : t('openConnection')}
                   </Link>
                 </DropdownMenuItem>
               )}

@@ -90,7 +90,8 @@
       "collapse": "Collapse the menu",
       "expand": "Expand the menu"
     },
-    "noSelection": "Choose a connection"
+    "noSelection": "Choose a connection",
+    "openConnection": "Open the connection"
   },
   "Status": {
     "draft": "Setup incomplete",

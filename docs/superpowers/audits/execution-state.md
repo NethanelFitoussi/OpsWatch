@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | DigitalOcean connected, with the narrowest scope it offers |
+| Current checkpoint | A monitoring section is only offered to the provider it is about |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -160,6 +160,14 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **A section is only offered to the provider it is about.** Adding two providers left a live
+      defect behind: every section under `/c/{id}/{region}` is a page about an AWS service, and a
+      Google or DigitalOcean connection has regions and a usable status like any other — so it passed
+      every check, appeared in the switcher with regions to click, and could be picked as the default
+      environment a section link opens. The page then asked AWS about an account that does not exist,
+      which an operator reads as "OpsWatch cannot see my project" rather than "this page is not about
+      it". A section that is not about a provider is a 404 now, the switcher offers those connections
+      as connections to open, and `preferredSelection` will not land anybody on one
 - [x] **DigitalOcean, with the narrowest scope it offers.** A personal access token scoped to
       `droplet:read`, not the `api:read` alias — DigitalOcean's custom scopes make least privilege
       available, and asking for read-everything when the product reads one resource is asking for

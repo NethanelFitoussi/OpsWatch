@@ -90,7 +90,8 @@
       "collapse": "Réduire le menu",
       "expand": "Déplier le menu"
     },
-    "noSelection": "Choisir une connexion"
+    "noSelection": "Choisir une connexion",
+    "openConnection": "Ouvrir la connexion"
   },
   "Status": {
     "draft": "Configuration incomplète",

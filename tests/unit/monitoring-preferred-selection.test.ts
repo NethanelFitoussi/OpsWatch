@@ -11,7 +11,9 @@ import type { ConnectionRow } from '@/lib/db/schema';
  */
 
 const connection = (id: string, over: Partial<ConnectionRow> = {}): ConnectionRow =>
-  ({ id, name: id, regions: ['us-east-1', 'eu-west-1'], status: 'ok', ...over }) as ConnectionRow;
+  // AWS, because every monitoring section is about an AWS service and these are the connections
+  // those links are for. `monitoring-selection-provider.test.ts` holds what happens for the others.
+  ({ id, name: id, provider: 'aws', regions: ['us-east-1', 'eu-west-1'], status: 'ok', ...over }) as ConnectionRow;
 
 const rows = [connection('prod'), connection('client-b')];
 

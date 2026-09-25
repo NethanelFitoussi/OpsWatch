@@ -90,3 +90,25 @@ test('DigitalOcean renders at 360px in French, with no raw key anywhere', async 
     expect(await page.locator('main').innerText(), path).not.toMatch(/DoWizard\.|DoSetup\.|GettingStarted\./);
   }
 });
+
+test('THE RULING: the monitoring sections are not offered to a connection they are not about', async ({ page }) => {
+  /*
+   * Every section under /c/{id}/{region} is a page about an AWS service. A DigitalOcean connection has
+   * a name and a status like any other, so without a check it appeared in the switcher with regions
+   * that led to pages which then asked AWS about an account that does not exist — which an operator
+   * reads as "OpsWatch cannot see my droplets" rather than "this page is not about them".
+   */
+  const id = await create(page, 'Not an AWS account');
+  await page.goto(`/en/accounts/${id}`);
+
+  // Hand-typed or bookmarked, it is a 404 rather than a page apologising for AWS.
+  await page.goto(`/en/c/${id}/eu-west-1/containers/services`);
+  await expect(page.locator('main')).toContainText('Page not found');
+
+  // And the switcher offers it as a connection to open, not as regions to monitor.
+  await page.goto('/en/accounts');
+  await page.getByRole('button', { name: 'Connection', exact: true }).click();
+  const menu = page.getByRole('menu');
+  await expect(menu).toContainText('Not an AWS account');
+  await expect(menu.getByRole('menuitem', { name: 'Open the connection' }).first()).toBeVisible();
+});
