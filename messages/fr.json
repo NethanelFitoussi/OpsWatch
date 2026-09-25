@@ -5858,6 +5858,12 @@
     },
     "secretTitle": "Votre secret de signature",
     "secretHint": "Copiez-le maintenant. Il est affiché une seule fois. Vous le collerez dans le paramètre OpsWatchIngestSecret au déploiement. Il authentifie la Lambda auprès de cet OpsWatch ; ce n’est pas un identifiant AWS et il ne donne accès à rien dans votre compte.",
+    "regions": {
+      "title": "Quelle région",
+      "hint": "Un forwarder vit dans une seule région et ne peut être atteint que par des filtres d’abonnement de cette région ; chaque région de ce compte se configure donc séparément.",
+      "forwarding": "transmet",
+      "notSetUp": "non configurée"
+    },
     "install": {
       "title": "Installer la Lambda de transfert",
       "hint": "Une seconde pile, distincte de celle qui connecte le compte.",
@@ -5866,7 +5872,7 @@
       "deploy": "Déployez-le dans {region}, en collant le secret quand il est demandé :",
       "verifyStep": "Recopiez la sortie ForwarderArn ici et vérifiez-la.",
       "noSecretInTemplate": "Le modèle ne contient aucun secret. Il peut être lu, comparé et conservé ; le secret est fourni au déploiement et ne vit que dans l’environnement de la fonction.",
-      "oneRegionOnly": "Cela transfère uniquement les groupes de journaux de {region}. Un filtre d’abonnement CloudWatch ne peut atteindre qu’une Lambda de sa propre région, donc rien dans {others} n’est transféré par cette pile."
+      "perRegion": "Chaque région se configure séparément : choisissez-en une autre ci-dessus une fois celle-ci en place."
     },
     "forwarder": {
       "title": "Lambda de transfert",

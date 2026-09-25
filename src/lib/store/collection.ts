@@ -4,10 +4,12 @@ import { randomId, randomToken } from '../crypto';
 import type { Db } from '../db/client';
 import {
   awsCollection,
+  awsCollectionStacks,
   awsForwardedGroups,
   ingestEvents,
   ingestStats,
   type AwsCollectionRow,
+  type AwsCollectionStackRow,
   type AwsForwardedGroupRow,
   type IngestEventRow,
 } from '../db/schema';
@@ -49,12 +51,6 @@ export function readCollection(db: Db, connectionId: string, nowMs = 0): AwsColl
       retentionHours: 24,
       ingestSecretCiphertext: null,
       secretRotatedAt: null,
-      stackState: 'absent' as const,
-      stackName: null,
-      stackId: null,
-      forwarderArn: null,
-      forwarderVersion: null,
-      verifiedAt: null,
       createdAt: nowMs,
       updatedAt: nowMs,
     }
@@ -70,12 +66,6 @@ export type CollectionPatch = Partial<
     | 'retentionHours'
     | 'ingestSecretCiphertext'
     | 'secretRotatedAt'
-    | 'stackState'
-    | 'stackName'
-    | 'stackId'
-    | 'forwarderArn'
-    | 'forwarderVersion'
-    | 'verifiedAt'
   >
 >;
 
@@ -84,6 +74,59 @@ export function writeCollection(db: Db, connectionId: string, patch: CollectionP
   const row: AwsCollectionRow = { ...current, ...patch, connectionId, updatedAt: nowMs };
   db.insert(awsCollection).values(row).onConflictDoUpdate({ target: awsCollection.connectionId, set: { ...row } }).run();
   return row;
+}
+
+/* ------------------------------------------------------------------ the stack, per region */
+
+/** What a region with no stack has. Returned, never written: `absent` is the absence of a row. */
+export function readStack(db: Db, connectionId: string, region: string, nowMs = 0): AwsCollectionStackRow {
+  return (
+    db
+      .select()
+      .from(awsCollectionStacks)
+      .where(and(eq(awsCollectionStacks.connectionId, connectionId), eq(awsCollectionStacks.region, region)))
+      .get() ?? {
+      connectionId,
+      region,
+      stackState: 'absent' as const,
+      stackName: null,
+      stackId: null,
+      forwarderArn: null,
+      forwarderVersion: null,
+      verifiedAt: null,
+      createdAt: nowMs,
+      updatedAt: nowMs,
+    }
+  );
+}
+
+/** Every region of one account that has a stack row, in the order the operator reads them. */
+export function listStacks(db: Db, connectionId: string): AwsCollectionStackRow[] {
+  return db
+    .select()
+    .from(awsCollectionStacks)
+    .where(eq(awsCollectionStacks.connectionId, connectionId))
+    .orderBy(asc(awsCollectionStacks.region))
+    .all();
+}
+
+export type StackPatch = Partial<
+  Pick<AwsCollectionStackRow, 'stackState' | 'stackName' | 'stackId' | 'forwarderArn' | 'forwarderVersion' | 'verifiedAt'>
+>;
+
+export function writeStack(db: Db, connectionId: string, region: string, patch: StackPatch, nowMs: number): AwsCollectionStackRow {
+  const current = readStack(db, connectionId, region, nowMs);
+  const row: AwsCollectionStackRow = { ...current, ...patch, connectionId, region, updatedAt: nowMs };
+  db.insert(awsCollectionStacks)
+    .values(row)
+    .onConflictDoUpdate({ target: [awsCollectionStacks.connectionId, awsCollectionStacks.region], set: { ...row } })
+    .run();
+  return row;
+}
+
+/** Forgets every region's stack for one account, for a disconnect that removed them all. */
+export function deleteStacks(db: Db, connectionId: string): number {
+  return db.delete(awsCollectionStacks).where(eq(awsCollectionStacks.connectionId, connectionId)).run().changes;
 }
 
 /** Every connection with a forwarder that could be sending. The ingestion endpoint's lookup. */

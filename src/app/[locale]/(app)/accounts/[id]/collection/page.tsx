@@ -19,7 +19,7 @@ import { FORWARDER_VERSION } from '@/lib/ingest/forwarder-version';
 import { forwarderState } from '@/lib/monitoring/shared/forwarder-state';
 import { formatMetricValue } from '@/lib/monitoring/shared/format';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
-import { listForwardedGroups, readCollection, readIngestTraffic } from '@/lib/store/collection';
+import { listForwardedGroups, listStacks, readCollection, readIngestTraffic, readStack } from '@/lib/store/collection';
 import { STATE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 import {
@@ -33,7 +33,7 @@ import {
 import { CollectionSettingsForm, DisableCollectionForm, EnableCollectionForm, LogGroupToggle, RotateSecretForm, VerifyForwarderForm } from './forms';
 import { LogGroupPicker } from './picker';
 
-type Props = { params: Promise<{ locale: string; id: string }> };
+type Props = { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ region?: string }> };
 
 export const generateMetadata = localizedTitle('Collection.metaTitle');
 
@@ -58,7 +58,7 @@ async function readDeadLetters(connectionId: string, region: string, awsAccountI
   return depth.ok ? depth.data : null;
 }
 
-export default async function CollectionPage({ params }: Props) {
+export default async function CollectionPage({ params, searchParams }: Props) {
   const { locale } = await initProtectedRoute(params);
   const { id } = await params;
   const db = getDb();
@@ -68,31 +68,30 @@ export default async function CollectionPage({ params }: Props) {
   const t = await getTranslations('Collection');
   const format = await getFormatter();
   const collection = readCollection(db, row.id);
-  const groups = listForwardedGroups(db, row.id);
   const nowMs = pageNow();
   const traffic = readIngestTraffic(db, row.id, nowMs - TRAFFIC_WINDOW_MS);
   const publicUrl = env().OPSWATCH_PUBLIC_URL?.replace(/\/$/, '');
   /*
-   * The region managed collection is set up in.
+   * The region being set up, and every region of this account beside it.
    *
-   * One region, and the first of the connection's, because `aws_collection` holds one forwarder ARN per
-   * connection — and a CloudWatch subscription filter can only target a Lambda in its own region. So a
-   * connection watched in several regions can forward from one of them.
-   *
-   * That is a real limitation, and the page says so below rather than letting an operator assume every
-   * region is covered. Making it per region is a schema change (the stack identity belongs to a region,
-   * the consent belongs to the account) and is recorded as MC-9 in the roadmap.
+   * A subscription filter can only target a Lambda in its own region, so a stack is installed per
+   * region and each one is verified separately. The page works on one at a time — installing three
+   * stacks is three passes through the same steps — and the picker says which of them are already
+   * forwarding, so "is production covered" is answerable without opening each in turn.
    */
-  const region = row.regions[0] ?? 'us-east-1';
-  const otherRegions = row.regions.filter((one) => one !== region);
+  const asked = (await searchParams).region;
+  const region = row.regions.includes(asked ?? '') ? (asked as string) : (row.regions[0] ?? 'us-east-1');
+  const stack = readStack(db, row.id, region);
+  const stacks = new Map(listStacks(db, row.id).map((one) => [one.region, one]));
+  const groups = listForwardedGroups(db, row.id, region);
 
   // The one number OpsWatch cannot know from its own counters: a batch that never arrived left no trace
-  // here. Read only once the stack is verified, so an account with the feature off makes no AWS call.
-  const deadLetters = collection.stackState === 'verified' ? await readDeadLetters(row.id, region, row.awsAccountId) : null;
+  // here. Read only once this region's stack is verified, so a region with none makes no AWS call.
+  const deadLetters = stack.stackState === 'verified' ? await readDeadLetters(row.id, region, row.awsAccountId) : null;
 
   const state = forwarderState({
     managed: collection.managed,
-    verified: collection.stackState === 'verified',
+    verified: stack.stackState === 'verified',
     activeGroups: groups.filter((group) => group.state === 'active').length,
     events: traffic.events,
     rejected: traffic.rejected,
@@ -131,6 +130,37 @@ export default async function CollectionPage({ params }: Props) {
         </SectionCard>
       ) : (
         <>
+          {/* Which region is being set up, and what every other one is doing. Only when there is a
+              choice to make: one region is not a picker, it is a sentence the steps already say. */}
+          {row.regions.length > 1 && (
+            <SectionCard title={t('regions.title')} description={t('regions.hint')}>
+              <div className="flex flex-wrap gap-2">
+                {row.regions.map((one) => {
+                  const verified = stacks.get(one)?.stackState === 'verified';
+                  const current = one === region;
+                  return (
+                    <Link
+                      key={one}
+                      href={{ pathname: `/accounts/${row.id}/collection`, query: { region: one } }}
+                      aria-current={current ? 'page' : undefined}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-sm',
+                        current ? 'border-primary bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      )}
+                    >
+                      {one}
+                      {/* Forwarding and not forwarding, never left to be inferred from the absence of
+                          a mark — and "not set up" is not "broken". */}
+                      <span className={cn('ml-2 text-xs', verified ? STATE_TEXT.healthy : 'text-muted-foreground')}>
+                        {verified ? t('regions.forwarding') : t('regions.notSetUp')}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </SectionCard>
+          )}
+
           <SectionCard title={t('install.title')} description={t('install.hint')}>
             <ol className="list-decimal space-y-3 pl-5 text-sm">
               <li>
@@ -144,13 +174,11 @@ export default async function CollectionPage({ params }: Props) {
                 <div className="mt-2">
                   <CodeBlock value={deployCollectionCommand(row.id, region)} />
                 </div>
-                {/* Said rather than left to be discovered: a subscription filter can only reach a Lambda
-                    in its own region, so the other regions of this connection are not forwarded. An
-                    operator who assumed otherwise would be waiting for logs that can never arrive. */}
-                {otherRegions.length > 0 && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t('install.oneRegionOnly', { region, others: otherRegions.join(', ') })}
-                  </p>
+                {/* A stack per region, because a subscription filter can only reach a Lambda in its
+                    own region. Each region's state is on the chip, so an operator can see which are
+                    covered without opening each one. */}
+                {row.regions.length > 1 && (
+                  <p className="mt-3 text-sm text-muted-foreground">{t('install.perRegion')}</p>
                 )}
               </li>
               <li>{t('install.verifyStep')}</li>
@@ -169,8 +197,8 @@ export default async function CollectionPage({ params }: Props) {
               <div>
                 <dt className="text-muted-foreground">{t('forwarder.version')}</dt>
                 <dd>
-                  {collection.forwarderVersion ?? t('forwarder.unknownVersion')}
-                  {collection.forwarderVersion !== null && collection.forwarderVersion !== FORWARDER_VERSION && (
+                  {stack.forwarderVersion ?? t('forwarder.unknownVersion')}
+                  {stack.forwarderVersion !== null && stack.forwarderVersion !== FORWARDER_VERSION && (
                     <span className="ml-2 text-xs text-muted-foreground">{t('forwarder.available', { version: FORWARDER_VERSION })}</span>
                   )}
                 </dd>
@@ -193,7 +221,7 @@ export default async function CollectionPage({ params }: Props) {
               </div>
             </dl>
             <div className="mt-4 border-t pt-4">
-              <VerifyForwarderForm action={verifyForwarderAction.bind(null, locale, row.id, region)} current={collection.forwarderArn} />
+              <VerifyForwarderForm action={verifyForwarderAction.bind(null, locale, row.id, region)} current={stack.forwarderArn} />
             </div>
             <div className="mt-4 border-t pt-4">
               <RotateSecretForm action={rotateSecretAction.bind(null, locale, row.id)} />

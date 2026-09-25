@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ensureMonitoringConnection, login } from './helpers';
+import { MOTO_ACCOUNT, MOTO_REGION, ensureMonitoringConnection, login } from './helpers';
 
 /**
  * Managed collection (AWS push collection).
@@ -144,4 +144,46 @@ test('the collection page renders at 360px without horizontal overflow, in both 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, locale).toBeLessThanOrEqual(0);
   }
+});
+
+test('THE RULING: a stack is set up per region, and the page says which are forwarding', async ({ page }) => {
+  /*
+   * `aws_collection` held one `forwarder_arn` for a whole account. A CloudWatch subscription filter can
+   * only reach a Lambda in its own region, so an account reading three regions could forward from one
+   * of them — and the other two would have pointed at a function that is not there. The page said which
+   * region it forwarded from, which was honest and still only one.
+   */
+  // Already signed in by the file's beforeEach; logging in again lands on a redirect with no form.
+  await page.goto('/en/accounts/new/aws');
+  await page.locator('input[name="method"][value="ambient"]').check({ force: true });
+  await page.getByLabel('Connection name').fill('Two regions');
+  await page.getByLabel('AWS account ID').fill(MOTO_ACCOUNT);
+  for (const region of [MOTO_REGION, 'eu-west-1']) await page.getByRole('checkbox', { name: region }).click();
+  await page.getByRole('button', { name: 'Create connection' }).click();
+  await page.waitForURL(/\/en\/accounts\/[0-9a-f]{12}$/);
+  const id = /\/accounts\/([0-9a-f]{12})/.exec(page.url())?.[1] as string;
+
+  await page.getByRole('button', { name: 'Run test' }).click();
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  await page.goto(`/en/accounts/${id}/collection`);
+  await page.locator('input[name="confirm"]').check();
+  await page.getByRole('button', { name: 'Enable managed collection' }).click();
+
+  // Every region of the account, each saying whether it is forwarding — the question an operator asks
+  // is "is production covered", and it must be answerable without opening each one.
+  const picker = page.locator('[data-slot="card"]').filter({ has: page.getByRole('heading', { name: 'Which region' }) });
+  await expect(picker).toContainText(MOTO_REGION);
+  await expect(picker).toContainText('eu-west-1');
+  expect((await picker.innerText()).match(/not set up/g)).toHaveLength(2);
+
+  // The deploy command is about the region being set up, and changes with it.
+  await expect(page.locator('main')).toContainText(`--region ${MOTO_REGION}`);
+  await picker.getByRole('link', { name: /eu-west-1/ }).click();
+  await expect(page).toHaveURL(/[?&]region=eu-west-1/);
+  await expect(page.locator('main')).toContainText('--region eu-west-1');
+  await expect(page.locator('main')).not.toContainText(`--region ${MOTO_REGION}`);
+
+  await page.goto(`/en/accounts/${id}`);
+  await page.getByRole('button', { name: 'Remove connection' }).click();
 });

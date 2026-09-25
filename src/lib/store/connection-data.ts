@@ -5,6 +5,7 @@ import {
   alertRules,
   alerts,
   awsCollection,
+  awsCollectionStacks,
   collectorRuns,
   deployments,
   errorGroups,
@@ -75,6 +76,9 @@ import {
 export const PURGED_TABLES = [
     // The push-collection tables cascade from this one, so it goes first and takes them.
     awsCollection,
+    // One row per region of this account, and not a child of the row above: the consent belongs to the
+    // account, the stack to a region, and the two are separate rows for exactly that reason.
+    awsCollectionStacks,
     problems,
     alerts,
     alertRules,

@@ -10,12 +10,15 @@ import { resolveTarget } from '../monitoring/target';
 import {
   deleteForwardedGroup,
   deleteIngestEvents,
+  deleteStacks,
   findCollection,
   listForwardedGroups,
   newIngestSecret,
   readCollection,
+  readStack,
   upsertForwardedGroup,
   writeCollection,
+  writeStack,
 } from '../store/collection';
 
 /**
@@ -48,7 +51,7 @@ export function enableManagedCollection(db: Db, connectionId: string, nowMs: num
       realtimeLogs: false,
       ingestSecretCiphertext: encrypt(secret, env().OPSWATCH_SECRET, 'aws-ingest'),
       secretRotatedAt: nowMs,
-      stackState: 'declared',
+      // Nothing about a stack: consent is for the account, and a stack exists in a region or does not.
     },
     nowMs,
   );
@@ -97,9 +100,11 @@ export async function disableManagedCollection(db: Db, connectionId: string, now
   writeCollection(
     db,
     connectionId,
-    { managed: false, realtimeLogs: false, ingestSecretCiphertext: null, secretRotatedAt: null, stackState: 'absent', forwarderArn: null, forwarderVersion: null, verifiedAt: null },
+    { managed: false, realtimeLogs: false, ingestSecretCiphertext: null, secretRotatedAt: null },
     nowMs,
   );
+  // Every region's stack, not one: the operator turned the capability off for the account.
+  deleteStacks(db, connectionId);
   deleteIngestEvents(db, connectionId);
   return outcome;
 }
@@ -123,7 +128,10 @@ export async function startForwarding(
   nowMs: number,
 ): Promise<ForwardOutcome> {
   const collection = readCollection(db, connectionId);
-  const destinationArn = collection.forwarderArn;
+  // **This region's** forwarder. A subscription filter can only target a Lambda in its own region, so
+  // one ARN for the whole account meant a second region's filters pointed at a function that is not
+  // there — which AWS rejects, after the operator has waited for logs that were never coming.
+  const destinationArn = readStack(db, connectionId, region).forwarderArn;
   if (!collection.managed || destinationArn === null) return { ok: false, reason: 'not_found' };
 
   const target = await resolveTarget({ connectionId, region });
@@ -198,12 +206,13 @@ export async function verifyForwarder(
 
   const facts = await describeForwarder(target.data, functionArn);
   if (!facts.ok) {
-    writeCollection(db, connectionId, { stackState: 'stale', forwarderArn: functionArn }, nowMs);
+    writeStack(db, connectionId, region, { stackState: 'stale', forwarderArn: functionArn }, nowMs);
     return { ok: false };
   }
-  writeCollection(
+  writeStack(
     db,
     connectionId,
+    region,
     { stackState: 'verified', forwarderArn: functionArn, forwarderVersion: facts.data.version, verifiedAt: nowMs },
     nowMs,
   );

@@ -10,9 +10,9 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Machine alerting: a full disk on the box now tells somebody |
+| Current checkpoint | MC-9: a collection stack is a thing in a region, not one per account |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
-| Schema | drizzle **0034** — `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
+| Schema | drizzle **0035** — `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
 ## The standing loop
@@ -152,6 +152,13 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **MC-9 a collection stack is a thing in a region.** `aws_collection` held one `forwarder_arn`
+      for a whole account, and a subscription filter can only target a Lambda in its own region — so an
+      account reading three regions could forward from one, and the other two would have pointed at a
+      function that is not there. Split along what the two things actually are: the consent belongs to
+      the account and was given once, the stack exists in a region and has its own answer from AWS.
+      drizzle-kit generated the move as six `DROP COLUMN`s and nothing else, which on any installation
+      with a forwarder would have thrown the stack away
 - [x] **A machine that is in trouble tells somebody.** `machine` is a fourth alert condition beside
       `problem`, `synthetic` and `slo`, covering the four kinds an agent can find. The conditions
       partition the kinds, so a machine finding cannot also match a problem rule and be announced twice.
@@ -214,8 +221,8 @@ The page now says that instead of hiding the button.
 
 ## Next, in priority order (the owner's marathon queue)
 
-1. ~~Multiple AWS accounts~~ — MC-1..MC-8 and MC-10..MC-12 done. **MC-9 (per-region collection stacks)
-   remains**: honest today, but still one region per connection, and it is a schema change
+1. ~~Multiple AWS accounts~~ — **MC-1..MC-12 all done.** The audit is the table in
+   `full-roadmap-status.md`
 2. ~~One-click CloudFormation onboarding~~ — the documented URL format and an honest explanation of what
    the button needs. It cannot be made bucket-free: the console fetches templates only from S3
 3. ~~Safe disconnect~~ — done. **Stack identity is still not tracked for the base stack**: the collection

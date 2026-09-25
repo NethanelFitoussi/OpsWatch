@@ -1149,23 +1149,51 @@ export const awsCollection = sqliteTable('aws_collection', {
    */
   ingestSecretCiphertext: text('ingest_secret_ciphertext'),
   secretRotatedAt: integer('secret_rotated_at'),
-  /**
-   * What OpsWatch believes is installed in the account.
-   *
-   * `declared` is what a browser told it; `verified` is what AWS itself answered. The two are kept apart
-   * because a value a browser supplied is not a fact about somebody's AWS account.
-   */
-  stackState: text('stack_state', { enum: COLLECTION_STACK_STATES }).notNull().default('absent'),
-  stackName: text('stack_name'),
-  stackId: text('stack_id'),
-  forwarderArn: text('forwarder_arn'),
-  forwarderVersion: text('forwarder_version'),
-  verifiedAt: integer('verified_at'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 });
 
 export type AwsCollectionRow = typeof awsCollection.$inferSelect;
+
+/**
+ * The collection stack installed in one region of one account.
+ *
+ * **Split out of `aws_collection`, which held one of these per account.** A subscription filter can only
+ * target a Lambda in its own region, so an account reading three regions needs three forwarders — and
+ * one `forwarder_arn` per account meant the second region's filters would have pointed at a function
+ * that is not there. The page said which region it forwarded from, which was honest and still only one.
+ *
+ * The split follows what the two things actually are. The **consent** — whether anything may be
+ * forwarded at all, whether records are kept, and the secret the forwarder signs with — belongs to the
+ * account: it is what the operator agreed to, once. The **stack** is a thing that exists in a region,
+ * with its own name, its own id and its own answer from AWS about whether it is really there.
+ */
+export const awsCollectionStacks = sqliteTable(
+  'aws_collection_stacks',
+  {
+    connectionId: text('connection_id')
+      .notNull()
+      .references(() => connections.id, { onDelete: 'cascade' }),
+    region: text('region').notNull(),
+    /**
+     * What OpsWatch believes is installed in this region.
+     *
+     * `declared` is what a browser told it; `verified` is what AWS itself answered. The two are kept
+     * apart because a value a browser supplied is not a fact about somebody's AWS account.
+     */
+    stackState: text('stack_state', { enum: COLLECTION_STACK_STATES }).notNull().default('absent'),
+    stackName: text('stack_name'),
+    stackId: text('stack_id'),
+    forwarderArn: text('forwarder_arn'),
+    forwarderVersion: text('forwarder_version'),
+    verifiedAt: integer('verified_at'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.connectionId, t.region] })],
+);
+
+export type AwsCollectionStackRow = typeof awsCollectionStacks.$inferSelect;
 
 export const FORWARDED_GROUP_STATES = ['pending', 'active', 'failed', 'removing'] as const;
 

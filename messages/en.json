@@ -5858,6 +5858,12 @@
     },
     "secretTitle": "Your forwarder signing secret",
     "secretHint": "Copy it now. It is shown once and never again. You will paste it as the OpsWatchIngestSecret parameter when you deploy the stack. It authenticates the forwarder to this OpsWatch; it is not an AWS credential and grants no access to anything in your account.",
+    "regions": {
+      "title": "Which region",
+      "hint": "A forwarder lives in one region and can only be reached by subscription filters in that region, so each region of this account is set up separately.",
+      "forwarding": "forwarding",
+      "notSetUp": "not set up"
+    },
     "install": {
       "title": "Install the forwarder",
       "hint": "A second stack, separate from the one that connects the account.",
@@ -5866,7 +5872,7 @@
       "deploy": "Deploy it in {region}, pasting the secret when asked:",
       "verifyStep": "Copy the ForwarderArn output back here and verify it.",
       "noSecretInTemplate": "The template contains no secret. It can be read, diffed and kept; the secret is supplied when you deploy and lives only in the function’s environment.",
-      "oneRegionOnly": "This forwards log groups in {region} only. A CloudWatch subscription filter can reach a Lambda in its own region and nowhere else, so nothing in {others} is forwarded by this stack."
+      "perRegion": "Each region is set up on its own: choose another above once this one is forwarding."
     },
     "forwarder": {
       "title": "Forwarder",

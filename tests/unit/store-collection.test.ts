@@ -8,14 +8,17 @@ import {
   listForwardedGroups,
   listManagedConnections,
   markIngestProcessed,
+  listStacks,
   readCollection,
   readIngestTraffic,
+  readStack,
   recordIngestStat,
   recordsThisMinute,
   storeIngestEvents,
   sweepIngestEvents,
   upsertForwardedGroup,
   writeCollection,
+  writeStack,
 } from '@/lib/store/collection';
 import { createTestDb } from '../helpers/db';
 
@@ -45,7 +48,10 @@ const record = (connectionId: string, over: Record<string, unknown> = {}) => ({
 describe('THE RULING: absence is the default, and the default is everything off', () => {
   it('reads a connection nobody has configured as off, without writing a row', () => {
     const { db, one } = withAccounts();
-    expect(readCollection(db, one)).toMatchObject({ managed: false, realtimeLogs: false, persistLogs: false, stackState: 'absent' });
+    expect(readCollection(db, one)).toMatchObject({ managed: false, realtimeLogs: false, persistLogs: false });
+    // A region nobody installed a stack in: `absent` is the absence of a row, not a row saying nothing.
+    expect(readStack(db, one, 'eu-west-1')).toMatchObject({ stackState: 'absent', forwarderArn: null });
+    expect(listStacks(db, one)).toEqual([]);
     // Nothing was written, so nobody can mistake a default for a decision somebody made.
     expect(listManagedConnections(db)).toEqual([]);
   });
@@ -59,12 +65,35 @@ describe('THE RULING: absence is the default, and the default is everything off'
     expect(readCollection(db, one)).toMatchObject({ managed: true, realtimeLogs: true, persistLogs: false });
   });
 
-  it('separates what a browser said from what AWS answered', () => {
+  it('separates what a browser said from what AWS answered, per region', () => {
     const { db, one } = withAccounts();
-    writeCollection(db, one, { stackState: 'declared', stackName: 'opswatch-x-collection' }, NOW);
-    expect(readCollection(db, one).stackState).toBe('declared');
-    writeCollection(db, one, { stackState: 'verified', forwarderArn: 'arn:aws:lambda:…', verifiedAt: NOW }, NOW);
-    expect(readCollection(db, one)).toMatchObject({ stackState: 'verified', verifiedAt: NOW });
+    writeStack(db, one, 'eu-west-1', { stackState: 'declared', stackName: 'opswatch-x-collection' }, NOW);
+    expect(readStack(db, one, 'eu-west-1').stackState).toBe('declared');
+    writeStack(db, one, 'eu-west-1', { stackState: 'verified', forwarderArn: 'arn:aws:lambda:…', verifiedAt: NOW }, NOW);
+    expect(readStack(db, one, 'eu-west-1')).toMatchObject({ stackState: 'verified', verifiedAt: NOW });
+  });
+
+  it('THE RULING: a stack is a thing in a region, and one region says nothing about another', () => {
+    /*
+     * `aws_collection` held one `forwarder_arn` for the whole account. A CloudWatch subscription filter
+     * can only target a Lambda in its own region, so an account reading two regions could forward from
+     * one of them: the second region's filters would have pointed at a function that is not there.
+     */
+    const { db, one } = withAccounts();
+    writeStack(db, one, 'eu-west-1', { stackState: 'verified', forwarderArn: 'arn:…:eu-west-1:…', verifiedAt: NOW }, NOW);
+
+    expect(readStack(db, one, 'us-east-1')).toMatchObject({ stackState: 'absent', forwarderArn: null });
+    expect(listStacks(db, one).map((stack) => stack.region)).toEqual(['eu-west-1']);
+
+    writeStack(db, one, 'us-east-1', { stackState: 'verified', forwarderArn: 'arn:…:us-east-1:…', verifiedAt: NOW }, NOW);
+    expect(listStacks(db, one).map((stack) => stack.forwarderArn)).toEqual(['arn:…:eu-west-1:…', 'arn:…:us-east-1:…']);
+  });
+
+  it('keeps one account’s stacks out of another’s', () => {
+    const { db, one, two } = withAccounts();
+    writeStack(db, one, 'eu-west-1', { stackState: 'verified', forwarderArn: 'arn:one' }, NOW);
+    expect(listStacks(db, two)).toEqual([]);
+    expect(readStack(db, two, 'eu-west-1').forwarderArn).toBeNull();
   });
 });
 

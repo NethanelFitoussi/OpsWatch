@@ -43,7 +43,7 @@ vi.mock('@/lib/monitoring/subscriptions', () => ({
 
 const { disableManagedCollection, enableManagedCollection, startForwarding, stopForwarding } = await import('@/lib/aws/collection');
 const { createConnection, findConnection } = await import('@/lib/connections/repository');
-const { listForwardedGroups, readCollection, writeCollection } = await import('@/lib/store/collection');
+const { listForwardedGroups, listStacks, readCollection, writeCollection, writeStack } = await import('@/lib/store/collection');
 
 let connectionId = '';
 
@@ -58,7 +58,9 @@ beforeEach(() => {
 /** Everything scenario B needs in place before a log group can be forwarded. */
 function managed() {
   const { secret } = enableManagedCollection(state.db, connectionId, NOW);
-  writeCollection(state.db, connectionId, { realtimeLogs: true, stackState: 'verified', forwarderArn: FORWARDER, verifiedAt: NOW }, NOW);
+  writeCollection(state.db, connectionId, { realtimeLogs: true }, NOW);
+  // The stack is a thing in a region, and this is the region this connection reads.
+  writeStack(state.db, connectionId, REGION, { stackState: 'verified', forwarderArn: FORWARDER, verifiedAt: NOW }, NOW);
   return secret;
 }
 
@@ -139,7 +141,9 @@ describe('Scenario C — back to direct', () => {
     // Nothing left in AWS, nothing left here, and no secret anything could authenticate with.
     expect(aws.filters).toEqual([]);
     expect(listForwardedGroups(state.db, connectionId)).toEqual([]);
-    expect(readCollection(state.db, connectionId)).toMatchObject({ managed: false, realtimeLogs: false, ingestSecretCiphertext: null, forwarderArn: null });
+    expect(readCollection(state.db, connectionId)).toMatchObject({ managed: false, realtimeLogs: false, ingestSecretCiphertext: null });
+    // Every region's stack, not one: the operator turned the capability off for the whole account.
+    expect(listStacks(state.db, connectionId)).toEqual([]);
 
     // And the account is still connected. Disabling a feature is not disconnecting an integration.
     expect(findConnection(state.db, connectionId)).not.toBeNull();
