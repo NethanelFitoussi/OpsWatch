@@ -119,3 +119,33 @@ test('Google Cloud renders at 360px in French, with no raw key anywhere', async 
     expect(await page.locator('main').innerText(), path).not.toMatch(/GoogleSetup\.|GoogleWizard\.|GettingStarted\./);
   }
 });
+
+test('THE RULING: the instances page says why there is nothing, and never shows an empty table', async ({ page }) => {
+  /*
+   * There is no Google project behind this test, so every read is refused — which is exactly the state
+   * an operator is in before the roles arrive, and the one worth accepting. "Could not read" and "there
+   * are none" are different answers and must not look the same.
+   */
+  const id = await create(page, 'Instances project');
+  await page.goto(`/en/accounts/${id}/instances`);
+
+  const main = await page.locator('main').innerText();
+  expect(main).toContain('Instances in my-project-123');
+  // A stated reason, not a blank table.
+  expect(main).toMatch(/could not reach Google|refused the read|no usable token|returned an error/);
+  await expect(page.locator('main table')).toHaveCount(0);
+  // And a way to find out which it is.
+  await expect(page.getByRole('link', { name: "Check this connection's access" })).toBeVisible();
+
+  // It says it is read live rather than implying a collector that does not exist.
+  expect(main).toContain('Nothing about a Google project is collected on a schedule yet');
+});
+
+test('the instances page belongs to Google connections only', async ({ page }) => {
+  // An AWS connection has an instances page of its own, in the monitoring rail; this is not it.
+  await page.goto('/en/accounts');
+  const aws = page.getByRole('link', { name: /Moto monitoring/ }).first();
+  const href = (await aws.getAttribute('href')) ?? '';
+  await page.goto(`/en${href.replace(/^\/en/, '')}/instances`);
+  await expect(page.locator('main')).toContainText('Page not found');
+});

@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { CodeBlock } from '@/components/code-block';
+import { Link } from '@/i18n/navigation';
 import { SectionCard } from '@/components/section-card';
 import { TONE_TEXT } from '@/lib/ui/tones';
 import { GCP_ROLES } from '@/lib/gcp/check';
@@ -113,6 +114,16 @@ export async function GoogleSetup({ row, locale, baseUrl }: { row: ConnectionRow
         {impersonationCommand !== null && <CodeBlock value={impersonationCommand} />}
         <CodeBlock value={grantCommands} />
       </SectionCard>
+
+      {/* Once something can be read, the way to it. Only then: a link to a page that would refuse is
+          not a way in, it is a dead end with a label on it. */}
+      {result?.federation === null && result.checks.some((check) => check.check === 'compute' && check.status === 'ok') && (
+        <SectionCard title={t('instances')} description={t('instancesHint')}>
+          <Link href={`/accounts/${row.id}/instances`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+            {t('instances')}
+          </Link>
+        </SectionCard>
+      )}
 
       <SectionCard step={4} title={t('verifyTitle')} description={t('verifyHint')} contentClassName="space-y-3">
         <p className="text-xs break-all text-muted-foreground">

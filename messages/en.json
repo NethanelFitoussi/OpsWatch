@@ -6261,8 +6261,11 @@
       "role_arn_wrong_role": "Something went wrong creating the connection.",
       "keys_invalid": "Something went wrong creating the connection.",
       "wrong_method": "Something went wrong creating the connection.",
-      "not_ready": "Something went wrong creating the connection."
-    }
+      "not_ready": "Something went wrong creating the connection.",
+      "gcp_regions_invalid": "Give at least one region, like us-central1."
+    },
+    "regions": "Regions to watch",
+    "regionsHint": "One or more, separated by commas — us-central1, europe-west1. OpsWatch reads only the zones inside them."
   },
   "GoogleSetup": {
     "accessTitle": "What OpsWatch can read",
@@ -6321,7 +6324,35 @@
       "gcp_project_number_invalid": "Something went wrong.",
       "gcp_pool_invalid": "Something went wrong.",
       "gcp_provider_invalid": "Something went wrong.",
-      "gcp_service_account_invalid": "Something went wrong."
+      "gcp_service_account_invalid": "Something went wrong.",
+      "gcp_regions_invalid": "Something went wrong."
+    },
+    "instances": "Instances",
+    "instancesHint": "What Compute Engine reports for this project."
+  },
+  "GoogleInstances": {
+    "title": "Instances in {project}",
+    "description": "What Compute Engine reports, read when this page is drawn.",
+    "back": "Back to the connection",
+    "regionTitle": "Which region",
+    "listTitle": "Instances in {region}",
+    "listHint": "Every zone of that region.",
+    "none": "Compute Engine reports no instances in {region}. That is an answer, not a failure — OpsWatch read the project and there were none.",
+    "notReported": "not reported",
+    "readNow": "Read live, with a token minted for this page. Nothing about a Google project is collected on a schedule yet, so there is no stale figure here and no history behind it.",
+    "checkAccess": "Check this connection's access",
+    "columns": {
+      "name": "Instance",
+      "status": "Status",
+      "zone": "Zone",
+      "machineType": "Machine type",
+      "created": "Created"
+    },
+    "failures": {
+      "denied": "Google refused the read. roles/compute.viewer has not reached this connection.",
+      "unreachable": "This instance could not reach Google.",
+      "no_token": "There is no usable token for this connection yet.",
+      "error": "Compute Engine returned an error."
     }
   }
 }

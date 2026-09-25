@@ -6261,8 +6261,11 @@
       "role_arn_wrong_role": "La création de la connexion a échoué.",
       "keys_invalid": "La création de la connexion a échoué.",
       "wrong_method": "La création de la connexion a échoué.",
-      "not_ready": "La création de la connexion a échoué."
-    }
+      "not_ready": "La création de la connexion a échoué.",
+      "gcp_regions_invalid": "Indiquez au moins une région, par exemple us-central1."
+    },
+    "regions": "Régions à surveiller",
+    "regionsHint": "Une ou plusieurs, séparées par des virgules — us-central1, europe-west1. OpsWatch ne lit que les zones qu’elles contiennent."
   },
   "GoogleSetup": {
     "accessTitle": "Ce qu’OpsWatch peut lire",
@@ -6321,7 +6324,35 @@
       "gcp_project_number_invalid": "Une erreur s’est produite.",
       "gcp_pool_invalid": "Une erreur s’est produite.",
       "gcp_provider_invalid": "Une erreur s’est produite.",
-      "gcp_service_account_invalid": "Une erreur s’est produite."
+      "gcp_service_account_invalid": "Une erreur s’est produite.",
+      "gcp_regions_invalid": "Une erreur s’est produite."
+    },
+    "instances": "Instances",
+    "instancesHint": "Ce que Compute Engine rapporte pour ce projet."
+  },
+  "GoogleInstances": {
+    "title": "Instances de {project}",
+    "description": "Ce que rapporte Compute Engine, lu au moment de l’affichage.",
+    "back": "Retour à la connexion",
+    "regionTitle": "Quelle région",
+    "listTitle": "Instances dans {region}",
+    "listHint": "Toutes les zones de cette région.",
+    "none": "Compute Engine ne rapporte aucune instance dans {region}. C’est une réponse, pas un échec — OpsWatch a lu le projet et il n’y en avait aucune.",
+    "notReported": "non communiqué",
+    "readNow": "Lu en direct, avec un jeton créé pour cette page. Rien n’est encore collecté périodiquement pour un projet Google, donc aucun chiffre ici n’est périmé et il n’y a pas d’historique derrière.",
+    "checkAccess": "Vérifier l’accès de cette connexion",
+    "columns": {
+      "name": "Instance",
+      "status": "État",
+      "zone": "Zone",
+      "machineType": "Type de machine",
+      "created": "Créée"
+    },
+    "failures": {
+      "denied": "Google a refusé la lecture. roles/compute.viewer n’est pas parvenu à cette connexion.",
+      "unreachable": "Cette installation n’a pas pu joindre Google.",
+      "no_token": "Cette connexion n’a pas encore de jeton utilisable.",
+      "error": "Compute Engine a renvoyé une erreur."
     }
   }
 }

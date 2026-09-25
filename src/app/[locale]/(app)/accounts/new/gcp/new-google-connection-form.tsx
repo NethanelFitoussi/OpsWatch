@@ -27,6 +27,7 @@ export function NewGoogleConnectionForm({ action }: { action: FormAction<FormSta
 
         <FormField id="name" label={t('name')} hint={t('nameHint')} defaultValue={state.values?.name} required maxLength={80} />
         <FormField id="projectId" label={t('projectId')} hint={t('projectIdHint')} required />
+        <FormField id="regions" label={t('regions')} hint={t('regionsHint')} defaultValue="us-central1" required />
         <FormField id="projectNumber" label={t('projectNumber')} hint={t('projectNumberHint')} required inputMode="numeric" />
         <FormField id="poolId" label={t('poolId')} hint={t('poolIdHint')} defaultValue="opswatch" required />
         <FormField id="providerId" label={t('providerId')} hint={t('providerIdHint')} defaultValue="opswatch" required />

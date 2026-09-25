@@ -166,6 +166,11 @@ export async function createGoogleConnectionAction(locale: string, _prev: FormSt
         poolId: formString(formData, 'poolId'),
         providerId: formString(formData, 'providerId'),
         serviceAccount: formString(formData, 'serviceAccount'),
+        // One per line or comma-separated: an operator pasting from the console does either.
+        regions: formString(formData, 'regions')
+          .split(/[\s,]+/)
+          .map((one) => one.trim())
+          .filter((one) => one !== ''),
       },
       env().OPSWATCH_SECRET,
     ).id;

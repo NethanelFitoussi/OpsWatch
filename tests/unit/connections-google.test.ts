@@ -17,13 +17,14 @@ import { connectionInput } from '../helpers/fixtures';
 const NOW = new Date('2026-09-25T12:00:00Z');
 const SECRET = 'instance-secret'.padEnd(32, 'x');
 
-const google = (over: Record<string, string> = {}) => ({
+const google = (over: Record<string, string | string[]> = {}) => ({
   name: 'analytics',
   projectId: 'my-project-123',
   projectNumber: '123456789012',
   poolId: 'opswatch',
   providerId: 'opswatch',
   serviceAccount: '',
+  regions: ['us-central1'],
   ...over,
 });
 
@@ -75,6 +76,16 @@ describe('connecting a Google Cloud project', () => {
       }
     }
     expect(listConnections(db)).toEqual([]);
+  });
+
+  it('needs at least one region, because every monitoring page in this product is about one', () => {
+    const db = createTestDb();
+    expect(() => createGoogleConnection(db, google({ regions: [] }), SECRET, NOW)).toThrow(ConnectionInputError);
+    expect(() => createGoogleConnection(db, google({ regions: ['Not A Region'] }), SECRET, NOW)).toThrow(ConnectionInputError);
+    expect(createGoogleConnection(db, google({ regions: ['us-central1', 'europe-west1'] }), SECRET, NOW).regions).toEqual([
+      'us-central1',
+      'europe-west1',
+    ]);
   });
 
   it('takes no service account, because federating straight to a resource is equally valid', () => {

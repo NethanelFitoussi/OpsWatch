@@ -15,6 +15,7 @@ import {
   accountIdSchema,
   gcpProjectIdSchema,
   gcpProjectNumberSchema,
+  gcpRegionsSchema,
   gcpResourceIdSchema,
   gcpServiceAccountSchema,
   methodSchema,
@@ -42,6 +43,7 @@ export type ConnectionInputErrorCode =
   | 'keys_invalid'
   | 'wrong_method'
   | 'gcp_project_invalid'
+  | 'gcp_regions_invalid'
   | 'gcp_project_number_invalid'
   | 'gcp_pool_invalid'
   | 'gcp_provider_invalid'
@@ -125,12 +127,15 @@ export function createConnection(
  */
 export function createGoogleConnection(
   db: Db,
-  input: { name: string; projectId: string; projectNumber: string; poolId: string; providerId: string; serviceAccount: string },
+  input: { name: string; projectId: string; projectNumber: string; poolId: string; providerId: string; serviceAccount: string; regions: string[] },
   secret: string,
   now: Date = new Date(),
 ): ConnectionRow {
   const name = parseOrThrow(nameSchema, input.name, 'name_invalid');
   const gcpProjectId = parseOrThrow(gcpProjectIdSchema, input.projectId, 'gcp_project_invalid');
+  // Regions, because every monitoring page in this product is about one. A Google connection with none
+  // would have a page for nowhere.
+  const regions = parseOrThrow(gcpRegionsSchema, input.regions, 'gcp_regions_invalid');
   const gcpProjectNumber = parseOrThrow(gcpProjectNumberSchema, input.projectNumber, 'gcp_project_number_invalid');
   const gcpPoolId = parseOrThrow(gcpResourceIdSchema, input.poolId, 'gcp_pool_invalid');
   const gcpProviderId = parseOrThrow(gcpResourceIdSchema, input.providerId, 'gcp_provider_invalid');
@@ -146,8 +151,7 @@ export function createGoogleConnection(
       provider: 'gcp',
       method: 'federation',
       awsAccountId: null,
-      // A Google connection has no AWS regions, and an empty list says so rather than implying one.
-      regions: [],
+      regions,
       gcpProjectId,
       gcpProjectNumber,
       gcpPoolId,

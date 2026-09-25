@@ -16,6 +16,17 @@ export const methodSchema = z.enum(CONNECTION_METHODS);
 export const gcpProjectIdSchema = z.string().trim().regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/);
 export const gcpProjectNumberSchema = z.string().trim().regex(/^[0-9]{1,30}$/);
 export const gcpResourceIdSchema = z.string().trim().regex(/^[a-z][a-z0-9-]{2,62}$/);
+/**
+ * Google Cloud regions, by shape rather than by list.
+ *
+ * The AWS side validates against a fixed list because its region grid offers one. Google adds regions
+ * often, and a list baked in here would quietly refuse a region that exists — so the shape is checked,
+ * and whether the region is real is answered by Google when the instances are read. Being wrong about
+ * that is a message on a page, not a field that cannot be typed into.
+ */
+export const gcpRegionSchema = z.string().trim().regex(/^[a-z]+-[a-z]+[0-9]$/);
+export const gcpRegionsSchema = z.array(gcpRegionSchema).min(1).max(20);
+
 export const gcpServiceAccountSchema = z
   .string()
   .trim()

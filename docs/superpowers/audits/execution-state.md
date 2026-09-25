@@ -10,7 +10,7 @@ restated.
 | | |
 |---|---|
 | Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | The Google Cloud connection: a project read without holding a key to it |
+| Current checkpoint | Google Cloud: a connected project now shows its instances |
 | Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0037** — `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
@@ -157,6 +157,14 @@ losing the whole conversation loses no plan.
       which of the two stopped it, because the remedy differs. The Checkup said "budget used up (0.00
       of 5 GB)" to the account that had spent nothing, which is a contradiction: it is a separate
       finding now
+- [x] **A connected Google project shows something.** Compute Engine instances, per region, on the
+      connection's own page rather than in the monitoring rail — every section of that rail is an AWS
+      service, and carrying a Google connection through it would offer Containers and Databases that
+      can never hold anything. `aggregatedList` answers for a whole project keyed by zone, so the
+      region is applied by matching the zone prefix **with its separator**: `us-central1` must not
+      swallow `us-central12`. Paged, because a first page shown as though it were the whole project is
+      worse than an error, and bounded, because a page render must not walk a hundred thousand
+      instances
 - [x] **Google Cloud, connected without a key.** Google's own guidance is to avoid service account
       keys — the risk it names is non-repudiation, "no reliable way to tell who used the key" — so
       OpsWatch stores no Google credential at all: each connection gets its own signing key, mints a
@@ -256,8 +264,10 @@ method Google explicitly discourages as the only one on offer.
    instance-wide rows**
 6. ~~Unified host/cloud identity~~ — an agent on EC2 is matched to its instance and shown from both
    sides. Still open: the same for GCE and DigitalOcean, which have no discovery to match against yet
-7. ~~Google Cloud~~ — connected, keylessly, against the current documentation. **Next for it: read
-   something.** Instances and metrics, which needs the monitoring pages to stop being AWS-shaped
+7. ~~Google Cloud~~ — connected keylessly, and its instances are readable. **Next for it: metrics,
+   and a monitoring surface that is not AWS-shaped.** The rail's ten sections are ten AWS services; a
+   unified model (§G) is what both this and DigitalOcean need, and it is a deliberate build rather
+   than something to grow one page at a time
 8. DigitalOcean — against current official documentation, never from memory
 
 P0 correctness, security and data-integrity defects override this order. Serious UX defects override new
