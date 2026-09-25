@@ -21,6 +21,21 @@ conversation.
 
 A schema, a migration, a placeholder page, a demo fixture or an unused service is **not** `DONE`.
 
+## Storage and the database (2026-09-25)
+
+The owner's marathon queue, item 4. Settings → **Storage** answers, in one place, what an operator
+previously had to gather from three: where the database is, whether that survives a restart, how large
+it is, which migrations are applied, whether history is being kept and for how long, and what has been
+backed up.
+
+| Asked for | What was built, and why |
+|---|---|
+| Database: connected / not connected | The file, its size, its directory, and whether that directory survives a restart. "Connected" is not a state SQLite has — the process either opened the file or did not start |
+| Schema: up to date / migration required | Applied against bundled, and **"cannot tell"** as its own answer when the journal is unreadable. Reporting `0` pending on evidence nobody could read would be the page reassuring an operator about the one thing it does not know |
+| History collection · Retention | Both, with retention shown as "nothing is being kept" while collection is off — "30 days" beside a switch that is off implies something is being kept for thirty days |
+| Test database · Initialize database · **Run migrations** | `INTENTIONALLY_DEFERRED`, and the page says why. OpsWatch applies its own packaged migrations at startup, after copying the database. A button would either do nothing, because they already ran, or invite somebody to change a schema from a browser against a database the process has open. There is also nothing to "test": a database that could not be opened is a process that did not start |
+| External PostgreSQL · AWS · Google Cloud storage | `NOT_STARTED`, and **not shown**. One backend exists. Listing the others as choices would be claiming support nobody has written, and a self-hosted operator would plan around it |
+
 ## AWS onboarding and removal (2026-09-25)
 
 The owner's marathon queue, items 2 and 3. What was researched, what changed, and what remains.

@@ -3664,7 +3664,9 @@
       "notifications": "Notifications",
       "notificationsHint": "Où une alerte peut être envoyée. Rien ne quitte cette instance tant que vous n'ajoutez pas de destination.",
       "backup": "Sauvegarde et restauration",
-      "backupHint": "Où vivent vos données, une copie à télécharger et la marche à suivre pour la remettre."
+      "backupHint": "Où vivent vos données, une copie à télécharger et la marche à suivre pour la remettre.",
+      "storage": "Stockage",
+      "storageHint": "Où se trouve la base, si elle survit à un redémarrage, quelles migrations ont été appliquées, et ce qui est conservé."
     },
     "repositories": {
       "title": "Dépôts",
@@ -4046,6 +4048,45 @@
       "errors": {
         "unknown_environment": "Ce couple connexion/région n’est pas surveillé par cette installation."
       }
+    },
+    "storage": {
+      "title": "Stockage",
+      "description": "Où OpsWatch garde ce qu’il a collecté, et si cela survit à un redémarrage.",
+      "whereTitle": "La base de données",
+      "whereHint": "Un fichier, sur cette machine. OpsWatch est auto-hébergé : rien de ce qu’il collecte n’en sort.",
+      "kind": "Type",
+      "sqlite": "SQLite, sur le système de fichiers local",
+      "size": "Taille",
+      "notMeasured": "N’a pas pu être mesurée",
+      "dataDir": "Répertoire de données",
+      "persistence": "Stockage",
+      "persistent": "Survit à un redémarrage",
+      "disposable": "Ne survit pas à un redémarrage",
+      "disposableHint": "Ce répertoire est sur la couche inscriptible du conteneur ou en mémoire. Tout ce qu’OpsWatch a collecté — le compte administrateur, les identifiants chiffrés, l’historique — sera perdu à la prochaine reconstruction du conteneur. Montez un volume sur ce chemin.",
+      "onlyPlace": "C’est le seul endroit où OpsWatch stocke l’historique. Il n’y a ni base externe ni stockage cloud : ce serait à construire, pas un réglage à activer.",
+      "schemaTitle": "Schéma",
+      "schemaHint": "Lesquelles des migrations fournies ont été appliquées à cette base.",
+      "schemaUnknown": "Le journal des migrations n’a pas pu être lu : savoir si quelque chose est en attente est impossible. Ce n’est pas la même chose que rien en attente.",
+      "schemaCurrent": "À jour — les {applied} migrations sont appliquées.",
+      "schemaPending": "{count, plural, one {# migration est en attente} other {# migrations sont en attente}} et sera appliquée au prochain démarrage d’OpsWatch.",
+      "schemaWhen": "OpsWatch applique ses propres migrations au démarrage, après avoir copié la base. Il n’y a pas de bouton ici : un changement de schéma ne se lance pas depuis un navigateur contre une base que ce processus a ouverte.",
+      "lastMigrationBackup": "Le dernier changement de schéma a été précédé d’une copie : {name}, {when}.",
+      "noSql": "Aucun SQL issu de cette page n’atteint la base. Les seules instructions exécutées par OpsWatch sont celles livrées dans ses migrations.",
+      "historyTitle": "Collecte de l’historique",
+      "historyHint": "Si OpsWatch conserve ce qu’il lit, et pendant combien de temps.",
+      "collecting": "Collecte",
+      "collectingOn": "Activée",
+      "collectingOff": "Désactivée — les pages lisent AWS en direct et ne gardent rien",
+      "retention": "Conservé",
+      "retentionDays": "{days} jours",
+      "retentionOff": "Rien n’est conservé",
+      "changeHistory": "Modifier les réglages d’historique",
+      "backupsTitle": "Sauvegardes",
+      "backupsHint": "Une sauvegarde est la base entière, y compris tous les identifiants chiffrés.",
+      "noBackups": "Aucune sauvegarde n’a encore été prise.",
+      "backupCount": "{count, plural, one {# sauvegarde} other {# sauvegardes}} sur le disque, la plus récente {when}.",
+      "goBackup": "Prendre une sauvegarde, ou lire la procédure de restauration",
+      "readGuide": "Historique et stockage"
     }
   },
   "Api": {

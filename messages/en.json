@@ -3664,7 +3664,9 @@
       "notifications": "Notifications",
       "notificationsHint": "Where an alert may be sent. Nothing leaves this instance until you add a destination.",
       "backup": "Backup & restore",
-      "backupHint": "Where your data lives, a copy you can download, and what to do to put one back."
+      "backupHint": "Where your data lives, a copy you can download, and what to do to put one back.",
+      "storage": "Storage",
+      "storageHint": "Where the database lives, whether it survives a restart, which migrations have been applied, and what is being kept."
     },
     "repositories": {
       "title": "Repositories",
@@ -4046,6 +4048,45 @@
       "errors": {
         "unknown_environment": "That connection and region are not ones this installation monitors."
       }
+    },
+    "storage": {
+      "title": "Storage",
+      "description": "Where OpsWatch keeps what it has collected, and whether that survives a restart.",
+      "whereTitle": "The database",
+      "whereHint": "One file, on this machine. OpsWatch is self-hosted: nothing it collects leaves it.",
+      "kind": "Kind",
+      "sqlite": "SQLite, on the local filesystem",
+      "size": "Size",
+      "notMeasured": "Could not be measured",
+      "dataDir": "Data directory",
+      "persistence": "Storage",
+      "persistent": "Survives a restart",
+      "disposable": "Does not survive a restart",
+      "disposableHint": "This directory is on the container’s own writable layer or in memory. Everything OpsWatch has collected — the admin account, the encrypted credentials, the history — is discarded the next time the container is rebuilt. Mount a volume at this path.",
+      "onlyPlace": "This is the only place OpsWatch stores history. There is no external database and no cloud storage: those would be things to build, not settings to switch on.",
+      "schemaTitle": "Schema",
+      "schemaHint": "Which of the packaged migrations this database has had applied.",
+      "schemaUnknown": "The migration journal could not be read, so whether anything is pending is unknown. That is not the same as nothing being pending.",
+      "schemaCurrent": "Up to date — all {applied} migrations applied.",
+      "schemaPending": "{count, plural, one {# migration is waiting} other {# migrations are waiting}}, and will be applied the next time OpsWatch starts.",
+      "schemaWhen": "OpsWatch applies its own packaged migrations when it starts, after copying the database first. There is no button here because a schema change is not something to run against a database this process has open, from a browser.",
+      "lastMigrationBackup": "The last schema change was preceded by a copy: {name}, {when}.",
+      "noSql": "No SQL from this page reaches the database. The only statements OpsWatch runs are the ones shipped in its own migrations.",
+      "historyTitle": "History collection",
+      "historyHint": "Whether OpsWatch keeps what it reads, and for how long.",
+      "collecting": "Collecting",
+      "collectingOn": "On",
+      "collectingOff": "Off — pages read AWS live and keep nothing",
+      "retention": "Kept for",
+      "retentionDays": "{days} days",
+      "retentionOff": "Nothing is being kept",
+      "changeHistory": "Change history settings",
+      "backupsTitle": "Backups",
+      "backupsHint": "A backup is the whole database, including every encrypted credential.",
+      "noBackups": "No backup has been taken yet.",
+      "backupCount": "{count, plural, one {# backup} other {# backups}} on disk, the newest {when}.",
+      "goBackup": "Take a backup, or read the restore procedure",
+      "readGuide": "History and storage"
     }
   },
   "Api": {

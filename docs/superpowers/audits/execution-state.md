@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | AWS safe disconnect: what OpsWatch does, and what only AWS can |
-| Last green gates | tsc 0 · eslint 0 · **2376 unit** · **396 e2e** · `roadmap:check` 0 |
+| Current checkpoint | Settings → Storage: where the data is, and whether it is safe |
+| Last green gates | tsc 0 · eslint 0 · **2381 unit** · **401 e2e** · `roadmap:check` 0 |
 | Schema | drizzle **0029** — `notify_destinations.connection_id`, nullable, existing rows keep `null` (unscoped), so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -91,6 +91,9 @@ losing the whole conversation loses no plan.
 - [x] **INV-1** `/api/v1/investigations/{id}`: §7's three bands, derived from the problem
 - [x] **UX-6** axe over 24 routes × 2 widths × 2 locales × 2 themes, zero WCAG 2.1 A/AA violations
 - [x] **UX-7** dark mode verified, including the failure no accessibility rule names
+- [x] **Settings → Storage.** One page for "where is my data and will I lose it", which took three
+      before. No migration button, and the page says why: migrations run at startup after the database
+      is copied. One storage backend, because there is one — the others would be claims
 - [x] **AWS safe disconnect.** The card separates what OpsWatch does from what stays in AWS, names the
       stacks with the documented `delete-stack` commands, links the console for the right region, and
       lists the collection stack first because it holds the subscription filters. The history deletion
@@ -126,7 +129,8 @@ The page now says that instead of hiding the button.
 3. ~~Safe disconnect~~ — done. **Stack identity is still not tracked for the base stack**: the collection
    row stores `stackId`, the connection does not, so "update available" is inferred from a template
    version rather than read from the stack
-4. Storage and database setup, with a migration flow that shows versions and pending work first
+4. ~~Storage and database setup~~ — done, with the migration button deliberately absent. An external
+   PostgreSQL backend is the next real step there, and it is a build rather than a setting
 5. Linux host architecture, then the host MVP, then Redis-on-Ubuntu discovery
 6. Unified host/cloud identity (an agent on EC2 must not duplicate the discovered instance)
 7. Google Cloud, then DigitalOcean — against current official documentation, never from memory
