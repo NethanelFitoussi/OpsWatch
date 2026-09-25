@@ -6014,7 +6014,10 @@
       },
       "servicesTitle": "Ce qui tourne",
       "servicesHint": "Trouvé par l’agent à partir des ports en écoute et des processus qui les détiennent. Chaque entrée dit comment.",
-      "noServices": "L’agent a cherché et n’a rien reconnu."
+      "noServices": "L’agent a cherché et n’a rien reconnu.",
+      "historyTitle": "Les dernières 24 heures",
+      "historyHint": "Un point par envoi. La ligne s’interrompt là où l’agent s’est tu — un trou est un silence, pas une mesure.",
+      "load1": "Charge (1 min)"
     },
     "services": {
       "redis": "Redis",

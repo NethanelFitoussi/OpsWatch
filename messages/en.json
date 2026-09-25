@@ -6014,7 +6014,10 @@
       },
       "servicesTitle": "What is running",
       "servicesHint": "Found by the agent from the ports that are listening and the processes holding them. Each entry says how.",
-      "noServices": "The agent looked and found nothing it recognises."
+      "noServices": "The agent looked and found nothing it recognises.",
+      "historyTitle": "The last day",
+      "historyHint": "One point per report. The line breaks wherever the agent went quiet — a gap is silence, not a measurement.",
+      "load1": "Load (1 min)"
     },
     "services": {
       "redis": "Redis",

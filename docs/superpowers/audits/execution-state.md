@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `6b734b0` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | What needs attention on a host: findings, with the figure behind each |
-| Last green gates | tsc 0 · eslint 0 · **2409 unit** · **410 e2e** · `roadmap:check` 0 |
+| Current checkpoint | Host charts: the last day, with the gaps left as gaps |
+| Last green gates | tsc 0 · eslint 0 · **2414 unit** · **412 e2e** · `roadmap:check` 0 |
 | Schema | drizzle **0031** — `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -91,6 +91,10 @@ losing the whole conversation loses no plan.
 - [x] **INV-1** `/api/v1/investigations/{id}`: §7's three bands, derived from the problem
 - [x] **UX-6** axe over 24 routes × 2 widths × 2 locales × 2 themes, zero WCAG 2.1 A/AA violations
 - [x] **UX-7** dark mode verified, including the failure no accessibility rule names
+- [x] **Host charts.** CPU, memory and load over the last day, under the latest reading rather than
+      instead of it. The line breaks wherever the agent went quiet: recharts draws straight between the
+      points it is given, so silence would otherwise be drawn as a measurement. `ChartSeries.values` is
+      `(number | null)[]` now, which every other chart inherits
 - [x] **Host findings.** A full disk, memory nearly exhausted, a machine that stopped reporting — each
       with the figure behind it, sorted to the top of the list, and outranking the reporting state. They
       are deliberately **not** Problems: that pipeline is scoped to an AWS connection and a host has
@@ -146,9 +150,8 @@ The page now says that instead of hiding the button.
 4. ~~Storage and database setup~~ — done, with the migration button deliberately absent. An external
    PostgreSQL backend is the next real step there, and it is a build rather than a setting
 5. ~~Linux host architecture, MVP, service discovery, Redis, findings~~ — done. **Next for hosts, in
-   order: host↔EC2 correlation on `cloudInstanceId` (`hosts.connection_id` exists for it); charts over
-   the samples already stored; host findings as first-class Problems, which needs `problems` to admit
-   instance-wide rows**
+   order: host↔EC2 correlation on `cloudInstanceId` (`hosts.connection_id` exists for it); host
+   findings as first-class Problems, which needs `problems` to admit instance-wide rows**
 6. Unified host/cloud identity (an agent on EC2 must not duplicate the discovered instance)
 7. Google Cloud, then DigitalOcean — against current official documentation, never from memory
 

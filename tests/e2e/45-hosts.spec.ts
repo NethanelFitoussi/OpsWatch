@@ -294,3 +294,28 @@ test('THE RULING: a machine that stopped reporting shows no figures from before 
   await expect(row).not.toContainText('% full');
   await expect(row).not.toContainText('stopped reporting');
 });
+
+test('THE RULING: a host with one reading gets a chart of one reading, not an empty box', async ({ page }) => {
+  /*
+   * "What is it doing now" and "what has it been doing" are two questions, and the second is the one
+   * that says whether the first is normal. A metric this kernel never published has no chart at all,
+   * rather than an empty frame implying one should be there.
+   */
+  const host = { ...(await enrol(page, 'e2e charted')), machineId: 'e2e-machine-charts' };
+  expect((await report(agent, host)).status()).toBe(202);
+
+  await page.goto(`/en/hosts/${host.hostId}`);
+  const main = page.locator('main');
+  await expect(main).toContainText('The last day');
+  // Each measured metric gets a figure; the caption is the chart's accessible name.
+  await expect(main.getByRole('figure', { name: 'CPU' })).toBeVisible();
+  await expect(main.getByRole('figure', { name: 'Memory' })).toBeVisible();
+  await expect(main).toContainText('a gap is silence, not a measurement');
+});
+
+test('a host that has never reported has no charts at all', async ({ page }) => {
+  // Not an empty chart: there is nothing to draw, and a frame would imply there should be.
+  const host = await enrol(page, 'e2e uncharted');
+  await page.goto(`/en/hosts/${host.hostId}`);
+  await expect(page.locator('main')).not.toContainText('The last day');
+});

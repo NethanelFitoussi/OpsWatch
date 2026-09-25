@@ -53,7 +53,7 @@ for hosts; it is not one to smuggle in behind a disk-space check.
 | Host findings as first-class problems | `NOT_STARTED` — needs `problems` to admit instance-wide rows, and every scoped read to say what it means by one |
 | Service discovery (Redis, PostgreSQL, nginx, Docker) | `DONE` — from the listening ports and the processes holding them, with the **evidence shown for every entry**: discovery is a guess, and an operator reading "Redis" is entitled to know how OpsWatch decided. Redis itself is read with `INFO` and an allow-list of fields — no key, no value, `KEYS` never run — and verified against a real Redis 7.4.11, including counting keys across databases and reading `maxmemory: 0` as "no limit" rather than a zero ceiling |
 | Host ↔ EC2 identity correlation | `NOT_STARTED` — the agent already reports `cloudInstanceId`, and `hosts.connection_id` exists for it |
-| History and charts for host metrics | `NOT_STARTED` — samples are stored and bounded; only the latest reading is rendered |
+| History and charts for host metrics | `DONE` — CPU, memory and load over the last day, at the agent's own interval, under the latest reading rather than instead of it. **The line breaks wherever the agent went quiet**: recharts draws straight between the points it is given, and a straight line across two hours of silence is a measurement nobody took drawn as though somebody had. A metric the kernel never published gets no chart, rather than an empty frame implying one should be there |
 
 ## Storage and the database (2026-09-25)
 

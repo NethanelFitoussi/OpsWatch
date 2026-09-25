@@ -8,7 +8,8 @@ import { mergeSeriesRows } from '@/lib/monitoring/shared/chart-data';
 import { formatAxisTime, formatMetricValue, type MetricUnit } from '@/lib/monitoring/shared/format';
 import type { TimeRange } from '@/lib/monitoring/shared/time-range';
 
-export type ChartSeries = { id: string; label: string; timestamps: number[]; values: number[] };
+/** `null` in `values` is a gap: the line breaks rather than being drawn across a period nobody measured. */
+export type ChartSeries = { id: string; label: string; timestamps: number[]; values: (number | null)[] };
 
 const SERIES_COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)'];
 

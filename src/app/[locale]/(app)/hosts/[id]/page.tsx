@@ -11,7 +11,9 @@ import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { getDb } from '@/lib/db/client';
 import { formatMetricValue } from '@/lib/monitoring/shared/format';
+import { MetricChart } from '@/components/monitoring/metric-chart';
 import { hostFindings } from '@/lib/monitoring/shared/host-findings';
+import { hasReadings, hostSeries } from '@/lib/monitoring/shared/host-series';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { findHost, listSamples, toHost } from '@/lib/store/hosts';
 import { STATE_TEXT, TONE_BORDER } from '@/lib/ui/tones';
@@ -53,9 +55,25 @@ export default async function HostDetailPage({ params }: Props) {
   if (row === null) notFound();
 
   const nowMs = pageNow();
-  const samples = listSamples(getDb(), id, 2);
+  // A day's worth at the agent's five-minute interval. The store keeps a fortnight; the page shows the
+  // part an operator is actually looking at.
+  const samples = listSamples(getDb(), id, 288);
   const host = toHost(row, samples[0] ?? null, nowMs);
   const findings = hostFindings(host);
+
+  // Only what was actually measured: a metric this kernel never published has no chart rather than an
+  // empty box implying one should be there.
+  const charts = (
+    [
+      { id: 'cpu', field: 'cpuPercent', title: t('detail.cpu'), unit: 'percent' as const },
+      { id: 'memory', field: 'memoryUsedBytes', title: t('detail.memory'), unit: 'bytes' as const },
+      // 'rate' rather than 'count': a load average is fractional, and 0.2 formatted as a count is 0.
+      { id: 'load', field: 'load1', title: t('detail.load1'), unit: 'rate' as const },
+    ] as const
+  ).flatMap((one) => {
+    const series = hostSeries(samples, one.field);
+    return hasReadings(series) ? [{ ...one, series: { id: one.id, label: one.title, ...series } }] : [];
+  });
   const notMeasured = t('detail.notMeasured');
   const bytes = (value: number | null) => (value === null ? notMeasured : formatMetricValue(value, 'bytes', locale));
   // Counts read as counts: 184,221 rather than 184221, in whichever grouping the locale uses.
@@ -160,6 +178,24 @@ export default async function HostDetailPage({ params }: Props) {
           </>
         )}
       </MonitoringCard>
+
+      {/*
+        * The last day, at the agent's own interval.
+        *
+        * Under the latest reading rather than instead of it: "what is it doing now" and "what has it
+        * been doing" are two questions, and the second is the one that says whether the first is
+        * normal. The lines break wherever the agent went quiet — a straight line across a gap would be
+        * a measurement nobody took.
+        */}
+      {charts.length > 0 && (
+        <MonitoringCard title={t('detail.historyTitle')} description={t('detail.historyHint')}>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {charts.map((chart) => (
+              <MetricChart key={chart.id} title={chart.title} unit={chart.unit} range="24h" series={[chart.series]} />
+            ))}
+          </div>
+        </MonitoringCard>
+      )}
 
       <MonitoringCard title={t('detail.servicesTitle')} description={t('detail.servicesHint')}>
         {host.services.length === 0 ? (
