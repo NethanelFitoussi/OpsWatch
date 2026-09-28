@@ -6668,7 +6668,8 @@
       "status": "État",
       "region": "Région",
       "size": "Taille",
-      "created": "Créé"
+      "created": "Créé",
+      "bandwidth": "Bande passante publique"
     },
     "failures": {
       "no_token": "Aucun jeton lisible pour cette connexion. Cela signifie en général qu’OPSWATCH_SECRET a changé depuis son enregistrement.",
@@ -6679,6 +6680,23 @@
       "error": "DigitalOcean a renvoyé une erreur.",
       "not_ready": "Cette connexion n’a pas encore de jeton. Ajoutez un jeton d’accès personnel DigitalOcean avec la portée droplet:read.",
       "secret_changed": "Le jeton de cette connexion ne peut pas être déchiffré. OPSWATCH_SECRET a changé depuis son enregistrement."
+    },
+    "bandwidthValue": "{inbound} entrant / {outbound} sortant Mbit/s",
+    "agentless": "La bande passante publique, les E/S disque et l’occupation disque sont mesurées par DigitalOcean depuis l’extérieur du droplet. Rien n’est installé pour les lire.",
+    "needsAgent": "{metrics} ne sont pas affichés : DigitalOcean les mesure à l’intérieur du droplet, avec son agent de métriques. OpsWatch ne l’installe pas.",
+    "bandwidthCapped": "La bande passante est lue pour les {count} premiers droplets. Chacun coûte deux requêtes ; le reste de la liste est affiché sans chiffre plutôt que d’en faire une centaine.",
+    "agentMetrics": {
+      "cpu": "Le processeur",
+      "load_average": "la charge moyenne",
+      "memory": "la mémoire"
+    },
+    "bandwidthFailures": {
+      "no_token": "Aucun jeton",
+      "unauthorized": "Jeton rejeté",
+      "forbidden": "Pas d’accès aux métriques",
+      "rate_limited": "Débit limité",
+      "unreachable": "DigitalOcean injoignable",
+      "error": "Lecture échouée"
     }
   },
   "Capabilities": {

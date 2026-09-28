@@ -95,7 +95,10 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
   do: {
     resources: direct,
     health: { state: 'not_built' },
-    metrics: { state: 'not_built' },
+    // Public bandwidth, read straight from the account. Not CPU: on DigitalOcean that comes from
+    // `do-agent` inside the droplet, the opposite way round from Google — so this is deliberately a
+    // narrower claim than the Google one, and the droplets page says which figures need the agent.
+    metrics: direct,
     problems: { state: 'not_built' },
     // DigitalOcean has no log product to read application errors out of. This is not a gap in OpsWatch.
     errors: { state: 'not_offered' },

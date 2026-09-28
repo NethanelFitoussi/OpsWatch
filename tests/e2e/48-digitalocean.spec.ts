@@ -144,3 +144,53 @@ test('the same question is answered for AWS, where the answer is mostly yes', as
   await expect(card).toContainText('Also available forwarded, if you switch that on');
   await expect(card).not.toContainText('Not offered by this provider');
 });
+
+test('THE RULING: it says CPU needs DigitalOcean’s agent, where Google’s CPU needs nothing', async ({ page }) => {
+  /*
+   * The one cross-provider fact this product must not smooth over. DigitalOcean measures bandwidth,
+   * disk I/O and disk usage from outside the droplet and needs `do-agent` inside it for CPU, load and
+   * memory. Google is close to the opposite: CPU comes from the hypervisor and memory needs the Ops
+   * Agent. Showing a "CPU" column on both, or the same caveat under both, would be inventing parity
+   * DigitalOcean does not offer — which is the failure this test exists to catch.
+   */
+  const id = await create(page, 'Agent caveat');
+  await page.goto(`/en/accounts/${id}/droplets`);
+  const droplets = await page.locator('main').innerText();
+
+  expect(droplets).toContain('Public bandwidth');
+  expect(droplets).toContain('measured by DigitalOcean from outside the droplet');
+  expect(droplets).toContain('Nothing is installed to read them');
+  // CPU is named as something the agent measures, and OpsWatch says it will not install it.
+  expect(droplets).toMatch(/CPU[\s\S]{0,120}metrics agent/);
+  expect(droplets).toContain('OpsWatch does not install it');
+
+  // And on Google the same word appears on the other side of the line.
+  await page.goto('/en/accounts/new/gcp');
+  await page.getByLabel('Connection name').fill('Agent contrast');
+  await page.getByLabel('Project ID').fill('my-project-123');
+  await page.getByLabel('Project number').fill('123456789012');
+  await page.getByRole('button', { name: 'Create connection' }).click();
+  await page.waitForURL(/\/en\/accounts\/[0-9a-f]{12}$/);
+  const google = /\/accounts\/([0-9a-f]{12})/.exec(page.url())?.[1] as string;
+  await page.goto(`/en/accounts/${google}/instances`);
+  const instances = await page.locator('main').innerText();
+
+  // Google: CPU is the agentless one, memory is not.
+  expect(instances).toContain('which Google writes for every running instance');
+  expect(instances).toMatch(/Memory[\s\S]{0,140}Ops Agent/);
+  // The two pages do not carry the same sentence about CPU, because the two clouds do not.
+  expect(instances).not.toContain('metrics agent');
+});
+
+test('the droplets page reads in French, and at 360 px, with the caveat intact', async ({ page }) => {
+  const id = await create(page, 'Narrow bandwidth');
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(`/fr/accounts/${id}/droplets`);
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain('agent de métriques');
+  expect(main).toContain('Le processeur');
+  expect(main).not.toMatch(/DoDroplets\./);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});

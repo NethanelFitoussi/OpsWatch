@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Google Cloud metrics: agentless CPU, read directly, with the agent caveat on the page |
-| Last green gates | tsc 0 · eslint 0 · **2565 unit** · **442 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | DigitalOcean metrics: bandwidth, and the fact that its CPU is not agentless |
+| Last green gates | tsc 0 · eslint 0 · **2574 unit** · **444 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -137,6 +137,26 @@ from `agent.googleapis.com/…` — the Ops Agent — not from the hypervisor. A
 operator nothing about whether OpsWatch failed or Google never measured it, so the page states which
 in a sentence, in both languages, and names the agent OpsWatch does not install.
 
+### DigitalOcean, which is not Google with different names
+
+The mission's instruction was not to invent parity DigitalOcean does not provide, and the first place
+that bites is the most obvious metric there is. **DigitalOcean's CPU needs `do-agent`.** Bandwidth,
+disk I/O and disk usage are measured from outside the droplet; CPU, load average and memory are
+measured inside it. Google is close to the opposite. So a second provider slice that mirrored the
+first — a CPU column, the same sparkline, the same sentence underneath — would have been a page that
+looked complete and was wrong about what it measured.
+
+What shipped is therefore deliberately narrower than the Google one: **public bandwidth**, in and out,
+in Mbps, for up to twelve droplets. Twelve because each droplet costs *two* requests — `inbound` and
+`outbound` are separate calls — and DigitalOcean allows 250 a minute; past the cap the rest of the
+list is shown without a figure and the page says which cap it hit. The values arrive as decimal
+**strings**, where `Number('')` is 0, so parsing them is a check and not a coercion.
+
+Both pages now carry a sentence naming what the provider measures without an agent and what it does
+not, and the two sentences are different because the two clouds are. An e2e ruling holds exactly that:
+DigitalOcean's page says CPU needs the metrics agent, Google's says CPU needs nothing and memory needs
+the Ops Agent, and neither page carries the other's caveat.
+
 ### What is still only architecture
 
 The CPU **cell** has never rendered with a number in it. There is no Google project behind the e2e
@@ -177,14 +197,24 @@ integration; this is one of the ones whose answer is *architecture only*.
   `awsAccountId`, at the schema level or in code, and the rest of the product treats two connections
   over one account as a supported configuration. Anything that matches on what an account *contains* —
   an instance id, a log group — must therefore be deterministic about which connection wins.
-- **Memory is the one metric that needs an agent, on both new providers.** Google collects CPU, disk,
-  network and uptime for every instance agentlessly; memory and processes need the Ops Agent
-  (`agent.googleapis.com/…`). DigitalOcean collects CPU, bandwidth and disk I/O from the hypervisor;
-  load average, memory and disk *usage* need `do-agent`. OpsWatch installs neither, and its own host
-  agent already reports memory — so the honest sentence is "CPU and network agentlessly; for memory,
-  the provider's agent or ours".
-- **DigitalOcean returns CPU as cumulative per-mode counters** (`mode: idle|user|system`, seconds), so
-  utilisation is `1 − Δidle/Δtotal` between two samples. The raw number is meaningless on its own.
+- **What each provider measures without an agent is different, and I had it backwards.** An earlier
+  version of this entry said DigitalOcean collects CPU from the hypervisor and needs `do-agent` for
+  disk usage. **The opposite is true**, and the current documentation says so plainly:
+
+  | | Without an agent | Needs the provider's agent |
+  |---|---|---|
+  | **Google Cloud** | CPU, disk, network, uptime (`compute.googleapis.com/…`) | memory, processes (Ops Agent, `agent.googleapis.com/…`) |
+  | **DigitalOcean** | public/private bandwidth, disk I/O, disk usage | **CPU**, load average, memory (`do-agent`) |
+
+  So there is **no metric both clouds give agentlessly**, and CPU — the obvious first thing to reach
+  for — is agentless on one and not the other. Any page that shows "CPU" for both without saying which
+  is measured and which is missing would be inventing parity DigitalOcean does not offer. This is
+  exactly what Part O is for: the wrong version above was plausible, consistent, and written from
+  memory.
+- **DigitalOcean's metric values are `[unixSeconds, "decimal string"]` pairs** under
+  `data.result[].values`, with the labels on `data.result[].metric`. Bandwidth is in **Mbps**, and its
+  endpoint needs `interface` (`public`/`private`) **and** `direction` (`inbound`/`outbound`) — so one
+  droplet's public traffic is two requests, which is what bounds how many droplets a page can show.
 - **A `select … .all()` is a page that stops loading in two years**, not one that is broken today.
   `store-bounded-reads.test.ts` holds every one of them to being limited, windowed, or listed with the
   reason it cannot grow.

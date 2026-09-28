@@ -12,8 +12,13 @@ import { findConnection } from '@/lib/connections/repository';
 import { doTargetFrom } from '@/lib/do/target';
 import { getDb } from '@/lib/db/client';
 import { listDroplets } from '@/lib/do/droplets';
+import { BANDWIDTH_DROPLET_CAP, DO_AGENT_METRICS, dropletBandwidth, latestBandwidth } from '@/lib/do/metrics';
+import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
+
+/** Fifteen minutes, the same window the Google page uses, so the two read as one product. */
+const BANDWIDTH_WINDOW_MS = 15 * 60_000;
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -42,6 +47,25 @@ export default async function DropletsPage({ params }: Props) {
   const result = target.ok ? await listDroplets({ token: target.data.token }) : null;
   const failure = target.ok ? (result !== null && !result.ok ? result.reason : null) : target.code === 'SecretChanged' ? 'secret_changed' : 'not_ready';
 
+  /*
+   * Public bandwidth for the droplets that were found.
+   *
+   * Its failure is kept apart from the list's: a token can be allowed to read droplets and not
+   * metrics, and a list that was read is worth showing whatever the metric call said.
+   */
+  const nowMs = pageNow();
+  const droplets = result !== null && result.ok ? result.data : [];
+  const bandwidth =
+    target.ok && droplets.length > 0
+      ? await dropletBandwidth({
+          target: target.data,
+          dropletIds: droplets.map((droplet) => droplet.id),
+          startMs: nowMs - BANDWIDTH_WINDOW_MS,
+          endMs: nowMs,
+        })
+      : null;
+  const series = new Map((bandwidth !== null && bandwidth.ok ? bandwidth.data : []).map((entry) => [entry.dropletId, entry]));
+
   return (
     <PageBody>
       <Link href={`/accounts/${row.id}`} className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground hover:text-foreground">
@@ -61,6 +85,7 @@ export default async function DropletsPage({ params }: Props) {
               <TableRow>
                 <TableHead>{t('columns.name')}</TableHead>
                 <TableHead>{t('columns.status')}</TableHead>
+                <TableHead>{t('columns.bandwidth')}</TableHead>
                 <TableHead>{t('columns.region')}</TableHead>
                 <TableHead>{t('columns.size')}</TableHead>
                 <TableHead>{t('columns.created')}</TableHead>
@@ -75,6 +100,31 @@ export default async function DropletsPage({ params }: Props) {
                   </TableCell>
                   {/* DigitalOcean's own word, which is what their console shows too. */}
                   <TableCell className={cn(droplet.status === 'active' ? TONE_TEXT.success : 'text-muted-foreground')}>{droplet.status}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const entry = series.get(droplet.id);
+                      const inbound = latestBandwidth(entry, 'inbound');
+                      const outbound = latestBandwidth(entry, 'outbound');
+                      /*
+                       * Nothing measured is nothing shown. A droplet past the read cap, or one
+                       * DigitalOcean reported no samples for, must not be drawn at 0 Mbps — that is a
+                       * silent machine and a machine nobody looked at, made to look identical.
+                       */
+                      if (inbound === null && outbound === null) {
+                        return (
+                          <span className="text-muted-foreground">
+                            {bandwidth !== null && !bandwidth.ok ? t(`bandwidthFailures.${bandwidth.reason}`) : t('notReported')}
+                          </span>
+                        );
+                      }
+                      const mbps = (value: number | null) => (value === null ? t('notReported') : format.number(value, { maximumFractionDigits: 2 }));
+                      return (
+                        <span className="block text-sm tabular-nums">
+                          {t('bandwidthValue', { inbound: mbps(inbound), outbound: mbps(outbound) })}
+                        </span>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{droplet.region ?? t('notReported')}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {droplet.size ?? t('notReported')}
@@ -91,6 +141,14 @@ export default async function DropletsPage({ params }: Props) {
           </Table>
         )}
         <p className="mt-3 text-xs text-muted-foreground">{t('readNow')}</p>
+        {/* Which figures DigitalOcean measures from outside the droplet and which it does not. Said,
+            rather than left as an absent column — and deliberately not the same list as Google's,
+            because CPU is agentless there and is not here. */}
+        <div className="mt-3 space-y-1 border-t pt-3 text-xs text-muted-foreground">
+          <p>{t('agentless')}</p>
+          <p>{t('needsAgent', { metrics: format.list(DO_AGENT_METRICS.map((metric) => t(`agentMetrics.${metric}`)), { type: 'conjunction' }) })}</p>
+          {bandwidth !== null && bandwidth.ok && bandwidth.truncated && <p>{t('bandwidthCapped', { count: BANDWIDTH_DROPLET_CAP })}</p>}
+        </div>
       </SectionCard>
     </PageBody>
   );

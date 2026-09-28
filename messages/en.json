@@ -6668,7 +6668,8 @@
       "status": "Status",
       "region": "Region",
       "size": "Size",
-      "created": "Created"
+      "created": "Created",
+      "bandwidth": "Public bandwidth"
     },
     "failures": {
       "no_token": "There is no readable token for this connection.",
@@ -6679,6 +6680,23 @@
       "error": "DigitalOcean returned an error.",
       "not_ready": "This connection has no token yet. Add a DigitalOcean personal access token with the droplet:read scope.",
       "secret_changed": "This connection’s token cannot be decrypted. OPSWATCH_SECRET has changed since it was stored."
+    },
+    "bandwidthValue": "{inbound} in / {outbound} out Mbps",
+    "agentless": "Public bandwidth, disk I/O and disk usage are measured by DigitalOcean from outside the droplet. Nothing is installed to read them.",
+    "needsAgent": "{metrics} are not shown: DigitalOcean measures those inside the droplet, with its metrics agent. OpsWatch does not install it.",
+    "bandwidthCapped": "Bandwidth is read for the first {count} droplets. Each one costs two requests, and the rest of the list is shown without a figure rather than making a hundred.",
+    "agentMetrics": {
+      "cpu": "CPU",
+      "load_average": "load average",
+      "memory": "memory"
+    },
+    "bandwidthFailures": {
+      "no_token": "No token",
+      "unauthorized": "Token rejected",
+      "forbidden": "No metrics access",
+      "rate_limited": "Rate-limited",
+      "unreachable": "DigitalOcean unreachable",
+      "error": "Read failed"
     }
   },
   "Capabilities": {

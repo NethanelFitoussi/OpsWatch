@@ -16,6 +16,7 @@ import { instancesInRegion } from '../gcp/instances';
 import { instanceCpuSeries } from '../gcp/metrics';
 import { gcpTargetFrom, type GcpTarget } from '../gcp/target';
 import { listDroplets } from '../do/droplets';
+import { dropletBandwidth } from '../do/metrics';
 import { doTargetFrom, type DoTarget } from '../do/target';
 import { findConnection } from '../connections/repository';
 import { getDb } from '../db/client';
@@ -184,7 +185,7 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
     // The scope's region is not passed on, because DigitalOcean's API has no per-region endpoint to
     // pass it to. Inventing one would be parity DigitalOcean does not offer.
     resolveTarget: fromRow('do:token', (row, _scope, deps) => doTargetFrom(row, deps.secret)),
-    readers: { resources: listDroplets, metrics: null, errors: null, alerts: null, logs: null, history: null },
+    readers: { resources: listDroplets, metrics: dropletBandwidth, errors: null, alerts: null, logs: null, history: null },
   },
 };
 
