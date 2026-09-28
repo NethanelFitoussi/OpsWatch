@@ -80,6 +80,36 @@ describe('the evidence a question is answered from', () => {
   });
 });
 
+describe('which cloud the model thinks it is looking at', () => {
+  it('THE RULING: the evidence names the provider, so an answer is not AWS advice about a project', () => {
+    /*
+     * Without it a model reads `Family gcp_alerts: 1 of 2 affected` with no idea whose estate it is,
+     * and an assistant that does not know which cloud it is looking at will suggest a CloudWatch
+     * alarm for a Google project — advice that is confidently wrong, in the one part of this product
+     * that has already admitted it is guessing.
+     *
+     * A measured fact, not a hint: the provider is on the connection and the scope is what it is.
+     */
+    const db = createTestDb();
+    expect(buildEvidence(db, { ...env, provider: 'gcp' }, context).text).toContain('Google Cloud project');
+    expect(buildEvidence(db, { ...env, provider: 'do' }, context).text).toContain('DigitalOcean account');
+    // AWS says region, and says it whether or not anyone passed the provider — the default it had.
+    expect(buildEvidence(db, { ...env, provider: 'aws' }, context).text).toContain('AWS region');
+    expect(buildEvidence(db, env, context).text).toContain('AWS region');
+  });
+
+  it('is looked up rather than defaulted where the caller can know it', async () => {
+    // A default that happens to be right is the thing that stops being right without anyone noticing.
+    const { readFileSync } = await import('node:fs');
+    for (const path of [
+      '../../src/app/api/v1/ai/ask/route.ts',
+      '../../src/app/[locale]/(app)/c/[connectionId]/[region]/overview/ask/actions.ts',
+    ]) {
+      expect(readFileSync(new URL(path, import.meta.url), 'utf8'), path).toContain('provider');
+    }
+  });
+});
+
 describe('what the model is told', () => {
   it('THE RULING: it is forbidden from inventing a figure or claiming a cause', () => {
     expect(SYSTEM_PROMPT).toContain('Never state a number, a service name or a time that is not in the evidence');

@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Three findings from an adversarial review of the logging slice |
-| Last green gates | tsc 0 · eslint 0 · **2655 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | The assistant is told which cloud it is looking at |
+| Last green gates | tsc 0 · eslint 0 · **2657 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -598,6 +598,27 @@ whose size Google chose. Fields are taken until the line is full instead.
 
 The pattern in the first: a claim in a comment is a claim. "Cannot make the page enormous" was written
 about the field in front of me and quietly generalised to the entry.
+
+### The assistant did not know which cloud it was looking at
+
+Checked "Ask OpsWatch" for the AWS-shaped assumption that has been everywhere else in this mission,
+and mostly it is clean: the system prompt never says AWS, and `buildEvidence` reads generic store
+functions, so a Google environment already produced correct evidence. `resolveEnvironment`'s fix even
+made the endpoint reachable for one.
+
+What was missing is smaller and worse than a broken link. The evidence said `Family gcp_alerts: 1 of 2
+affected` and **never said whose estate it was**. A model that does not know which cloud it is looking
+at will suggest a CloudWatch alarm for a Google project — confidently wrong advice, in the one part of
+this product that has already admitted it is guessing, and the part a reader is least equipped to
+check.
+
+One line fixes it, and it is a *measured* line: the provider is on the connection, and the scope is
+named in that cloud's own words through `scopeKindOf` — "a Google Cloud project (my-project)", "a
+DigitalOcean account (account)", "an AWS region (eu-west-1)".
+
+Both callers look the provider up rather than taking the default. The rail's action is AWS-only today
+and would have been right by accident, which is the thing that stops being right without anyone
+noticing.
 
 ## Decisions that must not be re-derived
 

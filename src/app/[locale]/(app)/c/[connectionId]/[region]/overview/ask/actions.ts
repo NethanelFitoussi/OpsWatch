@@ -3,6 +3,7 @@
 import { resolveLocale } from '@/i18n/routing';
 import { askOpsWatch } from '@/lib/ai/ask';
 import { requireAdmin } from '@/lib/auth/current';
+import { findConnection } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import type { ActionState } from '@/lib/forms/action-state';
 import { formString } from '@/lib/forms/form-data';
@@ -31,9 +32,14 @@ export async function askAction(
   await requireAdmin(resolveLocale(locale));
   const question = formString(formData, 'question').trim();
 
+  const db = getDb();
+  // Looked up rather than defaulted. This action is only reached from the AWS rail today, and a
+  // default that happens to be right is the thing that stops being right without anyone noticing.
+  const provider = findConnection(db, connectionId)?.provider ?? 'aws';
+
   const result = await askOpsWatch(
-    getDb(),
-    { connectionId, scope: region, question },
+    db,
+    { connectionId, scope: region, question, provider },
     { nowMs: Date.now(), render: await insightRenderer(resolveLocale(locale)) },
   );
   if (!result.ok) return { error: result.error, question };

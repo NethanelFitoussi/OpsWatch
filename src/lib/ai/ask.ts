@@ -1,6 +1,7 @@
 import 'server-only';
 import type { AiAnswer } from '@opswatch/contract';
 import { randomId } from '../crypto';
+import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
 import type { ReadContext } from '../read/problems';
 import { runAi } from './connection';
@@ -55,14 +56,14 @@ export type AskResult =
 
 export async function askOpsWatch(
   db: Db,
-  query: { connectionId: string; scope: string; question: string },
+  query: { connectionId: string; scope: string; question: string; provider?: Provider },
   context: ReadContext,
   deps: Parameters<typeof runAi>[2] = {},
 ): Promise<AskResult> {
   const question = query.question.trim();
   if (question === '' || question.length > MAX_QUESTION_LENGTH) return { ok: false, error: 'invalid_question' };
 
-  const evidence = buildEvidence(db, { connectionId: query.connectionId, scope: query.scope }, context);
+  const evidence = buildEvidence(db, { connectionId: query.connectionId, scope: query.scope, provider: query.provider }, context);
   // Nothing measured, nothing to narrate. Asking a model anyway would get a confident answer about an
   // environment nobody has read, which is the one failure this whole product is arranged to avoid.
   if (!hasEvidence(evidence)) return { ok: false, error: 'no_evidence' };

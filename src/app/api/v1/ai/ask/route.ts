@@ -28,7 +28,7 @@ export const POST = apiRoute({
 
     const result = await askOpsWatch(
       db,
-      { connectionId: environment.connectionId, scope: environment.scope, question },
+      { connectionId: environment.connectionId, scope: environment.scope, question, provider: environment.provider },
       { nowMs: Date.now(), render: await insightRenderer(actor.locale) },
     );
     if (!result.ok) {

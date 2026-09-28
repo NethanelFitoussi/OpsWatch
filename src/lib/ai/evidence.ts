@@ -1,6 +1,8 @@
 import 'server-only';
 import type { Ref } from '@opswatch/contract';
+import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
+import { scopeKindOf } from '../monitoring/shared/scopes';
 import { listDeployments } from '../store/deployments';
 import { recentErrorGroups } from '../store/errors';
 import { listFamilySnapshots } from '../store/health';
@@ -38,15 +40,29 @@ export type EvidencePack = {
 };
 
 /** Truncates a value the model does not need in full. A message is evidence; an essay is a context leak. */
+/** Their own names, so the model reads what an operator would say rather than an internal id. */
+const PROVIDER_NAMES: Record<Provider, string> = { aws: 'AWS', gcp: 'Google Cloud', do: 'DigitalOcean' };
+
 const short = (value: string, max = 160) => (value.length <= max ? value : `${value.slice(0, max)}…`);
 
 export function buildEvidence(
   db: Db,
-  query: { connectionId: string; scope: string },
+  query: { connectionId: string; scope: string; provider?: Provider },
   context: ReadContext,
 ): EvidencePack {
   const lines: string[] = [];
   const citations: Ref[] = [];
+
+  /*
+   * Which cloud this is, and what its scope is in that cloud's own words.
+   *
+   * A measured fact rather than a hint: without it a model reads `Family gcp_alerts: 1 of 2 affected`
+   * with no idea whose estate it is, and an assistant that does not know which cloud it is looking at
+   * will suggest a CloudWatch alarm for a Google project — advice that is confidently wrong, in the
+   * one place this product has already admitted it is guessing.
+   */
+  const provider = query.provider ?? 'aws';
+  lines.push(`This environment is a ${PROVIDER_NAMES[provider]} ${scopeKindOf(provider)} (${query.scope}).`);
 
   const counts = countBySeverity(db, query);
   lines.push(`Open problems: ${counts.critical} critical, ${counts.warning} warning.`);
