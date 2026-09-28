@@ -37,30 +37,24 @@ export type DoAlertPolicy = {
   entities: number;
   tags: number;
   enabled: boolean;
-  /**
-   * Whether the figure this policy watches needs `do-agent` inside the droplet.
-   *
-   * A CPU or memory policy on a droplet without the agent never fires, and a list that showed it as
-   * enabled would be telling an operator they are covered when they are not.
-   */
-  needsAgent: boolean;
 };
 
 export type DoAlertsResult = { ok: true; policies: DoAlertPolicy[]; truncated: boolean } | { ok: false; reason: DoTestFailure };
 
 /**
- * Which policy types watch a figure `do-agent` reports.
+ * **Every** droplet alert policy needs `do-agent` on the droplets it watches.
  *
- * From the same split the droplets page states: DigitalOcean measures bandwidth, disk I/O and disk
- * usage from outside the droplet, and CPU, load average and memory from inside it.
+ * Not the metric-by-metric split the droplets page uses. DigitalOcean's own words about creating a
+ * policy are: *"Only Droplets with the DigitalOcean metrics agent installed are available to
+ * select."* All twelve metrics, bandwidth included — whatever the hypervisor can see for a graph, an
+ * alert policy is offered only for droplets running the agent.
+ *
+ * So the caveat belongs to the page once, not to each row: a badge on every line is noise, and an
+ * operator reading "Enabled" needs to know it means *enabled for the droplets that have the agent*.
+ * An earlier version of this file guessed the split per metric, which was the wrong shape as well as
+ * the wrong answer.
  */
-const AGENT_METRICS = ['cpu', 'memory', 'load_1', 'load_5', 'load_15', 'disk_utilization_percent'];
-
-export const needsAgentFor = (type: string): boolean => {
-  // `v1/insights/droplet/cpu` → `cpu`. Anything that is not a droplet insight is not ours to judge.
-  const metric = type.split('/').pop() ?? '';
-  return AGENT_METRICS.includes(metric);
-};
+export const DO_ALERTS_NEED_AGENT = true;
 
 function failureOf(status: number): DoTestFailure {
   if (status === 401) return 'unauthorized';
@@ -117,7 +111,6 @@ export async function listAlertPolicies(input: { target: DoTarget; fetchImpl?: t
         tags: Array.isArray(policy.tags) ? policy.tags.length : 0,
         // Absent means off. Read as truthy, `undefined` would count a policy as watching.
         enabled: policy.enabled === true,
-        needsAgent: needsAgentFor(policy.type),
       });
     }
     if (batch.length < PER_PAGE) break;

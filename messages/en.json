@@ -6733,7 +6733,7 @@
       "secret_changed": "This connection’s token cannot be decrypted. OPSWATCH_SECRET has changed since it was stored."
     },
     "bandwidthValue": "{inbound} in / {outbound} out Mbps",
-    "agentless": "Public bandwidth, disk I/O and disk usage are measured by DigitalOcean from outside the droplet. Nothing is installed to read them.",
+    "agentless": "Public bandwidth and disk I/O are measured by DigitalOcean from outside the droplet. Nothing is installed to read them.",
     "needsAgent": "{metrics} are not shown: DigitalOcean measures those inside the droplet, with its metrics agent. OpsWatch does not install it.",
     "bandwidthCapped": "Bandwidth is read for the first {count} droplets. Each one costs two requests, and the rest of the list is shown without a figure rather than making a hundred.",
     "agentMetrics": {
@@ -6765,7 +6765,7 @@
     "unnamed": "Policy with no description",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "needsAgent": "Needs the metrics agent",
+    "needsAgent": "DigitalOcean offers an alert policy only for droplets that run its metrics agent, so “Enabled” means enabled for those. A droplet without the agent is not covered by anything here.",
     "condition": "{compare} {value} for {window}",
     "conditionUnknown": "DigitalOcean did not report the threshold",
     "windowUnknown": "an unreported window",

@@ -26,8 +26,15 @@ import type { DoTestFailure } from './result';
 
 const API = 'https://api.digitalocean.com/v2';
 
-/** What DigitalOcean measures from outside the droplet. Nothing here asks the operator to install anything. */
-export const DO_AGENTLESS_METRICS = ['bandwidth', 'disk_io', 'disk_usage'] as const;
+/**
+ * What DigitalOcean measures from outside the droplet.
+ *
+ * Bandwidth and disk I/O, and **not** disk usage: an earlier version of this list had it, on the
+ * strength of a graphs page calling it a default chart. A hypervisor can count a guest's packets and
+ * its block-device operations; how full a filesystem *inside* that guest is, it cannot see. Rather
+ * than assert either way from a page that does not say, the claim is limited to what is established.
+ */
+export const DO_AGENTLESS_METRICS = ['bandwidth', 'disk_io'] as const;
 /** What it does not. Named so the page can say which, rather than leaving a column out. */
 export const DO_AGENT_METRICS = ['cpu', 'load_average', 'memory'] as const;
 

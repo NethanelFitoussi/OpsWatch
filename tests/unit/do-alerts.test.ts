@@ -1,5 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { listAlertPolicies, needsAgentFor } from '@/lib/do/alerts';
+import { DO_ALERTS_NEED_AGENT, listAlertPolicies } from '@/lib/do/alerts';
 import { capabilitiesOf } from '@/lib/monitoring/capabilities';
 import type { DoTarget } from '@/lib/do/target';
 
@@ -58,17 +59,28 @@ describe('what DigitalOcean can and cannot tell us', () => {
     expect(capabilitiesOf('gcp').problems.state).toBe('supported');
   });
 
-  it('says which policies watch a figure the agent has to report', () => {
+  it('THE RULING: it does not guess a per-metric agent split for alert policies', () => {
     /*
-     * An enabled CPU policy on a droplet without `do-agent` never fires. Shown as simply "Enabled",
-     * it tells an operator they are covered when they are not — the same agentless split the droplets
-     * page states, arriving as a false sense of security instead of a missing column.
+     * An earlier version of this file decided per metric which policies need `do-agent`, reasoning
+     * from what a hypervisor can see. DigitalOcean's own words about creating a policy are: "Only
+     * Droplets with the DigitalOcean metrics agent installed are available to select." All twelve
+     * metrics, bandwidth included. The guess was the wrong shape as well as the wrong answer, and an
+     * operator reading "Enabled" on a droplet without the agent is not covered by anything.
      */
-    expect(needsAgentFor('v1/insights/droplet/cpu')).toBe(true);
-    expect(needsAgentFor('v1/insights/droplet/memory_utilization_percent')).toBe(false);
-    expect(needsAgentFor('v1/insights/droplet/load_5')).toBe(true);
-    // Bandwidth is measured outside the droplet, so a bandwidth policy needs nothing installed.
-    expect(needsAgentFor('v1/insights/droplet/public_outbound_bandwidth')).toBe(false);
+    expect(DO_ALERTS_NEED_AGENT).toBe(true);
+    const source = readFileSync(new URL('../../src/lib/do/alerts.ts', import.meta.url), 'utf8');
+    expect(source).not.toContain('needsAgentFor');
+  });
+
+  it('THE RULING: it does not claim disk usage is measured from outside the droplet', async () => {
+    /*
+     * The other half of the same correction. A hypervisor can count a guest's packets and its
+     * block-device operations; how full a filesystem *inside* that guest is, it cannot see. A graphs
+     * page listing "Disk Usage" as a default chart is not enough to assert it, so the claim is
+     * limited to what is established rather than made either way.
+     */
+    const { DO_AGENTLESS_METRICS } = await import('@/lib/do/metrics');
+    expect([...DO_AGENTLESS_METRICS]).toEqual(['bandwidth', 'disk_io']);
   });
 });
 

@@ -6733,7 +6733,7 @@
       "secret_changed": "Le jeton de cette connexion ne peut pas être déchiffré. OPSWATCH_SECRET a changé depuis son enregistrement."
     },
     "bandwidthValue": "{inbound} entrant / {outbound} sortant Mbit/s",
-    "agentless": "La bande passante publique, les E/S disque et l’occupation disque sont mesurées par DigitalOcean depuis l’extérieur du droplet. Rien n’est installé pour les lire.",
+    "agentless": "La bande passante publique et les E/S disque sont mesurées par DigitalOcean depuis l’extérieur du droplet. Rien n’est installé pour les lire.",
     "needsAgent": "{metrics} ne sont pas affichés : DigitalOcean les mesure à l’intérieur du droplet, avec son agent de métriques. OpsWatch ne l’installe pas.",
     "bandwidthCapped": "La bande passante est lue pour les {count} premiers droplets. Chacun coûte deux requêtes ; le reste de la liste est affiché sans chiffre plutôt que d’en faire une centaine.",
     "agentMetrics": {
@@ -6765,7 +6765,7 @@
     "unnamed": "Règle sans description",
     "enabled": "Activée",
     "disabled": "Désactivée",
-    "needsAgent": "Nécessite l’agent de métriques",
+    "needsAgent": "DigitalOcean ne propose une règle d’alerte que pour les droplets exécutant son agent de métriques : « Activée » signifie donc activée pour ceux-là. Un droplet sans l’agent n’est couvert par rien ici.",
     "condition": "{compare} {value} pendant {window}",
     "conditionUnknown": "DigitalOcean n’a pas indiqué le seuil",
     "windowUnknown": "une durée non indiquée",

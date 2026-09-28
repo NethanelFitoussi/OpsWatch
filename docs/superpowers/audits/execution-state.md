@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Every link a non-AWS environment can produce, swept for rail paths |
-| Last green gates | tsc 0 · eslint 0 · **2641 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Two DigitalOcean claims retracted to what is actually established |
+| Last green gates | tsc 0 · eslint 0 · **2642 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -500,6 +500,29 @@ so the solo run fails for a reason that has nothing to do with the flake. The on
 is the whole suite on a `--force-recreate`d instance, which is what the gate discipline above says and
 what it took three runs to remember.
 
+### Retracting two DigitalOcean claims
+
+Two things I shipped three checkpoints ago and could not actually support. Both were plausible, both
+came from a real documentation page, and both were still wrong.
+
+**Every droplet alert policy needs `do-agent`, not some of them.** I derived a per-metric split from
+what a hypervisor can see, and put a badge on the rows I thought needed the agent. DigitalOcean's own
+words about creating a policy are: *"Only Droplets with the DigitalOcean metrics agent installed are
+available to select."* All twelve metrics, bandwidth included. So the guess was the wrong **shape** as
+well as the wrong answer — the caveat belongs to the page once, not to each row, and an operator
+reading "Enabled" needs to know it means enabled for the droplets that have the agent.
+
+**Disk usage is not claimed to be agentless.** A graphs page lists "Disk Usage" as a default chart,
+which is where the claim came from. But a hypervisor can count a guest's packets and its block-device
+operations; how full a filesystem *inside* that guest is, it cannot see. The two do not reconcile, and
+the honest position is to assert neither — the list is now bandwidth and disk I/O, which are
+established, and the page says only that.
+
+The pattern behind both, and behind the earlier backwards CPU/disk table: **a documentation page that
+answers a nearby question is not an answer to yours.** The graphs page is about graphs, the alerts
+page is about alerts, and reasoning across them is how three separate wrong claims got written down
+with confidence.
+
 ## Decisions that must not be re-derived
 
 - **next-intl does not throw for a missing message — it renders the key path.** A dot inside a key is a
@@ -538,7 +561,7 @@ what it took three runs to remember.
   | | Without an agent | Needs the provider's agent |
   |---|---|---|
   | **Google Cloud** | CPU, disk, network, uptime (`compute.googleapis.com/…`) | memory, processes (Ops Agent, `agent.googleapis.com/…`) |
-  | **DigitalOcean** | public/private bandwidth, disk I/O, disk usage | **CPU**, load average, memory (`do-agent`) |
+  | **DigitalOcean** | public/private bandwidth, disk I/O | **CPU**, load average, memory (`do-agent`). *Disk usage is not claimed either way* |
 
   So there is **no metric both clouds give agentlessly**, and CPU — the obvious first thing to reach
   for — is agentless on one and not the other. Any page that shows "CPU" for both without saying which

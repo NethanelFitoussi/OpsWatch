@@ -159,6 +159,8 @@ test('THE RULING: it says CPU needs DigitalOcean’s agent, where Google’s CPU
 
   expect(droplets).toContain('Public bandwidth');
   expect(droplets).toContain('measured by DigitalOcean from outside the droplet');
+  // Disk *usage* is deliberately not claimed: a hypervisor cannot see inside a guest filesystem.
+  expect(droplets).not.toContain('disk usage are measured');
   expect(droplets).toContain('Nothing is installed to read them');
   // CPU is named as something the agent measures, and OpsWatch says it will not install it.
   expect(droplets).toMatch(/CPU[\s\S]{0,120}metrics agent/);

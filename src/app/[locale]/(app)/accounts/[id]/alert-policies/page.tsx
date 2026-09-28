@@ -4,7 +4,6 @@ import { getTranslations } from 'next-intl/server';
 import { PageBody } from '@/components/page-body';
 import { PageHeader } from '@/components/page-header';
 import { SectionCard } from '@/components/section-card';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
@@ -98,16 +97,6 @@ export default async function DoAlertPoliciesPage({ params }: Props) {
                     <span className={cn('text-sm font-medium', policy.enabled ? TONE_TEXT.success : 'text-muted-foreground')}>
                       {t(policy.enabled ? 'enabled' : 'disabled')}
                     </span>
-                    {/*
-                      * An enabled CPU or memory policy on a droplet without `do-agent` never fires.
-                      * Shown as a caveat on the row rather than left for the operator to work out,
-                      * because "enabled" otherwise reads as "covered".
-                      */}
-                    {policy.needsAgent && (
-                      <Badge variant="outline" className="mt-1 block w-fit">
-                        {t('needsAgent')}
-                      </Badge>
-                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -121,6 +110,12 @@ export default async function DoAlertPoliciesPage({ params }: Props) {
             * about DigitalOcean rather than about this request: an operator whose token was refused
             * still needs to know why there are no DigitalOcean incidents anywhere in this product.
             */}
+          {/*
+            * Said once rather than on every row: DigitalOcean offers a policy only for droplets that
+            * run its agent, so "Enabled" above means enabled *for those*, and an operator who has not
+            * installed it is not covered by anything on this page.
+            */}
+          <p>{t('needsAgent')}</p>
           <p>{t('noFiringState')}</p>
           {answered?.truncated === true && <p>{t('truncated')}</p>}
           {answered !== null && <p>{t('readNow')}</p>}
