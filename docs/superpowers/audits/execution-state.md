@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Why a Google problem cannot open an incident nobody could read |
-| Last green gates | tsc 0 · eslint 0 · **2658 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | The unified view on the API, not only in the browser |
+| Last green gates | tsc 0 · eslint 0 · **2662 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -634,6 +634,27 @@ critical Google problems in one cycle produce no candidate at all.
 Pinned, because it is load-bearing and invisible: the day somebody gives Google a service-typed kind,
 that test is what tells them the surface to read the incident on does not exist yet. Mutating
 `gcp_incident_open` to `'service'` fails it.
+
+### `GET /api/v1/problems/across`
+
+The unified view existed in the browser and nowhere else. `/problems` on the API answers "what is
+wrong *here*", where *here* was already chosen — so a client with three AWS accounts and a Google
+project has to know where to look before it can ask, and its answer depends on where it started.
+
+`crossProblemSchema` is its own shape rather than `problemSummarySchema` with fields bolted on,
+because it answers a different question: every row carries the cloud that produced the evidence, the
+connection and that connection's scope, and a schema that made those optional would let a client ship
+without them.
+
+Two rules carried over from the page and held by test here too: the **counts are over every open
+problem**, so filtering empties the list and leaves the numbers alone, and an unknown `?provider=`
+is a stated `invalid_request` rather than a silently unfiltered answer — handed everything, a client
+that misspelled the filter would believe it had asked for Azure and been told nothing is wrong.
+
+The test authenticates with a **real bearer token against a real session** rather than mocking past
+the auth, which is the half of an endpoint most worth exercising. It mocks exactly one thing: the
+request-scoped translator, which a unit run has no business standing up and whose wording is held
+elsewhere.
 
 ## Decisions that must not be re-derived
 

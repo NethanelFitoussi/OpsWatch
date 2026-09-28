@@ -92,3 +92,45 @@ export const investigationSchema = z.object({
   timeline: z.array(evidenceSchema),
 });
 export type Investigation = z.infer<typeof investigationSchema>;
+
+/**
+ * One problem in the cross-cloud list, which is a different question from one problem in an environment.
+ *
+ * A `ProblemSummary` answers "what is wrong here", where *here* was already chosen. This answers "what
+ * is wrong anywhere", so every row has to carry **where** — the cloud that produced the evidence, the
+ * connection, and that connection's scope. A unified list that dropped which cloud a row came from
+ * would be a list nobody could act on: "the payments database is at 98 % CPU" and "Google has an open
+ * incident on checkout" get fixed in different places by different people.
+ */
+export const crossProblemSchema = z.object({
+  id: idSchema,
+  title: z.string(),
+  severity: severitySchema,
+  /** The cloud the evidence came from, as the problem row recorded it when it was written. */
+  provider: z.string(),
+  connectionId: idSchema,
+  /** Empty when the connection has since been removed — stated, rather than a row belonging to nothing. */
+  connectionName: z.string(),
+  /** A region, a project or an account. Which of those it is follows from `provider`. */
+  scope: z.string(),
+  subject: z.string(),
+  firstSeenAt: epochSchema,
+  lastSeenAt: epochSchema,
+  /** Where to open it, when that cloud has somewhere. Null rather than a link into a rail it lacks. */
+  href: z.string().nullable(),
+});
+export type CrossProblemSummary = z.infer<typeof crossProblemSchema>;
+
+export const problemsAcrossSchema = z.object({
+  problems: z.array(crossProblemSchema),
+  /**
+   * Counted over **every** open problem, never over the filtered list.
+   *
+   * A count that moved when a client filtered would be answering a different question from the one it
+   * appears to answer, and a client showing it beside a filtered list would be repeating that.
+   */
+  counts: z.object({ total: z.number().int(), byProvider: z.record(z.string(), z.number().int()) }),
+  /** True when more are open than the page returned. The list is the worst of them, not all of them. */
+  truncated: z.boolean(),
+});
+export type ProblemsAcross = z.infer<typeof problemsAcrossSchema>;

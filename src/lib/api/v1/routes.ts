@@ -31,6 +31,7 @@ import {
   pageSchema,
   problemDetailSchema,
   problemSummarySchema,
+  problemsAcrossSchema,
   reportSchema,
   repositoryStateSchema,
   serverInfoSchema,
@@ -429,6 +430,17 @@ export const API_ROUTES: ApiRouteSpec[] = [
     response: pageSchema(problemSummarySchema),
     status: 200,
     errors: ['unauthorized', 'invalid_request', 'invalid_cursor', 'not_found'],
+  },
+  {
+    method: 'get',
+    path: '/problems/across',
+    operationId: 'listProblemsAcross',
+    auth: 'session',
+    summary:
+      'Open problems across every connection, worst first. Not scoped to an environment: each row carries the cloud that produced the evidence, the connection and its scope. `?provider=aws|gcp|do` limits the list; the counts stay over every open problem, so filtering does not move them.',
+    response: problemsAcrossSchema,
+    status: 200,
+    errors: ['unauthorized', 'invalid_request'],
   },
   {
     method: 'get',
