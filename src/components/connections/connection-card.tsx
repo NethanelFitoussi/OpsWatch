@@ -105,19 +105,32 @@ export function ConnectionCard({
           <CardTitle className="flex min-w-0 items-center gap-2 text-base font-semibold">
             <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
               <Icon className="size-4" aria-hidden />
-              {/* The glyph says which provider; this is the same thing said out loud. */}
-              <span className="sr-only">{provider}</span>
+              {/* Said out loud for a reader who gets no glyph. On a connection card the line below
+                  says it too, so this is scoped to the cards that have no other copy of it. */}
+              {scope === 'integration' && <span className="sr-only">{provider}</span>}
             </span>
-            {href === null ? (
-              <span className="truncate">{title}</span>
-            ) : (
-              // The whole card is the target; the title is what carries the name and the focus ring.
-              <Link href={href} className="truncate rounded-sm after:absolute after:inset-0 focus-visible:outline-none">
-                {title}
-                {/* What following it does. Listed among a page's links, "GitHub" alone does not say. */}
-                <span className="sr-only"> — {actionLabel}</span>
-              </Link>
-            )}
+            <span className="flex min-w-0 flex-col">
+              {href === null ? (
+                <span className="truncate">{title}</span>
+              ) : (
+                // The whole card is the target; the title is what carries the name and the focus ring.
+                <Link href={href} className="truncate rounded-sm after:absolute after:inset-0 focus-visible:outline-none">
+                  {title}
+                  {/* What following it does. Listed among a page's links, "GitHub" alone does not say. */}
+                  <span className="sr-only"> — {actionLabel}</span>
+                </Link>
+              )}
+              {/*
+                * The cloud, in writing, on a card that stands for one account inside a provider.
+                *
+                * An integration card does not get this line: its title *is* the provider's name, and
+                * repeating it would be the same word twice. A connection card's title is whatever the
+                * operator called it, so without this the only thing saying which cloud it is to is a
+                * glyph — and AWS's is a plain cloud, Google's a cloud with a cog. Identity that rests
+                * on telling those two apart at 16px is identity erased.
+                */}
+              {scope === 'connection' && <span className="truncate text-xs font-normal text-muted-foreground">{provider}</span>}
+            </span>
           </CardTitle>
           {/* Not `shrink-0`: a state label is a sentence in some languages — French says "Configuration
               incomplète" where English says "Draft" — and a pill that refuses to give way pushes the

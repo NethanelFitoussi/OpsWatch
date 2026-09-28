@@ -124,7 +124,9 @@
       "github": "GitHub",
       "ai": "Fournisseur d'IA",
       "cloudflare": "Cloudflare",
-      "google": "Connexion Google"
+      "google": "Connexion Google",
+      "gcp": "Google Cloud",
+      "do": "DigitalOcean"
     },
     "states": {
       "connected": "Connecté",
@@ -137,7 +139,11 @@
     "allIntegrations": "Voir toutes les intégrations",
     "tested": "Testé",
     "collectionOn": "Transfert de journaux actif",
-    "projectId": "Projet"
+    "projectId": "Projet",
+    "account": "Compte",
+    "filterLabel": "Filtrer les connexions par cloud",
+    "filterAll": "Toutes ({count})",
+    "filterProvider": "{provider} ({count})"
   },
   "Services": {
     "ecs": "Amazon ECS",

@@ -124,7 +124,9 @@
       "github": "GitHub",
       "ai": "AI provider",
       "cloudflare": "Cloudflare",
-      "google": "Google sign-in"
+      "google": "Google sign-in",
+      "gcp": "Google Cloud",
+      "do": "DigitalOcean"
     },
     "states": {
       "connected": "Connected",
@@ -137,7 +139,11 @@
     "allIntegrations": "See all integrations",
     "tested": "Tested",
     "collectionOn": "Forwarding logs",
-    "projectId": "Project"
+    "projectId": "Project",
+    "account": "Account",
+    "filterLabel": "Filter connections by cloud",
+    "filterAll": "All ({count})",
+    "filterProvider": "{provider} ({count})"
   },
   "Services": {
     "ecs": "Amazon ECS",

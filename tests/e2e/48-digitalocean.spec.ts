@@ -194,3 +194,37 @@ test('the droplets page reads in French, and at 360 px, with the caveat intact',
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('THE RULING: the connections page says which cloud each connection is to', async ({ page }) => {
+  /*
+   * Every card on this page used to carry the AWS glyph and the word "AWS", whatever it was a
+   * connection to. On the one screen whose job is to tell an operator what they are connected to,
+   * that is provider identity erased — and it is invisible until somebody connects a second cloud.
+   */
+  await create(page, 'Named provider');
+  await page.goto('/en/accounts');
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain('DigitalOcean');
+  expect(main).toContain('AWS');
+
+  // Counted by cloud, and filterable, without losing which cloud is which.
+  const filters = page.getByRole('navigation', { name: 'Filter connections by cloud' });
+  await expect(filters).toBeVisible();
+  await expect(filters.getByRole('link', { name: /^DigitalOcean \(\d+\)$/ })).toBeVisible();
+
+  await filters.getByRole('link', { name: /^DigitalOcean \(\d+\)$/ }).click();
+  await expect(page).toHaveURL(/provider=do/);
+  const filtered = await page.locator('main').innerText();
+  expect(filtered).toContain('Named provider');
+  // Filtered to one cloud means one cloud: an AWS account left on screen would be answering the
+  // wrong question, and so would GitHub.
+  expect(filtered).not.toContain('Moto monitoring');
+  expect(filtered).not.toContain('GitHub');
+
+  // The counts are of everything, so they do not change when the list does.
+  const all = page.getByRole('link', { name: /^All \(\d+\)$/ });
+  const before = await all.innerText();
+  await page.goto('/en/accounts');
+  expect(await page.getByRole('link', { name: /^All \(\d+\)$/ }).innerText()).toBe(before);
+});

@@ -16,8 +16,10 @@ import { INTEGRATION_SPECS } from '@/lib/integrations/catalogue';
 import { integrationStatuses } from '@/lib/integrations/status';
 import { CONNECTION_TONES, INTEGRATION_TONES } from '@/lib/integrations/tone';
 import { listManagedConnections } from '@/lib/store/collection';
+import { PROVIDERS, type Provider } from '@/lib/connections/types';
+import { cn } from '@/lib/utils';
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ provider?: string }> };
 
 export const generateMetadata = localizedTitle('Accounts.title');
 
@@ -32,7 +34,7 @@ export const generateMetadata = localizedTitle('Accounts.title');
  * **One source of truth.** The non-AWS cards read `integrationStatuses`, exactly what `/accounts/new` and
  * `/settings/integrations` read, so the three screens cannot disagree about what is connected.
  */
-export default async function AccountsPage({ params }: Props) {
+export default async function AccountsPage({ params, searchParams }: Props) {
   await initProtectedRoute(params);
   const t = await getTranslations('Accounts');
   // The two vocabularies these cards borrow rather than restate: the result of an AWS permission test,
@@ -47,6 +49,23 @@ export default async function AccountsPage({ params }: Props) {
   const collection = new Map(listManagedConnections(db).map((row) => [row.connectionId, row.managed && row.realtimeLogs]));
   const others = integrationStatuses(db).filter((entry) => entry.id !== 'aws' && INTEGRATION_SPECS[entry.id].connectable);
   const nothing = views.length === 0 && others.every((entry) => entry.state === 'not_configured');
+
+  /*
+   * How many connections to each cloud, and which one is being looked at.
+   *
+   * Counted from every connection, never from the filtered list: a count that changed when you
+   * filtered would be answering a different question from the one it appears to answer. Only
+   * providers that are actually connected get a chip — an installation with no Google project does
+   * not need to be told it has none, and a row of zeroes reads as a product nagging about what you
+   * have not bought.
+   */
+  const counts = new Map<Provider, number>();
+  for (const view of views) counts.set(view.provider, (counts.get(view.provider) ?? 0) + 1);
+  const present = PROVIDERS.filter((provider) => (counts.get(provider) ?? 0) > 0);
+
+  const asked = (await searchParams).provider;
+  const selected = present.find((provider) => provider === asked) ?? null;
+  const shown = selected === null ? views : views.filter((view) => view.provider === selected);
 
   return (
     <PageBody>
@@ -83,18 +102,61 @@ export default async function AccountsPage({ params }: Props) {
         </Card>
       )}
 
+      {/*
+        * How many connections to each cloud, and a way to look at one of them.
+        *
+        * Links rather than a client-side control: the filtered view has a URL somebody can send to a
+        * colleague or keep in a tab, it survives a reload, and it works before any JavaScript does.
+        *
+        * Shown only when there is more than one cloud connected. A filter with a single option is a
+        * control that cannot do anything, and the count it carries is already the length of the list
+        * underneath it.
+        */}
+      {present.length > 1 && (
+        <nav aria-label={t('filterLabel')} className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/accounts"
+            aria-current={selected === null ? 'page' : undefined}
+            className={cn(
+              'rounded-full border px-3 py-1 text-sm transition-colors',
+              selected === null ? 'border-primary bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t('filterAll', { count: views.length })}
+          </Link>
+          {present.map((provider) => (
+            <Link
+              key={provider}
+              href={{ pathname: '/accounts', query: { provider } }}
+              aria-current={selected === provider ? 'page' : undefined}
+              className={cn(
+                'rounded-full border px-3 py-1 text-sm transition-colors',
+                selected === provider ? 'border-primary bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {/* The provider's own name and its own count. Never "Cloud 3": which cloud is the
+                  question this page exists to answer. */}
+              {t('filterProvider', { provider: t(`provider.${provider}`), count: counts.get(provider) ?? 0 })}
+            </Link>
+          ))}
+        </nav>
+      )}
+
       {/* `minmax(0,1fr)`, not `1fr`: a grid track sized `1fr` still refuses to go below its content's
           min-content width, and a card holding a `truncate` line — which is `white-space: nowrap` —
           contributes that whole line. At 360px the card then grew past the screen, and the longer
           the language the further: 41px in English, 119px in French. */}
       <ul className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[repeat(2,minmax(0,1fr))] xl:grid-cols-[repeat(3,minmax(0,1fr))] 2xl:grid-cols-[repeat(4,minmax(0,1fr))]">
-        {views.map((c) => (
+        {shown.map((c) => (
           <li key={c.id} className="min-w-0">
             <ConnectionCard
-              integration="aws"
+              // The connection's own cloud, not AWS for everything. Every card used to carry the AWS
+              // glyph and the word "AWS", so a Google project and a DigitalOcean account were both
+              // presented as AWS accounts on the one page whose job is to say what you are connected to.
+              integration={c.provider}
               scope="connection"
               state={c.status}
-              provider={t('provider.aws')}
+              provider={t(`provider.${c.provider}`)}
               tone={CONNECTION_TONES[c.status]}
               stateLabel={status(c.status)}
               title={c.name}
@@ -121,11 +183,17 @@ export default async function AccountsPage({ params }: Props) {
               facts={[
                 {
                   // The account or the project, whichever this connection is to: a Google row showing an
-                  // empty account id would read as an AWS account whose number nobody filled in.
-                  label: c.provider === 'gcp' ? t('projectId') : t('accountId'),
-                  value: `${c.awsAccountId ?? c.gcpProjectId ?? ''} · ${t(`methods.${c.method}`)}`,
+                  // empty account id would read as an AWS account whose number nobody filled in. A
+                  // DigitalOcean account has neither, and is identified by its token, so it says so.
+                  label: c.provider === 'gcp' ? t('projectId') : c.provider === 'do' ? t('account') : t('accountId'),
+                  value:
+                    c.provider === 'do'
+                      ? t(`methods.${c.method}`)
+                      : `${c.awsAccountId ?? c.gcpProjectId ?? ''} · ${t(`methods.${c.method}`)}`,
                 },
-                { label: t('regions'), value: c.regions.join(', ') },
+                // A DigitalOcean account has no regions to choose: its API is account-wide and each
+                // droplet carries its own. An empty "Regions:" would read as a misconfiguration.
+                ...(c.regions.length > 0 ? [{ label: t('regions'), value: c.regions.join(', ') }] : []),
                 {
                   label: t('tested'),
                   value: c.lastTest ? format.relativeTime(new Date(c.lastTest.testedAt)) : t('neverTested'),
@@ -135,21 +203,24 @@ export default async function AccountsPage({ params }: Props) {
           </li>
         ))}
 
-        {others.map((entry) => (
-          <li key={entry.id}>
-            <ConnectionCard
-              integration={entry.id}
-              state={entry.state}
-              provider={t(`provider.${entry.id}`)}
-              tone={INTEGRATION_TONES[entry.state]}
-              stateLabel={t(`states.${entry.state}`)}
-              title={t(`provider.${entry.id}`)}
-              href={entry.href}
-              actionLabel={t(entry.state === 'not_configured' ? 'connectOther' : 'manageOther')}
-              notes={entry.detailKey !== null && <p>{integrations(`detail.${entry.detailKey}`, entry.values)}</p>}
-            />
-          </li>
-        ))}
+        {/* Only when nothing is filtered: GitHub is not an AWS account, and a cloud filter that left it
+            on screen would be answering "show me AWS" with a list containing something else. */}
+        {selected === null &&
+          others.map((entry) => (
+            <li key={entry.id}>
+              <ConnectionCard
+                integration={entry.id}
+                state={entry.state}
+                provider={t(`provider.${entry.id}`)}
+                tone={INTEGRATION_TONES[entry.state]}
+                stateLabel={t(`states.${entry.state}`)}
+                title={t(`provider.${entry.id}`)}
+                href={entry.href}
+                actionLabel={t(entry.state === 'not_configured' ? 'connectOther' : 'manageOther')}
+                notes={entry.detailKey !== null && <p>{integrations(`detail.${entry.detailKey}`, entry.values)}</p>}
+              />
+            </li>
+          ))}
       </ul>
 
       <p>

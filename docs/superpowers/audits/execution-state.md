@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | DigitalOcean metrics: bandwidth, and the fact that its CPU is not agentless |
-| Last green gates | tsc 0 · eslint 0 · **2574 unit** · **444 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | The unified overview: provider identity restored, counted and filterable |
+| Last green gates | tsc 0 · eslint 0 · **2579 unit** · **445 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -156,6 +156,31 @@ Both pages now carry a sentence naming what the provider measures without an age
 not, and the two sentences are different because the two clouds are. An e2e ruling holds exactly that:
 DigitalOcean's page says CPU needs the metrics agent, Google's says CPU needs nothing and memory needs
 the Ops Agent, and neither page carries the other's caveat.
+
+### The overview, and a bug that only a second cloud could reveal
+
+`/accounts` drew **every** connection with `integration="aws"` and the label `t('provider.aws')`. A
+Google project and a DigitalOcean account were both presented as AWS accounts — on the one screen
+whose entire job is to say what this installation is connected to. Invisible until a second cloud
+existed, and then wrong on every card.
+
+Fixed, and then found to be only half fixed: the provider name renders `sr-only`. That is right for an
+integration card, whose *title* is the provider's name, and leaves a connection card showing nothing
+but a glyph, because its title is whatever the operator called it. AWS's glyph is a plain cloud and
+Google's is a cloud with a cog. Identity that rests on telling those apart at 16px is identity erased,
+so a connection card now carries its cloud in writing under the name, and the hidden copy is scoped to
+the cards that have no visible one.
+
+Beside it, counts by cloud and a filter. Links rather than a client-side control, so a filtered view
+has a URL that can be sent to a colleague and works before any JavaScript does. Two things held by
+test: the **counts are of everything**, never of the filtered list — a count that changed when you
+filtered would be answering a different question from the one it appears to answer — and filtering to
+one cloud shows one cloud, with GitHub and the other integrations out of the way rather than left on
+screen answering something nobody asked.
+
+A note on method: `git checkout messages/fr.json` during a mutation run silently discarded this
+checkpoint's uncommitted French keys. Same trap as the earlier `git checkout` on an untracked file,
+and the same lesson — after reverting anything, check what else was in that file.
 
 ### What is still only architecture
 
