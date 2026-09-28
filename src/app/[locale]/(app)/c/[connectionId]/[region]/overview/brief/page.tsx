@@ -29,7 +29,7 @@ export default async function BriefPage({ params }: Props) {
   const t = await getTranslations('Monitoring.brief');
   const tSeverity = await getTranslations('Insights.severity');
   const format = await getFormatter();
-  const query = { connectionId: context.scope.connectionId, scope: context.scope.region };
+  const query = { connectionId: context.scope.connectionId, scope: context.scope.region, provider: context.connection.provider };
 
   if (!hasBeenRead(db, query)) {
     return (

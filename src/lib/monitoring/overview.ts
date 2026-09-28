@@ -1,4 +1,5 @@
 import 'server-only';
+import { AWS_FAMILIES, type AwsFamily } from './shared/families';
 import { listAlarms } from './alarms';
 import type { AwsTarget, MonitoringDeps } from './call';
 import { listClusters, listServices, serviceTaskCountQueries, serviceUtilizationQueries, type EcsService } from './ecs';
@@ -19,8 +20,8 @@ import { rdsMetricQueries, listDatabases, type RdsMetric } from './rds';
 import type { MonitoringResult } from './result';
 import { recentWindow, type TimeWindow } from './shared/time-range';
 
-export const INSIGHT_FAMILIES = ['ecs', 'rds', 'alb', 'alarms'] as const;
-export type InsightFamily = (typeof INSIGHT_FAMILIES)[number];
+export const INSIGHT_FAMILIES = AWS_FAMILIES;
+export type InsightFamily = AwsFamily;
 export type FamilySummary = { insights: Insight[]; total: number; affected: number };
 
 /**

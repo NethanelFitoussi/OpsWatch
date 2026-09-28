@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | The multi-cloud seam: capabilities declared, and a registry that has to back them |
-| Last green gates | tsc 0 · eslint 0 · **2538 unit** · **439 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Provider-aware target resolution, and one family list where there were three |
+| Last green gates | tsc 0 · eslint 0 · **2554 unit** · **439 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -70,10 +70,43 @@ a non-AWS family is added — in the order it will bite:
 
 | Left | Why it matters |
 |---|---|
-| `resolveTarget` (`monitoring/target.ts`) is `sts:AssumeRole` and returns `AwsTarget` | `runDetectJob` calls it unconditionally. Harmless today only because a provider with no families returns before reaching it. The first GCP family makes every GCP cycle throw `connection_unavailable` |
-| `InsightKind` is a **closed union** of the 12 AWS kinds, and `SUBJECT_OF` in `detect/aws.ts` is an exhaustive `Record` over it | A GCP kind means widening the union (losing the exhaustiveness that guarantees every kind has a subject type) or a second map beside it. Decide deliberately |
-| The family list exists in **four** places: `INSIGHT_FAMILIES`, `HEALTH_FAMILIES`, `PROBLEM_FAMILIES`, and `familiesSection` in `read/reports.ts` | None consults the registry, so a family added to a provider would silently vanish from Health and from the report — no error, just absent |
+| ~~`resolveTarget` is `sts:AssumeRole` for every cloud~~ | **Done.** Each provider has its own `resolveTarget` in the registry; `ProviderTarget` is a tagged union of three genuinely unalike things, and the cycle asks the provider |
+| ~~The family list exists in four places~~ | **Done.** `monitoring/shared/families.ts` is the leaf all three reach; Health derives its rows from the connection's provider |
+| `InsightKind` is a **closed union** of the 12 AWS kinds, and `SUBJECT_OF` in `detect/aws.ts` is an exhaustive `Record` over it | A GCP kind means widening the union (losing the exhaustiveness that guarantees every kind has a subject type) or a second map beside it. Decide deliberately. **This is the next one to bite** |
 | `ScopeRef = { connectionId, region }` | GCP's `timeSeries.list` is **project**-scoped and a project spans regions. Whether "region" means a GCP region or the project is an open decision, not a detail |
+
+### What the second checkpoint changed
+
+**A target is per-cloud, because the three are not alike.** AWS's is assumed role credentials for one
+region, Google's is a signing key plus the pool that will exchange it, DigitalOcean's is an account-wide
+token with no region in it at all. Forcing them into one `credentials` field each fills differently is
+exactly how the AWS model gets cloned under generic names, so `ProviderTarget` is tagged and each arm
+says what that cloud needs. The AWS resolver itself is untouched — ninety-odd pages call it and it is
+correct; the fix was to stop calling it for clouds it knows nothing about.
+
+Resolving Google's target properly turned up an older bug it was worth stopping: the instances page
+turned each of five nullable columns into `?? ''`, which builds `projects//locations/global/...`, sends
+it, and shows the rejection as though Google had refused an access grant. `isValidTarget` had existed
+since federation was built and nothing called it. "This connection was never finished" and "Google
+refused you" are different sentences with different fixes, and both pages now say which.
+
+**One family list where there were three.** `INSIGHT_FAMILIES`, `HEALTH_FAMILIES` and `PROBLEM_FAMILIES`
+declared the same four strings in three modules, separately and for a real reason — the read layer must
+not import the collector, the detect layer must not import the AWS stack. The consequence was that a
+fifth family added in the obvious place would have been read by the cycle and absent from Health and
+from the report: not wrong, not unknown, just missing. `monitoring/shared/families.ts` is the leaf all
+three can reach, keyed by provider, and the registry takes its list from there too.
+
+Which made a second thing possible and necessary: **Health iterates the connection's own families.**
+It iterated AWS's four regardless, so a Google project would have shown Containers, Databases, Load
+balancers and Alarms, each `unknown` — OpsWatch appearing to fail at reading four things nobody ever
+said were there. Unreachable today because the rail is gated on `supports(provider, 'health')`, and
+wrong the moment that gate opens.
+
+Mutation testing caught one of my own here. The Health change passed every test I had just written —
+substituting `AWS_FAMILIES` back in broke nothing — because the rulings were all about the *list* and
+none about *who asks*. The ruling that pins it lives in `read-health.test.ts` and is the thing that
+actually fails.
 
 `Insight.href` and `subject_type` turned out **not** to be AWS-shaped: `href` is built by `subsectionPath`
 and the subject kinds (`resource`, `service`, `cluster`) describe a droplet or a Cloud Run service

@@ -5,10 +5,8 @@ import { outcomesFromInsights, type EvaluatedPair } from '../detect/aws';
 import type { SubjectOutcome, SubjectRef } from '../detect/types';
 import type { Db } from '../db/client';
 import type { InsightKind } from '../monitoring/insights';
-import { INSIGHT_FAMILIES } from '../monitoring/overview';
 import { monitoringProvider } from '../monitoring/provider-registry';
 import type { Provider } from '../connections/types';
-import { resolveTarget } from '../monitoring/target';
 import { recordFamilySnapshot } from '../store/health';
 import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
 import { runAlertCycle } from './alerts';
@@ -50,13 +48,16 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
    * of families and a loader for them, not a second monitoring application.
    */
   const monitoring = monitoringProvider(input.provider ?? 'aws');
-  if (monitoring.loadFamily === null || monitoring.families.length === 0) {
+  if (monitoring.loadFamily === null || monitoring.families.length === 0 || monitoring.resolveTarget === null) {
     // A provider with nothing to read is not a failed cycle. It is a cycle with no families, and
     // recording it as a failure would put a red mark on a connection that is working as designed.
     return { covered: 0, total: 0, truncated: false };
   }
 
-  const target = await resolveTarget({ connectionId: input.connectionId, region: input.scope });
+  // This provider's own resolver. It used to be AWS's AssumeRole for every connection, which was
+  // harmless only while nothing but AWS had families — the first Google family would have made every
+  // Google cycle throw `connection_unavailable` before a single Google request was attempted.
+  const target = await monitoring.resolveTarget({ connectionId: input.connectionId, region: input.scope });
   if (!target.ok) {
     // Nothing could be read, so nothing is claimed. Every live problem stays exactly as it was, and the
     // failure is what the run records — not a cycle in which everything quietly looked healthy.

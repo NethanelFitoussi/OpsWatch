@@ -6,10 +6,11 @@
  * report service, to scope a section's report to the problems that belong to it. A read service must not
  * have to import the collector — and everything it would drag in — to answer that.
  */
+import { AWS_FAMILIES, type AwsFamily } from '../monitoring/shared/families';
 
-/** The four families the detect job reads, in the order the product shows them. */
-export const PROBLEM_FAMILIES = ['ecs', 'rds', 'alb', 'alarms'] as const;
-export type ProblemFamily = (typeof PROBLEM_FAMILIES)[number];
+/** The families the detect job reads, in the order the product shows them. Re-exported, never re-declared. */
+export const PROBLEM_FAMILIES = AWS_FAMILIES;
+export type ProblemFamily = AwsFamily;
 
 const FAMILY_OF: Record<string, ProblemFamily> = {
   ecs_tasks_below_desired: 'ecs',

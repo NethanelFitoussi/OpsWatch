@@ -1,5 +1,6 @@
 import 'server-only';
 import type { Brief } from '@opswatch/contract';
+import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
 import { changesFrom, overallStatus, readHealth, type HealthContext } from './health';
 import { countBySeverity, topProblems } from './problems';
@@ -17,7 +18,7 @@ export const BRIEF_PERIOD_MS = 24 * 60 * 60_000;
 
 export function readBrief(
   db: Db,
-  query: { connectionId: string; scope: string; periodMs?: number },
+  query: { connectionId: string; scope: string; periodMs?: number; provider?: Provider },
   context: HealthContext,
 ): Brief {
   const periodMs = query.periodMs ?? BRIEF_PERIOD_MS;

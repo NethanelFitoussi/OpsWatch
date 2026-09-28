@@ -8,6 +8,10 @@ import {
   supports,
 } from '@/lib/monitoring/capabilities';
 import { MONITORING_PROVIDERS, capabilityIsBacked, monitoringProvider } from '@/lib/monitoring/provider-registry';
+import { PROVIDER_FAMILIES, familiesOf } from '@/lib/monitoring/shared/families';
+import { PROBLEM_FAMILIES, kindsOfFamily } from '@/lib/detect/family';
+import { HEALTH_FAMILIES } from '@/lib/read/health';
+import { INSIGHT_FAMILIES } from '@/lib/monitoring/overview';
 
 /**
  * What each provider can do, and whether it can actually do it.
@@ -121,5 +125,40 @@ describe('a detect cycle counts its own provider’s families', () => {
     expect(summary).toContain('truncated: read.size < monitoring.families.length');
     // And not the constant it was, anywhere in that summary.
     expect(summary.slice(0, 400)).not.toContain('INSIGHT_FAMILIES.length');
+  });
+});
+
+describe('the family list, which used to be four family lists', () => {
+  /*
+   * `INSIGHT_FAMILIES` (what the cycle reads), `HEALTH_FAMILIES` (what the Health page shows) and
+   * `PROBLEM_FAMILIES` (what a problem belongs to, and through it what the report sections are) were
+   * three separate declarations of the same four strings. They were separate for a real reason — the
+   * read layer must not import the collector, and the detect layer must not import the AWS stack — but
+   * the consequence was that a fifth family added in the obvious place would have been read by the
+   * cycle and absent from Health and from the report, showing as neither healthy nor unknown.
+   */
+
+  it('THE RULING: a family added once is added everywhere', () => {
+    // Identity, not equality: three arrays that happen to match today is the situation this replaces.
+    expect(INSIGHT_FAMILIES).toBe(PROVIDER_FAMILIES.aws);
+    expect(HEALTH_FAMILIES).toBe(PROVIDER_FAMILIES.aws);
+    expect(PROBLEM_FAMILIES).toBe(PROVIDER_FAMILIES.aws);
+  });
+
+  it('THE RULING: every family has a detector that can put a problem in it', () => {
+    // A family with no kinds would be a Health row that is permanently healthy, because nothing can
+    // ever be filed under it — the shape of an unearned green that no failing test would show.
+    for (const family of PROVIDER_FAMILIES.aws) {
+      expect(kindsOfFamily(family), family).not.toHaveLength(0);
+    }
+  });
+
+  it('gives the registry and the capability table the same list', () => {
+    for (const provider of PROVIDERS) {
+      expect(monitoringProvider(provider).families, provider).toBe(familiesOf(provider));
+      // And the two ways of saying "nothing is read here yet" agree with each other.
+      const declared = PROVIDER_CAPABILITIES[provider].health.state;
+      expect(familiesOf(provider).length > 0, provider).toBe(declared === 'supported');
+    }
   });
 });

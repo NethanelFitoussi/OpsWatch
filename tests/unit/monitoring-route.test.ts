@@ -70,7 +70,7 @@ describe('initMonitoringRoute', () => {
     expect(await initMonitoringRoute(params(row.id))).toEqual({
       locale: 'en',
       scope: { connectionId: row.id, region: 'eu-west-1' },
-      connection: { id: row.id, name: 'production', regions: ['eu-west-1'], status: 'degraded' },
+      connection: { id: row.id, name: 'production', regions: ['eu-west-1'], status: 'degraded', provider: 'aws' },
       // Every page reads the instance settings from the context, so no card pays its own round trip.
       settings: DEFAULT_SETTINGS,
     });

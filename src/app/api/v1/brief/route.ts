@@ -16,7 +16,7 @@ export const GET = apiRoute({
 
     const brief = readBrief(
       db,
-      { connectionId: environment.connectionId, scope: environment.scope },
+      { connectionId: environment.connectionId, scope: environment.scope, provider: environment.provider },
       { nowMs: Date.now(), render: await insightRenderer(actor.locale), labels: await healthLabels(actor.locale) },
     );
     return apiJson(briefSchema, brief);

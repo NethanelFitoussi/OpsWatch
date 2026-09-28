@@ -27,7 +27,7 @@ export default async function HealthPage({ params }: Props) {
   const nowMs = pageNow();
   const db = getDb();
   const t = await getTranslations('Monitoring.health');
-  const query = { connectionId: context.scope.connectionId, scope: context.scope.region };
+  const query = { connectionId: context.scope.connectionId, scope: context.scope.region, provider: context.connection.provider };
 
   if (!hasBeenRead(db, query)) {
     return (

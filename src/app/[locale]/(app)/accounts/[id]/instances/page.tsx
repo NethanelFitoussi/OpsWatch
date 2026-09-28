@@ -10,9 +10,8 @@ import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
 import { findConnection } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
-import { env } from '@/lib/env';
 import { instancesInRegion } from '@/lib/gcp/instances';
-import { openConnectionKey } from '@/lib/gcp/issuer';
+import { gcpTargetFrom } from '@/lib/gcp/target';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
@@ -46,20 +45,24 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
   const asked = (await searchParams).region;
   const region = row.regions.includes(asked ?? '') ? (asked as string) : (row.regions[0] ?? '');
 
-  const result = await instancesInRegion({
-    connectionId: row.id,
-    projectId: row.gcpProjectId ?? '',
-    region,
-    target: {
-      projectNumber: row.gcpProjectNumber ?? '',
-      poolId: row.gcpPoolId ?? '',
-      providerId: row.gcpProviderId ?? '',
-      serviceAccount: row.gcpServiceAccount,
-    },
-    key: row.gcpKeyCiphertext === null ? null : openConnectionKey(row.gcpKeyCiphertext, env().OPSWATCH_SECRET),
-    baseUrl: env().OPSWATCH_PUBLIC_URL,
-    nowMs: pageNow(),
-  });
+  // The federation details are five nullable columns, and this page used to turn each missing one into
+  // an empty string — which builds an audience of `projects//locations/...`, sends it, and reports a
+  // connection nobody finished setting up as a token Google rejected. The target is resolved or it is
+  // not, and "not finished" says so in those words.
+  const target = gcpTargetFrom(row, region);
+  const result = target.ok
+    ? await instancesInRegion({
+        connectionId: target.data.connectionId,
+        projectId: target.data.projectId,
+        region: target.data.region,
+        target: target.data.federation,
+        key: target.data.key,
+        baseUrl: target.data.baseUrl,
+        nowMs: pageNow(),
+      })
+    : null;
+  // One reason to show, whether it came from resolving the connection or from Google.
+  const failure = target.ok ? (result !== null && !result.ok ? result.reason : null) : target.code === 'SecretChanged' ? 'secret_changed' : 'not_ready';
 
   return (
     <PageBody>
@@ -90,10 +93,10 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
       )}
 
       <SectionCard title={t('listTitle', { region })} description={t('listHint')}>
-        {!result.ok ? (
+        {failure !== null || result === null || !result.ok ? (
           // Why there is nothing, never an empty table: "could not read" and "none" are different answers.
           <>
-            <p className={cn('text-sm font-medium', TONE_TEXT.danger)}>{t(`failures.${result.reason}`)}</p>
+            <p className={cn('text-sm font-medium', TONE_TEXT.danger)}>{t(`failures.${failure ?? 'error'}`)}</p>
             <p className="mt-2 text-sm">
               <Link href={`/accounts/${row.id}`} className="text-primary underline-offset-4 hover:underline">
                 {t('checkAccess')}

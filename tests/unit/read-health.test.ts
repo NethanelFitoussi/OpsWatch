@@ -44,6 +44,32 @@ describe('the families OpsWatch checks', () => {
   });
 });
 
+describe('whose families they are', () => {
+  it('THE RULING: a connection is asked about its own cloud\u2019s families, not AWS\u2019s', () => {
+    const db = createTestDb();
+    for (const name of HEALTH_FAMILIES) recordFamilySnapshot(db, snapshot({ family: name }));
+
+    // AWS is what the snapshots are, and asking as AWS finds them.
+    expect(readHealth(db, { ...env, provider: 'aws' }, context).families.map((entry) => entry.family)).toEqual([...HEALTH_FAMILIES]);
+
+    /*
+     * Google has no families yet, so there is nothing to report about one \u2014 and iterating AWS's four
+     * anyway would print Containers, Databases, Load balancers and Alarms for a project that has none of
+     * them, each marked `unknown`. That is OpsWatch declining to answer a question nobody asked, which
+     * reads on the page as OpsWatch failing to read four things it was supposed to.
+     */
+    expect(readHealth(db, { ...env, provider: 'gcp' }, context).families).toEqual([]);
+    // And with no families read, the verdict is that there is no verdict.
+    expect(readHealth(db, { ...env, provider: 'gcp' }, context).status).toBe('unknown');
+  });
+
+  it('still answers as AWS when nobody says which cloud, so every existing caller keeps its meaning', () => {
+    const db = createTestDb();
+    for (const name of HEALTH_FAMILIES) recordFamilySnapshot(db, snapshot({ family: name }));
+    expect(readHealth(db, env, context).families.map((entry) => entry.family)).toEqual([...HEALTH_FAMILIES]);
+  });
+});
+
 describe('"healthy" and "we could not look" are different answers', () => {
   it('is unknown when nothing has been read at all', () => {
     const db = createTestDb();

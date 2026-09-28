@@ -6562,7 +6562,9 @@
       "denied": "Google a refusé la lecture. roles/compute.viewer n’est pas parvenu à cette connexion.",
       "unreachable": "Cette installation n’a pas pu joindre Google.",
       "no_token": "Cette connexion n’a pas encore de jeton utilisable.",
-      "error": "Compute Engine a renvoyé une erreur."
+      "error": "Compute Engine a renvoyé une erreur.",
+      "not_ready": "Cette connexion n’est pas terminée. Son projet Google, son pool d’identités de charge de travail et son fournisseur doivent être renseignés avant toute lecture.",
+      "secret_changed": "La clé de signature de cette connexion ne peut pas être ouverte. OPSWATCH_SECRET a changé depuis son enregistrement."
     }
   },
   "DoWizard": {
@@ -6663,7 +6665,9 @@
       "forbidden": "Le jeton fonctionne mais n’a pas le droit de lire les droplets. Il lui faut la portée droplet:read, qui ne peut pas être ajoutée à un jeton existant — créez-en un nouveau.",
       "rate_limited": "DigitalOcean limite le débit de ce compte. Il autorise 5000 requêtes par heure ; réessayez sous peu.",
       "unreachable": "Cette installation n’a pas pu joindre DigitalOcean.",
-      "error": "DigitalOcean a renvoyé une erreur."
+      "error": "DigitalOcean a renvoyé une erreur.",
+      "not_ready": "Cette connexion n’a pas encore de jeton. Ajoutez un jeton d’accès personnel DigitalOcean avec la portée droplet:read.",
+      "secret_changed": "Le jeton de cette connexion ne peut pas être déchiffré. OPSWATCH_SECRET a changé depuis son enregistrement."
     }
   },
   "Capabilities": {

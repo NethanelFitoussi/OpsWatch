@@ -8,10 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Link } from '@/i18n/navigation';
 import { localizedTitle } from '@/i18n/metadata';
 import { initProtectedRoute } from '@/lib/auth/route';
-import { findConnection, readDoToken } from '@/lib/connections/repository';
+import { findConnection } from '@/lib/connections/repository';
+import { doTargetFrom } from '@/lib/do/target';
 import { getDb } from '@/lib/db/client';
 import { listDroplets } from '@/lib/do/droplets';
-import { env } from '@/lib/env';
 import { TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +36,11 @@ export default async function DropletsPage({ params }: Props) {
 
   const t = await getTranslations('DoDroplets');
   const format = await getFormatter();
-  const result = await listDroplets({ token: readDoToken(row, env().OPSWATCH_SECRET) });
+  // Resolved rather than decrypted inline: a connection with no token and one whose token will not
+  // decrypt are different problems with different fixes, and `readDoToken` answers null for both.
+  const target = doTargetFrom(row);
+  const result = target.ok ? await listDroplets({ token: target.data.token }) : null;
+  const failure = target.ok ? (result !== null && !result.ok ? result.reason : null) : target.code === 'SecretChanged' ? 'secret_changed' : 'not_ready';
 
   return (
     <PageBody>
@@ -46,9 +50,9 @@ export default async function DropletsPage({ params }: Props) {
       <PageHeader title={t('title', { name: row.name })} description={t('description')} />
 
       <SectionCard title={t('listTitle')} description={t('listHint')}>
-        {!result.ok ? (
+        {failure !== null || result === null || !result.ok ? (
           // Why there is nothing, never an empty table.
-          <p className={cn('text-sm font-medium', TONE_TEXT.danger)}>{t(`failures.${result.reason}`)}</p>
+          <p className={cn('text-sm font-medium', TONE_TEXT.danger)}>{t(`failures.${failure ?? 'error'}`)}</p>
         ) : result.data.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('none')}</p>
         ) : (

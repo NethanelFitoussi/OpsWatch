@@ -1,9 +1,11 @@
 import 'server-only';
 import type { Change, Family, Health, HealthStatus } from '@opswatch/contract';
+import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
 import type { FamilySnapshotRow } from '../db/schema';
 import { listEvents } from '../store/events';
 import { listFamilySnapshots } from '../store/health';
+import { AWS_FAMILIES, familiesOf, type AwsFamily } from '../monitoring/shared/families';
 import { countBySeverity, topProblems, type ReadContext } from './problems';
 
 /**
@@ -18,9 +20,9 @@ import { countBySeverity, topProblems, type ReadContext } from './problems';
  * it has not measured is worse than one that admits the gap.
  */
 
-/** The four families the detect job reads, in the order the page shows them. */
-export const HEALTH_FAMILIES = ['ecs', 'rds', 'alb', 'alarms'] as const;
-export type HealthFamily = (typeof HEALTH_FAMILIES)[number];
+/** The families the detect job reads, in the order the page shows them. Re-exported, never re-declared. */
+export const HEALTH_FAMILIES = AWS_FAMILIES;
+export type HealthFamily = AwsFamily;
 
 /** How long a change stays interesting on the Health page. The brief uses its own, wider, period. */
 const RECENT_CHANGE_MS = 24 * 60 * 60_000;
@@ -98,9 +100,12 @@ export function changesFrom(
     .reverse();
 }
 
-export function readHealth(db: Db, query: { connectionId: string; scope: string }, context: HealthContext): Health {
+export function readHealth(db: Db, query: { connectionId: string; scope: string; provider?: Provider }, context: HealthContext): Health {
   const snapshots = new Map(listFamilySnapshots(db, query.connectionId, query.scope).map((row) => [row.family, row]));
-  const families = HEALTH_FAMILIES.map((family) => familyOf(snapshots.get(family), family, context.labels));
+  // This connection's cloud decides which families the page has rows for. Iterating AWS's four for a
+  // Google project would print four services that project does not have, each `unknown` — a page that
+  // says OpsWatch cannot tell you about load balancers nobody ever claimed were there.
+  const families = familiesOf(query.provider ?? 'aws').map((family) => familyOf(snapshots.get(family), family, context.labels));
   const counts = countBySeverity(db, query);
   const ranked = topProblems(db, query, context);
   const ecs = snapshots.get('ecs');

@@ -6562,7 +6562,9 @@
       "denied": "Google refused the read. roles/compute.viewer has not reached this connection.",
       "unreachable": "This instance could not reach Google.",
       "no_token": "There is no usable token for this connection yet.",
-      "error": "Compute Engine returned an error."
+      "error": "Compute Engine returned an error.",
+      "not_ready": "This connection is not finished. Its Google project, workload identity pool and provider have to be set before anything can be read.",
+      "secret_changed": "This connection’s signing key cannot be opened. OPSWATCH_SECRET has changed since it was stored."
     }
   },
   "DoWizard": {
@@ -6663,7 +6665,9 @@
       "forbidden": "This token is not allowed to read droplets. It needs the droplet:read scope.",
       "rate_limited": "DigitalOcean is rate-limiting this account; try again shortly.",
       "unreachable": "This instance could not reach DigitalOcean.",
-      "error": "DigitalOcean returned an error."
+      "error": "DigitalOcean returned an error.",
+      "not_ready": "This connection has no token yet. Add a DigitalOcean personal access token with the droplet:read scope.",
+      "secret_changed": "This connection’s token cannot be decrypted. OPSWATCH_SECRET has changed since it was stored."
     }
   },
   "Capabilities": {

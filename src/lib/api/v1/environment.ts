@@ -1,5 +1,6 @@
 import 'server-only';
 import type { Db } from '../../db/client';
+import type { Provider } from '../../connections/types';
 import { listConnections } from '../../connections/repository';
 import { parseEnvironmentParam } from './request';
 
@@ -12,7 +13,8 @@ import { parseEnvironmentParam } from './request';
  * them apart will show the first when it means the second.
  */
 export type ResolvedEnvironment =
-  | { ok: true; connectionId: string; scope: string }
+  /** `provider` because what an environment contains depends on its cloud; free here, the row is already read. */
+  | { ok: true; connectionId: string; scope: string; provider: Provider }
   | { ok: false; error: 'invalid_request' | 'not_found' };
 
 export function resolveEnvironment(db: Db, url: URL): ResolvedEnvironment {
@@ -21,8 +23,8 @@ export function resolveEnvironment(db: Db, url: URL): ResolvedEnvironment {
   // Required here, unlike on the endpoints that are not scoped to one.
   if (parsed.environment === null) return { ok: false, error: 'invalid_request' };
   const { connectionId, scope } = parsed.environment;
-  const known = listConnections(db).some(
+  const known = listConnections(db).find(
     (connection) => connection.id === connectionId && connection.regions.includes(scope),
   );
-  return known ? { ok: true, connectionId, scope } : { ok: false, error: 'not_found' };
+  return known === undefined ? { ok: false, error: 'not_found' } : { ok: true, connectionId, scope, provider: known.provider };
 }
