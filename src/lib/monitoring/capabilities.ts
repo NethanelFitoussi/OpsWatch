@@ -112,7 +112,12 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
     problems: { state: 'not_built' },
     // DigitalOcean has no log product to read application errors out of. This is not a gap in OpsWatch.
     errors: { state: 'not_offered' },
-    alerts: { state: 'not_built' },
+    /*
+     * Its alert **policies**, which is all DigitalOcean exposes. There is no endpoint at all that
+     * says which of them are currently firing — Google has one, AWS has alarm state, DigitalOcean has
+     * neither — so this capability means something different here, and the page says which.
+     */
+    alerts: direct,
     logs: { state: 'not_offered' },
     history: { state: 'not_built' },
   },

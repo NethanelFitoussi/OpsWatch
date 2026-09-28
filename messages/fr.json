@@ -6696,7 +6696,8 @@
       "gcp_provider_invalid": "Une erreur s’est produite.",
       "gcp_service_account_invalid": "Une erreur s’est produite.",
       "gcp_regions_invalid": "Une erreur s’est produite."
-    }
+    },
+    "alertPolicies": "Règles d’alerte"
   },
   "DoDroplets": {
     "title": "Droplets de {name}",
@@ -6742,6 +6743,47 @@
       "rate_limited": "Débit limité",
       "unreachable": "DigitalOcean injoignable",
       "error": "Lecture échouée"
+    }
+  },
+  "DoAlerts": {
+    "title": "Règles d’alerte de {name}",
+    "description": "Ce que vous avez demandé à DigitalOcean de vous signaler, lu au moment de l’affichage.",
+    "back": "Retour à la connexion",
+    "listTitle": "Règles d’alerte",
+    "listHint": "Ce sont les conditions que vous avez configurées. DigitalOcean n’indique pas lesquelles se déclenchent actuellement.",
+    "checkAccess": "Vérifier l’accès de cette connexion",
+    "noneTitle": "Ce compte n’a aucune règle d’alerte.",
+    "noneHint": "Rien n’a été demandé, ce qui ne signifie pas que rien ne va mal. DigitalOcean ne préviendra personne au sujet d’un droplet tant qu’aucune règle ne le couvre.",
+    "noFiringState": "DigitalOcean n’expose aucune API indiquant quelles règles se déclenchent actuellement : OpsWatch ne peut donc pas afficher d’incidents ouverts pour ce compte comme il le fait pour un projet Google Cloud. Cette page montre votre configuration, pas son état.",
+    "truncated": "Il existe plus de règles qu’il n’en a été lu. La liste montre les premières.",
+    "readNow": "Lu en direct. Rien n’est encore collecté périodiquement pour un compte DigitalOcean.",
+    "unnamed": "Règle sans description",
+    "enabled": "Activée",
+    "disabled": "Désactivée",
+    "needsAgent": "Nécessite l’agent de métriques",
+    "condition": "{compare} {value} pendant {window}",
+    "conditionUnknown": "DigitalOcean n’a pas indiqué le seuil",
+    "windowUnknown": "une durée non indiquée",
+    "applies": "{droplets, plural, =0 {Aucun droplet} one {# droplet} other {# droplets}}, {tags, plural, =0 {aucune étiquette} one {# étiquette} other {# étiquettes}}",
+    "compare": {
+      "GreaterThan": "Au-dessus de",
+      "LessThan": "En dessous de"
+    },
+    "columns": {
+      "policy": "Règle",
+      "condition": "Condition",
+      "applies": "S’applique à",
+      "state": "État"
+    },
+    "failures": {
+      "no_token": "Aucun jeton lisible pour cette connexion.",
+      "unauthorized": "DigitalOcean a rejeté le jeton.",
+      "forbidden": "Ce jeton n’a pas le droit de lire les règles d’alerte.",
+      "rate_limited": "DigitalOcean limite le débit de ce compte ; réessayez sous peu.",
+      "unreachable": "Cette installation n’a pas pu joindre DigitalOcean.",
+      "error": "DigitalOcean a renvoyé une erreur.",
+      "not_ready": "Cette connexion n’a pas encore de jeton. Ajoutez un jeton d’accès personnel DigitalOcean avec la portée droplet:read.",
+      "secret_changed": "Le jeton de cette connexion ne peut pas être déchiffré. OPSWATCH_SECRET a changé depuis son enregistrement."
     }
   },
   "Capabilities": {

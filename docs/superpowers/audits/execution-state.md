@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Google's incidents are OpsWatch problems, with the whole lifecycle behind them |
-| Last green gates | tsc 0 · eslint 0 · **2618 unit** · **452 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | DigitalOcean's alert policies, and saying what it does not expose |
+| Last green gates | tsc 0 · eslint 0 · **2625 unit** · **454 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -310,6 +310,28 @@ the family list, and an e2e ruling holds that the rail is still not offered.
 Six mutations verified, including ranking `ERROR` down, letting an unranked incident become `info`,
 keying on the resource alone, counting the estate as incidents rather than policies, and turning a
 refused read into an empty family.
+
+### DigitalOcean has policies and no firing state, and the product says so
+
+`GET /v2/monitoring/alerts` lists alert **policies**. There is no endpoint anywhere in DigitalOcean's
+Monitoring API that says which of them are currently firing — five CRUD operations on policies, sixty
+metric endpoints, and nothing for open incidents. Google has `projects.alerts`; AWS has alarm state.
+DigitalOcean has neither.
+
+So the third cloud's alerts page is **configuration**, and the difference is stated on it rather than
+left as an absence: "DigitalOcean has no API for which policies are currently firing, so OpsWatch
+cannot show open incidents for this account the way it does for a Google Cloud project. This page is
+your configuration, not the state of it." That sentence renders **whether or not the read succeeded**,
+because it is a fact about DigitalOcean and not about the request — an operator whose token was
+refused still needs to know why there are no DigitalOcean incidents anywhere in this product.
+
+The same `alerts` capability therefore means something different on each cloud, which is what a
+capability model is for. Three clouds, three genuinely different answers to "what does the provider
+itself say is wrong", and not one of them is the AWS page with the names changed.
+
+One thing worth stealing for later: an **enabled CPU or memory policy on a droplet without `do-agent`
+never fires**, so "Enabled" alone tells an operator they are covered when they are not. Each row
+carries the caveat, from the same agentless split the droplets page states.
 
 ### What is still only architecture
 

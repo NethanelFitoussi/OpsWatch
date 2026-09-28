@@ -46,6 +46,12 @@ export async function DoSetup({ row, locale }: { row: ConnectionRow; locale: str
                     {t('droplets')}
                   </Link>
                 </p>
+                {/* Both read with the same token, so one link cannot work while the other does not. */}
+                <p className="text-sm">
+                  <Link href={`/accounts/${row.id}/alert-policies`} className="text-primary underline-offset-4 hover:underline">
+                    {t('alertPolicies')}
+                  </Link>
+                </p>
               </>
             ) : (
               <p className={cn('text-sm font-medium', TONE_TEXT.danger)}>{t(`failures.${result.failure}`)}</p>

@@ -228,3 +228,29 @@ test('THE RULING: the connections page says which cloud each connection is to', 
   await page.goto('/en/accounts');
   expect(await page.getByRole('link', { name: /^All \(\d+\)$/ }).innerText()).toBe(before);
 });
+
+test('THE RULING: it says DigitalOcean does not report which alerts are firing', async ({ page }) => {
+  /*
+   * The pressure, when three clouds sit beside each other in one product, is to make the third look
+   * like the first two. DigitalOcean exposes alert policies and no endpoint at all for which of them
+   * are firing — Google has one, AWS has alarm state — so the honest page is configuration with that
+   * said on it, rather than an empty incident list somebody would read as "nothing is wrong".
+   */
+  const id = await create(page, 'Policy account');
+  await page.goto(`/en/accounts/${id}/alert-policies`);
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain('Alert policies in Policy account');
+  expect(main).toContain('DigitalOcean does not report which of them are currently firing');
+  // And the comparison stated outright, so nobody reads the difference as an OpsWatch gap.
+  expect(main).toContain('the way it does for a Google Cloud project');
+  expect(main).toContain('This page is your configuration, not the state of it');
+});
+
+test('the alert policies page belongs to DigitalOcean connections only', async ({ page }) => {
+  await page.goto('/en/accounts');
+  const aws = page.getByRole('link', { name: /Moto monitoring/ }).first();
+  const href = (await aws.getAttribute('href')) ?? '';
+  await page.goto(`/en${href.replace(/^\/en/, '')}/alert-policies`);
+  await expect(page.locator('main')).toContainText('Page not found');
+});

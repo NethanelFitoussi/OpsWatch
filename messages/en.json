@@ -6696,7 +6696,8 @@
       "gcp_provider_invalid": "Something went wrong.",
       "gcp_service_account_invalid": "Something went wrong.",
       "gcp_regions_invalid": "Something went wrong."
-    }
+    },
+    "alertPolicies": "Alert policies"
   },
   "DoDroplets": {
     "title": "Droplets in {name}",
@@ -6742,6 +6743,47 @@
       "rate_limited": "Rate-limited",
       "unreachable": "DigitalOcean unreachable",
       "error": "Read failed"
+    }
+  },
+  "DoAlerts": {
+    "title": "Alert policies in {name}",
+    "description": "What you have asked DigitalOcean to tell you about, read when this page is drawn.",
+    "back": "Back to the connection",
+    "listTitle": "Alert policies",
+    "listHint": "These are the conditions you configured. DigitalOcean does not report which of them are currently firing.",
+    "checkAccess": "Check this connection's access",
+    "noneTitle": "This account has no alert policies.",
+    "noneHint": "Nothing has been asked, which is not the same as nothing being wrong. DigitalOcean will not tell anyone about a droplet until a policy exists for it.",
+    "noFiringState": "DigitalOcean has no API for which policies are currently firing, so OpsWatch cannot show open incidents for this account the way it does for a Google Cloud project. This page is your configuration, not the state of it.",
+    "truncated": "More policies exist than were read. The list shows the first of them.",
+    "readNow": "Read live. Nothing about a DigitalOcean account is collected on a schedule yet.",
+    "unnamed": "Policy with no description",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "needsAgent": "Needs the metrics agent",
+    "condition": "{compare} {value} for {window}",
+    "conditionUnknown": "DigitalOcean did not report the threshold",
+    "windowUnknown": "an unreported window",
+    "applies": "{droplets, plural, =0 {No droplets} one {# droplet} other {# droplets}}, {tags, plural, =0 {no tags} one {# tag} other {# tags}}",
+    "compare": {
+      "GreaterThan": "Above",
+      "LessThan": "Below"
+    },
+    "columns": {
+      "policy": "Policy",
+      "condition": "Condition",
+      "applies": "Applies to",
+      "state": "State"
+    },
+    "failures": {
+      "no_token": "There is no readable token for this connection.",
+      "unauthorized": "DigitalOcean rejected the token.",
+      "forbidden": "This token is not allowed to read alert policies.",
+      "rate_limited": "DigitalOcean is rate-limiting this account; try again shortly.",
+      "unreachable": "This instance could not reach DigitalOcean.",
+      "error": "DigitalOcean returned an error.",
+      "not_ready": "This connection has no token yet. Add a DigitalOcean personal access token with the droplet:read scope.",
+      "secret_changed": "This connection’s token cannot be decrypted. OPSWATCH_SECRET has changed since it was stored."
     }
   },
   "Capabilities": {
