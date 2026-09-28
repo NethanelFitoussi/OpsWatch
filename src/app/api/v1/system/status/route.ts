@@ -14,7 +14,7 @@ export const GET = apiRoute({
   handler: ({ db, actor }) => {
     if (!can(actor.role, 'audit.read')) return apiFailure('forbidden');
     const environments = listConnections(db).flatMap((connection) =>
-      scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope })),
+      scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope, provider: connection.provider, connectionName: connection.name })),
     );
     return apiJson(
       systemStatusSchema,

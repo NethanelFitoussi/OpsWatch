@@ -3857,7 +3857,12 @@
       "environment": {
         "name": "Environment",
         "lastRead": "Last read",
-        "families": "Read"
+        "families": "Read",
+        "scopeKind": {
+          "region": "region {scope}",
+          "project": "project {scope}",
+          "account": "whole account"
+        }
       },
       "neverRead": "Never read",
       "database": "Database",

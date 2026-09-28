@@ -1,6 +1,7 @@
 import 'server-only';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
 import { appliedMigrations } from '../store/meta';
 import { JOBS, type JobId } from '../collector/jobs';
@@ -32,8 +33,19 @@ const LOCK_ALIVE_MS = 90_000;
 /** Worst first: a job failing anywhere is failing, whatever it did somewhere else. */
 const STATUS_RANK = { failed: 0, running: 1, skipped: 2, ok: 3 } as const;
 
-function jobStatus(db: Db, job: JobId, environments: readonly { connectionId: string; scope: string }[]): JobStatus {
+function jobStatus(db: Db, job: JobId, allEnvironments: readonly SystemEnvironment[]): JobStatus {
   const spec = JOBS[job];
+  /*
+   * The environments this job **runs in**, not every environment there is.
+   *
+   * Counted against all of them, `metrics` reported "not yet run in 22 environments" on an
+   * installation whose twenty-two non-AWS environments it will never run in — which reads as a
+   * backlog and is really "does not apply". A job cannot be behind on work it does not have.
+   */
+  const environments =
+    spec.scope === 'environment' && spec.providers !== undefined
+      ? allEnvironments.filter((environment) => spec.providers?.includes(environment.provider ?? 'aws'))
+      : allEnvironments;
   const base = { job, everyMs: spec.everyMs };
   const empty = {
     ...base,
@@ -105,9 +117,12 @@ function jobStatus(db: Db, job: JobId, environments: readonly { connectionId: st
   };
 }
 
+/** One unit of collection, as this page needs it: enough to name it and to know which jobs apply. */
+export type SystemEnvironment = { connectionId: string; scope: string; provider?: Provider; connectionName?: string };
+
 export function readSystemStatus(
   db: Db,
-  input: { nowMs: number; environments: readonly { connectionId: string; scope: string }[]; dataDir?: string },
+  input: { nowMs: number; environments: readonly SystemEnvironment[]; dataDir?: string },
 ): SystemStatus {
   const runs = lastRuns(db, 500);
   const lock = readCollectorLock(db);
@@ -126,7 +141,12 @@ export function readSystemStatus(
     environments: input.environments.map((environment) => {
       const snapshots = listFamilySnapshots(db, environment.connectionId, environment.scope);
       return {
-        ...environment,
+        connectionId: environment.connectionId,
+        scope: environment.scope,
+        // Named, because a scope alone stopped identifying an environment: every DigitalOcean account
+        // is collected under `account`, so several of them were several identical rows.
+        ...(environment.connectionName === undefined ? {} : { connectionName: environment.connectionName }),
+        ...(environment.provider === undefined ? {} : { provider: environment.provider }),
         lastReadAt: snapshots.length === 0 ? null : Math.max(...snapshots.map((row) => row.readAt)),
         familiesRead: snapshots.filter((row) => row.unavailableReason === null).length,
         familiesTotal: snapshots.length,

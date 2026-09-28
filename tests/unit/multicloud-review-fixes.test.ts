@@ -193,3 +193,58 @@ describe('a report over a Google environment', () => {
     ]);
   });
 });
+
+describe('System status, on an installation with more than one cloud', () => {
+  it('THE RULING: a job is not behind on work it does not have', () => {
+    /*
+     * `metrics` is AWS-only now. Counted against every environment, it reported "not yet run in 22
+     * environments" on an installation whose twenty-two non-AWS environments it will never run in —
+     * which reads as a backlog and is really "does not apply". A monitoring tool reporting itself as
+     * behind when it is not is the same class of untruth as reporting an estate healthy when it is.
+     */
+    const db = createTestDb();
+    const aws = createConnection(db, connectionInput({ name: 'production' }), new Date(NOW));
+    const gcp = createGoogleConnection(db, google, SECRET, new Date(NOW));
+    const environments = [
+      { connectionId: aws.id, scope: 'eu-west-1', provider: 'aws' as const, connectionName: aws.name },
+      { connectionId: gcp.id, scope: 'my-project', provider: 'gcp' as const, connectionName: gcp.name },
+    ];
+
+    const run = startRun(db, { job: 'metrics', connectionId: aws.id, scope: 'eu-west-1', startedAt: NOW });
+    finishRun(db, run.id, { status: 'ok', finishedAt: NOW + 1_000, covered: 4, total: 4, truncated: false, errorCode: null });
+
+    const status = readSystemStatus(db, { nowMs: NOW + 60_000, environments, dataDir: '/tmp' });
+    const metrics = status.jobs.find((job) => job.job === 'metrics');
+    // One AWS environment, one run, nothing outstanding. The Google one is not its business.
+    expect(metrics?.environments).toMatchObject({ total: 1, neverRan: 0 });
+
+    // `detect` has no provider list, so it runs in both — and being behind on one, it says so.
+    const detectRun = startRun(db, { job: 'detect', connectionId: aws.id, scope: 'eu-west-1', startedAt: NOW });
+    finishRun(db, detectRun.id, { status: 'ok', finishedAt: NOW + 1_000, covered: 4, total: 4, truncated: false, errorCode: null });
+    const withDetect = readSystemStatus(db, { nowMs: NOW + 60_000, environments, dataDir: '/tmp' });
+    expect(withDetect.jobs.find((job) => job.job === 'detect')?.environments).toMatchObject({ total: 2, neverRan: 1 });
+  });
+
+  it('THE RULING: every environment row can be told apart from the others', () => {
+    /*
+     * A scope stopped identifying an environment when scopes became per-provider. Every DigitalOcean
+     * account is collected under `account`, so several accounts were several rows reading `account`,
+     * `account`, `account` — on the page whose job is telling an operator which of their environments
+     * OpsWatch cannot see.
+     */
+    const db = createTestDb();
+    const first = createDoConnection(db, { name: 'europe', token: 'dop_v1_'.padEnd(71, 'a') }, SECRET, new Date(NOW));
+    const second = createDoConnection(db, { name: 'staging', token: 'dop_v1_'.padEnd(71, 'b') }, SECRET, new Date(NOW));
+    const environments = [first, second].map((row) => ({
+      connectionId: row.id,
+      scope: 'account',
+      provider: 'do' as const,
+      connectionName: row.name,
+    }));
+
+    const status = readSystemStatus(db, { nowMs: NOW, environments, dataDir: '/tmp' });
+    expect(status.environments.map((entry) => entry.connectionName)).toEqual(['europe', 'staging']);
+    // And each carries its cloud, so the page can say what kind of thing the scope is.
+    expect(status.environments.every((entry) => entry.provider === 'do')).toBe(true);
+  });
+});

@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | A report lists its own cloud's families — the defect the last fix made reachable |
-| Last green gates | tsc 0 · eslint 0 · **2638 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | System status stops claiming a backlog it does not have, and names its rows |
+| Last green gates | tsc 0 · eslint 0 · **2640 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -435,6 +435,27 @@ marked critical and one marked awareness-only, and fixing the first is what arme
 
 `kindsOfFamily` and `familiesOf` widened to any cloud's family along the way; `SECTION_FAMILY` stayed
 AWS's, because a monitoring *section* is an AWS service and that mapping is correctly not general.
+
+### Two defects that only opening the page would show
+
+Both found by looking at System status on a stack with three clouds on it, after every gate was green.
+
+**`metrics` reported "not yet run in 22 environments".** It is AWS-only now, and those
+twenty-two are the non-AWS ones it will never run in — so the figure read as a backlog and was really
+"does not apply". A monitoring tool reporting itself as behind when it is not is the same class of
+untruth as reporting an estate healthy when it is not; it just points the other way. `jobStatus` now
+counts against the environments the job actually serves, and the same page reads "OK across all 10
+environments".
+
+**Every DigitalOcean account was a row saying `account`.** A scope stopped identifying an environment
+the moment scopes became per-provider, so several accounts were several identical rows — on the page
+whose entire job is telling an operator which of their environments OpsWatch cannot see. Each row now
+carries the connection's name and says what kind of thing its scope is: *whole account*, *project
+my-project-123*, *region eu-west-1*.
+
+Neither would have been caught by a test, because neither is wrong in a way a test knows to ask about,
+and neither is visible on an installation with one cloud. Part T's browser acceptance is not a
+formality.
 
 ### What is still only architecture
 

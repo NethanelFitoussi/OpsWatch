@@ -3857,7 +3857,12 @@
       "environment": {
         "name": "Environnement",
         "lastRead": "Dernière lecture",
-        "families": "Lu"
+        "families": "Lu",
+        "scopeKind": {
+          "region": "région {scope}",
+          "project": "projet {scope}",
+          "account": "compte entier"
+        }
       },
       "neverRead": "Jamais lu",
       "database": "Base de données",

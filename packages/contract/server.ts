@@ -105,6 +105,15 @@ export type JobStatus = z.infer<typeof jobStatusSchema>;
 export const environmentStatusSchema = z.object({
   connectionId: z.string(),
   scope: z.string(),
+  /**
+   * What this connection is called, and which cloud it is to.
+   *
+   * A scope alone stopped identifying an environment once scopes became per-provider: every
+   * DigitalOcean account is collected under `account`, so eight of them were eight identical rows.
+   * Optional so an older client still parses a newer server's answer.
+   */
+  connectionName: z.string().optional(),
+  provider: z.string().optional(),
   lastReadAt: epochSchema.nullable(),
   familiesRead: z.number(),
   familiesTotal: z.number(),

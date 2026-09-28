@@ -2,7 +2,8 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { requireAdmin } from '@/lib/auth/current';
-import { scopesOf } from '@/lib/monitoring/shared/scopes';
+import { scopeKindOf, scopesOf } from '@/lib/monitoring/shared/scopes';
+import type { Provider } from '@/lib/connections/types';
 import { listConnections } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -35,7 +36,7 @@ export default async function SystemStatusPage({ params }: Props) {
   const status = readSystemStatus(db, {
     nowMs,
     environments: listConnections(db).flatMap((connection) =>
-      scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope })),
+      scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope, provider: connection.provider, connectionName: connection.name })),
     ),
     dataDir: env().OPSWATCH_DATA_DIR,
   });
@@ -118,7 +119,18 @@ export default async function SystemStatusPage({ params }: Props) {
         <ul className="divide-y">
           {status.environments.map((environment) => (
             <li key={`${environment.connectionId}/${environment.scope}`} className="flex flex-wrap items-baseline justify-between gap-x-4 py-2 text-sm">
-              <span>{environment.scope}</span>
+              {/* The connection, then what its scope is in that cloud's own terms. The scope alone
+                  stopped identifying an environment when scopes became per-provider: every
+                  DigitalOcean account is collected under `account`, so several accounts were
+                  several identical rows with no way to tell which was which. */}
+              <span>
+                <span className="block">{environment.connectionName ?? environment.connectionId}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {environment.provider === undefined
+                    ? environment.scope
+                    : t(`environment.scopeKind.${scopeKindOf(environment.provider as Provider)}`, { scope: environment.scope })}
+                </span>
+              </span>
               <span className="text-muted-foreground">
                 {environment.lastReadAt === null
                   ? t('neverRead')
