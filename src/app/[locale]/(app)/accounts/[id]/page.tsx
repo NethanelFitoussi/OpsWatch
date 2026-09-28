@@ -21,6 +21,7 @@ import { AmbientSection } from './sections/ambient-section';
 import { DangerZone } from './sections/danger-zone';
 import { IdentitySkeleton } from './sections/identity-skeleton';
 import { KeysSection } from './sections/keys-section';
+import { CapabilityTable } from '@/components/connections/capability-table';
 import { DoSetup } from './sections/do-setup';
 import { GoogleSetup } from './sections/google-setup';
 import { RoleArnCard, RoleIdentityAndTemplate } from './sections/role-setup';
@@ -77,6 +78,9 @@ export default async function ConnectionPage({ params, searchParams }: Props) {
         }
         actions={<ConnectionStatusBadge status={view.status} />}
       />
+
+      {/* The same question for every cloud: what can OpsWatch read here, and why not the rest. */}
+      <CapabilityTable provider={row.provider} />
 
       {/* Everything below is about one cloud or the other. A Google connection has no role to set up,
           no permission checklist of AWS services and no CloudFormation stack, and showing those empty

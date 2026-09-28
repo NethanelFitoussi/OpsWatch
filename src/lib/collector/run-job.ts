@@ -5,6 +5,7 @@ import { runBaselinesJob } from './baselines-job';
 import { runCloudflareJob } from './cloudflare-job';
 import { runCompactJob } from './compact-job';
 import { runDeploymentsJob } from './deployments-job';
+import { findConnection } from '../connections/repository';
 import { runDetectJob } from './detect';
 import { runDigestJob } from './digest-job';
 import { runErrorsJob } from './errors-job';
@@ -39,10 +40,13 @@ export const runJob: JobRun = async (job, nowMs) => {
 
   if (job.connectionId === null || job.scope === null) return { covered: 0, total: 0 };
   const scoped = { db, connectionId: job.connectionId, scope: job.scope, nowMs };
+  // Which cloud this environment is in, so the detect cycle reads that provider's families. A
+  // connection that has gone is treated as AWS and then fails on its credential, exactly as before.
+  const provider = findConnection(db, job.connectionId)?.provider ?? 'aws';
 
   switch (job.id) {
     case 'detect':
-      return runDetectJob(scoped);
+      return runDetectJob({ ...scoped, provider });
     case 'deployments':
       return runDeploymentsJob(scoped);
     case 'errors':

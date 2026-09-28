@@ -6665,5 +6665,26 @@
       "unreachable": "Cette installation n’a pas pu joindre DigitalOcean.",
       "error": "DigitalOcean a renvoyé une erreur."
     }
+  },
+  "Capabilities": {
+    "title": "Ce qu’OpsWatch peut lire ici",
+    "hint": "Par capacité, pour ce cloud. Une absence est soit quelque chose que le fournisseur ne propose pas, soit quelque chose qu’OpsWatch n’a pas encore construit : ce sont deux choses différentes.",
+    "names": {
+      "resources": "Ressources",
+      "health": "Santé",
+      "metrics": "Métriques",
+      "problems": "Problèmes",
+      "errors": "Erreurs",
+      "alerts": "Alertes du fournisseur",
+      "logs": "Journaux",
+      "history": "Historique"
+    },
+    "states": {
+      "supported": "Lu directement chez le fournisseur",
+      "not_offered": "Non proposé par ce fournisseur",
+      "not_built": "Pas encore construit dans OpsWatch"
+    },
+    "alsoManaged": "Également disponible en transfert, si vous l’activez.",
+    "direct": "Tout ce qui précède est lu par OpsWatch en appelant le fournisseur avec l’identifiant que vous lui avez donné. Rien n’est envoyé ailleurs, et rien ici n’exige de forwarder, d’agent ou de compte chez nous."
   }
 }

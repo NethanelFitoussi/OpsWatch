@@ -307,7 +307,14 @@ export function listRecentlyResolved(db: Db, connectionId: string, scope: string
 }
 
 /** What the detector knew about a subject, kept beside the transition so the store can write the row. */
-export type ProblemContext = { connectionId: string; scope: string };
+/**
+ * Which environment a cycle is writing about, and which cloud it read.
+ *
+ * `source` was the literal `'aws'` on every problem and every lifecycle event, which was true while
+ * there was one provider and becomes a mislabel the moment there are three — on a row whose whole job
+ * is to say where the evidence came from.
+ */
+export type ProblemContext = { connectionId: string; scope: string; source?: string };
 
 function scoredFields(problem: DetectedProblem, firstSeenAt: number, nowMs: number) {
   const terms = scoreProblem({
@@ -347,7 +354,8 @@ export function applyTransitions(db: Db, context: ProblemContext, transitions: r
       subjectId: row?.subjectId ?? id,
       serviceId: row?.serviceId ?? null,
       severity: row?.severity ?? null,
-      source: 'aws',
+      // The cloud this cycle read, not a constant. Defaulted so every existing caller is unchanged.
+      source: context.source ?? 'aws',
       payload: { problemId: id, ...(row === null ? {} : { titleKey: row.titleKey, score: row.score }) },
       dedupeKey: `${kind}:${id}:${at}`,
     });
@@ -366,7 +374,7 @@ export function applyTransitions(db: Db, context: ProblemContext, transitions: r
           subjectId: problem.subject.id,
           subjectName: problem.subject.name,
           serviceId: problem.subject.serviceId,
-          source: 'aws',
+          source: context.source ?? 'aws',
           titleKey: problem.titleKey,
           values: problem.values,
           href: problem.href,

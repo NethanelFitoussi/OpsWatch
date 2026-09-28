@@ -5,7 +5,9 @@ import { outcomesFromInsights, type EvaluatedPair } from '../detect/aws';
 import type { SubjectOutcome, SubjectRef } from '../detect/types';
 import type { Db } from '../db/client';
 import type { InsightKind } from '../monitoring/insights';
-import { INSIGHT_FAMILIES, loadFamily } from '../monitoring/overview';
+import { INSIGHT_FAMILIES } from '../monitoring/overview';
+import { monitoringProvider } from '../monitoring/provider-registry';
+import type { Provider } from '../connections/types';
 import { resolveTarget } from '../monitoring/target';
 import { recordFamilySnapshot } from '../store/health';
 import { applyTransitions, listLiveProblems, listRecentlyResolved } from '../store/problems';
@@ -34,9 +36,26 @@ export type DetectJobInput = {
   connectionId: string;
   scope: string;
   nowMs: number;
+  /** Which cloud this connection is to. Defaulted so every existing caller keeps its meaning. */
+  provider?: Provider;
 };
 
 export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
+  /*
+   * Which families this connection's provider has, and who reads them.
+   *
+   * The seam of the whole multi-cloud model is right here and nowhere else: everything below this
+   * point — the outcomes, the problem lifecycle, the family snapshots, the alert and incident cycles —
+   * works on `Insight` and problem rows and has no AWS type in it. A second provider is a second set
+   * of families and a loader for them, not a second monitoring application.
+   */
+  const monitoring = monitoringProvider(input.provider ?? 'aws');
+  if (monitoring.loadFamily === null || monitoring.families.length === 0) {
+    // A provider with nothing to read is not a failed cycle. It is a cycle with no families, and
+    // recording it as a failure would put a red mark on a connection that is working as designed.
+    return { covered: 0, total: 0, truncated: false };
+  }
+
   const target = await resolveTarget({ connectionId: input.connectionId, region: input.scope });
   if (!target.ok) {
     // Nothing could be read, so nothing is claimed. Every live problem stays exactly as it was, and the
@@ -45,7 +64,10 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
   }
 
   const families = await Promise.all(
-    INSIGHT_FAMILIES.map(async (family) => ({ family, result: await loadFamily(family, target.data, input.nowMs) })),
+    monitoring.families.map(async (family) => ({
+      family,
+      result: await monitoring.loadFamily!(family, target.data, input.nowMs),
+    })),
   );
   const read = new Set(families.filter(({ result }) => result.ok).map(({ family }) => family));
   const insights = families.flatMap(({ result }) => (result.ok ? result.data.insights : []));
@@ -91,7 +113,7 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
     nowMs: input.nowMs,
   });
 
-  applyTransitions(input.db, { connectionId: input.connectionId, scope: input.scope }, transitions);
+  applyTransitions(input.db, { connectionId: input.connectionId, scope: input.scope, source: monitoring.provider }, transitions);
 
   const liveNow = listLiveProblems(input.db, input.connectionId, input.scope).map(({ row }) => row);
 
@@ -126,7 +148,9 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
     // How much of the environment this cycle actually saw. A family that failed to load means it saw less
     // than all of it, which System status shows rather than hides.
     covered: read.size,
-    total: INSIGHT_FAMILIES.length,
-    truncated: read.size < INSIGHT_FAMILIES.length,
+    // This provider's families, not AWS's. Counting AWS's four while looping over another provider's
+    // two would report a cycle that read everything it has as truncated, for ever.
+    total: monitoring.families.length,
+    truncated: read.size < monitoring.families.length,
   };
 }

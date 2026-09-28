@@ -112,3 +112,35 @@ test('THE RULING: the monitoring sections are not offered to a connection they a
   await expect(menu).toContainText('Not an AWS account');
   await expect(menu.getByRole('menuitem', { name: 'Open the connection' }).first()).toBeVisible();
 });
+
+test('THE RULING: a gap says whether the provider lacks it or OpsWatch has not built it', async ({ page }) => {
+  /*
+   * "Unsupported" would be true for both and useless for either. "DigitalOcean does not offer this"
+   * ends the matter; "OpsWatch has not built it" does not — and an operator who reads the first when
+   * the second is true goes looking for another product.
+   */
+  const id = await create(page, 'Capability table');
+  await page.goto(`/en/accounts/${id}`);
+  const card = page.locator('[data-slot="card"]').filter({ has: page.getByRole('heading', { name: 'What OpsWatch can read here' }) });
+
+  await expect(card).toContainText('Resources');
+  await expect(card).toContainText('Read directly from the provider');
+  // DigitalOcean has no log product to read errors out of; that is not a gap in OpsWatch.
+  await expect(card).toContainText('Not offered by this provider');
+  await expect(card).toContainText('Not built yet in OpsWatch');
+
+  // And the promise that makes self-hosting work, on the page rather than in a README.
+  await expect(card).toContainText('nothing here requires a forwarder, an agent or an account with us');
+});
+
+test('the same question is answered for AWS, where the answer is mostly yes', async ({ page }) => {
+  await page.goto('/en/accounts');
+  const href = (await page.getByRole('link', { name: /Moto monitoring/ }).first().getAttribute('href')) ?? '';
+  await page.goto(href);
+  const card = page.locator('[data-slot="card"]').filter({ has: page.getByRole('heading', { name: 'What OpsWatch can read here' }) });
+
+  await expect(card).toContainText('Health');
+  // Forwarding is an option an operator switches on, never a condition of the capability.
+  await expect(card).toContainText('Also available forwarded, if you switch that on');
+  await expect(card).not.toContainText('Not offered by this provider');
+});

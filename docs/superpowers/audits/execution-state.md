@@ -9,9 +9,9 @@ restated.
 
 | | |
 |---|---|
-| Integrated main | `434c2f7` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | A monitoring section is only offered to the provider it is about |
-| Last green gates | tsc 0 · eslint 0 · **2435 unit** · **413 e2e, 2 skipped** · `roadmap:check` 0 |
+| Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
+| Current checkpoint | The multi-cloud seam: capabilities declared, and a registry that has to back them |
+| Last green gates | tsc 0 · eslint 0 · **2538 unit** · **439 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -56,6 +56,29 @@ losing the whole conversation loses no plan.
 - A mutating `/api/v1` call from a test needs `headers: { origin: baseURL }`: an ambient credential
   requires an Origin, which is the whole of CSRF.
 
+## The multi-cloud seam (§G), and what is still AWS-shaped behind it
+
+**The seam is `loadFamily`, and nothing downstream moves.** The detect cycle reads each family; after
+that, `outcomesFromInsights`, the problem lifecycle, `family_snapshots`, the alert cycle, incidents,
+history and reports all work on `Insight` and problem rows with no AWS type in them, and
+`family_snapshots.family` is a plain string. A second provider is therefore a second set of families
+and a loader for them — the same shape as the host agent's findings becoming a second producer into
+the alert cycle — **not** a second monitoring application.
+
+Verified against the code, and confirmed by review. What is *not* yet moved, and will bite the moment
+a non-AWS family is added — in the order it will bite:
+
+| Left | Why it matters |
+|---|---|
+| `resolveTarget` (`monitoring/target.ts`) is `sts:AssumeRole` and returns `AwsTarget` | `runDetectJob` calls it unconditionally. Harmless today only because a provider with no families returns before reaching it. The first GCP family makes every GCP cycle throw `connection_unavailable` |
+| `InsightKind` is a **closed union** of the 12 AWS kinds, and `SUBJECT_OF` in `detect/aws.ts` is an exhaustive `Record` over it | A GCP kind means widening the union (losing the exhaustiveness that guarantees every kind has a subject type) or a second map beside it. Decide deliberately |
+| The family list exists in **four** places: `INSIGHT_FAMILIES`, `HEALTH_FAMILIES`, `PROBLEM_FAMILIES`, and `familiesSection` in `read/reports.ts` | None consults the registry, so a family added to a provider would silently vanish from Health and from the report — no error, just absent |
+| `ScopeRef = { connectionId, region }` | GCP's `timeSeries.list` is **project**-scoped and a project spans regions. Whether "region" means a GCP region or the project is an open decision, not a detail |
+
+`Insight.href` and `subject_type` turned out **not** to be AWS-shaped: `href` is built by `subsectionPath`
+and the subject kinds (`resource`, `service`, `cluster`) describe a droplet or a Cloud Run service
+without strain. Two things I expected to be problems and are not.
+
 ## Decisions that must not be re-derived
 
 - **next-intl does not throw for a missing message — it renders the key path.** A dot inside a key is a
@@ -87,6 +110,14 @@ losing the whole conversation loses no plan.
   `awsAccountId`, at the schema level or in code, and the rest of the product treats two connections
   over one account as a supported configuration. Anything that matches on what an account *contains* —
   an instance id, a log group — must therefore be deterministic about which connection wins.
+- **Memory is the one metric that needs an agent, on both new providers.** Google collects CPU, disk,
+  network and uptime for every instance agentlessly; memory and processes need the Ops Agent
+  (`agent.googleapis.com/…`). DigitalOcean collects CPU, bandwidth and disk I/O from the hypervisor;
+  load average, memory and disk *usage* need `do-agent`. OpsWatch installs neither, and its own host
+  agent already reports memory — so the honest sentence is "CPU and network agentlessly; for memory,
+  the provider's agent or ours".
+- **DigitalOcean returns CPU as cumulative per-mode counters** (`mode: idle|user|system`, seconds), so
+  utilisation is `1 − Δidle/Δtotal` between two samples. The raw number is meaningless on its own.
 - **A `select … .all()` is a page that stops loading in two years**, not one that is broken today.
   `store-bounded-reads.test.ts` holds every one of them to being limited, windowed, or listed with the
   reason it cannot grow.

@@ -6665,5 +6665,26 @@
       "unreachable": "This instance could not reach DigitalOcean.",
       "error": "DigitalOcean returned an error."
     }
+  },
+  "Capabilities": {
+    "title": "What OpsWatch can read here",
+    "hint": "Per capability, for this cloud. A gap is either something the provider does not offer or something OpsWatch has not built, and those are different things.",
+    "names": {
+      "resources": "Resources",
+      "health": "Health",
+      "metrics": "Metrics",
+      "problems": "Problems",
+      "errors": "Errors",
+      "alerts": "Provider alerts",
+      "logs": "Logs",
+      "history": "History"
+    },
+    "states": {
+      "supported": "Read directly from the provider",
+      "not_offered": "Not offered by this provider",
+      "not_built": "Not built yet in OpsWatch"
+    },
+    "alsoManaged": "Also available forwarded, if you switch that on.",
+    "direct": "Everything above is read by OpsWatch calling the provider with the credential you gave it. Nothing is sent anywhere else, and nothing here requires a forwarder, an agent or an account with us."
   }
 }

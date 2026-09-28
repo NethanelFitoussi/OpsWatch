@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Link, usePathname } from '@/i18n/navigation';
 import { isUsableStatus } from '@/lib/connections/types';
+import { supports } from '@/lib/monitoring/capabilities';
 import type { ConnectionRow } from '@/lib/db/schema';
 import { parseMonitoringPath, switchConnectionPath } from '@/lib/monitoring/shared/paths';
 import { cn } from '@/lib/utils';
@@ -59,12 +60,13 @@ export function ConnectionSwitcher({ connections }: { connections: ShellConnecti
         <DropdownMenuLabel>{t('account')}</DropdownMenuLabel>
         {connections.map((c) => {
           /*
-            * A region is a destination only where the sections behind it exist. Every one of them is a
-            * page about an AWS service, so a Google or DigitalOcean connection offering `eu-west-1`
-            * here would be offering a page that then asks AWS about an account that is not there.
-            * It links to its own connection page, which is where what it can show actually lives.
+            * A region is a destination only where the sections behind it exist — which is what the
+            * capability table says, rather than which provider it happens to be. A connection whose
+            * provider has no health verdict yet would otherwise offer `eu-west-1` here and open a page
+            * that asks the wrong cloud. It links to its own connection page instead, which is where
+            * what it *can* show actually lives.
             */
-          const usable = c.provider === 'aws' && isUsableStatus(c.status);
+          const usable = supports(c.provider, 'health') && isUsableStatus(c.status);
           return (
             <div key={c.id}>
               <DropdownMenuLabel className="pb-0 text-xs font-medium text-muted-foreground">{c.name}</DropdownMenuLabel>
