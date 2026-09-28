@@ -150,3 +150,37 @@ describe('the family the detect cycle reads', () => {
     expect(outcome.problem.href.startsWith('/c/')).toBe(false);
   });
 });
+
+describe('what a Google problem does not reach', () => {
+  it('THE RULING: it cannot open an incident, because incidents are service-scoped and it is not', async () => {
+    /*
+     * `runIncidentCycle` runs for every provider now, and an incident is only visible in the AWS
+     * section rail — so an incident opened for a Google problem would exist, be notified, and have
+     * nowhere to be read. It cannot happen, and this records *why* rather than leaving it as luck:
+     * §16 groups **critical problems on one service**, a Google incident's subject is a `resource`,
+     * and `outcomesFromInsights` sets `serviceId` only for service subjects. Null, so the rule skips it.
+     *
+     * The day somebody gives Google a service-typed kind, this test is what tells them the surface
+     * to read the incident on does not exist yet.
+     */
+    const { incidentCandidates } = await import('@/lib/detect/incident');
+    const { SUBJECT_OF } = await import('@/lib/detect/subjects');
+
+    expect(SUBJECT_OF.gcp_incident_open).toBe('resource');
+
+    const result = await load(google([alert(), alert({ name: 'projects/p/two', policy: { displayName: 'Memory', severity: 'CRITICAL' } })], [{ enabled: true }]));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const outcomes = outcomesFromInsights({ insights: result.data.insights, evaluated: [], nowMs: NOW });
+    const candidates = outcomes.flatMap((outcome) =>
+      outcome.state === 'fired'
+        ? [{ id: outcome.subject.id, serviceId: outcome.subject.serviceId, severity: 'critical' as const, firstSeenAt: NOW - 60_000, userFacing: null }]
+        : [],
+    );
+    // Two critical problems in one cycle, which for an AWS service would be the first trigger.
+    expect(candidates).toHaveLength(2);
+    expect(candidates.every((candidate) => candidate.serviceId === null)).toBe(true);
+    expect(incidentCandidates(candidates, NOW, { suppressedUntil: new Map(), existing: new Set() })).toEqual([]);
+  });
+});

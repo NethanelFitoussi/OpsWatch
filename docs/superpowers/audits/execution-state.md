@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | The assistant is told which cloud it is looking at |
-| Last green gates | tsc 0 · eslint 0 · **2657 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Why a Google problem cannot open an incident nobody could read |
+| Last green gates | tsc 0 · eslint 0 · **2658 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -619,6 +619,21 @@ DigitalOcean account (account)", "an AWS region (eu-west-1)".
 Both callers look the provider up rather than taking the default. The rail's action is AWS-only today
 and would have been right by accident, which is the thing that stops being right without anyone
 noticing.
+
+### An incident with nowhere to be read — checked, and safe by construction
+
+`runIncidentCycle` runs for every provider now, and an incident is visible only in the AWS section
+rail. An incident opened for a Google problem would therefore exist, be notified, and have nowhere to
+be read — the same shape as the notification link that 404s.
+
+It cannot happen, and the reason is worth writing down rather than leaving as luck: §16 groups
+**critical problems on one service**, a Google incident's subject is a `resource`, and
+`outcomesFromInsights` sets `serviceId` only for service subjects. Null, so the rule skips it — two
+critical Google problems in one cycle produce no candidate at all.
+
+Pinned, because it is load-bearing and invisible: the day somebody gives Google a service-typed kind,
+that test is what tells them the surface to read the incident on does not exist yet. Mutating
+`gcp_incident_open` to `'service'` fails it.
 
 ## Decisions that must not be re-derived
 
