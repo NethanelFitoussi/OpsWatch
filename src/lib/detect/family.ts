@@ -6,13 +6,20 @@
  * report service, to scope a section's report to the problems that belong to it. A read service must not
  * have to import the collector — and everything it would drag in — to answer that.
  */
-import { AWS_FAMILIES, type AwsFamily } from '../monitoring/shared/families';
+import { AWS_FAMILIES, GCP_FAMILIES, type AwsFamily, type MonitoringFamily } from '../monitoring/shared/families';
 
 /** The families the detect job reads, in the order the product shows them. Re-exported, never re-declared. */
 export const PROBLEM_FAMILIES = AWS_FAMILIES;
 export type ProblemFamily = AwsFamily;
 
-const FAMILY_OF: Record<string, ProblemFamily> = {
+/** Every family of every cloud, which is what a problem row's kind may belong to. */
+export const ALL_PROBLEM_FAMILIES: readonly MonitoringFamily[] = [...AWS_FAMILIES, ...GCP_FAMILIES];
+
+const FAMILY_OF: Record<string, MonitoringFamily> = {
+  // Google's, filed under the family that reads them. A kind with no family is never evaluated, so
+  // its problems could neither resolve themselves nor be reported as unevaluated — they would simply
+  // sit there.
+  gcp_incident_open: 'gcp_alerts',
   ecs_tasks_below_desired: 'ecs',
   ecs_cpu_high: 'ecs',
   ecs_memory_high: 'ecs',
@@ -28,7 +35,7 @@ const FAMILY_OF: Record<string, ProblemFamily> = {
 };
 
 /** Null for a kind no family claims, which is how an unknown detector stays unevaluated rather than clear. */
-export function familyOfKind(kind: string): ProblemFamily | null {
+export function familyOfKind(kind: string): MonitoringFamily | null {
   return FAMILY_OF[kind] ?? null;
 }
 

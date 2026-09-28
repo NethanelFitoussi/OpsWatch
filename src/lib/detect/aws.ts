@@ -1,9 +1,10 @@
 import 'server-only';
 import type { Insight, InsightKind, InsightSeverity, InsightValues } from '../monitoring/insights';
 import { INSIGHT_WINDOW_MINUTES } from '../monitoring/insights';
-import type { SubjectKind } from './key';
+
 import type { DetectorLevel } from './score';
 import type { Evidence, SubjectOutcome, SubjectRef } from './types';
+import { ALL_INSIGHT_KINDS, SUBJECT_OF } from './subjects';
 
 /**
  * The Stage 2 insight rules, as detectors (§5).
@@ -16,23 +17,7 @@ import type { Evidence, SubjectOutcome, SubjectRef } from './types';
  * erased at runtime, so nothing here reaches a client, a clock or a socket.
  */
 
-/** Which kind of thing each rule is about. The resource of an `ecs_*` insight *is* the service id. */
-const SUBJECT_OF: Record<InsightKind, SubjectKind> = {
-  ecs_tasks_below_desired: 'service',
-  ecs_cpu_high: 'service',
-  ecs_memory_high: 'service',
-  ecs_rollout_failed: 'service',
-  ecs_rollout_stuck: 'service',
-  rds_cpu_high: 'resource',
-  rds_freeable_memory_low: 'resource',
-  aurora_replica_lag: 'resource',
-  alb_5xx_rate: 'resource',
-  alb_elb_5xx_count: 'resource',
-  alb_unhealthy_hosts: 'resource',
-  alarm_firing: 'resource',
-};
-
-export const INSIGHT_DETECTOR_KINDS = Object.keys(SUBJECT_OF) as InsightKind[];
+export const INSIGHT_DETECTOR_KINDS = ALL_INSIGHT_KINDS;
 
 /** A Stage 2 severity is already the detector's own level; the score decides what it is worth. */
 const levelOf = (severity: InsightSeverity): DetectorLevel => severity;
@@ -119,21 +104,32 @@ export function outcomesFromInsights(input: InsightCycleInput): SubjectOutcome[]
     const rows = insight.members?.length
       ? insight.members.map((member) => ({
           resource: member.resource,
+          subjectId: member.subjectId ?? member.resource,
           severity: member.severity,
           messageKey: member.messageKey,
           values: member.values,
           href: member.href,
         }))
-      : [{ resource: insight.resource, severity: insight.severity, messageKey: insight.messageKey, values: insight.values, href: insight.href }];
+      : [
+          {
+            resource: insight.resource,
+            // Absent for every AWS rule, where what is shown is what identifies it.
+            subjectId: insight.subjectId ?? insight.resource,
+            severity: insight.severity,
+            messageKey: insight.messageKey,
+            values: insight.values,
+            href: insight.href,
+          },
+        ];
 
     for (const row of rows) {
       const subject: SubjectRef = {
         type: subjectType,
-        id: row.resource,
+        id: row.subjectId,
         name: row.resource,
-        serviceId: subjectType === 'service' ? row.resource : null,
+        serviceId: subjectType === 'service' ? row.subjectId : null,
       };
-      fired.add(pairKey(kind, row.resource));
+      fired.add(pairKey(kind, row.subjectId));
       outcomes.push({
         state: 'fired',
         kind,

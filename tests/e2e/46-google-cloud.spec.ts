@@ -235,3 +235,23 @@ test('the alerts page is Google’s, and reads in French at 360 px', async ({ pa
   await page.goto(`/en${href.replace(/^\/en/, '')}/alerts`);
   await expect(page.locator('main')).toContainText('Page not found');
 });
+
+test('THE RULING: a Google connection is not offered the AWS monitoring rail', async ({ page }) => {
+  /*
+   * Google now has a family, produces problems and appears on `/problems` — and it still has no
+   * Health page, deliberately. The rail that shows one is ten AWS services, so offering it here would
+   * put Containers, Databases and Load balancers in front of somebody whose project has none. The
+   * capability table says exactly that, and this is the difference between the two claims being real.
+   */
+  const id = await create(page, 'No rail project');
+  await page.goto(`/en/accounts/${id}`);
+  const main = await page.locator('main').innerText();
+
+  // Problems: built. Health: not, and said so rather than quietly linked.
+  expect(main).toMatch(/\bProblems\s*\n\s*Read directly from the provider/);
+  expect(main).toMatch(/\bHealth\s*\n\s*Not built yet in OpsWatch/);
+
+  // And the switcher does not offer to carry this connection into the rail.
+  await page.goto('/en/problems');
+  await expect(page.getByRole('navigation', { name: 'Filter problems by cloud' }).getByRole('link', { name: /^Google Cloud/ })).toBeVisible();
+});

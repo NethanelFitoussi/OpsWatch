@@ -156,8 +156,13 @@ describe('the family list, which used to be four family lists', () => {
   it('gives the registry and the capability table the same list', () => {
     for (const provider of PROVIDERS) {
       expect(monitoringProvider(provider).families, provider).toBe(familiesOf(provider));
-      // And the two ways of saying "nothing is read here yet" agree with each other.
-      const declared = PROVIDER_CAPABILITIES[provider].health.state;
+      /*
+       * And the two ways of saying "problems are computed here" agree with each other. `problems`
+       * rather than `health`: Google has a family and produces problems from it, and does **not**
+       * have a Health page, because the section rail that shows one is ten AWS services. They are
+       * different claims and the table keeps them apart.
+       */
+      const declared = PROVIDER_CAPABILITIES[provider].problems.state;
       expect(familiesOf(provider).length > 0, provider).toBe(declared === 'supported');
     }
   });

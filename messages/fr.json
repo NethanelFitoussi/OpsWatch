@@ -3682,7 +3682,8 @@
       "alarm_firing_metric": "{metric} a franchi son seuil d’alarme.",
       "machine_redis_no_memory_limit": "{name} : Redis n’a pas de limite de mémoire et utilise {percent}% de la machine",
       "machine_redis_near_memory_limit": "{name} : Redis est à {percent}% de sa limite de mémoire",
-      "machine_redis_last_save_failed": "{name} : Redis n’a pas pu écrire sa dernière sauvegarde en arrière-plan"
+      "machine_redis_last_save_failed": "{name} : Redis n’a pas pu écrire sa dernière sauvegarde en arrière-plan",
+      "gcp_incident_open": "Google Cloud a ouvert un incident : {policy} sur {resource}."
     },
     "groups": {
       "ecs_tasks_below_desired": "{count} services de {cluster} exécutent moins de tâches que souhaité.",

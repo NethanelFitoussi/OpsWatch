@@ -11,25 +11,30 @@ import { RESOURCE_DIMENSIONS, subjectOf } from './shared/metric-catalogue';
 import { subsectionPath, type ScopeRef } from './shared/paths';
 
 export type InsightSeverity = 'critical' | 'warning' | 'info';
-export type InsightKind =
-  | 'ecs_tasks_below_desired'
-  | 'ecs_cpu_high'
-  | 'ecs_memory_high'
-  | 'ecs_rollout_failed'
-  | 'ecs_rollout_stuck'
-  | 'rds_cpu_high'
-  | 'rds_freeable_memory_low'
-  | 'aurora_replica_lag'
-  | 'alb_5xx_rate'
-  | 'alb_elb_5xx_count'
-  | 'alb_unhealthy_hosts'
-  | 'alarm_firing';
+// Declared in a leaf and re-exported here, because the detect layer and the family map both need it
+// and neither may import this module — it pulls in the AWS SDK. Split per provider there: see
+// `detect/subjects.ts` for why one flat union would have cost the exhaustiveness guarantee.
+import type { InsightKind } from './shared/kinds';
+export type { InsightKind };
 export type InsightValues = Record<string, string | number>;
-type InsightMember = { resource: string; severity: InsightSeverity; messageKey: string; values: InsightValues; href: string };
+type InsightMember = { resource: string; subjectId?: string; severity: InsightSeverity; messageKey: string; values: InsightValues; href: string };
 export type Insight = {
   severity: InsightSeverity;
   kind: InsightKind;
+  /** What to show. For every AWS rule this is also what identifies it, which is why there was one field. */
   resource: string;
+  /**
+   * What identifies it, when that is not the same string as what to show.
+   *
+   * The dedupe key is `(connection, scope, kind, subjectId)`, so two things that are genuinely
+   * different problems must differ here. Google has one kind — an incident it opened — and what makes
+   * two of them different is the **policy and the resource together**: two policies watching one
+   * instance are two problems, and one policy firing on two instances is two problems. The resource
+   * alone is the useful thing to *show*, and it is not enough to key on.
+   *
+   * Absent means the two are the same string, which is every AWS rule.
+   */
+  subjectId?: string;
   messageKey: string;
   values: InsightValues;
   href: string;

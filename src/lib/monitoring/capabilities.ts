@@ -81,12 +81,20 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
   },
   gcp: {
     resources: direct,
+    /*
+     * Not built, and `problems` below is. They are not the same claim: Health is a per-family verdict
+     * on an estate, and the section rail that shows it is ten AWS services — offering it for a Google
+     * project would put Containers, Databases and Load balancers in front of somebody who has none.
+     * Google's problems appear on the cross-cloud page instead, which needs no rail.
+     */
     health: { state: 'not_built' },
     // Agentless CPU utilisation from Cloud Monitoring, read straight from the project. Memory and disk
     // usage are not here because on Google they are not agentless — they come from `agent.googleapis.com`
     // and exist only where the Ops Agent is installed, which OpsWatch does not install.
     metrics: direct,
-    problems: { state: 'not_built' },
+    // Incidents Google opened, turned into OpsWatch problems with their whole lifecycle — they
+    // resolve when Google closes them, they raise alerts, and they appear beside AWS's on `/problems`.
+    problems: direct,
     errors: { state: 'not_built' },
     // Cloud Monitoring's alerting policies and open incidents, read directly. Google's verdicts, not
     // OpsWatch's: nothing here is a health conclusion this product reached on its own.

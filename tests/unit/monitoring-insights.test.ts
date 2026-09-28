@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import en from '../../messages/en.json';
+import { ALL_INSIGHT_KINDS } from '@/lib/detect/subjects';
 import type { AlarmSummary } from '@/lib/monitoring/alarms';
 import type { EcsDeployment, EcsService } from '@/lib/monitoring/ecs';
 import type { LoadBalancer, TargetGroup } from '@/lib/monitoring/elb';
@@ -468,20 +469,13 @@ describe('sortInsights and formatInsightValues', () => {
 });
 
 describe('insight messages', () => {
-  const KINDS: InsightKind[] = [
-    'ecs_tasks_below_desired',
-    'ecs_cpu_high',
-    'ecs_memory_high',
-    'ecs_rollout_failed',
-    'ecs_rollout_stuck',
-    'rds_cpu_high',
-    'rds_freeable_memory_low',
-    'aurora_replica_lag',
-    'alb_5xx_rate',
-    'alb_elb_5xx_count',
-    'alb_unhealthy_hosts',
-    'alarm_firing',
-  ];
+  /*
+   * Every kind there is, not a list kept by hand beside the real one. next-intl renders the key path
+   * for a missing message rather than throwing, so a new detector with no sentence ships as
+   * `Insights.messages.gcp_incident_open` printed on a problem — and a hand-kept list is exactly the
+   * thing nobody updates in the commit that adds the kind.
+   */
+  const KINDS: readonly InsightKind[] = ALL_INSIGHT_KINDS;
 
   it('has an English message for every kind', () => {
     for (const kind of KINDS) {

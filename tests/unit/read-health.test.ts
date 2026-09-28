@@ -53,14 +53,17 @@ describe('whose families they are', () => {
     expect(readHealth(db, { ...env, provider: 'aws' }, context).families.map((entry) => entry.family)).toEqual([...HEALTH_FAMILIES]);
 
     /*
-     * Google has no families yet, so there is nothing to report about one \u2014 and iterating AWS's four
-     * anyway would print Containers, Databases, Load balancers and Alarms for a project that has none of
-     * them, each marked `unknown`. That is OpsWatch declining to answer a question nobody asked, which
-     * reads on the page as OpsWatch failing to read four things it was supposed to.
+     * Google has one family of its own, and iterating AWS's four would print Containers, Databases,
+     * Load balancers and Alarms for a project that has none of them, each marked `unknown`. That is
+     * OpsWatch declining to answer a question nobody asked, which reads on the page as OpsWatch
+     * failing to read four things it was supposed to.
      */
-    expect(readHealth(db, { ...env, provider: 'gcp' }, context).families).toEqual([]);
-    // And with no families read, the verdict is that there is no verdict.
-    expect(readHealth(db, { ...env, provider: 'gcp' }, context).status).toBe('unknown');
+    const google = readHealth(db, { ...env, provider: 'gcp' }, context);
+    expect(google.families.map((entry) => entry.family)).toEqual(['gcp_alerts']);
+    // Nothing has been read for it, so the verdict is that there is no verdict \u2014 not that it is well.
+    expect(google.status).toBe('unknown');
+    // And none of AWS's four leaks in, which is the failure this guards.
+    for (const name of HEALTH_FAMILIES) expect(google.families.map((entry) => entry.family), name).not.toContain(name);
   });
 
   it('still answers as AWS when nobody says which cloud, so every existing caller keeps its meaning', () => {

@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Problems across every cloud, on a page that does not need a connection first |
-| Last green gates | tsc 0 · eslint 0 · **2608 unit** · **451 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Google's incidents are OpsWatch problems, with the whole lifecycle behind them |
+| Last green gates | tsc 0 · eslint 0 · **2618 unit** · **452 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -72,7 +72,7 @@ a non-AWS family is added — in the order it will bite:
 |---|---|
 | ~~`resolveTarget` is `sts:AssumeRole` for every cloud~~ | **Done.** Each provider has its own `resolveTarget` in the registry; `ProviderTarget` is a tagged union of three genuinely unalike things, and the cycle asks the provider |
 | ~~The family list exists in four places~~ | **Done.** `monitoring/shared/families.ts` is the leaf all three reach; Health derives its rows from the connection's provider |
-| `InsightKind` is a **closed union** of the 12 AWS kinds, and `SUBJECT_OF` in `detect/aws.ts` is an exhaustive `Record` over it | A GCP kind means widening the union (losing the exhaustiveness that guarantees every kind has a subject type) or a second map beside it. Decide deliberately. **This is the next one to bite** |
+| ~~`InsightKind` is a closed union, `SUBJECT_OF` exhaustive over it~~ | **Decided.** Per-provider unions and per-provider exhaustive records, merged. Nothing lost: a kind without a subject type still fails to compile. `detect/subjects.ts` |
 | ~~`ScopeRef = { connectionId, region }`~~ | **Decided.** A scope is the unit the provider scopes by: a region for AWS, a **project** for Google, the account for DigitalOcean. `monitoring/shared/scopes.ts` |
 
 ### What the second checkpoint changed
@@ -269,6 +269,47 @@ share instead of scrolling. The list scrolls now and the two controls under it s
 `sidebar-fits.test.ts` holds it, because this failure scales with the product: every section added
 from here makes it likelier, and it shows up first on whichever screen is shortest rather than on the
 one it was built on.
+
+### Google's incidents are problems now, and what that cost
+
+The seam's claim, tested end to end: a Google incident goes through `outcomesFromInsights`, the
+problem lifecycle, the alert cycle and onto `/problems` beside AWS's, and nothing between the family
+loader and the stored row knows which cloud produced it.
+
+**One Google kind, not four families with Google names on them.** OpsWatch does not read Google's
+metrics and decide a project is unwell: the project's own alerting policies do that, an operator wrote
+them, and relaying what they opened is using the provider's evidence. A parallel set of OpsWatch
+thresholds would be a second opinion beside the one the project already has, and the two would
+disagree in front of somebody at three in the morning.
+
+**The `InsightKind` decision.** Per-provider unions, per-provider exhaustive records, merged. The
+naive widening — one flat union and one `Record` over it — looks identical and throws the guarantee
+away: a `Record<InsightKind, SubjectKind>` is satisfied by any map that happens to cover the union,
+and nothing then ties a provider's kinds to a provider's map. Split, adding a Google kind without a
+subject type fails to compile in `GCP_SUBJECT_OF` exactly as an AWS one does in `AWS_SUBJECT_OF`.
+
+**What is shown and what is keyed on are not always the same string.** `Insight` gained an optional
+`subjectId`. Google keys an incident by the **policy and the resource together**, and either alone is
+wrong: two policies watching one instance are two problems, and one policy firing on two instances is
+two problems. Keyed on the resource alone the first pair collapses into one row whose title flips
+between them. Length-prefixed, for the same reason the dedupe key is. Not Google's incident id, which
+changes when Google closes one and opens another for the same cause — a problem that started again is
+the same problem returning, which the lifecycle's two-hour window exists to recognise.
+
+**Severity: three of Google's become two of ours, upward.** `CRITICAL` and `ERROR` are both critical,
+because Google's alerting is opt-in and somebody chose `ERROR` to mean a failure. `WARNING` and *no
+severity* are warning, never `info`: Google opened an incident, which is a statement that something is
+wrong. Google's own word is carried in the problem's values, so nothing the mapping loses is hidden.
+
+**`problems: supported`, `health: not_built`, and that is not a contradiction.** Health is a
+per-family verdict shown in the section rail, and the rail is ten AWS services — offering it for a
+Google project would put Containers, Databases and Load balancers in front of somebody who has none of
+them. The capability table keeps the two claims apart, `capabilityIsBacked` checks `problems` against
+the family list, and an e2e ruling holds that the rail is still not offered.
+
+Six mutations verified, including ranking `ERROR` down, letting an unranked incident become `info`,
+keying on the resource alone, counting the estate as incidents rather than policies, and turning a
+refused read into an empty family.
 
 ### What is still only architecture
 

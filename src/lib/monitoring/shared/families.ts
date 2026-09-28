@@ -21,12 +21,27 @@ import type { Provider } from '../../connections/types';
 export const PROVIDER_FAMILIES = {
   /** In the order the product shows them, which is the order every page iterates. */
   aws: ['ecs', 'rds', 'alb', 'alarms'],
-  gcp: [],
+  /*
+   * One, and it is Google's own verdicts rather than OpsWatch's.
+   *
+   * Not four families mirroring AWS's with Google service names in them. OpsWatch does not evaluate
+   * Google's metrics and decide something is wrong: the project's alerting policies do that, an
+   * operator wrote them, and relaying what they opened is using the provider's evidence. A parallel
+   * set of OpsWatch thresholds would be a second opinion beside the one the project already has, and
+   * the two would disagree in front of somebody at three in the morning.
+   */
+  gcp: ['gcp_alerts'],
   do: [],
 } as const satisfies Record<Provider, readonly string[]>;
 
 export const AWS_FAMILIES = PROVIDER_FAMILIES.aws;
 export type AwsFamily = (typeof AWS_FAMILIES)[number];
+
+export const GCP_FAMILIES = PROVIDER_FAMILIES.gcp;
+export type GcpFamily = (typeof GCP_FAMILIES)[number];
+
+/** Any family, whichever cloud it belongs to. What `family_snapshots.family` holds. */
+export type MonitoringFamily = AwsFamily | GcpFamily;
 
 /** What to iterate for a connection to this cloud. Empty is an answer: nothing is read there yet. */
 export const familiesOf = (provider: Provider): readonly string[] => PROVIDER_FAMILIES[provider];

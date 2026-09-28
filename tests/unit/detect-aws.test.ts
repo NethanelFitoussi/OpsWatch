@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { INSIGHT_DETECTOR_KINDS, outcomesFromInsights, type EvaluatedPair } from '@/lib/detect/aws';
+import { SUBJECT_OF } from '@/lib/detect/subjects';
 import { INSIGHT_WINDOW_MINUTES, type Insight, type InsightKind } from '@/lib/monitoring/insights';
 import type { SubjectRef } from '@/lib/detect/types';
 
@@ -31,14 +32,30 @@ const run = (over: Partial<Parameters<typeof outcomesFromInsights>[0]> = {}) =>
   outcomesFromInsights({ insights: [], evaluated: [], nowMs: NOW, ...over });
 
 describe('the Stage 2 rules as detectors', () => {
-  it('covers every insight kind the rules can produce', () => {
+  it('covers every insight kind the rules can produce, on every cloud', () => {
     // A kind the adapter does not know would throw at runtime when that rule first fires in the field.
     const kinds: InsightKind[] = [
       'ecs_tasks_below_desired', 'ecs_cpu_high', 'ecs_memory_high', 'ecs_rollout_failed', 'ecs_rollout_stuck',
       'rds_cpu_high', 'rds_freeable_memory_low', 'aurora_replica_lag',
       'alb_5xx_rate', 'alb_elb_5xx_count', 'alb_unhealthy_hosts', 'alarm_firing',
+      // Google's, which is one: an incident Google itself opened.
+      'gcp_incident_open',
     ];
     expect([...INSIGHT_DETECTOR_KINDS].sort()).toEqual([...kinds].sort());
+  });
+
+  it('THE RULING: every kind has a subject type, whichever cloud it belongs to', () => {
+    /*
+     * `SUBJECT_OF` used to be an exhaustive `Record` over a closed union of AWS's twelve, so the
+     * compiler guaranteed this. Widening the union naively would have thrown that away — a
+     * `Record<InsightKind, …>` over a union of everything is satisfied by any map covering it, and
+     * nothing would tie a provider's kinds to a provider's map. Each cloud keeps its own exhaustive
+     * record and they are merged, so this holds at compile time *and* is checked here.
+     */
+    for (const kind of INSIGHT_DETECTOR_KINDS) {
+      expect(SUBJECT_OF[kind], kind).toBeTypeOf('string');
+    }
+    expect(Object.keys(SUBJECT_OF).sort()).toEqual([...INSIGHT_DETECTOR_KINDS].sort());
   });
 
   it('keeps the rule\'s own severity as the detector level, and its catalogue key as the title', () => {

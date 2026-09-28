@@ -15,6 +15,7 @@ import { enabledLogSources } from '../store/errors';
 import { instancesInRegion } from '../gcp/instances';
 import { instanceCpuSeries } from '../gcp/metrics';
 import { projectAlerts } from '../gcp/alerts';
+import { gcpAlertsFamily } from '../gcp/family';
 import { gcpTargetFrom, type GcpTarget } from '../gcp/target';
 import { listDroplets } from '../do/droplets';
 import { dropletBandwidth } from '../do/metrics';
@@ -175,7 +176,13 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
   gcp: {
     provider: 'gcp',
     families: familiesOf('gcp'),
-    loadFamily: null,
+    // One family, and the insights in it are Google's verdicts rather than OpsWatch's thresholds.
+    loadFamily: (family, target, nowMs) => {
+      if (family !== 'gcp_alerts') return Promise.resolve(unknownFamily(family));
+      // Narrowed rather than asserted, exactly as AWS's is: a target for another cloud is a bug.
+      if (target.provider !== 'gcp') return Promise.resolve(wrongTarget('gcp', target.provider));
+      return gcpAlertsFamily(target, nowMs);
+    },
     // Null, not `scope.region`: a Google connection's scope is its project, and handing a project id
     // to something expecting `us-central1` is a zone-prefix match that silently finds nothing.
     resolveTarget: fromRow('gcp:federation', (row, _scope, deps) => gcpTargetFrom(row, null, { secret: deps.secret })),
