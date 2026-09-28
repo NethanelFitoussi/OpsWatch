@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | `costs` declared, so the capability model matches the model that was asked for |
-| Last green gates | tsc 0 · eslint 0 · **2633 unit** · **454 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | One problem page for every cloud, which offers the AWS one rather than cloning it |
+| Last green gates | tsc 0 · eslint 0 · **2637 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -395,6 +395,26 @@ capability cannot be declared without somewhere to name the code that will serve
 because the next one will not be so lucky: **every capability needs a name in both languages**.
 next-intl renders `Capabilities.names.costs` rather than throwing, so a capability added without one
 ships as that string on every connection page.
+
+### A problem is understandable whichever cloud produced it
+
+The mission's own sentence, and until now it was half true: the cross-cloud list showed a Google
+problem and there was nowhere to open it. `/problems/{id}` is one route for every cloud.
+
+**Deliberately a subset of the AWS section page.** That page has the diagnosis, the investigation and
+the workspace, and all three read AWS-shaped rows; reproducing them under generic names for the sake
+of symmetry is the exact failure this work exists to avoid. What is here is what a problem row and its
+evidence actually carry whichever provider wrote them — enough for the four questions an operator asks
+first: what happened, how bad, since when, and on what grounds. The AWS page is **offered** on AWS
+problems rather than duplicated, and a Google problem is not offered one that resolves to nothing.
+
+Two rulings, both mutation-verified: the section link is AWS's alone, and a rail path stored on a
+non-AWS row is refused here as well as at the loader — belt and braces, because the cost of following
+one is a 404 at the moment somebody is chasing a real problem.
+
+The page also made an honest copy problem visible in the browser that no test would have caught: the
+card was titled "Why this score" and the breakdown inside it carries its own disclosure with the same
+words, so the heading appeared twice.
 
 ### What is still only architecture
 

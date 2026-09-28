@@ -6837,6 +6837,21 @@
       "region": "région {scope}",
       "project": "projet {scope}",
       "account": "compte entier"
-    }
+    },
+    "detailTitle": "Problème",
+    "backToList": "Retour aux problèmes",
+    "detailWhere": "{provider} · {connection} · {scope}",
+    "whatHappened": "Ce qui s’est passé",
+    "since": "Vu pour la première fois {when}",
+    "lastSeen": "Vu pour la dernière fois {when}",
+    "occurrences": "{count, plural, one {# occurrence} other {# occurrences}}",
+    "subject": "À propos de : {subject}",
+    "openProvider": "Ouvrir dans les pages {provider} d’OpsWatch",
+    "openSection": "Ouvrir la page complète de ce problème",
+    "evidence": "Preuves",
+    "evidenceHint": "Ce que le détecteur a réellement lu. Chaque élément est un fait observé, jamais une cause.",
+    "noEvidence": "Ce problème n’a aucune preuve enregistrée.",
+    "ranking": "Comment ceci a été classé",
+    "rankingHint": "Le calcul derrière le classement, pour qui veut vérifier."
   }
 }

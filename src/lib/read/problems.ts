@@ -59,7 +59,8 @@ export function trendOf(evidence: readonly ProblemEvidenceRow[]): Trend | null {
   return change < -0.05 ? 'falling' : 'stable';
 }
 
-function toEvidence(row: ProblemEvidenceRow, context: ReadContext): Evidence {
+/** Exported so a page about a problem from any cloud renders its evidence the same way. */
+export function toEvidence(row: ProblemEvidenceRow, context: ReadContext): Evidence {
   return {
     id: row.id,
     at: row.at,

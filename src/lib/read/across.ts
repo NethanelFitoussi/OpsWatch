@@ -3,8 +3,10 @@ import type { ProblemSeverity } from '../db/schema';
 import { listConnections } from '../connections/repository';
 import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
-import { countLiveProblemsByConnection, listLiveProblemsAcross } from '../store/problems';
-import type { Render } from './problems';
+import { countLiveProblemsByConnection, findProblemById, listEvidence, listLiveProblemsAcross } from '../store/problems';
+import type { ProblemRow } from '../db/schema';
+import type { Evidence } from '@opswatch/contract';
+import { toEvidence, type Render } from './problems';
 
 /**
  * What is wrong anywhere, across every connection this installation has (§G).
@@ -39,6 +41,68 @@ export type CrossProblem = {
   lastSeenAt: number;
   /** Where to go, when there is somewhere: the rail exists for AWS and not yet for the others. */
   href: string | null;
+};
+
+/**
+ * One problem, from anywhere, in the terms every cloud shares.
+ *
+ * Deliberately a *subset* of what the AWS section page shows. That page has the diagnosis, the
+ * investigation and the workspace, all of which read AWS-shaped rows, and cloning it under generic
+ * names for the sake of symmetry is the failure this whole piece of work exists to avoid. What is
+ * here is what a problem row and its evidence actually carry, whichever cloud produced them — and
+ * that is enough to answer what happened, how bad, since when, and on what grounds.
+ */
+export type CrossProblemDetail = CrossProblem & {
+  status: string;
+  occurrences: number;
+  score: number;
+  scoreTerms: ProblemRow['scoreTerms'];
+  evidence: Evidence[];
+  kind: string;
+  /** Null unless this is an AWS problem, which has a fuller page of its own in the section rail. */
+  sectionHref: string | null;
+};
+
+export function readProblemAcross(db: Db, id: string, context: { nowMs: number; render: Render }): CrossProblemDetail | null {
+  const row = findProblemById(db, id);
+  if (row === null) return null;
+  const connection = listConnections(db).find((entry) => entry.id === row.connectionId) ?? null;
+  const provider = connection?.provider ?? null;
+
+  return {
+    id: row.id,
+    title: context.render(row.titleKey, row.values),
+    severity: row.severity,
+    provider: row.source,
+    connectionId: row.connectionId,
+    connectionName: connection?.name ?? '',
+    scope: row.scope,
+    subject: row.subjectName,
+    firstSeenAt: row.firstSeenAt,
+    lastSeenAt: row.lastSeenAt,
+    href: usableHref(provider, row.href),
+    status: row.status,
+    occurrences: row.occurrences,
+    score: row.score,
+    scoreTerms: row.scoreTerms,
+    evidence: listEvidence(db, row.id).map((item) => toEvidence(item, context)),
+    kind: row.kind,
+    // The section page, which is AWS's and has more on it. Offered rather than duplicated.
+    sectionHref: provider === 'aws' ? `/c/${row.connectionId}/${row.scope}/overview/problems/${row.id}` : null,
+  };
+}
+
+/**
+ * The link on a problem, when following it would land somewhere that exists.
+ *
+ * `href` is a monitoring-rail path for AWS rows and the provider's own page for the others. The rail
+ * resolves for AWS and nothing else, so a rail path on a non-AWS row is refused rather than followed
+ * — that would open a page about a service that cloud does not have.
+ */
+const usableHref = (provider: string | null, href: string): string | null => {
+  if (href === '') return null;
+  if (provider === 'aws') return href;
+  return href.startsWith('/c/') ? null : href;
 };
 
 /** The most a single page shows. Past it the page says so rather than implying it is everything. */
@@ -96,7 +160,7 @@ export function readProblemsAcross(
       lastSeenAt: row.lastSeenAt,
       // `href` is a monitoring-rail path, and the rail is AWS's. A link into it for a Google problem
       // would be a link to a page about a service that cloud does not have.
-      href: connection?.provider === 'aws' && row.href !== '' ? row.href : null,
+      href: usableHref(connection?.provider ?? null, row.href),
     };
   });
 

@@ -68,3 +68,33 @@ test('it reads in French and at 360 px', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('THE RULING: a problem from any cloud opens on one page', async ({ page }) => {
+  /*
+   * The AWS section page has the diagnosis, the investigation and the workspace, all reading
+   * AWS-shaped rows. This page is a deliberate subset — what a problem row and its evidence carry
+   * whichever cloud produced them — and it *offers* the fuller one rather than cloning it under
+   * generic names, which is the failure this whole piece of work exists to avoid.
+   */
+  await page.goto('/en/problems');
+  const first = page.locator('main table tbody tr').first();
+  await expect(first).toBeVisible();
+  await first.getByRole('link').first().click();
+  await expect(page).toHaveURL(/\/en\/problems\/[0-9a-f]+$/);
+
+  const main = await page.locator('main').innerText();
+  // The four questions an operator asks first, in the order they ask them.
+  expect(main).toContain('What happened');
+  expect(main).toContain('First seen');
+  expect(main).toContain('Evidence');
+  expect(main).toContain('How this was ranked');
+  // The seeded estate is AWS, so the fuller page is offered rather than reproduced here.
+  expect(main).toContain('Open the full page for this problem');
+  await page.getByRole('link', { name: 'Open the full page for this problem' }).click();
+  await expect(page).toHaveURL(/\/c\/[0-9a-f]+\/us-east-1\/overview\/problems\//);
+});
+
+test('a problem that does not exist is absent, not an error', async ({ page }) => {
+  await page.goto('/en/problems/deadbeefdeadbeef');
+  await expect(page.locator('main')).toContainText('Page not found');
+});

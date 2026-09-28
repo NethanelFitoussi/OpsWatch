@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createGoogleConnection, createConnection } from '@/lib/connections/repository';
-import { ACROSS_LIMIT, readProblemsAcross } from '@/lib/read/across';
+import { ACROSS_LIMIT, readProblemAcross, readProblemsAcross } from '@/lib/read/across';
 import { insertProblem, updateProblem } from '@/lib/store/problems';
 import { createTestDb } from '../helpers/db';
 import { connectionInput } from '../helpers/fixtures';
@@ -131,5 +131,53 @@ describe('problems across every connection', () => {
     expect(problems[0].connectionName).toBe('');
     // And it is not counted under a cloud, because nothing says which cloud it was.
     expect(counts.total).toBe(0);
+  });
+});
+
+describe('one problem, from any cloud', () => {
+  it('THE RULING: it offers the fuller AWS page rather than cloning it', () => {
+    /*
+     * The section page has the diagnosis, the investigation and the workspace, and all three read
+     * AWS-shaped rows. Reproducing them under generic names for the sake of symmetry would be the
+     * "clone the AWS UI and change the service names" failure, arriving as a detail page.
+     */
+    const { db, aws, gcp } = twoClouds();
+    const awsRow = insertProblem(db, newProblem({ key: 'a'.repeat(32), connectionId: aws.id, scope: 'us-east-1' }));
+    const gcpRow = insertProblem(
+      db,
+      newProblem({ key: 'g'.repeat(32), connectionId: gcp.id, scope: 'my-project', source: 'gcp', href: '/accounts/x/alerts' }),
+    );
+
+    expect(readProblemAcross(db, awsRow.id, context)?.sectionHref).toBe(`/c/${aws.id}/us-east-1/overview/problems/${awsRow.id}`);
+    // Google has no section page, and must not be offered one that resolves to nothing.
+    expect(readProblemAcross(db, gcpRow.id, context)?.sectionHref).toBeNull();
+  });
+
+  it('THE RULING: a non-AWS problem is never given a link into the AWS rail', () => {
+    // Belt and braces with the loader: even a rail path stored on a non-AWS row is refused here.
+    const { db, gcp } = twoClouds();
+    const row = insertProblem(
+      db,
+      newProblem({ key: 'g'.repeat(32), connectionId: gcp.id, scope: 'my-project', source: 'gcp', href: '/c/x/us-east-1/containers' }),
+    );
+    expect(readProblemAcross(db, row.id, context)?.href).toBeNull();
+  });
+
+  it('carries what every cloud has, and says when there is no evidence', () => {
+    const { db, gcp } = twoClouds();
+    const row = insertProblem(
+      db,
+      newProblem({ key: 'g'.repeat(32), connectionId: gcp.id, scope: 'my-project', source: 'gcp', href: '/accounts/x/alerts', evidence: [] }),
+    );
+    const detail = readProblemAcross(db, row.id, context);
+    expect(detail).toMatchObject({ provider: 'gcp', scope: 'my-project', occurrences: 1, evidence: [] });
+    // The provider's own page, which does exist, is offered.
+    expect(detail?.href).toBe('/accounts/x/alerts');
+    expect(detail?.scoreTerms).toBeTypeOf('object');
+  });
+
+  it('answers null for a problem that is not there', () => {
+    const { db } = twoClouds();
+    expect(readProblemAcross(db, 'nope', context)).toBeNull();
   });
 });

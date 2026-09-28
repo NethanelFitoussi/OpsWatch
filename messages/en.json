@@ -6837,6 +6837,21 @@
       "region": "region {scope}",
       "project": "project {scope}",
       "account": "whole account"
-    }
+    },
+    "detailTitle": "Problem",
+    "backToList": "Back to problems",
+    "detailWhere": "{provider} · {connection} · {scope}",
+    "whatHappened": "What happened",
+    "since": "First seen {when}",
+    "lastSeen": "Last seen {when}",
+    "occurrences": "{count, plural, one {# occurrence} other {# occurrences}}",
+    "subject": "About: {subject}",
+    "openProvider": "Open in OpsWatch’s {provider} pages",
+    "openSection": "Open the full page for this problem",
+    "evidence": "Evidence",
+    "evidenceHint": "What the detector actually read. Every item is an observed fact, never a cause.",
+    "noEvidence": "This problem has no recorded evidence.",
+    "ranking": "How this was ranked",
+    "rankingHint": "The arithmetic behind the ranking, for anybody who wants to check the working."
   }
 }

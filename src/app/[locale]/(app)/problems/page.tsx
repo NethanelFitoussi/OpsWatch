@@ -123,15 +123,12 @@ export default async function ProblemsAcrossPage({ params, searchParams }: Props
               {problems.map((problem) => (
                 <TableRow key={problem.id}>
                   <TableCell className="font-medium">
-                    {/* Into the rail where there is one. A Google problem has nowhere to go yet, and a
-                        link into an AWS section would be a link to a service that cloud does not have. */}
-                    {problem.href === null ? (
-                      <span className="block">{problem.title}</span>
-                    ) : (
-                      <Link href={problem.href} className="block text-primary underline-offset-4 hover:underline">
-                        {problem.title}
-                      </Link>
-                    )}
+                    {/* One detail page for every cloud. It shows what a problem row and its evidence
+                        carry whichever provider produced them, and offers the fuller AWS section page
+                        rather than having it cloned under generic names. */}
+                    <Link href={`/problems/${problem.id}`} className="block text-primary underline-offset-4 hover:underline">
+                      {problem.title}
+                    </Link>
                     <span className="block text-xs text-muted-foreground">{problem.subject}</span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
