@@ -484,6 +484,22 @@ answer to have honoured the filter — but "a stopped instance shows *Not report
 been proven in a test and not seen on a screen. The roadmap already asks this question of every
 integration; this is one of the ones whose answer is *architecture only*.
 
+### A flake worth chasing to its cause
+
+`09-settings` failed once in a full run: it saved a setting, navigated, and found the *previous*
+value. The first save in that test waits for "Settings saved."; the second clicked and navigated
+immediately, so the page could be rendered before the server action the click started had committed.
+
+Not a product bug — the settings cache does drop its entry on save — but a test that intermittently
+checked the state it meant to change, which is the same family as one that skips itself. Both are a
+gate that is not guarding.
+
+Worth writing down separately: **a single spec cannot be re-run against a used stack to reproduce
+this.** `09-settings` asserts the fresh defaults, and the full run before it had already changed them,
+so the solo run fails for a reason that has nothing to do with the flake. The only valid verification
+is the whole suite on a `--force-recreate`d instance, which is what the gate discipline above says and
+what it took three runs to remember.
+
 ## Decisions that must not be re-derived
 
 - **next-intl does not throw for a missing message — it renders the key path.** A dot inside a key is a

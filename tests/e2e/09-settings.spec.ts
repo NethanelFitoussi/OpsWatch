@@ -56,6 +56,13 @@ test('the chosen interval and range are saved, survive a reload and reach the mo
   await page.goto('/en/settings');
   await page.getByLabel('Refresh interval').selectOption('0');
   await page.getByRole('button', { name: 'Save settings' }).click();
+  /*
+   * Waited for, like the save above it. Navigating straight off the click races the server action
+   * that the click started: the next page can be rendered before the new value is stored, and the
+   * assertion below then reads the *previous* setting. It failed once in a full run for exactly that
+   * reason — a test that intermittently checks the state it meant to change.
+   */
+  await expect(page.getByRole('status')).toContainText('Settings saved.');
   await page.goto(monitoringUrl(connectionId, 'alarms', 'list'));
   await expect(page.getByText('Auto-refresh off')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pause auto-refresh' })).toHaveCount(0);
