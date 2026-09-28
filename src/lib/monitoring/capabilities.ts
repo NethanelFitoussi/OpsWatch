@@ -109,7 +109,13 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
     // Cloud Monitoring's alerting policies and open incidents, read directly. Google's verdicts, not
     // OpsWatch's: nothing here is a health conclusion this product reached on its own.
     alerts: direct,
-    logs: { state: 'not_built' },
+    /*
+     * Cloud Logging, behind a third role the operator grants separately and may decline. The only
+     * part of a Google connection that reads content rather than figures, which is why it is the
+     * only part with a role of its own — and `direct`, because the lines are read from Google when
+     * the page is drawn and none of them is stored or forwarded anywhere.
+     */
+    logs: direct,
     history: { state: 'not_built' },
     costs: { state: 'not_built' },
   },

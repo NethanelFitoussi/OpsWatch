@@ -13,20 +13,34 @@ import type { ConnectionKey } from './issuer';
  * which one. So each read is attempted separately and reported separately, and "denied" is a different
  * answer from "the exchange never worked".
  *
- * Two reads, because two roles are asked for and no more:
+ * Three reads, two of them required:
  *
  *   - `roles/compute.viewer`, for the instances — `compute.instances.list`.
  *   - `roles/monitoring.viewer`, for the figures — its `monitoring.metricDescriptors.list`, which is
  *     the cheapest call that fails in exactly the case `monitoring.timeSeries.list` would.
+ *   - `roles/logging.viewer`, **optional**, for reading log lines. A connection without it is
+ *     complete: every other page works, and the logs page says which role is missing rather than
+ *     failing. Tested all the same, because "not granted" and "granted and broken" differ.
  *
  * `maxResults`/`pageSize` of 1 throughout: this asks whether the door opens, not what is behind it.
  */
 
 export const GCP_ROLES = ['roles/compute.viewer', 'roles/monitoring.viewer'] as const;
 
+/**
+ * The role an operator may grant afterwards, or never.
+ *
+ * `roles/logging.viewer` and deliberately **not** `roles/logging.privateLogViewer`: the former
+ * excludes Data Access logs, which are the ones recording who read what. The narrower role answers
+ * "what was my application saying" without also handing over an audit trail of people.
+ */
+export const GCP_OPTIONAL_ROLES = ['roles/logging.viewer'] as const;
+
 const ENDPOINT: Record<GcpCheckName, (projectId: string) => string> = {
   compute: (id) => `https://compute.googleapis.com/compute/v1/projects/${encodeURIComponent(id)}/aggregated/instances?maxResults=1`,
   monitoring: (id) => `https://monitoring.googleapis.com/v3/projects/${encodeURIComponent(id)}/metricDescriptors?pageSize=1`,
+  // The cheapest read that fails in exactly the case `entries:list` would, and it needs no body.
+  logging: (id) => `https://logging.googleapis.com/v2/projects/${encodeURIComponent(id)}/logs?pageSize=1`,
 };
 
 async function readDetail(response: Response): Promise<string | undefined> {

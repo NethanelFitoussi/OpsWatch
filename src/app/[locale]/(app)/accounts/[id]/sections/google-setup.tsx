@@ -138,6 +138,20 @@ export async function GoogleSetup({ row, locale, baseUrl }: { row: ConnectionRow
               <span className="block text-xs text-muted-foreground">{t('alertsHint')}</span>
             </p>
           )}
+          {/*
+            * Offered once *something* can be read, like its neighbours — a link to a page that would
+            * refuse is a dead end with a label on it. But unlike them it does not wait for its own
+            * role: the page is where that grant is explained, so a link appearing only after you had
+            * already granted it would be a link nobody needs. It says which role is missing instead.
+            */}
+          <p>
+            <Link href={`/accounts/${row.id}/logs`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+              {t('logs')}
+            </Link>
+            <span className="block text-xs text-muted-foreground">
+              {result.checks.some((check) => check.check === 'logging' && check.status === 'ok') ? t('logsHint') : t('logsOptional')}
+            </span>
+          </p>
         </SectionCard>
       )}
 

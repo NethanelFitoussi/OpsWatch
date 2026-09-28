@@ -6555,7 +6555,10 @@
     "readTitle": "Ce que vous pouvez lire dès maintenant",
     "readHint": "Chaque page a besoin de son propre rôle. L’une fonctionne dès que son attribution arrive.",
     "alerts": "Alertes",
-    "alertsHint": "Les incidents ouverts de Cloud Monitoring, et la part de ce projet qui est surveillée."
+    "alertsHint": "Les incidents ouverts de Cloud Monitoring, et la part de ce projet qui est surveillée.",
+    "logs": "Journaux",
+    "logsHint": "Les entrées de journal récentes de ce projet, lues en direct.",
+    "logsOptional": "Nécessite un troisième rôle que vous n’avez pas accordé. La page explique ce qu’il permet."
   },
   "GoogleInstances": {
     "title": "Instances de {project}",
@@ -6624,6 +6627,33 @@
       "unreachable": "Cette installation n’a pas pu joindre Google.",
       "no_token": "Cette connexion n’a pas encore de jeton utilisable.",
       "error": "Cloud Monitoring a renvoyé une erreur.",
+      "not_ready": "Cette connexion n’est pas terminée. Son projet Google, son pool d’identités de charge de travail et son fournisseur doivent être renseignés avant toute lecture.",
+      "secret_changed": "La clé de signature de cette connexion ne peut pas être ouverte. OPSWATCH_SECRET a changé depuis son enregistrement."
+    }
+  },
+  "GoogleLogs": {
+    "title": "Journaux de {project}",
+    "description": "Les {minutes} dernières minutes, lues au moment de l’affichage.",
+    "back": "Retour à la connexion",
+    "grantTitle": "Cette page nécessite un troisième rôle",
+    "grantHint": "Accordé séparément ; la connexion fonctionne entièrement sans lui. Tout ce qu’OpsWatch lit d’autre chez Google est un compte ou un état ; une ligne de journal, c’est ce que votre code a écrit.",
+    "notPrivate": "roles/logging.viewer, et délibérément pas roles/logging.privateLogViewer : le rôle restreint exclut les journaux d’accès aux données, ceux qui enregistrent qui a lu quoi.",
+    "nothingStored": "Rien de ce qui est lu ici n’est stocké, et rien n’est envoyé à un fournisseur d’IA.",
+    "listTitle": "Entrées récentes",
+    "listHint": "Les gravités et les termes de Google. Vous choisissez un seuil ; OpsWatch construit la requête.",
+    "severityLabel": "Gravité minimale",
+    "atLeast": "{severity} et au-dessus",
+    "checkAccess": "Vérifier l’accès de cette connexion",
+    "none": "Rien au niveau {severity} ou au-dessus dans les {minutes} dernières minutes.",
+    "noTime": "Aucun horodatage",
+    "noText": "Cette entrée ne portait aucun message.",
+    "truncated": "Il y a plus d’entrées que cette page n’en montre. Voici les plus récentes.",
+    "readNow": "Lu en direct. Rien d’un projet Google n’est collecté périodiquement, et aucune ligne de journal n’est écrite dans la base de cette installation.",
+    "failures": {
+      "denied": "Google a refusé la lecture. roles/logging.viewer n’est pas parvenu à cette connexion.",
+      "unreachable": "Cette installation n’a pas pu joindre Google.",
+      "no_token": "Cette connexion n’a pas encore de jeton utilisable.",
+      "error": "Cloud Logging a renvoyé une erreur.",
       "not_ready": "Cette connexion n’est pas terminée. Son projet Google, son pool d’identités de charge de travail et son fournisseur doivent être renseignés avant toute lecture.",
       "secret_changed": "La clé de signature de cette connexion ne peut pas être ouverte. OPSWATCH_SECRET a changé depuis son enregistrement."
     }

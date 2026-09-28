@@ -255,3 +255,48 @@ test('THE RULING: a Google connection is not offered the AWS monitoring rail', a
   await page.goto('/en/problems');
   await expect(page.getByRole('navigation', { name: 'Filter problems by cloud' }).getByRole('link', { name: /^Google Cloud/ })).toBeVisible();
 });
+
+test('THE RULING: the logs page says what the role allows before asking for it', async ({ page }) => {
+  /*
+   * The only part of a Google connection that reads **content** rather than figures. Everything else
+   * OpsWatch reads from Google is a count or a status; a log line is whatever somebody's code wrote.
+   * So the role is granted separately, the connection is complete without it, and the page explains
+   * the grant rather than a wizard slipping it in with the other two.
+   */
+  const id = await create(page, 'Logs project');
+  await page.goto(`/en/accounts/${id}/logs`);
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain('This page needs a third role');
+  expect(main).toContain('the connection works completely without it');
+  // The narrower role, and why it is the narrower one.
+  expect(main).toContain('roles/logging.viewer');
+  expect(main).toContain('not roles/logging.privateLogViewer');
+  expect(main).toContain('who read what');
+  // The two promises that matter most about log content.
+  expect(main).toContain('Nothing read here is stored');
+  expect(main).toContain('none of it is sent to an AI provider');
+
+  // A severity floor rather than a query box: no operator text reaches Google's query language.
+  await expect(page.getByRole('navigation', { name: 'Minimum severity' })).toBeVisible();
+  await expect(page.getByRole('textbox')).toHaveCount(0);
+});
+
+test('a connection that has not granted the logging role is not shown as broken', async ({ page }) => {
+  /*
+   * Declining something optional must not colour the connection: a status that goes yellow for a
+   * deliberate choice teaches an operator to ignore the colour on the one screen where it has to
+   * mean something. There is no real Google project behind this test, so what is checked here is the
+   * page — `gcpStatusOf` is where the rule lives, and its own ruling proves the three verdicts.
+   */
+  const id = await create(page, 'Declined logging');
+  await page.goto(`/en/accounts/${id}`);
+  const main = await page.locator('main').innerText();
+  // Never tested is its own state, and specifically not "degraded".
+  expect(main).toContain('Setup incomplete');
+  expect(main).not.toContain('Degraded');
+
+  // The capability table says logs are read, and keeps the gaps it still has as gaps.
+  expect(main).toMatch(/\bLogs\s*\n\s*Read directly from the provider/);
+  expect(main).toMatch(/\bHealth\s*\n\s*Not built yet in OpsWatch/);
+});

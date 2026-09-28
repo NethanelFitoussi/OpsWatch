@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Two DigitalOcean claims retracted to what is actually established |
-| Last green gates | tsc 0 · eslint 0 · **2642 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Google Cloud Logging, behind a role the operator may decline |
+| Last green gates | tsc 0 · eslint 0 · **2652 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -522,6 +522,35 @@ The pattern behind both, and behind the earlier backwards CPU/disk table: **a do
 answers a nearby question is not an answer to yours.** The graphs page is about graphs, the alerts
 page is about alerts, and reasoning across them is how three separate wrong claims got written down
 with confidence.
+
+### Cloud Logging, and the one place content enters
+
+The mission hedged this one — "Cloud Logging where appropriate" — and the hedge is the design. **This
+is the only part of a Google connection that reads content rather than figures.** Everything else
+OpsWatch reads from Google is a count, a status or a number; a log line is whatever somebody's code
+wrote, and it may contain anything at all. So:
+
+  - it is behind a **third role, granted separately**, and the connection is complete without it
+  - the role is `roles/logging.viewer` and deliberately **not** `roles/logging.privateLogViewer` —
+    the narrower one excludes Data Access logs, which are the record of *which person read which
+    record*. "What was my application saying" does not require an audit trail of people, and taking
+    one because it is one role instead of two would be taking it by accident
+  - the page explains the grant **before** it is asked for, with the command to copy
+  - nothing read is stored, and nothing reaches an AI provider — checked, not asserted: the reader has
+    exactly two callers, this page and the registry
+
+**No operator text reaches the query.** Google's query language can address any field of any log, so a
+free-text box wired into it is a way to ask a project questions this product never meant to offer.
+What the operator chooses is a severity floor, checked against Google's own enum; the window is
+computed here and every query is bounded by it.
+
+The check list gained `logging` and the verdict did not: `gcpStatusOf` judges a connection on the
+**required** checks alone. Counted in, a perfectly working project would show as degraded for
+declining something optional — and a status that goes yellow for a deliberate choice teaches an
+operator to ignore the colour on the one screen where it has to mean something.
+
+Four mutations verified, including concatenating an unchecked severity into the filter, counting the
+optional role in the verdict, and asking for the wide logging role instead of the narrow one.
 
 ## Decisions that must not be re-derived
 

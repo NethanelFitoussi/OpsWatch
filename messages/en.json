@@ -6555,7 +6555,10 @@
     "readTitle": "What you can read now",
     "readHint": "Each page needs its own role. One works as soon as its grant arrives.",
     "alerts": "Alerts",
-    "alertsHint": "Open incidents from Cloud Monitoring, and how much of this project is watched."
+    "alertsHint": "Open incidents from Cloud Monitoring, and how much of this project is watched.",
+    "logs": "Logs",
+    "logsHint": "Recent log entries from this project, read live.",
+    "logsOptional": "Needs a third role you have not granted. The page explains what it allows."
   },
   "GoogleInstances": {
     "title": "Instances in {project}",
@@ -6624,6 +6627,33 @@
       "unreachable": "This instance could not reach Google.",
       "no_token": "There is no usable token for this connection yet.",
       "error": "Cloud Monitoring returned an error.",
+      "not_ready": "This connection is not finished. Its Google project, workload identity pool and provider have to be set before anything can be read.",
+      "secret_changed": "This connection’s signing key cannot be opened. OPSWATCH_SECRET has changed since it was stored."
+    }
+  },
+  "GoogleLogs": {
+    "title": "Logs in {project}",
+    "description": "The last {minutes} minutes, read when this page is drawn.",
+    "back": "Back to the connection",
+    "grantTitle": "This page needs a third role",
+    "grantHint": "Granted separately, and the connection works completely without it. Everything else OpsWatch reads from Google is a count or a status; a log line is whatever your code wrote.",
+    "notPrivate": "roles/logging.viewer, and deliberately not roles/logging.privateLogViewer — the narrower role excludes Data Access logs, which are the ones recording who read what.",
+    "nothingStored": "Nothing read here is stored, and none of it is sent to an AI provider.",
+    "listTitle": "Recent entries",
+    "listHint": "Google’s own severities and its own wording. You choose a floor; OpsWatch builds the query.",
+    "severityLabel": "Minimum severity",
+    "atLeast": "{severity} and above",
+    "checkAccess": "Check this connection's access",
+    "none": "Nothing at {severity} or above in the last {minutes} minutes.",
+    "noTime": "No timestamp",
+    "noText": "This entry carried no message.",
+    "truncated": "There are more entries than this page shows. These are the most recent.",
+    "readNow": "Read live. Nothing from a Google project is collected on a schedule, and no log line is written to this instance’s database.",
+    "failures": {
+      "denied": "Google refused the read. roles/logging.viewer has not reached this connection.",
+      "unreachable": "This instance could not reach Google.",
+      "no_token": "There is no usable token for this connection yet.",
+      "error": "Cloud Logging returned an error.",
       "not_ready": "This connection is not finished. Its Google project, workload identity pool and provider have to be set before anything can be read.",
       "secret_changed": "This connection’s signing key cannot be opened. OPSWATCH_SECRET has changed since it was stored."
     }

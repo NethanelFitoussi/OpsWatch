@@ -35,6 +35,7 @@ import { credentialResolver } from '@/lib/connections/resolver';
 import { purgeConnectionData } from '@/lib/store/connection-data';
 import { isTemplateReady, renderConnectionTemplate } from '@/lib/connections/template';
 import { getDb, type Db } from '@/lib/db/client';
+import { gcpStatusOf } from '@/lib/gcp/result';
 import { env } from '@/lib/env';
 import type { ActionState } from '@/lib/forms/action-state';
 import { formString, formStrings } from '@/lib/forms/form-data';
@@ -263,10 +264,10 @@ export async function verifyGoogleAction(locale: string, id: string, _prev: Form
         nowMs: Date.now(),
       });
 
-      // Usable when something can actually be read. Every check denied is a connection that
-      // authenticated and cannot see anything, which is not a working connection.
-      const readable = result.checks.filter((check) => check.status === 'ok').length;
-      saveGoogleTestResult(db, id, result, readable === 0 ? 'failed' : readable < result.checks.length ? 'degraded' : 'ok');
+      // Usable when the **required** reads work. The optional logging role is not part of the verdict:
+      // a connection that declined it is complete, and marking it degraded would train an operator to
+      // ignore the colour on the one screen where it has to mean something.
+      saveGoogleTestResult(db, id, result, gcpStatusOf(result.checks));
       revalidatePath(`/${resolveLocale(locale)}/accounts/${id}`);
       return {};
     },

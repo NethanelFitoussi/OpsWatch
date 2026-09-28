@@ -15,6 +15,7 @@ import { enabledLogSources } from '../store/errors';
 import { instancesInRegion } from '../gcp/instances';
 import { instanceCpuSeries } from '../gcp/metrics';
 import { projectAlerts } from '../gcp/alerts';
+import { recentLogEntries } from '../gcp/logs';
 import { gcpAlertsFamily } from '../gcp/family';
 import { gcpTargetFrom, type GcpTarget } from '../gcp/target';
 import { listDroplets } from '../do/droplets';
@@ -190,7 +191,7 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
     // Null, not `scope.region`: a Google connection's scope is its project, and handing a project id
     // to something expecting `us-central1` is a zone-prefix match that silently finds nothing.
     resolveTarget: fromRow('gcp:federation', (row, _scope, deps) => gcpTargetFrom(row, null, { secret: deps.secret })),
-    readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: projectAlerts, logs: null, history: null, costs: null },
+    readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: projectAlerts, logs: recentLogEntries, history: null, costs: null },
   },
   do: {
     provider: 'do',

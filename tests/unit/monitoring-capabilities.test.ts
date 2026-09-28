@@ -79,8 +79,11 @@ describe('the capability table', () => {
   it('tells "this provider has no such thing" from "OpsWatch has not built it"', () => {
     // Two different sentences with two different consequences: one is the end of the matter, the
     // other is a thing that may arrive. Collapsing them into "unsupported" would be true and useless.
+    // DigitalOcean has no log product to read, which ends the matter.
     expect(capabilitiesOf('do').logs.state).toBe('not_offered');
-    expect(capabilitiesOf('gcp').logs.state).toBe('not_built');
+    // Google has one and OpsWatch reads it; the gap it still has is a different sentence again.
+    expect(capabilitiesOf('gcp').logs.state).toBe('supported');
+    expect(capabilitiesOf('gcp').health.state).toBe('not_built');
     expect(capabilitiesOf('aws').logs.state).toBe('supported');
   });
 
