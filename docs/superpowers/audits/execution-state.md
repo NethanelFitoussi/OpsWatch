@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Google Cloud Logging, behind a role the operator may decline |
-| Last green gates | tsc 0 · eslint 0 · **2652 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | A raw message key on the connections page, and the guard that missed it |
+| Last green gates | tsc 0 · eslint 0 · **2654 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -551,6 +551,24 @@ operator to ignore the colour on the one screen where it has to mean something.
 
 Four mutations verified, including concatenating an unchecked severity into the filter, counting the
 optional role in the verdict, and asking for the wide logging role instead of the narrow one.
+
+### A raw key on the connections page, found by looking in French
+
+A sweep of every new page at 360px in French turned up `Settings.integrations.detail.gcpFailing` and
+`…doFailing` rendered **as those strings** on `/accounts`. Present since Google connections were
+built, and visible only when a connection is *failing* — which is exactly when somebody is reading
+that page.
+
+Four pages render `` t(`detail.${key}`) `` against **four different namespaces**, and the keys had
+been filed in three of them. `message-namespaces.test.ts` exists for precisely this mistake and could
+not see it: it reads literal `t('…')` calls, and this key is composed at run time.
+
+The guard that replaces it derives the key list from `integrations/status.ts` and the page-to-namespace
+mapping from `INTEGRATION_SPECS.connectable`, so neither is a list kept by hand beside the real one.
+Two things it does *not* do, both tempting and both wrong: assume the three blocks should be identical
+(they are three audiences — `google` is sign-in, not connectable, and two of the pages never ask for
+its sentences), and treat every quoted string on a `detailKey:` line as a key (`status === 'configured'`
+sits on those lines, and taking it for a key is how a guard invents work).
 
 ## Decisions that must not be re-derived
 

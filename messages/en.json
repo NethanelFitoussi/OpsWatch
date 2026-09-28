@@ -4176,7 +4176,11 @@
         "cloudflareConnected": "{zones, plural, one {# zone} other {# zones}}",
         "cloudflareNoZones": "verified, no zone chosen yet",
         "cloudflare_untested": "saved, not verified",
-        "cloudflare_failed": "the last verification failed"
+        "cloudflare_failed": "the last verification failed",
+        "gcpConnected": "{projects, plural, one {One project} other {# projects}} connected",
+        "gcpFailing": "{failing} of {projects} projects cannot be read",
+        "doConnected": "{accounts, plural, one {One account} other {# accounts}} connected",
+        "doFailing": "{failing} of {accounts} accounts cannot be read"
       },
       "readGuide": "Read the guide"
     },
