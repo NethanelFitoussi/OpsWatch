@@ -62,7 +62,7 @@ export const GET = apiRoute({
     // and a label in an API payload is a string nobody can join on.
     const report = readReport(
       db,
-      { connectionId: environment.connectionId, scope: environment.scope, section, period: asked as ReportPeriod },
+      { connectionId: environment.connectionId, scope: environment.scope, section, period: asked as ReportPeriod, provider: environment.provider },
       { nowMs: Date.now() },
     );
 

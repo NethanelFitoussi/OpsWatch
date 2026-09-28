@@ -44,4 +44,4 @@ export type GcpFamily = (typeof GCP_FAMILIES)[number];
 export type MonitoringFamily = AwsFamily | GcpFamily;
 
 /** What to iterate for a connection to this cloud. Empty is an answer: nothing is read there yet. */
-export const familiesOf = (provider: Provider): readonly string[] => PROVIDER_FAMILIES[provider];
+export const familiesOf = (provider: Provider): readonly MonitoringFamily[] => PROVIDER_FAMILIES[provider];

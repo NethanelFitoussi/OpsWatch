@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | One problem page for every cloud, which offers the AWS one rather than cloning it |
-| Last green gates | tsc 0 · eslint 0 · **2637 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | A report lists its own cloud's families — the defect the last fix made reachable |
+| Last green gates | tsc 0 · eslint 0 · **2638 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -415,6 +415,26 @@ one is a 404 at the moment somebody is chasing a real problem.
 The page also made an honest copy problem visible in the browser that no test would have caught: the
 card was titled "Why this score" and the breakdown inside it carries its own disclosure with the same
 words, so the heading appeared twice.
+
+### One fix uncovering the next
+
+The review listed `read/reports.ts` iterating AWS-only `PROBLEM_FAMILIES` as awareness-only, "double
+gated behind the `resolveEnvironment` bug, so inert". **Fixing `resolveEnvironment` ungated it.** A
+Google environment now resolves, so `GET /api/v1/reports` is reachable for one — and its families
+section would have listed AWS's four at zero and left out `gcp_alerts`.
+
+Worth reading the comment that was already there: "a family with nothing in either window is still
+listed at zero — that is a measured zero, because `detect` ran over all of them." True of AWS and of
+nothing else. For a Google project `detect` ran over `gcp_alerts` and none of AWS's four, so those
+four zeroes would have been four *measured* claims about services the project does not have, made in a
+report, beside the one family that actually was read being absent.
+
+The lesson is about sequencing, not about reports: a defect listed as inert because something else is
+broken stops being inert the moment that something else is fixed. Both were on the same list, one
+marked critical and one marked awareness-only, and fixing the first is what armed the second.
+
+`kindsOfFamily` and `familiesOf` widened to any cloud's family along the way; `SECTION_FAMILY` stayed
+AWS's, because a monitoring *section* is an AWS service and that mapping is correctly not general.
 
 ### What is still only architecture
 

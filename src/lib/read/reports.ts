@@ -2,7 +2,9 @@ import 'server-only';
 import type { Report, ReportFigure, ReportPeriod, ReportRow, ReportSection, ReportUnavailableReason } from '@opswatch/contract';
 import { PROBLEM_SEVERITIES, type ProblemSeverity } from '../db/schema';
 import type { Db } from '../db/client';
-import { PROBLEM_FAMILIES, kindsOfFamily, type ProblemFamily } from '../detect/family';
+import { kindsOfFamily, type ProblemFamily } from '../detect/family';
+import { familiesOf, type MonitoringFamily } from '../monitoring/shared/families';
+import type { Provider } from '../connections/types';
 import { albBucket, evaluateSlo, type Bucket } from '../detect/slo';
 import { readHistorySettings } from '../history/settings';
 import { countDeployments, listDeployments } from '../store/deployments';
@@ -53,7 +55,14 @@ export const SECTION_FAMILY: Record<string, ProblemFamily> = {
   alarms: 'alarms',
 };
 
-export type ReportQuery = { connectionId: string; scope: string; section: string; period: ReportPeriod };
+export type ReportQuery = {
+  connectionId: string;
+  scope: string;
+  section: string;
+  period: ReportPeriod;
+  /** Which cloud this environment is in, so the report lists that cloud's families. Defaulted. */
+  provider?: Provider;
+};
 export type ReportContext = {
   nowMs: number;
   /**
@@ -68,7 +77,7 @@ export type ReportContext = {
    * How a detector family is named for a reader. Optional, and the id itself when it is not given: a read
    * module has no locale of its own, and a report exported by a machine is entitled to the raw ids.
    */
-  familyLabel?: (family: ProblemFamily) => string;
+  familyLabel?: (family: MonitoringFamily) => string;
 };
 
 /**
@@ -400,7 +409,14 @@ function syntheticsSection(db: Db, query: ReportQuery, windows: ReturnType<typeo
  * is still listed at zero — that is a measured zero, because `detect` ran over all of them.
  */
 function familiesSection(db: Db, query: ReportQuery, windows: ReturnType<typeof windowsFor>, context: ReportContext): ReportSection {
-  const rows: ReportRow[] = PROBLEM_FAMILIES.map((family) => {
+  /*
+   * **This environment's families, not AWS's.** The line above is true of AWS and of nothing else:
+   * a zero is measured only because `detect` ran over all of them, and for a Google project `detect`
+   * ran over `gcp_alerts` and none of AWS's four. Listing those four at zero would report four
+   * measured zeroes about services the project does not have, and leave out the one family that was
+   * actually read.
+   */
+  const rows: ReportRow[] = familiesOf(query.provider ?? 'aws').map((family) => {
     const filter = { connectionId: query.connectionId, scope: query.scope, kinds: kindsOfFamily(family) };
     const total = (counts: Record<ProblemSeverity, number>) => PROBLEM_SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
     const now = total(countProblemsInWindow(db, filter, windows.period).opened);

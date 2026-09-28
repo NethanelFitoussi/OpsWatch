@@ -25,7 +25,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
 
   const report = readReport(
     getDb(),
-    { connectionId: context.scope.connectionId, scope: context.scope.region, section: 'logs', period },
+    { connectionId: context.scope.connectionId, scope: context.scope.region, section: 'logs', period, provider: context.connection.provider },
     // The detector's own sentence, so a row says what happened rather than printing an AWS identifier.
     { nowMs: pageNow(), familyLabel: (family) => families(family), render: await insightRenderer(context.locale) },
   );

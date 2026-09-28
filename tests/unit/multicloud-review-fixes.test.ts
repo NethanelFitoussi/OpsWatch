@@ -157,3 +157,39 @@ describe('System status and a job that stopped running somewhere', () => {
     expect(metrics?.errorCode).toBeNull();
   });
 });
+
+describe('a report over a Google environment', () => {
+  it('THE RULING: it lists that cloud’s families, not four measured zeroes about services it lacks', async () => {
+    /*
+     * The families section says a family with nothing in either window is "still listed at zero — that
+     * is a measured zero, because `detect` ran over all of them". True of AWS and of nothing else. For
+     * a Google project, `detect` ran over `gcp_alerts` and none of AWS's four, so listing those four
+     * would be four measured zeroes about services the project does not have — and would leave out the
+     * one family that actually was read.
+     *
+     * Latent until this week: `resolveEnvironment` could not resolve a Google scope, so the endpoint
+     * was unreachable. Fixing that made this reachable, which is how one fix uncovers the next.
+     */
+    const { readReport } = await import('@/lib/read/reports');
+    const db = createTestDb();
+    const gcp = createGoogleConnection(db, google, SECRET, new Date(NOW));
+
+    const report = readReport(
+      db,
+      { connectionId: gcp.id, scope: 'my-project', section: 'overview', period: '24h', provider: 'gcp' },
+      { nowMs: NOW },
+    );
+    const families = report.sections.find((section) => section.id === 'families');
+    expect(families?.rows.map((row) => row.id)).toEqual(['gcp_alerts']);
+
+    // And AWS still gets exactly the four it always had.
+    const aws = createConnection(db, connectionInput({ name: 'production' }), new Date(NOW));
+    const awsReport = readReport(db, { connectionId: aws.id, scope: 'eu-west-1', section: 'overview', period: '24h' }, { nowMs: NOW });
+    expect(awsReport.sections.find((section) => section.id === 'families')?.rows.map((row) => row.id)).toEqual([
+      'ecs',
+      'rds',
+      'alb',
+      'alarms',
+    ]);
+  });
+});

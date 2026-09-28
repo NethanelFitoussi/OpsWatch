@@ -40,7 +40,8 @@ export function familyOfKind(kind: string): MonitoringFamily | null {
 }
 
 /** Every detector kind belonging to a family, which is how a report scopes itself to its own section. */
-export function kindsOfFamily(family: ProblemFamily): string[] {
+/** Widened to any cloud's family: a report over a Google environment asks about `gcp_alerts`. */
+export function kindsOfFamily(family: MonitoringFamily): string[] {
   return Object.keys(FAMILY_OF).filter((kind) => FAMILY_OF[kind] === family);
 }
 
