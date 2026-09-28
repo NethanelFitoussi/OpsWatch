@@ -22,7 +22,22 @@ import { recentWindow, type TimeWindow } from './shared/time-range';
 
 export const INSIGHT_FAMILIES = AWS_FAMILIES;
 export type InsightFamily = AwsFamily;
-export type FamilySummary = { insights: Insight[]; total: number; affected: number };
+export type FamilySummary = {
+  insights: Insight[];
+  total: number;
+  affected: number;
+  /**
+   * True when the read stopped before the end of what the provider had.
+   *
+   * **A partial read must not let a problem resolve itself.** The detect cycle clears a live problem
+   * when its family was read and the problem did not reappear; a family that was read *in part* cannot
+   * distinguish "gone" from "past the page I stopped at", and treating the two alike closes a problem
+   * the provider still reports as open. §33.5's rule, applied one level finer than it was.
+   *
+   * Absent means a complete read, which is every AWS family.
+   */
+  truncated?: boolean;
+};
 
 /**
  * Fetched window, wider than the 15 (or 10) minutes the rules slice: CloudWatch publishes the last minutes

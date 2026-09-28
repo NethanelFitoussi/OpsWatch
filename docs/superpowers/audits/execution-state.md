@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | DigitalOcean's alert policies, and saying what it does not expose |
-| Last green gates | tsc 0 · eslint 0 · **2625 unit** · **454 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Six defects a second reader found in the multi-cloud work, fixed and pinned |
+| Last green gates | tsc 0 · eslint 0 · **2632 unit** · **454 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -332,6 +332,54 @@ itself say is wrong", and not one of them is the AWS page with the names changed
 One thing worth stealing for later: an **enabled CPU or memory policy on a droplet without `do-agent`
 never fires**, so "Enabled" alone tells an operator they are covered when they are not. Each row
 carries the caveat, from the same agentless split the droplets page states.
+
+### What a second reader found, and what the six had in common
+
+Ten checkpoints of multi-cloud work, reviewed. Six defects, all verified against the code before
+being acted on, all fixed, all pinned by a ruling that fails when reverted. Three were mine from this
+week. Not one of them threw, failed a test, or looked wrong on a screen.
+
+**A truncated read was recorded as a complete one.** The worst of them, and the most instructive.
+Google's incidents are paged and the read stops at a cap; the family reported `ok` either way, so the
+cycle treated it as fully read, saw no sign of a problem whose incident was past the cap, and
+**resolved it while Google still reported it open**. §33.5 already says a problem nobody could look at
+must not resolve itself — it just did not go a level finer, to a family looked at *in part*.
+`FamilySummary` gained `truncated`, a partial read is no longer in the `read` set, and a partial read
+with nothing wrong in what it saw records `unknown` rather than `healthy`.
+
+**The score's persistence term asked with a display name.** When I split "what is shown" from "what is
+keyed on", I updated every use of the identifier in that hunk except one — `breachingMinutes`. For
+every AWS rule the two are the same string, so nothing failed; for Google they differ, so the lookup
+never matched and every Google problem scored as though it had just started, however long Google had
+had the incident open.
+
+**A notification about a Google incident linked to a 404.** `alertUrl` always built
+`/c/{connection}/{scope}/…`, which resolves for AWS and for nothing else — at the one moment an
+operator is following a link because something is actually wrong. It now takes the provider and the
+problem's own link, and refuses a rail path offered for a non-AWS problem rather than passing it
+through.
+
+**Four places independently rebuilt "what environments exist" from `connection.regions`** — System
+status (page and API), the digest job, and `resolveEnvironment`, which every data endpoint uses. For
+DigitalOcean that list is empty, so its real scope was invisible; for Google it holds real region
+strings, so the page invented an environment nothing was collected under: permanently "never read",
+with the working one nowhere to be seen. On the screen whose entire purpose is saying when OpsWatch
+cannot see something. All four ask `scopesOf` now, and a ruling greps for the old shape.
+
+**A stale run made a job permanently red.** `collector_runs` is a log, and the worst-of was taken over
+all of history — so an installation upgrading through the `providers: ['aws']` change keeps its old
+failed Google `metrics` run for ever and reports `metrics` as failing, when `metrics` is now correctly
+not run there at all. A status a job cannot recover from is worse than no status.
+
+The common shape is worth more than the six fixes: **something written once when AWS was the only
+cloud, still compiling, still passing, and quietly answering the wrong question.** None of them was a
+design flaw in the seam — the seam held — and none would have been found by running the product,
+because every one of them fails in a direction that looks like success.
+
+Two the review flagged for awareness rather than as defects: `read/reports.ts` iterates AWS-only
+`PROBLEM_FAMILIES`, so a Google family gets no report row; and if Google's `health` is ever turned on,
+its `total`/`affected` are policies and incidents where the Health summary reads instances. Both are
+recorded here rather than fixed, because both are gated shut today.
 
 ### What is still only architecture
 

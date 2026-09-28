@@ -102,6 +102,12 @@ export async function gcpAlertsFamily(
        */
       total: answer.policies.enabled,
       affected: insights.length,
+      /*
+       * Incidents are paged and the read stops at a cap. Past it, an incident that is still open can
+       * be missing from what was read — and without this the cycle would treat the family as fully
+       * read, see no sign of that problem, and **resolve it while Google still reports it open**.
+       */
+      truncated: answer.truncated,
     },
   };
 }

@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Provider } from '../connections/types';
 import { env } from '../env';
 import { SIGNATURE_HEADER, TIMESTAMP_HEADER, sign, type NotifyPayload } from './payload';
 
@@ -66,18 +67,45 @@ export function reportUrl(connectionId: string, scope: string): string | null {
   return `${base.replace(/\/$/, '')}/c/${connectionId}/${scope}/overview/report`;
 }
 
-/** The absolute link into this installation, or null when no public URL is configured. */
-export function alertUrl(connectionId: string, scope: string, problemId: string | null, hostId: string | null = null): string | null {
+/**
+ * The absolute link into this installation, or null when no public URL is configured.
+ *
+ * **It must not point at the monitoring rail for a cloud that has none.** The rail is ten AWS
+ * services and `/c/{connection}/{scope}/…` only resolves for an AWS connection, so a notification
+ * about a Google incident built that way lands on a 404 — the one moment an operator is following a
+ * link because something is actually wrong.
+ */
+export function alertUrl(input: {
+  connectionId: string;
+  scope: string;
+  problemId: string | null;
+  hostId?: string | null;
+  /** The cloud this environment is in. Defaulted, so every existing caller keeps its meaning. */
+  provider?: Provider;
+  /** The problem row's own link, which each provider's loader set to a page that exists. */
+  problemHref?: string | null;
+}): string | null {
   const base = env().OPSWATCH_PUBLIC_URL;
   if (base === undefined || base.length === 0) return null;
+  const provider = input.provider ?? 'aws';
+
   // The thing the alert is about, in order of how specific it is: a problem, a machine, or the list.
-  // A machine has no problem row — `problems` is keyed to an AWS environment — so without this branch
-  // the one alert an operator most needs to act on would land them on a page of every alert there is.
-  const path =
-    problemId !== null
-      ? `/c/${connectionId}/${scope}/overview/problems/${problemId}`
-      : hostId !== null
-        ? `/hosts/${hostId}`
-        : `/c/${connectionId}/${scope}/overview/alerts`;
+  // A machine has no problem row — `problems` is keyed to an environment — so without that branch the
+  // one alert an operator most needs to act on would land them on a page of every alert there is.
+  let path: string;
+  if (input.problemId !== null) {
+    path =
+      provider === 'aws'
+        ? `/c/${input.connectionId}/${input.scope}/overview/problems/${input.problemId}`
+        : // The page that provider's own rules linked to, and the connection itself when there is
+          // none — never a rail path, which for this cloud is a link to nothing.
+          (input.problemHref ?? '') !== '' && !(input.problemHref ?? '').startsWith('/c/')
+          ? (input.problemHref as string)
+          : `/accounts/${input.connectionId}`;
+  } else if ((input.hostId ?? null) !== null) {
+    path = `/hosts/${input.hostId}`;
+  } else {
+    path = provider === 'aws' ? `/c/${input.connectionId}/${input.scope}/overview/alerts` : `/accounts/${input.connectionId}`;
+  }
   return `${base.replace(/\/$/, '')}${path}`;
 }

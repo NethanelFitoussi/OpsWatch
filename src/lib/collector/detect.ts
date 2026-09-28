@@ -70,7 +70,13 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
       result: await monitoring.loadFamily!(family, target.data, input.nowMs),
     })),
   );
-  const read = new Set(families.filter(({ result }) => result.ok).map(({ family }) => family));
+  /*
+   * Which families were read **in full**. A partial read is deliberately not in here: silence about a
+   * subject only means "gone" when everything was looked at, and a family that stopped at a page
+   * boundary cannot tell an absent problem from one further down the list. Its problems stay
+   * unevaluated rather than resolving themselves.
+   */
+  const read = new Set(families.filter(({ result }) => result.ok && result.data.truncated !== true).map(({ family }) => family));
   const insights = families.flatMap(({ result }) => (result.ok ? result.data.insights : []));
 
   const live = listLiveProblems(input.db, input.connectionId, input.scope);
@@ -128,7 +134,10 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
       connectionId: input.connectionId,
       scope: input.scope,
       family,
-      status: result.ok ? (worst ?? 'healthy') : 'unknown',
+      // A partial read with nothing wrong in what it saw is `unknown`, not `healthy`: the trouble may
+      // be in the part it did not reach. What it *did* see still counts, so a partial read that found
+      // something reports what it found.
+      status: result.ok ? (worst ?? (result.data.truncated === true ? 'unknown' : 'healthy')) : 'unknown',
       total: result.ok ? result.data.total : null,
       affected: result.ok ? result.data.affected : null,
       readAt: input.nowMs,
@@ -139,7 +148,7 @@ export async function runDetectJob(input: DetectJobInput): Promise<JobOutcome> {
 
   // §15, on the same rows: an alert is a statement about what is live now, so it is decided here rather
   // than by a job that would see a different set five minutes later.
-  runAlertCycle(input.db, { connectionId: input.connectionId, scope: input.scope }, liveNow, input.nowMs);
+  runAlertCycle(input.db, { connectionId: input.connectionId, scope: input.scope, provider: monitoring.provider }, liveNow, input.nowMs);
 
   // §16, on the rows this cycle just wrote. Evaluating it as a job of its own five minutes later would open
   // incidents for trouble that had already passed.

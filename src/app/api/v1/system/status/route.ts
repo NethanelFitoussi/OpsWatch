@@ -1,6 +1,7 @@
 import { apiFailure, apiJson } from '@/lib/api/v1/envelope';
 import { apiRoute } from '@/lib/api/v1/handler';
 import { systemStatusSchema } from '@opswatch/contract';
+import { scopesOf } from '@/lib/monitoring/shared/scopes';
 import { listConnections } from '@/lib/connections/repository';
 import { env } from '@/lib/env';
 import { can } from '@opswatch/contract';
@@ -13,7 +14,7 @@ export const GET = apiRoute({
   handler: ({ db, actor }) => {
     if (!can(actor.role, 'audit.read')) return apiFailure('forbidden');
     const environments = listConnections(db).flatMap((connection) =>
-      connection.regions.map((scope) => ({ connectionId: connection.id, scope })),
+      scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope })),
     );
     return apiJson(
       systemStatusSchema,

@@ -2,6 +2,7 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 import { MonitoringCard } from '@/components/monitoring/monitoring-card';
 import { localizedTitle } from '@/i18n/metadata';
 import { requireAdmin } from '@/lib/auth/current';
+import { scopesOf } from '@/lib/monitoring/shared/scopes';
 import { listConnections } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import { env } from '@/lib/env';
@@ -34,7 +35,7 @@ export default async function SystemStatusPage({ params }: Props) {
   const status = readSystemStatus(db, {
     nowMs,
     environments: listConnections(db).flatMap((connection) =>
-      connection.regions.map((scope) => ({ connectionId: connection.id, scope })),
+      scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope })),
     ),
     dataDir: env().OPSWATCH_DATA_DIR,
   });

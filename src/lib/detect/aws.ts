@@ -143,7 +143,11 @@ export function outcomesFromInsights(input: InsightCycleInput): SubjectOutcome[]
           href: row.href,
           evidence: [evidenceOf({ ...insight, messageKey: row.messageKey, href: row.href }, row.severity, row.values, input.nowMs)],
           blast: blastOf({ ...insight, values: row.values }),
-          minutesBreaching: input.breachingMinutes?.(kind, row.resource) ?? INSIGHT_WINDOW_MINUTES,
+          // By what *identifies* the subject, not by what is shown. The caller looks the live problem
+          // up by its `subjectId`, and for Google those two are different strings — so this asked with
+          // a display name, never matched, and every Google problem scored as though it had just
+          // started however long Google had had the incident open.
+          minutesBreaching: input.breachingMinutes?.(kind, row.subjectId) ?? INSIGHT_WINDOW_MINUTES,
           // Unknown, and left unknown: §17's dependency map and §8's baselines do not exist yet, and a zero
           // here is what §33.7 was written to stop.
           userFacing: null,

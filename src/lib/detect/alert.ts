@@ -38,6 +38,14 @@ export type Candidate = {
   problemId: string | null;
   /** The machine this is about, where it is about one: what the alert links to instead of a problem. */
   hostId?: string | null;
+  /**
+   * Where this problem lives, as its own rules decided.
+   *
+   * Carried so a notification can link somewhere that exists on **this** cloud. The AWS rail path a
+   * notification used to build is a 404 for a Google connection, which is the worst possible moment
+   * for a broken link.
+   */
+  href?: string | null;
   titleKey: string;
   values: Record<string, string | number>;
 };

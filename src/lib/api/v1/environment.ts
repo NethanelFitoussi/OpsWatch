@@ -1,6 +1,7 @@
 import 'server-only';
 import type { Db } from '../../db/client';
 import type { Provider } from '../../connections/types';
+import { scopesOf } from '../../monitoring/shared/scopes';
 import { listConnections } from '../../connections/repository';
 import { parseEnvironmentParam } from './request';
 
@@ -23,8 +24,12 @@ export function resolveEnvironment(db: Db, url: URL): ResolvedEnvironment {
   // Required here, unlike on the endpoints that are not scoped to one.
   if (parsed.environment === null) return { ok: false, error: 'invalid_request' };
   const { connectionId, scope } = parsed.environment;
+  // `scopesOf`, not `regions`: a scope is the unit that cloud's data is collected under — a region
+  // for AWS, the project for Google, the account for DigitalOcean. Matched on `regions`, a Google
+  // connection's real scope could never resolve, and a region string that *is* in `regions` would
+  // resolve and then read rows under a scope nothing was ever written to.
   const known = listConnections(db).find(
-    (connection) => connection.id === connectionId && connection.regions.includes(scope),
+    (connection) => connection.id === connectionId && scopesOf(connection).includes(scope),
   );
   return known === undefined ? { ok: false, error: 'not_found' } : { ok: true, connectionId, scope, provider: known.provider };
 }

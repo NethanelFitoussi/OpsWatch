@@ -1,4 +1,5 @@
 import 'server-only';
+import { scopesOf } from '../monitoring/shared/scopes';
 import { listConnections } from '../connections/repository';
 import { randomId } from '../crypto';
 import type { Db } from '../db/client';
@@ -38,8 +39,11 @@ export async function runDigestJob({ db, nowMs }: { db: Db; nowMs: number }): Pr
   // per environment below.
   if (listDestinations(db).filter((destination) => destination.enabled).length === 0) return { covered: 0, total: 0 };
 
+  // The scopes each connection is actually collected under, not its AWS region list: a Google project
+  // is collected under its project id, and building the list from `regions` would summarise an
+  // environment nothing was ever written to — `hasBeenRead` false for ever, and the real one unseen.
   const environments = listConnections(db).flatMap((connection) =>
-    connection.regions.map((region) => ({ connectionId: connection.id, scope: region })),
+    scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope })),
   );
 
   let queued = 0;

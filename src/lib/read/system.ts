@@ -55,7 +55,21 @@ function jobStatus(db: Db, job: JobId, environments: readonly { connectionId: st
    * The answer is the **worst** of them, with the counts beside it so the single word is not the whole
    * claim, and `coveredEverywhereSince` for "every environment has been visited at least this recently".
    */
-  const runs = latestRunPerEnvironment(db, job);
+  /*
+   * Only the environments this job runs in **now**.
+   *
+   * `collector_runs` is a log, so it keeps rows for pairs that are no longer collected — a removed
+   * connection, or a `(connection, scope)` a job stopped applying to. Unfiltered, the worst-of is
+   * taken over history: an installation that upgraded through the change making `metrics` AWS-only
+   * keeps its old failed Google run for ever and shows `metrics` as failing, when `metrics` is now
+   * correctly not run there at all. A status a job cannot recover from is worse than no status.
+   */
+  const eligible = new Set(environments.map((environment) => `${environment.connectionId}\u0000${environment.scope}`));
+  const all = latestRunPerEnvironment(db, job);
+  const runs =
+    spec.scope === 'environment'
+      ? all.filter((run) => run.connectionId !== null && run.scope !== null && eligible.has(`${run.connectionId}\u0000${run.scope}`))
+      : all;
   if (runs.length === 0) return empty;
 
   const worst = [...runs].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])[0];

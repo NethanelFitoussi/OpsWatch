@@ -5,6 +5,7 @@ import type { AlertRow, ProblemRow } from '../db/schema';
 import { alertUrl } from '../notify/deliver';
 import type { AlertPayload } from '../notify/payload';
 import { destinationsFor, queueDelivery } from '../store/notifications';
+import type { Provider } from '../connections/types';
 import { decide, ruleMatches, type Candidate } from '../detect/alert';
 import {
   ensureInstallRules,
@@ -37,7 +38,7 @@ export type AlertCycleResult = { opened: number; refired: number; suppressed: nu
  */
 function queueForDestinations(
   db: Db,
-  context: { connectionId: string; scope: string },
+  context: { connectionId: string; scope: string; provider?: Provider },
   alert: AlertRow,
   candidate: Candidate,
   nowMs: number,
@@ -58,7 +59,14 @@ function queueForDestinations(
       subject: candidate.subjectKey,
       environment: `${context.connectionId}:${context.scope}`,
       firedAt: nowMs,
-      url: alertUrl(context.connectionId, context.scope, candidate.problemId, candidate.hostId ?? null),
+      url: alertUrl({
+        connectionId: context.connectionId,
+        scope: context.scope,
+        problemId: candidate.problemId,
+        hostId: candidate.hostId ?? null,
+        provider: context.provider,
+        problemHref: candidate.href ?? null,
+      }),
     };
     queueDelivery(db, { destinationId: destination.id, alertId: alert.id, payload, nowMs });
   }
@@ -70,6 +78,8 @@ export function toCandidate(row: ProblemRow): Candidate {
   return {
     // The dedupe subject is the problem's own key, so one problem is one alert however often it is re-read.
     subjectKey: row.key,
+    // Where this problem actually lives, so a notification about it links somewhere that exists.
+    href: row.href,
     kind: row.kind,
     severity: row.severity,
     problemId: row.id,
@@ -80,7 +90,9 @@ export function toCandidate(row: ProblemRow): Candidate {
 
 export function runAlertCycle(
   db: Db,
-  context: { connectionId: string; scope: string },
+  // `provider` decides where a notification links: the monitoring rail resolves for AWS and for
+  // nothing else. Defaulted, so every existing caller keeps its meaning.
+  context: { connectionId: string; scope: string; provider?: Provider },
   live: readonly ProblemRow[],
   nowMs: number,
 ): AlertCycleResult {
