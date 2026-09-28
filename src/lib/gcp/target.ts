@@ -24,8 +24,14 @@ export type GcpTarget = {
   provider: 'gcp';
   connectionId: string;
   projectId: string;
-  /** The region asked for, as a Google region — `us-central1`, matched against zone prefixes. */
-  region: string;
+  /**
+   * The Google region a caller asked about, or null when it asked about the project.
+   *
+   * Null is the detect cycle's answer: a Google connection is collected under its **project**, because
+   * alerting policies and incidents are project-scoped. Carrying the project id here under the name
+   * `region` and hoping nobody used it is how a zone-prefix match starts silently matching nothing.
+   */
+  region: string | null;
   federation: FederationTarget;
   key: ConnectionKey;
   /** Where this instance publishes its JWK set, when the provider fetches rather than holds it. */
@@ -39,7 +45,7 @@ export type GcpTarget = {
  * connection page can say one thing about either cloud: the connection is not finished, or the secret
  * that encrypts its key is no longer the one that encrypted it.
  */
-export function gcpTargetFrom(row: ConnectionRow, region: string, opts: { secret?: string; baseUrl?: string } = {}): MonitoringResult<GcpTarget> {
+export function gcpTargetFrom(row: ConnectionRow, region: string | null, opts: { secret?: string; baseUrl?: string } = {}): MonitoringResult<GcpTarget> {
   if (row.provider !== 'gcp') return { ok: false, reason: 'error', code: 'ConnectionNotFound', action: ACTION };
 
   const federation: FederationTarget = {

@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Provider } from '../connections/types';
 
 /**
  * The job catalogue of §9.2: what the collector can run, how often, and what bounds one cycle.
@@ -50,7 +51,20 @@ export type JobSpec = {
    * else waits for the operator to turn something on — the history switch, or a log source.
    */
   freshInstall: boolean;
+  /**
+   * Which clouds this job is about. Absent means every one of them.
+   *
+   * An environment-scoped job used to run for every connection whatever cloud it was to, and every
+   * one of these reads AWS. With history switched on, a Google project was asked for CloudWatch
+   * metrics every five minutes and the run failed every time — a red mark on System status for a
+   * connection that was working exactly as designed. `detect` is the one with no list, because it
+   * asks the provider registry which families to read and answers honestly for a cloud with none.
+   */
+  providers?: readonly Provider[];
 };
+
+/** Everything that reads CloudWatch, and therefore belongs to AWS connections and no others. */
+const AWS_ONLY = ['aws'] as const;
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -61,22 +75,22 @@ export const JOBS: Record<JobId, JobSpec> = {
    * switch inside the job itself: while history is off it makes no AWS request at all. Gating it here as
    * well would mean an operator who enables history has to restart for it to take effect.
    */
-  metrics: { id: 'metrics', everyMs: 5 * MINUTE, cap: 500, scope: 'environment', freshInstall: true },
+  metrics: { id: 'metrics', everyMs: 5 * MINUTE, cap: 500, scope: 'environment', freshInstall: true, providers: AWS_ONLY },
   // Runs over data the pages already fetched, so it costs nothing extra.
   detect: { id: 'detect', everyMs: 5 * MINUTE, cap: null, scope: 'environment', freshInstall: true },
-  deployments: { id: 'deployments', everyMs: 5 * MINUTE, cap: 100, scope: 'environment', freshInstall: false },
+  deployments: { id: 'deployments', everyMs: 5 * MINUTE, cap: 100, scope: 'environment', freshInstall: false, providers: AWS_ONLY },
   /**
    * One bounded Logs Insights query per opted-in source. It is on from the start because a fresh install has
    * no enabled source, so the job finds nothing to do and costs nothing — and the moment an operator opts a
    * log group in, collection begins without their having to find a second switch.
    */
-  errors: { id: 'errors', everyMs: 15 * MINUTE, cap: 1, scope: 'environment', freshInstall: true },
+  errors: { id: 'errors', everyMs: 15 * MINUTE, cap: 1, scope: 'environment', freshInstall: true, providers: AWS_ONLY },
   /**
    * Outbound requests from the operator's own host, so it is off for a fresh install and finds nothing to
    * do until somebody enables a check.
    */
-  synthetics: { id: 'synthetics', everyMs: 5 * MINUTE, cap: 25, scope: 'environment', freshInstall: true },
-  baselines: { id: 'baselines', everyMs: HOUR, cap: 500, scope: 'environment', freshInstall: false },
+  synthetics: { id: 'synthetics', everyMs: 5 * MINUTE, cap: 25, scope: 'environment', freshInstall: true, providers: AWS_ONLY },
+  baselines: { id: 'baselines', everyMs: HOUR, cap: 500, scope: 'environment', freshInstall: false, providers: AWS_ONLY },
   /**
    * What the edge saw. **Instance-scoped**, because a Cloudflare zone belongs to the installation rather
    * than to one AWS account and region — an operator with three regions must not fetch the same zone

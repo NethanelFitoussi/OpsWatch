@@ -18,8 +18,8 @@ import { createTestDb } from '../helpers/db';
 
 const NOW = Date.UTC(2026, 8, 22, 9, 0, 0);
 const ENVIRONMENTS: Environment[] = [
-  { connectionId: 'c1', scope: 'us-east-1' },
-  { connectionId: 'c1', scope: 'eu-west-1' },
+  { connectionId: 'c1', scope: 'us-east-1', provider: 'aws' as const },
+  { connectionId: 'c1', scope: 'eu-west-1', provider: 'aws' as const },
 ];
 
 describe('the off switch and the roles (§9.2)', () => {

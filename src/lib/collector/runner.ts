@@ -9,6 +9,7 @@ import {
   releaseCollectorLock,
   startRun,
 } from '../store/collector';
+import type { Provider } from '../connections/types';
 import { JOBS, type JobId } from './jobs';
 
 /**
@@ -22,7 +23,13 @@ import { JOBS, type JobId } from './jobs';
 /** How often the loop wakes. Well inside the heartbeat, so a tick never risks the lock going stale. */
 export const COLLECTOR_TICK_MS = 15_000;
 
-export type Environment = { connectionId: string; scope: string };
+/**
+ * One unit of collection: a connection and the scope it is collected under.
+ *
+ * `provider` is on it because which jobs apply depends on which cloud this is — every AWS reader ran
+ * for every connection before, whatever it was to.
+ */
+export type Environment = { connectionId: string; scope: string; provider: Provider };
 
 /** A job to run now, and what it is scoped to. `null` for an instance-wide job such as `compact`. */
 export type DueJob = { id: JobId; connectionId: string | null; scope: string | null };
@@ -74,7 +81,11 @@ export function dueJobs(input: DueInput): DueJob[] {
     const targets: DueJob[] =
       spec.scope === 'instance'
         ? [{ id, connectionId: null, scope: null }]
-        : input.environments.map((environment) => ({ id, connectionId: environment.connectionId, scope: environment.scope }));
+        : input.environments
+            // A job that reads CloudWatch has nothing to do in a Google project, and running it there
+            // failed every cycle rather than doing nothing. Absent means every cloud.
+            .filter((environment) => spec.providers === undefined || spec.providers.includes(environment.provider))
+            .map((environment) => ({ id, connectionId: environment.connectionId, scope: environment.scope }));
     for (const job of targets) {
       const last = input.lastRunAt.get(jobKey(job));
       if (last === undefined || input.nowMs - last >= spec.everyMs) due.push(job);

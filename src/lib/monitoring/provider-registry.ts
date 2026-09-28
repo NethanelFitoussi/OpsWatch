@@ -176,7 +176,9 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
     provider: 'gcp',
     families: familiesOf('gcp'),
     loadFamily: null,
-    resolveTarget: fromRow('gcp:federation', (row, scope, deps) => gcpTargetFrom(row, scope.region, { secret: deps.secret })),
+    // Null, not `scope.region`: a Google connection's scope is its project, and handing a project id
+    // to something expecting `us-central1` is a zone-prefix match that silently finds nothing.
+    resolveTarget: fromRow('gcp:federation', (row, _scope, deps) => gcpTargetFrom(row, null, { secret: deps.secret })),
     readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: projectAlerts, logs: null, history: null },
   },
   do: {

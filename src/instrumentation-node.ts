@@ -37,15 +37,18 @@ export async function registerNode() {
   if (!collectorEnabled(process.env)) return;
   const { FRESH_INSTALL_JOBS } = await import('./lib/collector/jobs');
   const { listConnections } = await import('./lib/connections/repository');
+  const { scopesOf } = await import('./lib/monitoring/shared/scopes');
   const { runJob } = await import('./lib/collector/run-job');
   startCollector({
     db,
     owner: collectorOwner(),
     now: () => Date.now(),
     // Re-read each tick, so a connection added while OpsWatch is running is collected without a restart.
+    // `scopesOf` decides what a scope is per cloud — a region for AWS, a project for Google, the
+    // account for DigitalOcean — rather than applying the AWS answer everywhere.
     environments: () =>
       listConnections(db).flatMap((connection) =>
-        connection.regions.map((scope) => ({ connectionId: connection.id, scope })),
+        scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope, provider: connection.provider })),
       ),
     enabled: () => FRESH_INSTALL_JOBS,
     run: runJob,

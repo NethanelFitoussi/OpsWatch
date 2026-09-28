@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Google alerts: open incidents, and whether silence means anything |
-| Last green gates | tsc 0 · eslint 0 · **2588 unit** · **447 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | A scope is what the provider scopes by, and a job runs only where it applies |
+| Last green gates | tsc 0 · eslint 0 · **2597 unit** · **447 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -73,7 +73,7 @@ a non-AWS family is added — in the order it will bite:
 | ~~`resolveTarget` is `sts:AssumeRole` for every cloud~~ | **Done.** Each provider has its own `resolveTarget` in the registry; `ProviderTarget` is a tagged union of three genuinely unalike things, and the cycle asks the provider |
 | ~~The family list exists in four places~~ | **Done.** `monitoring/shared/families.ts` is the leaf all three reach; Health derives its rows from the connection's provider |
 | `InsightKind` is a **closed union** of the 12 AWS kinds, and `SUBJECT_OF` in `detect/aws.ts` is an exhaustive `Record` over it | A GCP kind means widening the union (losing the exhaustiveness that guarantees every kind has a subject type) or a second map beside it. Decide deliberately. **This is the next one to bite** |
-| `ScopeRef = { connectionId, region }` | GCP's `timeSeries.list` is **project**-scoped and a project spans regions. Whether "region" means a GCP region or the project is an open decision, not a detail |
+| ~~`ScopeRef = { connectionId, region }`~~ | **Decided.** A scope is the unit the provider scopes by: a region for AWS, a **project** for Google, the account for DigitalOcean. `monitoring/shared/scopes.ts` |
 
 ### What the second checkpoint changed
 
@@ -211,6 +211,30 @@ a JSON quirk.
 The connection page now offers each page behind the role that opens it: instances for
 `roles/compute.viewer`, alerts for `roles/monitoring.viewer`. A connection with one grant and not the
 other gets the page it can use rather than a dead end.
+
+### A scope is whatever the provider scopes by
+
+The open decision in the table above, made. `scope` has meant "AWS region" since there was only AWS,
+and it is really the unit the provider's data is scoped to — which is a region for AWS, a **project**
+for Google, and the account for DigitalOcean. Google's alerting policies and incidents are
+project-scoped and a project spans regions, so a two-region Google connection collected once per
+region would have opened the same incident twice, as two OpsWatch problems under two scopes, and
+resolved neither when Google closed it. Nothing downstream would have noticed: both rows are valid.
+
+The same mistake one layer up, and this one was already live. **Every environment-scoped job reads
+CloudWatch, and every one of them ran for every connection whatever cloud it was to.** With history
+switched on, `metrics` asked a Google project for CloudWatch every five minutes and threw
+`connection_unavailable` every time — a permanent red mark on System status for a connection working
+exactly as designed. `metrics`, `errors`, `synthetics`, `deployments` and `baselines` now declare
+`providers: ['aws']`; `detect` declares none, because it asks the registry which families a cloud has
+and answers honestly for one with none.
+
+Two smaller consequences worth having written down. A `GcpTarget.region` is now `string | null`, and
+the detect path passes **null** rather than the project id — carrying a project id in a field named
+`region` and hoping nothing reads it is how `instancesInRegion`'s zone-prefix match starts silently
+matching nothing. And a Google connection with no project set yet is collected under **no** scope
+rather than under `''`: rows written under an empty string could never be found again and would show
+on System status as a collected environment.
 
 ### What is still only architecture
 

@@ -59,7 +59,7 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
     ? await instancesInRegion({
         connectionId: target.data.connectionId,
         projectId: target.data.projectId,
-        region: target.data.region,
+        region,
         target: target.data.federation,
         key: target.data.key,
         baseUrl: target.data.baseUrl,

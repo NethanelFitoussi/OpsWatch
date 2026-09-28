@@ -41,9 +41,9 @@ export default async function GoogleAlertsPage({ params }: Props) {
   const t = await getTranslations('GoogleAlerts');
   const format = await getFormatter();
 
-  // The region is not used: alerting policies and incidents are a property of the project, not of a
-  // region within it. Passed because the target carries one, and ignored on purpose.
-  const target = gcpTargetFrom(row, row.regions[0] ?? '');
+  // Null, because this page is about the project: alerting policies and incidents belong to it, not
+  // to a region within it. Said rather than passing a region nothing would read.
+  const target = gcpTargetFrom(row, null);
   const result = target.ok ? await projectAlerts({ target: target.data, nowMs: pageNow() }) : null;
   const failure = target.ok ? (result !== null && !result.ok ? result.reason : null) : target.code === 'SecretChanged' ? 'secret_changed' : 'not_ready';
   const answered = result !== null && result.ok ? result : null;
