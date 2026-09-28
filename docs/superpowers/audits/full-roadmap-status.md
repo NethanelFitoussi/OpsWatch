@@ -68,8 +68,8 @@ backed up.
 | Schema: up to date / migration required | Applied against bundled, and **"cannot tell"** as its own answer when the journal is unreadable. Reporting `0` pending on evidence nobody could read would be the page reassuring an operator about the one thing it does not know |
 | History collection · Retention | Both, with retention shown as "nothing is being kept" while collection is off — "30 days" beside a switch that is off implies something is being kept for thirty days |
 | Test database · Initialize database · **Run migrations** | `INTENTIONALLY_DEFERRED`, and the page says why. OpsWatch applies its own packaged migrations at startup, after copying the database. A button would either do nothing, because they already ran, or invite somebody to change a schema from a browser against a database the process has open. There is also nothing to "test": a database that could not be opened is a process that did not start |
-| DigitalOcean connection | `PARTIAL` — an account is connected by a personal access token scoped to **`droplet:read`**, not the `api:read` read-everything alias: DigitalOcean's custom scopes make least privilege available, so asking for more would be asking for access with no plan for it. The token is encrypted under its own purpose, never returned to a page and never repopulated into a field after an error. Droplets are readable on the connection's own page, read live, paged by **constructed** page numbers rather than by following `links.pages.next` out of a response body. **No metrics, no history, no detection and no alerting** for a DigitalOcean account, and no monitoring rail — the same honest limit as Google Cloud, for the same reason. Architecture proven; not yet connected against a real account |
-| Google Cloud connection | `PARTIAL` — a project is connected by **workload identity federation**, the method Google recommends over the service account keys it discourages: OpsWatch holds no Google credential, signs a short-lived token with a key of its own, and exchanges it. A self-hosted instance nobody can reach still qualifies, because the provider takes the key set by upload (`--jwk-json-path`). The page names the two read-only roles **before** the form, prints the `gcloud` commands for the operator to run themselves, and checks each role separately afterwards. **Compute Engine instances are readable**, per region, on the connection's own page — read live, with no collector behind them, and the page says so. **Not in the monitoring rail**: every section of it is a page about an AWS service, and carrying a Google connection through would offer Containers, Databases and Load balancers that can never hold anything. A unified model is the next step and this is deliberately not half of one. **Metrics are not read yet**, and there is no history, no detection and no alerting for a Google project. Architecture proven; not yet connected against a real project |
+| DigitalOcean connection | `PARTIAL` — an account is connected by a personal access token scoped to **`droplet:read`**, not the `api:read` read-everything alias: DigitalOcean's custom scopes make least privilege available, so asking for more would be asking for access with no plan for it. The token is encrypted under its own purpose, never returned to a page and never repopulated into a field after an error. Droplets are readable on the connection's own page, read live, paged by **constructed** page numbers rather than by following `links.pages.next` out of a response body. **Public bandwidth** is read agentlessly, capped at twelve droplets because each costs two requests. **Alert policies** are readable, and the page says the thing that matters most about them: DigitalOcean exposes no endpoint at all for which policies are *firing*, so this account cannot have open incidents the way a Google project can — and every policy needs `do-agent` on the droplets it watches. **No history, no detection and no problems** for a DigitalOcean account, and no monitoring rail. Architecture proven; not yet connected against a real account |
+| Google Cloud connection | `PARTIAL` — a project is connected by **workload identity federation**, the method Google recommends over the service account keys it discourages: OpsWatch holds no Google credential, signs a short-lived token with a key of its own, and exchanges it. A self-hosted instance nobody can reach still qualifies, because the provider takes the key set by upload (`--jwk-json-path`). The page names the read-only roles **before** the form, prints the `gcloud` commands for the operator to run themselves, and checks each separately afterwards. Readable now: **Compute Engine instances** per region; **agentless CPU** from Cloud Monitoring, with the page saying that memory needs the Ops Agent and OpsWatch does not install it; **open incidents and alerting-policy counts**, where no incidents *and no enabled policy* is reported as "nothing is watching" rather than as health; and **Cloud Logging**, behind an optional third role (`roles/logging.viewer`, deliberately not `privateLogViewer`) that the connection is complete without. Google's incidents become **OpsWatch problems** with the full lifecycle, and appear on the cross-cloud `/problems` page beside AWS's. **No Health page and no history** for a project: Health is shown in the section rail, and that rail is ten AWS services. Architecture proven; not yet connected against a real project |
 | External PostgreSQL · AWS · Google Cloud storage | `NOT_STARTED`, and **not shown**. One backend exists. Listing the others as choices would be claiming support nobody has written, and a self-hosted operator would plan around it |
 
 ## AWS onboarding and removal (2026-09-25)
@@ -497,6 +497,32 @@ one links nowhere, and `.credentialCiphertext` is read in exactly one file.
 ---
 
 ## Remaining work queue, in dependency order
+
+### DONE — the multi-cloud monitoring layer (§G, 2026-09-28)
+
+Twenty checkpoints. Providers declare what they support and the UI derives sections from that, rather
+than from `provider === 'aws'`:
+
+  - **`capabilities.ts`** — nine capabilities per provider, with two distinct kinds of "no":
+    `not_offered` (the provider lacks it) and `not_built` (OpsWatch has not done it). Two guards make
+    it honest: a declared capability must name the code that serves it, and **no capability may be
+    `managed`-only**, so nothing in the product can come to require forwarding data to us.
+  - **`provider-registry.ts`** — families, a loader, a target resolver and readers per cloud. A
+    `ProviderTarget` is a tagged union, because assumed-role credentials, a signing key and an
+    account-wide token are not one shape.
+  - **`shared/scopes.ts`** — a scope is what the provider scopes by: a *region* for AWS, a *project*
+    for Google, the *account* for DigitalOcean. Jobs declare which clouds they are about.
+  - **`/problems` and `/problems/{id}`** — what is wrong anywhere, counted by cloud and filterable,
+    every row naming its cloud, connection and scope. The detail page is deliberately a subset of the
+    AWS section page and **offers** it rather than cloning it.
+  - **Google**: instances, agentless CPU, incidents and alerting policies, Cloud Logging behind an
+    optional role. Its incidents become OpsWatch problems with the full lifecycle.
+  - **DigitalOcean**: droplets, public bandwidth, alert policies — and the page saying DigitalOcean
+    exposes no firing state at all, so it cannot have incidents the way Google can.
+
+What is deliberately **not** built, and declared as such rather than implied: Health for Google or
+DigitalOcean (Health is shown in a rail of ten AWS services), history for either, problems for
+DigitalOcean, and `costs` anywhere.
 
 ### DONE since this audit was written
 
