@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | System status stops claiming a backlog it does not have, and names its rows |
-| Last green gates | tsc 0 · eslint 0 · **2640 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Every link a non-AWS environment can produce, swept for rail paths |
+| Last green gates | tsc 0 · eslint 0 · **2641 unit** · **456 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -456,6 +456,24 @@ my-project-123*, *region eu-west-1*.
 Neither would have been caught by a test, because neither is wrong in a way a test knows to ask about,
 and neither is visible on an installation with one cloud. Part T's browser acceptance is not a
 formality.
+
+### Sweeping for the rest of one review finding
+
+The review found `alertUrl` sending a Google notification into the AWS rail. One finding of that shape
+is a reason to look for the others rather than to fix the one, and there were three more — every one
+of them made reachable by fixing `resolveEnvironment`, which until this week could not resolve a
+non-AWS environment at all:
+
+  - **the weekly digest's `reportUrl`**, which is a 404 arriving by email once a week; and the digest
+    was also calling `readReport` without a provider, so a Google summary would have counted AWS's
+    four families
+  - **search results for problems, alerts and incidents**, all built with `subsectionPath`
+  - **the five "search in Containers / Instances / Redis / Kubernetes / Logs" rows**, offered for any
+    environment — for a Google project, five rows proposing to search an estate that has none of them
+
+`/c/{connection}/{scope}/…` resolves for an AWS connection and for nothing else. All four now branch
+on the provider, and a single ruling walks every link a non-AWS search can produce and asserts none of
+them starts `/c/`, so the next one is caught by shape rather than by somebody remembering.
 
 ### What is still only architecture
 

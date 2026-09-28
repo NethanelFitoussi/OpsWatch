@@ -43,7 +43,9 @@ export async function runDigestJob({ db, nowMs }: { db: Db; nowMs: number }): Pr
   // is collected under its project id, and building the list from `regions` would summarise an
   // environment nothing was ever written to — `hasBeenRead` false for ever, and the real one unseen.
   const environments = listConnections(db).flatMap((connection) =>
-    scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope })),
+    // `provider` travels with it: the report lists that cloud's families, and the link has to point
+    // at a page that cloud has.
+    scopesOf(connection).map((scope) => ({ connectionId: connection.id, scope, provider: connection.provider })),
   );
 
   let queued = 0;
@@ -64,7 +66,7 @@ export async function runDigestJob({ db, nowMs }: { db: Db; nowMs: number }): Pr
       generatedAt: report.generatedAt,
       // Counts, never the report's rows: an error group's sample message is a raw log line.
       summary: digestCounts(report),
-      url: reportUrl(environment.connectionId, environment.scope),
+      url: reportUrl(environment.connectionId, environment.scope, environment.provider),
     };
 
     // This environment's destinations. The weekly summary names the account it is about, so sending it

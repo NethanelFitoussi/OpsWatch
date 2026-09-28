@@ -33,7 +33,7 @@ export const GET = apiRoute({
     // repeating an id the operator never chose.
     const name = findConnection(db, environment.connectionId)?.name ?? environment.connectionId;
     const labels = await searchLabels(localeOf(url), name);
-    const items = search(db, scope, query, labels, SEARCH_LIMIT + 1);
+    const items = search(db, scope, query, labels, SEARCH_LIMIT + 1, environment.provider);
     return apiJson(globalSearchResponseSchema, {
       query,
       items: items.slice(0, SEARCH_LIMIT).map(({ score: _score, terms: _terms, ...rest }) => rest),

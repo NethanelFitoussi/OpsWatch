@@ -1,5 +1,6 @@
 import 'server-only';
 import { DOCS, docPath } from '../docs/catalogue';
+import type { Provider } from '../connections/types';
 import type { Db } from '../db/client';
 import { listConnections } from '../connections/repository';
 import { subsectionPath, type ScopeRef } from '../monitoring/shared/paths';
@@ -51,7 +52,7 @@ const SECTION_SEARCHES: readonly { section: 'containers' | 'instances' | 'redis'
   { section: 'logs', subsection: 'search' },
 ];
 
-function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string): SearchCandidate[] {
+function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string, provider: Provider): SearchCandidate[] {
   const env = { connectionId: scope.connectionId, scope: scope.region };
   const found: SearchCandidate[] = [];
   const context = (kind: string) => `${labels.kind(kind)} · ${labels.environment} · ${scope.region}`;
@@ -77,7 +78,8 @@ function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string
       title: problem.subjectName,
       context: context('problem'),
       state: labels.severity(problem.severity),
-      href: `${subsectionPath(scope, 'overview', 'problems')}/${problem.id}`,
+      // The cross-cloud problem page for anything that is not AWS: one route that works everywhere.
+      href: provider === 'aws' ? `${subsectionPath(scope, 'overview', 'problems')}/${problem.id}` : `/problems/${problem.id}`,
       terms: [labels.headline(problem.titleKey, problem.values), problem.kind, problem.subjectId],
     });
   }
@@ -100,7 +102,7 @@ function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string
       title: labels.headline(alert.titleKey, alert.values),
       context: context('alert'),
       state: labels.severity(alert.severity),
-      href: subsectionPath(scope, 'overview', 'alerts'),
+      href: provider === 'aws' ? subsectionPath(scope, 'overview', 'alerts') : `/accounts/${scope.connectionId}`,
     });
   }
 
@@ -111,7 +113,7 @@ function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string
       title: labels.headline(incident.titleKey, incident.values),
       context: context('incident'),
       state: labels.severity(incident.severity),
-      href: `${subsectionPath(scope, 'overview', 'incidents')}/${incident.id}`,
+      href: provider === 'aws' ? `${subsectionPath(scope, 'overview', 'incidents')}/${incident.id}` : `/accounts/${scope.connectionId}`,
     });
   }
 
@@ -170,7 +172,12 @@ function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string
 
   // The offer, never a claim: OpsWatch has no inventory of live resources, so this carries the query into
   // the section that can ask AWS for it.
-  for (const { section, subsection } of SECTION_SEARCHES) {
+  /*
+   * The five are AWS sections. Offered for a Google project they would be five rows proposing to
+   * search Containers, Redis and Kubernetes in an estate that has none of them, each linking into a
+   * rail that does not resolve for that connection.
+   */
+  for (const { section, subsection } of provider === 'aws' ? SECTION_SEARCHES : []) {
     found.push({
       kind: 'sectionSearch',
       id: `${section}/${subsection}`,
@@ -185,6 +192,20 @@ function candidates(db: Db, scope: ScopeRef, labels: SearchLabels, query: string
   return found;
 }
 
-export function search(db: Db, scope: ScopeRef, query: string, labels: SearchLabels, limit = SEARCH_LIMIT): SearchResult[] {
-  return rank(candidates(db, scope, labels, query), query, limit);
+/**
+ * `provider` decides where a result links.
+ *
+ * The rail is ten AWS services and `/c/{connection}/{scope}/…` resolves for an AWS connection alone,
+ * so a Google problem found by search must not be offered one — it would take somebody to a page
+ * about a service their project does not have. Defaulted, so every existing caller keeps its meaning.
+ */
+export function search(
+  db: Db,
+  scope: ScopeRef,
+  query: string,
+  labels: SearchLabels,
+  limit = SEARCH_LIMIT,
+  provider: Provider = 'aws',
+): SearchResult[] {
+  return rank(candidates(db, scope, labels, query, provider), query, limit);
 }

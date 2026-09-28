@@ -61,10 +61,18 @@ export async function deliver(destination: { url: string }, payload: NotifyPaylo
 }
 
 /** The absolute link to one environment's report, or null when no public URL is configured. */
-export function reportUrl(connectionId: string, scope: string): string | null {
+/**
+ * The absolute link to an environment's report, or null when no public URL is configured.
+ *
+ * Provider-aware for the same reason `alertUrl` is: `/c/{connection}/{scope}/…` resolves for an AWS
+ * connection and for nothing else, and a weekly summary about a Google project that links into the
+ * AWS rail is a 404 arriving by email once a week.
+ */
+export function reportUrl(connectionId: string, scope: string, provider: Provider = 'aws'): string | null {
   const base = env().OPSWATCH_PUBLIC_URL;
   if (base === undefined || base.length === 0) return null;
-  return `${base.replace(/\/$/, '')}/c/${connectionId}/${scope}/overview/report`;
+  const path = provider === 'aws' ? `/c/${connectionId}/${scope}/overview/report` : `/accounts/${connectionId}`;
+  return `${base.replace(/\/$/, '')}${path}`;
 }
 
 /**

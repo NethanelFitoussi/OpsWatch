@@ -11,6 +11,8 @@ import { scopesOf } from '@/lib/monitoring/shared/scopes';
 import { resolveEnvironment } from '@/lib/api/v1/environment';
 import { readSystemStatus } from '@/lib/read/system';
 import { finishRun, startRun } from '@/lib/store/collector';
+import { insertProblem } from '@/lib/store/problems';
+import { newProblem } from '../helpers/detect';
 import { createTestDb } from '../helpers/db';
 import { connectionInput } from '../helpers/fixtures';
 
@@ -246,5 +248,49 @@ describe('System status, on an installation with more than one cloud', () => {
     expect(status.environments.map((entry) => entry.connectionName)).toEqual(['europe', 'staging']);
     // And each carries its cloud, so the page can say what kind of thing the scope is.
     expect(status.environments.every((entry) => entry.provider === 'do')).toBe(true);
+  });
+});
+
+describe('every link a non-AWS environment can produce', () => {
+  it('THE RULING: none of them points into the AWS monitoring rail', async () => {
+    /*
+     * A sweep rather than one fix. The review found `alertUrl`; the same shape turned out to be in
+     * the weekly digest's `reportUrl` and in search, both of which became reachable for a Google
+     * environment the moment `resolveEnvironment` started resolving one. `/c/{connection}/{scope}/…`
+     * exists for an AWS connection and for nothing else, so every one of these was a 404 waiting for
+     * somebody to follow it — by email, by webhook, or from a search box.
+     */
+    const { reportUrl } = await import('@/lib/notify/deliver');
+    const { search } = await import('@/lib/read/search');
+
+    expect(reportUrl('c1', 'my-project', 'gcp')).toBe('https://opswatch.example/accounts/c1');
+    // AWS keeps the report link it always had.
+    expect(reportUrl('c1', 'eu-west-1')).toBe('https://opswatch.example/c/c1/eu-west-1/overview/report');
+
+    const db = createTestDb();
+    const gcp = createGoogleConnection(db, google, SECRET, new Date(NOW));
+    const row = insertProblem(db, newProblem({ key: 'g'.repeat(32), connectionId: gcp.id, scope: 'my-project', source: 'gcp' }));
+    const labels = {
+      kind: (kind: string) => kind,
+      severity: (severity: string) => severity,
+      headline: (key: string) => key,
+      sectionSearch: (section: string) => section,
+      environment: 'analytics',
+    };
+    const results = search(db, { connectionId: gcp.id, region: 'my-project' }, 'web', labels as never, 20, 'gcp');
+    for (const item of results) expect(item.href.startsWith('/c/'), `${item.kind}: ${item.href}`).toBe(false);
+    // And the problem it found goes to the page that works for every cloud.
+    expect(results.find((item) => item.kind === 'problem')?.href).toBe(`/problems/${row.id}`);
+    /*
+     * Nor does it offer to search five AWS sections. For a Google project those are five rows
+     * proposing to search Containers, Redis and Kubernetes in an estate that has none of them.
+     */
+    expect(results.some((item) => item.kind === 'sectionSearch')).toBe(false);
+
+    // An AWS environment still gets all of it, so this is about the cloud and not about search.
+    const aws = createConnection(db, connectionInput({ name: 'production' }), new Date(NOW));
+    insertProblem(db, newProblem({ key: 'a'.repeat(32), connectionId: aws.id, scope: 'eu-west-1' }));
+    const awsResults = search(db, { connectionId: aws.id, region: 'eu-west-1' }, 'containers', labels as never, 20);
+    expect(awsResults.some((item) => item.kind === 'sectionSearch')).toBe(true);
   });
 });
