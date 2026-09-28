@@ -123,8 +123,10 @@ export default async function GoogleLogsPage({ params, searchParams }: Props) {
                   {/* Google's own word for how bad it is. Not remapped onto OpsWatch's three. */}
                   <span className={cn('font-medium', SEVERITY_TEXT[entry.severity] ?? 'text-muted-foreground')}>{entry.severity}</span>
                   <span className="text-muted-foreground">{entry.at === null ? t('noTime') : format.relativeTime(new Date(entry.at))}</span>
-                  <span className="font-mono text-muted-foreground">{entry.logName}</span>
-                  {entry.resourceName !== null && <span className="text-muted-foreground">{entry.resourceName}</span>}
+                  {/* `break-all` on both: these come from whatever wrote the log, and a long one
+                      without it pushes the row past the edge of a narrow screen. */}
+                  <span className="font-mono break-all text-muted-foreground">{entry.logName}</span>
+                  {entry.resourceName !== null && <span className="break-all text-muted-foreground">{entry.resourceName}</span>}
                 </div>
                 {/* The line as Google returned it, wrapped rather than truncated on screen: a log
                     line cut off at the edge of a column is the half nobody needed. */}

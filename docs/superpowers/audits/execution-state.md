@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | A raw message key on the connections page, and the guard that missed it |
-| Last green gates | tsc 0 · eslint 0 · **2654 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Three findings from an adversarial review of the logging slice |
+| Last green gates | tsc 0 · eslint 0 · **2655 unit** · **458 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -569,6 +569,35 @@ Two things it does *not* do, both tempting and both wrong: assume the three bloc
 (they are three audiences — `google` is sign-in, not connectable, and two of the pages never ask for
 its sentences), and treat every quoted string on a `detailKey:` line as a key (`status === 'configured'`
 sits on those lines, and taking it for a key is how a guard invents work).
+
+### The logging slice, adversarially reviewed
+
+Seven questions asked of the most security-sensitive thing in this mission — can operator input reach
+Google's query language, does log content leak into the database or the AI feature or a URL or
+unescaped HTML, is a refusal distinguishable from silence. **All seven came back clean**, and the
+reasons are worth keeping: `gcpProjectId` is validated against Google's own project-id grammar at the
+one place it is written; the severity is checked twice, independently; `recentLogEntries` has exactly
+two callers and neither is anywhere near the AI path; log text is plain JSX children, which React
+escapes.
+
+Three findings, all verified here before acting:
+
+**`gcpStatusOf` returned `ok` for a required check that was missing entirely** — as opposed to present
+and denied. It *filtered* the array for required checks, so an absent `monitoring` contributed to
+neither side of the comparison and one-of-one came out `ok`, indistinguishable from both passing. Not
+reachable from the one caller, which always passes all three or none — but **"ok" arrived at by not
+asking is the shape of an unearned green**, and an exported function should not rest on caller
+discipline for it. Each required check is looked up by name now.
+
+**"One entry cannot make this page enormous" held for `text` and nothing else.** A log id is chosen by
+whatever wrote to the log, and the resource labels come from the same place, so an entry carrying a
+50 kB `logName` walked onto the page. Both are capped now, and the fields render with `break-all`.
+
+**A structured payload was stringified whole and then cut** — the expensive half first, on something
+whose size Google chose. Fields are taken until the line is full instead.
+
+The pattern in the first: a claim in a comment is a claim. "Cannot make the page enormous" was written
+about the field in front of me and quietly generalised to the entry.
 
 ## Decisions that must not be re-derived
 

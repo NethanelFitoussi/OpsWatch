@@ -68,6 +68,22 @@ describe('the role it needs', () => {
     expect([...GCP_REQUIRED_CHECKS]).toEqual(['compute', 'monitoring']);
   });
 
+  it('THE RULING: a required check that is missing entirely is not an ok connection', () => {
+    /*
+     * Filtering the array counted only the checks that were *present*, so a list with no `monitoring`
+     * entry at all — as opposed to one that was denied — had one required check, one readable, and
+     * came out `ok`: indistinguishable from a connection where both genuinely passed. "Ok" arrived at
+     * by not asking is the shape of an unearned green, and an exported function should not depend on
+     * its caller always passing a complete list.
+     */
+    expect(gcpStatusOf([{ check: 'compute', status: 'ok' }])).toBe('degraded');
+    expect(gcpStatusOf([{ check: 'monitoring', status: 'ok' }])).toBe('degraded');
+    // Nothing at all is a connection that could not be tested, not one that passed.
+    expect(gcpStatusOf([])).toBe('failed');
+    // An optional check on its own does not make a connection, either.
+    expect(gcpStatusOf([{ check: 'logging', status: 'ok' }])).toBe('failed');
+  });
+
   it('THE RULING: it asks for the narrow role, not the one that reads who looked at what', () => {
     /*
      * `roles/logging.privateLogViewer` would also return Data Access logs — the record of which
@@ -141,12 +157,33 @@ describe('what comes back', () => {
     expect(result.entries.map((entry) => entry.text)).toEqual(['plain', 'structured', '{"code":500}']);
   });
 
-  it('truncates one enormous entry rather than letting it become the page', async () => {
-    const { call } = logging([{ insertId: 'a', timestamp: '2026-09-28T11:59:00Z', textPayload: 'x'.repeat(50_000) }]);
+  it('THE RULING: no field of one entry can make the page enormous, not only its text', async () => {
+    /*
+     * The comment claiming "one entry cannot make this page enormous" held for `text` and for
+     * nothing else. A log id is chosen by whatever wrote to the log, and the resource labels come
+     * from the same place — so an entry carrying a 50 kB `logName` walked straight onto the page.
+     */
+    const { call } = logging([
+      {
+        insertId: 'a',
+        timestamp: '2026-09-28T11:59:00Z',
+        textPayload: 'x'.repeat(50_000),
+        logName: `projects/p/logs/${'n'.repeat(50_000)}`,
+        resource: { type: 'gce_instance', labels: { instance_name: 'r'.repeat(50_000) } },
+      },
+      // A structured payload of many large fields, which used to be stringified whole and then cut.
+      { insertId: 'b', timestamp: '2026-09-28T11:58:00Z', jsonPayload: Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`k${i}`, 'v'.repeat(1_000)])) },
+    ]);
     const result = await read(call);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.entries[0].text.length).toBeLessThanOrEqual(2_000);
+    for (const entry of result.entries) {
+      expect(entry.text.length, entry.id).toBeLessThanOrEqual(2_000);
+      expect(entry.logName.length, entry.id).toBeLessThanOrEqual(200);
+      expect((entry.resourceName ?? '').length, entry.id).toBeLessThanOrEqual(200);
+    }
+    // And the structured one still says something rather than being emptied by the bounding.
+    expect(result.entries[1].text.startsWith('{"k0":')).toBe(true);
   });
 
   it('says which refusal it was, and never an empty log', async () => {

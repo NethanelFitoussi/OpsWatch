@@ -41,9 +41,19 @@ export type GcpTestResult = {
  * project as broken for declining something optional, and train an operator to ignore the colour.
  */
 export function gcpStatusOf(checks: readonly GcpCheck[]): 'failed' | 'degraded' | 'ok' {
-  const required = checks.filter((check) => (GCP_REQUIRED_CHECKS as readonly string[]).includes(check.check));
-  const readable = required.filter((check) => check.status === 'ok').length;
+  /*
+   * Each required check is **looked up**, not filtered for.
+   *
+   * Filtering counted only the checks that were present, so a list missing `monitoring` entirely —
+   * as opposed to having it and being denied — had one required check, one readable, and came out
+   * `ok`: identical to a connection where both genuinely passed. Not reachable from the one caller
+   * today, which always passes all three or none, but "ok" arrived at by *not asking* is the shape
+   * of an unearned green, and an exported function should not depend on caller discipline for it.
+   */
+  const readable = GCP_REQUIRED_CHECKS.filter(
+    (name) => checks.find((check) => check.check === name)?.status === 'ok',
+  ).length;
   // Nothing required could be read: a connection that authenticated and can see nothing.
   if (readable === 0) return 'failed';
-  return readable < required.length ? 'degraded' : 'ok';
+  return readable < GCP_REQUIRED_CHECKS.length ? 'degraded' : 'ok';
 }

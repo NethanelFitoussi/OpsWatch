@@ -55,6 +55,8 @@ export type GcpLogsResult = { ok: true; entries: GcpLogEntry[]; truncated: boole
 
 /** Long enough to recognise a line, short enough that a page cannot be made enormous by one entry. */
 const MAX_TEXT = 2_000;
+/** The same reasoning for the short fields beside it: a name is a label, not a place to put a line. */
+const MAX_NAME = 200;
 
 const RESOURCE_NAME_LABELS = ['instance_name', 'instance_id', 'service_name', 'revision_name', 'function_name', 'bucket_name'];
 
@@ -102,7 +104,15 @@ function textOf(entry: RawEntry): string {
   const message = (structured as { message?: unknown }).message;
   if (typeof message === 'string') return message.slice(0, MAX_TEXT);
   try {
-    return JSON.stringify(structured).slice(0, MAX_TEXT);
+    // Stringifying the whole payload and then slicing does the expensive half first, on something
+    // whose size Google chose rather than us. The fields are taken until there is enough to fill the
+    // line, so a megabyte of structured payload costs a line's worth of work.
+    let text = '{';
+    for (const [key, value] of Object.entries(structured)) {
+      if (text.length >= MAX_TEXT) break;
+      text += `${text.length > 1 ? ',' : ''}${JSON.stringify(key)}:${JSON.stringify(value).slice(0, MAX_TEXT)}`;
+    }
+    return `${text}}`.slice(0, MAX_TEXT);
   } catch {
     return '';
   }
@@ -158,9 +168,11 @@ export async function recentLogEntries(input: {
       at: Number.isNaN(at) ? null : at,
       // Google's own word. An entry with no severity is `DEFAULT` in its vocabulary, not "info".
       severity: entry.severity ?? 'DEFAULT',
-      logName: typeof entry.logName === 'string' ? (entry.logName.split('/').pop() ?? entry.logName) : '',
+      // Bounded like the line is. A log id is chosen by whatever wrote to the log, not by OpsWatch,
+      // so "one entry cannot make this page enormous" holds only if every field it carries is capped.
+      logName: typeof entry.logName === 'string' ? (entry.logName.split('/').pop() ?? entry.logName).slice(0, MAX_NAME) : '',
       resourceType: entry.resource?.type ?? null,
-      resourceName: nameOf(entry.resource?.labels),
+      resourceName: nameOf(entry.resource?.labels)?.slice(0, MAX_NAME) ?? null,
       text: textOf(entry),
     });
   }
