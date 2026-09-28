@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Provider-aware target resolution, and one family list where there were three |
-| Last green gates | tsc 0 · eslint 0 · **2554 unit** · **439 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Google Cloud metrics: agentless CPU, read directly, with the agent caveat on the page |
+| Last green gates | tsc 0 · eslint 0 · **2565 unit** · **442 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -111,6 +111,40 @@ actually fails.
 `Insight.href` and `subject_type` turned out **not** to be AWS-shaped: `href` is built by `subsectionPath`
 and the subject kinds (`resource`, `service`, `cluster`) describe a droplet or a Cloud Run service
 without strain. Two things I expected to be problems and are not.
+
+## The first non-AWS capability (§G), and what it cost
+
+**Google CPU, agentless, direct.** `compute.googleapis.com/instance/cpu/utilization` is written by the
+hypervisor, so it exists for every running instance with nothing installed — which is exactly what lets
+a self-hosted OpsWatch read a Google project with no forwarder, no agent and no account with us. One
+`timeSeries.list` call for every instance on the page, shown as a percentage and a sparkline beside the
+list that was already there.
+
+Verified against the current reference before a line was written, per Part O — the parameter names
+(`interval.startTime`, `aggregation.alignmentPeriod`, `aggregation.perSeriesAligner`, `view`), the rule
+that a filter must name **exactly one** metric type, that `AND` is upper case, and that the OAuth scope
+is inside what `roles/monitoring.viewer` grants. That role was already in the connection wizard,
+described as "the metrics Google already collects"; it is now true rather than aspirational.
+
+Deliberately **not** shipped: network and disk counters. The docs pages are too large to fetch whole and
+the best a search returned was that the metric kind is "likely DELTA" — and whether a counter is DELTA
+or CUMULATIVE decides whether you subtract consecutive points or not. A bandwidth chart wrong by that
+difference looks perfectly plausible. It waits for the descriptor, read from Google or from the
+reference, rather than being guessed at.
+
+**Memory is not available and the page says so.** On Google, memory, disk usage and process counts come
+from `agent.googleapis.com/…` — the Ops Agent — not from the hypervisor. An absent column tells an
+operator nothing about whether OpsWatch failed or Google never measured it, so the page states which
+in a sentence, in both languages, and names the agent OpsWatch does not install.
+
+### What is still only architecture
+
+The CPU **cell** has never rendered with a number in it. There is no Google project behind the e2e
+stack, so every read is refused and the column is exercised only by its own unit tests. The reader's
+behaviour is pinned hard — five mutations, including reading a missing point as zero and trusting the
+answer to have honoured the filter — but "a stopped instance shows *Not reported* rather than 0 %" has
+been proven in a test and not seen on a screen. The roadmap already asks this question of every
+integration; this is one of the ones whose answer is *architecture only*.
 
 ## Decisions that must not be re-derived
 

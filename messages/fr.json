@@ -6556,7 +6556,8 @@
       "status": "État",
       "zone": "Zone",
       "machineType": "Type de machine",
-      "created": "Créée"
+      "created": "Créée",
+      "cpu": "Processeur"
     },
     "failures": {
       "denied": "Google a refusé la lecture. roles/compute.viewer n’est pas parvenu à cette connexion.",
@@ -6565,6 +6566,16 @@
       "error": "Compute Engine a renvoyé une erreur.",
       "not_ready": "Cette connexion n’est pas terminée. Son projet Google, son pool d’identités de charge de travail et son fournisseur doivent être renseignés avant toute lecture.",
       "secret_changed": "La clé de signature de cette connexion ne peut pas être ouverte. OPSWATCH_SECRET a changé depuis son enregistrement."
+    },
+    "cpuTrend": "Processeur sur les {minutes} dernières minutes",
+    "agentless": "Le processeur provient de {metric}, que Google écrit pour chaque instance en marche. Rien n’est installé pour le lire.",
+    "needsAgent": "La mémoire, l’occupation disque et le nombre de processus ne sont pas affichés : Google ne les mesure pas sans agent. Ils proviennent de l’agent Ops, qu’OpsWatch n’installe pas.",
+    "cpuTruncated": "Plus d’instances ont rapporté leur processeur qu’il n’était possible d’en lire en une requête. Certaines lignes n’affichent aucun chiffre.",
+    "cpuFailures": {
+      "denied": "Pas d’accès au processeur",
+      "unreachable": "Google injoignable",
+      "no_token": "Aucun jeton",
+      "error": "Lecture du processeur échouée"
     }
   },
   "DoWizard": {

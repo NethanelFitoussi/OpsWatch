@@ -82,7 +82,10 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
   gcp: {
     resources: direct,
     health: { state: 'not_built' },
-    metrics: { state: 'not_built' },
+    // Agentless CPU utilisation from Cloud Monitoring, read straight from the project. Memory and disk
+    // usage are not here because on Google they are not agentless — they come from `agent.googleapis.com`
+    // and exist only where the Ops Agent is installed, which OpsWatch does not install.
+    metrics: direct,
     problems: { state: 'not_built' },
     errors: { state: 'not_built' },
     alerts: { state: 'not_built' },

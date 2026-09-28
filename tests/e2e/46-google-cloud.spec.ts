@@ -149,3 +149,49 @@ test('the instances page belongs to Google connections only', async ({ page }) =
   await page.goto(`/en${href.replace(/^\/en/, '')}/instances`);
   await expect(page.locator('main')).toContainText('Page not found');
 });
+
+test('THE RULING: the page says what it reads without an agent, and what it cannot', async ({ page }) => {
+  /*
+   * Google measures CPU at the hypervisor, so it is there for every running instance with nothing
+   * installed — which is what lets a self-hosted OpsWatch read a project directly. Memory and disk
+   * usage are **not** agentless on Google: they come from the Ops Agent. An absent memory column that
+   * says nothing leaves an operator to work out for themselves whether OpsWatch failed or Google did.
+   */
+  const id = await create(page, 'Metrics project');
+  await page.goto(`/en/accounts/${id}/instances`);
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain('compute.googleapis.com/instance/cpu/utilization');
+  expect(main).toContain('Nothing is installed to read it');
+  // Named as the provider's own component, and as something OpsWatch will not install for you.
+  expect(main).toContain('Ops Agent');
+  expect(main).toContain('OpsWatch does not install');
+  // Not a promise that it is coming, and not an empty column: a statement about what Google measures.
+  expect(main).toContain('does not measure them agentlessly');
+});
+
+test('the capability table says Google metrics are built, and stops saying they are not', async ({ page }) => {
+  const id = await create(page, 'Capability project');
+  await page.goto(`/en/accounts/${id}`);
+  const main = await page.locator('main').innerText();
+
+  // Two kinds of "no" that must stay apart, on the same page: what Google does not offer through
+  // OpsWatch yet, and what it does. Anchored to the row, because a looser pattern reads the next one.
+  expect(main).toMatch(/\bMetrics\s*\n\s*Read directly from the provider/);
+  // The rows that are still honestly empty stay empty, so this is not a table that says yes to everything.
+  expect(main).toMatch(/\bHealth\s*\n\s*Not built yet in OpsWatch/);
+  // And the promise the whole model rests on, still made in writing.
+  expect(main).toMatch(/nothing here requires a forwarder, an agent or an account with us/i);
+});
+
+test('the instances page reads in French, and at 360 px', async ({ page }) => {
+  const id = await create(page, 'Narrow instances');
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(`/fr/accounts/${id}/instances`);
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain("l’agent Ops");
+  expect(main).not.toMatch(/GoogleInstances\./);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});

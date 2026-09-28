@@ -11,10 +11,15 @@ import { initProtectedRoute } from '@/lib/auth/route';
 import { findConnection } from '@/lib/connections/repository';
 import { getDb } from '@/lib/db/client';
 import { instancesInRegion } from '@/lib/gcp/instances';
+import { CPU_METRIC, instanceCpuSeries, latestOf } from '@/lib/gcp/metrics';
 import { gcpTargetFrom } from '@/lib/gcp/target';
+import { SPARKLINE_HEIGHT, SPARKLINE_WIDTH, sparklinePoints } from '@/lib/monitoring/shared/sparkline';
 import { pageNow } from '@/lib/monitoring/shared/time-range';
 import { TONE_TEXT } from '@/lib/ui/tones';
 import { cn } from '@/lib/utils';
+
+/** Fifteen minutes at Google's own one-minute sampling: fifteen points, enough to show a shape. */
+const CPU_WINDOW_MS = 15 * 60_000;
 
 type Props = { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ region?: string }> };
 
@@ -64,6 +69,28 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
   // One reason to show, whether it came from resolving the connection or from Google.
   const failure = target.ok ? (result !== null && !result.ok ? result.reason : null) : target.code === 'SecretChanged' ? 'secret_changed' : 'not_ready';
 
+  /*
+   * CPU for the instances that were found, in one request for all of them.
+   *
+   * Second, and only on success: asking Cloud Monitoring which instances exist would be asking the
+   * wrong service. And its failure is kept apart from the list's — an instance list that was read is
+   * worth showing even when the metric read was refused, because `roles/monitoring.viewer` and
+   * `roles/compute.viewer` are two grants and an operator very often has one and not the other.
+   */
+  const nowMs = pageNow();
+  const instances = result !== null && result.ok ? result.data : [];
+  const cpu =
+    target.ok && instances.length > 0
+      ? await instanceCpuSeries({
+          target: target.data,
+          instanceIds: instances.map((instance) => instance.id),
+          startMs: nowMs - CPU_WINDOW_MS,
+          endMs: nowMs,
+          nowMs,
+        })
+      : null;
+  const series = new Map((cpu !== null && cpu.ok ? cpu.data : []).map((entry) => [entry.instanceId, entry]));
+
   return (
     <PageBody>
       <Link href={`/accounts/${row.id}`} className="inline-flex items-center gap-1 rounded-sm text-sm text-muted-foreground hover:text-foreground">
@@ -111,6 +138,7 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
               <TableRow>
                 <TableHead>{t('columns.name')}</TableHead>
                 <TableHead>{t('columns.status')}</TableHead>
+                <TableHead>{t('columns.cpu')}</TableHead>
                 <TableHead>{t('columns.zone')}</TableHead>
                 <TableHead>{t('columns.machineType')}</TableHead>
                 <TableHead>{t('columns.created')}</TableHead>
@@ -128,6 +156,41 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
                   <TableCell className={cn(instance.status === 'RUNNING' ? TONE_TEXT.success : 'text-muted-foreground')}>
                     {instance.status}
                   </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const latest = latestOf(series.get(instance.id));
+                      /*
+                       * Null is "Google reported nothing for this instance", which is the honest answer
+                       * for a stopped one — and must not be drawn as 0 %, a flat green line under a
+                       * machine that is switched off. §2.4: healthy and "cannot tell" never look alike.
+                       */
+                      if (latest === null) {
+                        return <span className="text-muted-foreground">{cpu !== null && !cpu.ok ? t(`cpuFailures.${cpu.reason}`) : t('notReported')}</span>;
+                      }
+                      const points = series.get(instance.id)?.points ?? [];
+                      return (
+                        <span className="flex items-center gap-2">
+                          {/* A fraction of one, turned into a percentage once and at the last moment. */}
+                          <span className="tabular-nums">{format.number(latest, { style: 'percent', maximumFractionDigits: 1 })}</span>
+                          {points.length > 1 && (
+                            <svg
+                              width={SPARKLINE_WIDTH}
+                              height={SPARKLINE_HEIGHT}
+                              viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`}
+                              className="text-muted-foreground"
+                              role="img"
+                              aria-label={t('cpuTrend', { minutes: CPU_WINDOW_MS / 60_000 })}
+                            >
+                              {/* Scaled to a full one, not to the window's own maximum: a machine idling
+                                  between 1 % and 2 % must not draw the same alarming climb as one going
+                                  from 40 % to 90 %. */}
+                              <polyline points={sparklinePoints(points.map((point) => point.value), SPARKLINE_WIDTH, SPARKLINE_HEIGHT, 1)} fill="none" stroke="currentColor" strokeWidth="1.5" />
+                            </svg>
+                          )}
+                        </span>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{instance.zone}</TableCell>
                   {/* Null is "Google did not report it", which is not the same as an empty cell. */}
                   <TableCell className="text-muted-foreground">{instance.machineType ?? t('notReported')}</TableCell>
@@ -140,6 +203,14 @@ export default async function GoogleInstancesPage({ params, searchParams }: Prop
           </Table>
         )}
         <p className="mt-3 text-xs text-muted-foreground">{t('readNow')}</p>
+        {/* What is here without installing anything, and what is not here because it cannot be. Said on
+            the page rather than left as an absent column an operator has to work out for themselves, and
+            set apart from the note above it so the second sentence is not read as more of the first. */}
+        <div className="mt-3 space-y-1 border-t pt-3 text-xs text-muted-foreground">
+          <p>{t('agentless', { metric: CPU_METRIC })}</p>
+          <p>{t('needsAgent')}</p>
+        </div>
+        {cpu !== null && cpu.ok && cpu.truncated && <p className="mt-1 text-xs text-muted-foreground">{t('cpuTruncated')}</p>}
       </SectionCard>
     </PageBody>
   );

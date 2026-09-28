@@ -6556,7 +6556,8 @@
       "status": "Status",
       "zone": "Zone",
       "machineType": "Machine type",
-      "created": "Created"
+      "created": "Created",
+      "cpu": "CPU"
     },
     "failures": {
       "denied": "Google refused the read. roles/compute.viewer has not reached this connection.",
@@ -6565,6 +6566,16 @@
       "error": "Compute Engine returned an error.",
       "not_ready": "This connection is not finished. Its Google project, workload identity pool and provider have to be set before anything can be read.",
       "secret_changed": "This connection’s signing key cannot be opened. OPSWATCH_SECRET has changed since it was stored."
+    },
+    "cpuTrend": "CPU over the last {minutes} minutes",
+    "agentless": "CPU comes from {metric}, which Google writes for every running instance. Nothing is installed to read it.",
+    "needsAgent": "Memory, disk usage and process counts are not shown because Google does not measure them agentlessly. They come from the Ops Agent, which OpsWatch does not install.",
+    "cpuTruncated": "More instances reported CPU than could be read in one request. Some rows show no figure.",
+    "cpuFailures": {
+      "denied": "No CPU access",
+      "unreachable": "Google unreachable",
+      "no_token": "No token",
+      "error": "CPU read failed"
     }
   },
   "DoWizard": {
