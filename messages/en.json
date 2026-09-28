@@ -6544,7 +6544,11 @@
       "gcp_regions_invalid": "Something went wrong."
     },
     "instances": "Instances",
-    "instancesHint": "What Compute Engine reports for this project."
+    "instancesHint": "What Compute Engine reports for this project.",
+    "readTitle": "What you can read now",
+    "readHint": "Each page needs its own role. One works as soon as its grant arrives.",
+    "alerts": "Alerts",
+    "alertsHint": "Open incidents from Cloud Monitoring, and how much of this project is watched."
   },
   "GoogleInstances": {
     "title": "Instances in {project}",
@@ -6582,6 +6586,39 @@
       "unreachable": "Google unreachable",
       "no_token": "No token",
       "error": "CPU read failed"
+    }
+  },
+  "GoogleAlerts": {
+    "title": "Alerts in {project}",
+    "description": "What Google Cloud Monitoring is reporting, read when this page is drawn.",
+    "back": "Back to the connection",
+    "listTitle": "Open incidents",
+    "listHint": "Every figure and every name here is Google’s. OpsWatch adds no verdict of its own.",
+    "checkAccess": "Check this connection's access",
+    "quiet": "No open incidents. {enabled, plural, one {# alerting policy is} other {# alerting policies are}} enabled in this project, so this is Google saying nothing is wrong rather than nobody having asked.",
+    "unwatchedTitle": "There are no open incidents, and nothing is watching for them.",
+    "unwatchedNone": "This project has no alerting policies. An empty list here is the absence of a question, not an answer: OpsWatch will not call it healthy.",
+    "unwatchedDisabled": "All {total} of this project’s alerting policies are disabled. Nothing can open an incident while they are off.",
+    "policies": "{enabled} of {total} alerting policies are enabled in this project.",
+    "incidentsTruncated": "More incidents are open than were read. The list is the most recently opened.",
+    "policiesTruncated": "More alerting policies exist than were counted, so the figure above is a floor.",
+    "readNow": "Read live. Nothing about a Google project is collected on a schedule yet, so there is no stale figure here and no history behind it.",
+    "unnamedPolicy": "Policy with no name",
+    "noSeverity": "No severity set",
+    "notReported": "Not reported",
+    "columns": {
+      "policy": "Policy",
+      "severity": "Severity",
+      "resource": "Resource",
+      "opened": "Opened"
+    },
+    "failures": {
+      "denied": "Google refused the read. roles/monitoring.viewer has not reached this connection.",
+      "unreachable": "This instance could not reach Google.",
+      "no_token": "There is no usable token for this connection yet.",
+      "error": "Cloud Monitoring returned an error.",
+      "not_ready": "This connection is not finished. Its Google project, workload identity pool and provider have to be set before anything can be read.",
+      "secret_changed": "This connection’s signing key cannot be opened. OPSWATCH_SECRET has changed since it was stored."
     }
   },
   "DoWizard": {

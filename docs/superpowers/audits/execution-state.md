@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | The unified overview: provider identity restored, counted and filterable |
-| Last green gates | tsc 0 · eslint 0 · **2579 unit** · **445 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Google alerts: open incidents, and whether silence means anything |
+| Last green gates | tsc 0 · eslint 0 · **2588 unit** · **447 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -181,6 +181,36 @@ screen answering something nobody asked.
 A note on method: `git checkout messages/fr.json` during a mutation run silently discarded this
 checkpoint's uncommitted French keys. Same trap as the earlier `git checkout` on an untracked file,
 and the same lesson — after reverting anything, check what else was in that file.
+
+### Google alerts, and the most comfortable lie a monitoring tool can tell
+
+Cloud Monitoring's open incidents, read directly. Every word on the page is Google's — its policy
+names, its severities, its open times — because the instruction was to use the provider's evidence and
+not manufacture health conclusions it never reached.
+
+The design decision worth keeping: **the page reads policies as well as incidents, and it has to.** An
+empty incident list means one of two completely different things — nothing is wrong, or nothing is
+watching — and a project with no enabled alerting policies has not been found healthy, it has not been
+looked at. So there are three answers where a naive version would have one:
+
+  - open incidents, listed
+  - *no* open incidents **and** at least one enabled policy → Google is asserting that nothing is wrong
+  - *no* open incidents **and** nothing enabled → "there are no open incidents, and nothing is watching
+    for them", which OpsWatch will not call healthy
+
+`quietMeansSomething(policies)` is the whole distinction and it is one line, which is exactly why it
+needed a ruling: mutating it to `true` breaks one test and nothing else would have noticed.
+
+Two API facts worth not re-deriving: **there is no `projects.incidents`** — incidents are
+`projects.alerts`, and an `Alert` carries a `PolicySnapshot` with the policy's display name and
+severity, so an incident is self-describing. And a policy's `enabled` comes back **either as a bare
+boolean or as `{ value }`**; read as truthy, a `{ value: false }` counts a switched-off policy as
+watching, which turns "nothing is watching" into "nothing is wrong" — the exact failure above, through
+a JSON quirk.
+
+The connection page now offers each page behind the role that opens it: instances for
+`roles/compute.viewer`, alerts for `roles/monitoring.viewer`. A connection with one grant and not the
+other gets the page it can use rather than a dead end.
 
 ### What is still only architecture
 

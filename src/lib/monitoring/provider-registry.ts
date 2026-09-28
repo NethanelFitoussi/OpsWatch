@@ -14,6 +14,7 @@ import { startLogsQuery } from './logs';
 import { enabledLogSources } from '../store/errors';
 import { instancesInRegion } from '../gcp/instances';
 import { instanceCpuSeries } from '../gcp/metrics';
+import { projectAlerts } from '../gcp/alerts';
 import { gcpTargetFrom, type GcpTarget } from '../gcp/target';
 import { listDroplets } from '../do/droplets';
 import { dropletBandwidth } from '../do/metrics';
@@ -176,7 +177,7 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
     families: familiesOf('gcp'),
     loadFamily: null,
     resolveTarget: fromRow('gcp:federation', (row, scope, deps) => gcpTargetFrom(row, scope.region, { secret: deps.secret })),
-    readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: null, logs: null, history: null },
+    readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: projectAlerts, logs: null, history: null },
   },
   do: {
     provider: 'do',

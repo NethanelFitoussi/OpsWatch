@@ -195,3 +195,43 @@ test('the instances page reads in French, and at 360 px', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('THE RULING: an unreadable project is not a quiet project', async ({ page }) => {
+  /*
+   * There is no Google project behind this test, so the read is refused. The one thing the alerts
+   * page must never do is turn that into "no open incidents" — a monitoring tool reporting calm
+   * because it could not look is worse than one that reports nothing at all.
+   */
+  const id = await create(page, 'Alerts project');
+  await page.goto(`/en/accounts/${id}/alerts`);
+  const main = await page.locator('main').innerText();
+
+  expect(main).toContain('Alerts in my-project-123');
+  expect(main).toMatch(/could not reach Google|refused the read|no usable token|returned an error/);
+  // Not the calm answers, either of them.
+  expect(main).not.toContain('No open incidents');
+  expect(main).not.toContain('nothing is watching');
+  await expect(page.locator('main table')).toHaveCount(0);
+
+  // And the promise the page rests on: none of this is OpsWatch's opinion.
+  expect(main).toContain('OpsWatch adds no verdict of its own');
+});
+
+test('the alerts page is Google’s, and reads in French at 360 px', async ({ page }) => {
+  const id = await create(page, 'French alerts');
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(`/fr/accounts/${id}/alerts`);
+  const main = await page.locator('main').innerText();
+  expect(main).toContain('Incidents ouverts');
+  expect(main).not.toMatch(/GoogleAlerts\./);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  // An AWS connection has no such page: this one is about Cloud Monitoring, not about alarms.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/en/accounts');
+  const aws = page.getByRole('link', { name: /Moto monitoring/ }).first();
+  const href = (await aws.getAttribute('href')) ?? '';
+  await page.goto(`/en${href.replace(/^\/en/, '')}/alerts`);
+  await expect(page.locator('main')).toContainText('Page not found');
+});

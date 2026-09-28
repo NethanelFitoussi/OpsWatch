@@ -88,7 +88,9 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
     metrics: direct,
     problems: { state: 'not_built' },
     errors: { state: 'not_built' },
-    alerts: { state: 'not_built' },
+    // Cloud Monitoring's alerting policies and open incidents, read directly. Google's verdicts, not
+    // OpsWatch's: nothing here is a health conclusion this product reached on its own.
+    alerts: direct,
     logs: { state: 'not_built' },
     history: { state: 'not_built' },
   },

@@ -6544,7 +6544,11 @@
       "gcp_regions_invalid": "Une erreur s’est produite."
     },
     "instances": "Instances",
-    "instancesHint": "Ce que Compute Engine rapporte pour ce projet."
+    "instancesHint": "Ce que Compute Engine rapporte pour ce projet.",
+    "readTitle": "Ce que vous pouvez lire dès maintenant",
+    "readHint": "Chaque page a besoin de son propre rôle. L’une fonctionne dès que son attribution arrive.",
+    "alerts": "Alertes",
+    "alertsHint": "Les incidents ouverts de Cloud Monitoring, et la part de ce projet qui est surveillée."
   },
   "GoogleInstances": {
     "title": "Instances de {project}",
@@ -6582,6 +6586,39 @@
       "unreachable": "Google injoignable",
       "no_token": "Aucun jeton",
       "error": "Lecture du processeur échouée"
+    }
+  },
+  "GoogleAlerts": {
+    "title": "Alertes de {project}",
+    "description": "Ce que rapporte Google Cloud Monitoring, lu au moment de l’affichage.",
+    "back": "Retour à la connexion",
+    "listTitle": "Incidents ouverts",
+    "listHint": "Chaque chiffre et chaque nom ici vient de Google. OpsWatch n’ajoute aucun verdict.",
+    "checkAccess": "Vérifier l’accès de cette connexion",
+    "quiet": "Aucun incident ouvert. {enabled, plural, one {# règle d’alerte est activée} other {# règles d’alerte sont activées}} dans ce projet : c’est donc Google qui affirme que rien ne va mal, et non l’absence de question.",
+    "unwatchedTitle": "Aucun incident ouvert, et rien ne les surveille.",
+    "unwatchedNone": "Ce projet n’a aucune règle d’alerte. Une liste vide est ici l’absence de question, pas une réponse : OpsWatch ne le déclarera pas sain.",
+    "unwatchedDisabled": "Les {total} règles d’alerte de ce projet sont désactivées. Rien ne peut ouvrir d’incident tant qu’elles le sont.",
+    "policies": "{enabled} des {total} règles d’alerte de ce projet sont activées.",
+    "incidentsTruncated": "Plus d’incidents sont ouverts qu’il n’en a été lu. La liste montre les plus récemment ouverts.",
+    "policiesTruncated": "Il existe plus de règles d’alerte qu’il n’en a été compté : le chiffre ci-dessus est un minimum.",
+    "readNow": "Lu en direct. Rien n’est encore collecté périodiquement pour un projet Google, donc aucun chiffre ici n’est périmé et il n’y a pas d’historique derrière.",
+    "unnamedPolicy": "Règle sans nom",
+    "noSeverity": "Aucune gravité définie",
+    "notReported": "Non rapporté",
+    "columns": {
+      "policy": "Règle",
+      "severity": "Gravité",
+      "resource": "Ressource",
+      "opened": "Ouvert"
+    },
+    "failures": {
+      "denied": "Google a refusé la lecture. roles/monitoring.viewer n’est pas parvenu à cette connexion.",
+      "unreachable": "Cette installation n’a pas pu joindre Google.",
+      "no_token": "Cette connexion n’a pas encore de jeton utilisable.",
+      "error": "Cloud Monitoring a renvoyé une erreur.",
+      "not_ready": "Cette connexion n’est pas terminée. Son projet Google, son pool d’identités de charge de travail et son fournisseur doivent être renseignés avant toute lecture.",
+      "secret_changed": "La clé de signature de cette connexion ne peut pas être ouverte. OPSWATCH_SECRET a changé depuis son enregistrement."
     }
   },
   "DoWizard": {

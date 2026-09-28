@@ -116,12 +116,28 @@ export async function GoogleSetup({ row, locale, baseUrl }: { row: ConnectionRow
       </SectionCard>
 
       {/* Once something can be read, the way to it. Only then: a link to a page that would refuse is
-          not a way in, it is a dead end with a label on it. */}
-      {result?.federation === null && result.checks.some((check) => check.check === 'compute' && check.status === 'ok') && (
-        <SectionCard title={t('instances')} description={t('instancesHint')}>
-          <Link href={`/accounts/${row.id}/instances`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
-            {t('instances')}
-          </Link>
+          not a way in, it is a dead end with a label on it. Each role opens its own page, so the one
+          that arrived is usable while the other is still being granted. */}
+      {result?.federation === null && result.checks.some((check) => ['compute', 'monitoring'].includes(check.check) && check.status === 'ok') && (
+        <SectionCard title={t('readTitle')} description={t('readHint')} contentClassName="space-y-2">
+          {result.checks.some((check) => check.check === 'compute' && check.status === 'ok') && (
+            <p>
+              <Link href={`/accounts/${row.id}/instances`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                {t('instances')}
+              </Link>
+              <span className="block text-xs text-muted-foreground">{t('instancesHint')}</span>
+            </p>
+          )}
+          {/* Alerts are the monitoring role's, not compute's: a connection with one grant and not the
+              other gets exactly the page it can use. */}
+          {result.checks.some((check) => check.check === 'monitoring' && check.status === 'ok') && (
+            <p>
+              <Link href={`/accounts/${row.id}/alerts`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                {t('alerts')}
+              </Link>
+              <span className="block text-xs text-muted-foreground">{t('alertsHint')}</span>
+            </p>
+          )}
         </SectionCard>
       )}
 
