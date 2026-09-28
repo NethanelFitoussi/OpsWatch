@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { PROVIDERS } from '@/lib/connections/types';
 import {
@@ -56,6 +57,21 @@ describe('the capability table', () => {
         const declared = capabilitiesOf(provider)[capability];
         if (declared.state !== 'supported') continue;
         expect(declared.modes, `${provider}.${capability}`).toContain('direct');
+      }
+    }
+  });
+
+  it('THE RULING: every capability has a name in both languages, or it renders as a key path', () => {
+    /*
+     * The table is built from the enum, and next-intl renders `Capabilities.names.costs` rather than
+     * throwing. A capability added without a name ships as that string on every connection page.
+     */
+    for (const locale of ['en', 'fr']) {
+      const messages = JSON.parse(readFileSync(new URL(`../../messages/${locale}.json`, import.meta.url), 'utf8')) as {
+        Capabilities: { names: Record<string, string> };
+      };
+      for (const capability of MONITORING_CAPABILITIES) {
+        expect(messages.Capabilities.names[capability], `${locale}.${capability}`).toBeTypeOf('string');
       }
     }
   });

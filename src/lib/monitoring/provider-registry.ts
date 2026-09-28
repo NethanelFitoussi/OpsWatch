@@ -113,6 +113,8 @@ export type MonitoringProvider = {
     alerts: CapabilityReader | null;
     logs: CapabilityReader | null;
     history: CapabilityReader | null;
+    /** Null on every provider today, which is what `costs: not_built` says in the table. */
+    costs: CapabilityReader | null;
   };
 };
 
@@ -127,6 +129,7 @@ const AWS: MonitoringProvider = {
     logs: startLogsQuery,
     // History is metrics, kept: the job that writes it reads through the same series call.
     history: getMetricSeries,
+    costs: null,
   },
   // The AssumeRole resolver the ninety-odd AWS pages already call, tagged on its way through here.
   // Untouched: it is correct for AWS, and the fix was never to change it but to stop calling it for
@@ -187,7 +190,7 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
     // Null, not `scope.region`: a Google connection's scope is its project, and handing a project id
     // to something expecting `us-central1` is a zone-prefix match that silently finds nothing.
     resolveTarget: fromRow('gcp:federation', (row, _scope, deps) => gcpTargetFrom(row, null, { secret: deps.secret })),
-    readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: projectAlerts, logs: null, history: null },
+    readers: { resources: instancesInRegion, metrics: instanceCpuSeries, errors: null, alerts: projectAlerts, logs: null, history: null, costs: null },
   },
   do: {
     provider: 'do',
@@ -196,7 +199,7 @@ export const MONITORING_PROVIDERS: Record<Provider, MonitoringProvider> = {
     // The scope's region is not passed on, because DigitalOcean's API has no per-region endpoint to
     // pass it to. Inventing one would be parity DigitalOcean does not offer.
     resolveTarget: fromRow('do:token', (row, _scope, deps) => doTargetFrom(row, deps.secret)),
-    readers: { resources: listDroplets, metrics: dropletBandwidth, errors: null, alerts: listAlertPolicies, logs: null, history: null },
+    readers: { resources: listDroplets, metrics: dropletBandwidth, errors: null, alerts: listAlertPolicies, logs: null, history: null, costs: null },
   },
 };
 

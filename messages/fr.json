@@ -6797,7 +6797,8 @@
       "errors": "Erreurs",
       "alerts": "Alertes du fournisseur",
       "logs": "Journaux",
-      "history": "Historique"
+      "history": "Historique",
+      "costs": "Coûts et consommation"
     },
     "states": {
       "supported": "Lu directement chez le fournisseur",

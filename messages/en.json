@@ -6797,7 +6797,8 @@
       "errors": "Errors",
       "alerts": "Provider alerts",
       "logs": "Logs",
-      "history": "History"
+      "history": "History",
+      "costs": "Costs and usage"
     },
     "states": {
       "supported": "Read directly from the provider",

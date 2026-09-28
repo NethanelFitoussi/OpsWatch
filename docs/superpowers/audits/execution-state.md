@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | Six defects a second reader found in the multi-cloud work, fixed and pinned |
-| Last green gates | tsc 0 · eslint 0 · **2632 unit** · **454 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | `costs` declared, so the capability model matches the model that was asked for |
+| Last green gates | tsc 0 · eslint 0 · **2633 unit** · **454 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -380,6 +380,21 @@ Two the review flagged for awareness rather than as defects: `read/reports.ts` i
 `PROBLEM_FAMILIES`, so a Google family gets no report row; and if Google's `health` is ever turned on,
 its `total`/`affected` are policies and incidents where the Health summary reads instances. Both are
 recorded here rather than fixed, because both are gated shut today.
+
+### `costs`, declared and not built
+
+The capability list asked for was Resources, Health, Metrics, Problems, Errors, Alerts, Logs,
+History, **Costs / usage** — and the enum had eight of the nine. Declaring the ninth is one row and it
+is `not_built` on all three clouds, which is exactly why it is worth declaring: all three *do* expose
+it (Cost Explorer, Cloud Billing, DigitalOcean's balance and billing history), so an operator asking
+"can OpsWatch show me what this costs?" gets a straight *not yet* instead of silence, and knows their
+cloud is not the obstacle.
+
+Adding it failed to compile until the registry had a `costs` reader slot — the guard doing its job: a
+capability cannot be declared without somewhere to name the code that will serve it. And a new ruling,
+because the next one will not be so lucky: **every capability needs a name in both languages**.
+next-intl renders `Capabilities.names.costs` rather than throwing, so a capability added without one
+ships as that string on every connection page.
 
 ### What is still only architecture
 

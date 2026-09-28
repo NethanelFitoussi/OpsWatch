@@ -35,6 +35,15 @@ export const MONITORING_CAPABILITIES = [
   'logs',
   /** Figures kept beyond the provider's own retention, for baselines and objectives. */
   'history',
+  /**
+   * What this cloud is costing, and what of it is being used up.
+   *
+   * Declared and not built anywhere, which is the point of declaring it. All three providers expose
+   * it — AWS through Cost Explorer, Google through Cloud Billing, DigitalOcean through its balance
+   * and billing history — so an operator asking "can OpsWatch show me what this costs?" gets a
+   * straight *not yet* rather than silence, and knows their cloud is not the obstacle.
+   */
+  'costs',
 ] as const;
 export type MonitoringCapability = (typeof MONITORING_CAPABILITIES)[number];
 
@@ -78,6 +87,7 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
     alerts: direct,
     logs: directOrManaged,
     history: direct,
+    costs: { state: 'not_built' },
   },
   gcp: {
     resources: direct,
@@ -101,6 +111,7 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
     alerts: direct,
     logs: { state: 'not_built' },
     history: { state: 'not_built' },
+    costs: { state: 'not_built' },
   },
   do: {
     resources: direct,
@@ -120,6 +131,7 @@ export const PROVIDER_CAPABILITIES: Record<Provider, ProviderCapabilities> = {
     alerts: direct,
     logs: { state: 'not_offered' },
     history: { state: 'not_built' },
+    costs: { state: 'not_built' },
   },
 };
 
