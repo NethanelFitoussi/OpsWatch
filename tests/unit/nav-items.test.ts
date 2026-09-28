@@ -21,7 +21,9 @@ describe('navigation items', () => {
       'alarms',
       'logs',
       // Instance-scoped, so these sit after the sections that carry a connection and a region. A Linux
-      // machine is not an attribute of an AWS account any more than a Cloudflare zone is.
+      // machine is not an attribute of an AWS account any more than a Cloudflare zone is — and neither
+      // is "what is wrong", which is a question about every cloud at once.
+      'problems',
       'hosts',
       'cloudflare',
       'gettingStarted',

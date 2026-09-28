@@ -21,7 +21,8 @@
       "redis": "Redis",
       "kubernetes": "Kubernetes",
       "docs": "Documentation",
-      "hosts": "Linux servers"
+      "hosts": "Linux servers",
+      "problems": "Problems"
     },
     "language": {
       "label": "Language",
@@ -6762,5 +6763,36 @@
     },
     "alsoManaged": "Also available forwarded, if you switch that on.",
     "direct": "Everything above is read by OpsWatch calling the provider with the credential you gave it. Nothing is sent anywhere else, and nothing here requires a forwarder, an agent or an account with us."
+  },
+  "Problems": {
+    "title": "Problems",
+    "description": "What is wrong anywhere OpsWatch is connected, worst first.",
+    "listTitle": "Open across every connection",
+    "listHint": "Each row says which cloud produced the evidence, and where to go and act on it.",
+    "filterLabel": "Filter problems by cloud",
+    "filterAll": "All ({count})",
+    "filterProvider": "{provider} ({count})",
+    "emptyTitle": "Nothing is open.",
+    "emptyFiltered": "Nothing is open for this cloud.",
+    "emptyHint": "This counts what has been collected. A connection nothing has been read from contributes no rows here, which is not the same as it being well.",
+    "truncated": "More problems are open than this page shows. The list is the worst of them.",
+    "collected": "Read from what the collector has already written, so this page costs no provider request.",
+    "connectionGone": "Connection removed",
+    "columns": {
+      "problem": "Problem",
+      "where": "Where",
+      "severity": "Severity",
+      "since": "Since"
+    },
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "scopeKind": {
+      "region": "region {scope}",
+      "project": "project {scope}",
+      "account": "whole account"
+    }
   }
 }

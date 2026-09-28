@@ -1,9 +1,9 @@
-import { BookOpen, Boxes, Bug, Cloud, Database, Globe, LayoutDashboard, LibraryBig, Server, Settings, type LucideIcon } from 'lucide-react';
+import { BookOpen, Boxes, Bug, Cloud, Database, Globe, LayoutDashboard, LibraryBig, Server, Settings, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { defaultSubsection } from '@/lib/monitoring/shared/sections';
 import { parseMonitoringPath, subsectionPath, type MonitoringSection } from '@/lib/monitoring/shared/paths';
 import type { AwsIconName } from './aws-icon';
 
-type NavKey = 'overview' | 'errors' | 'containers' | 'instances' | 'redis' | 'kubernetes' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'hosts' | 'cloudflare' | 'gettingStarted' | 'docs' | 'settings' | 'accounts';
+type NavKey = 'overview' | 'problems' | 'errors' | 'containers' | 'instances' | 'redis' | 'kubernetes' | 'databases' | 'loadBalancers' | 'alarms' | 'logs' | 'hosts' | 'cloudflare' | 'gettingStarted' | 'docs' | 'settings' | 'accounts';
 export type NavItem = {
   key: NavKey;
   /** A Lucide icon, or the AWS service icon of a section about that service. */
@@ -35,6 +35,12 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'loadBalancers', kind: 'monitoring', section: 'load-balancers', icon: 'elb' },
   { key: 'alarms', kind: 'monitoring', section: 'alarms', icon: 'alarm' },
   { key: 'logs', kind: 'monitoring', section: 'logs', icon: 'logs' },
+  /*
+   * What is wrong anywhere. **Instance-scoped**, with Linux servers and Cloudflare, because "what is
+   * wrong" is not an attribute of one AWS account and region: an operator with three accounts and a
+   * Google project would otherwise have to know where to look before they could ask.
+   */
+  { key: 'problems', kind: 'static', href: '/problems', icon: TriangleAlert },
   // Instance-scoped rather than per environment, and beside Cloudflare for the same reason: a Linux
   // machine is not an attribute of an AWS account and region, so this link carries neither.
   { key: 'hosts', kind: 'static', href: '/hosts', icon: Server },

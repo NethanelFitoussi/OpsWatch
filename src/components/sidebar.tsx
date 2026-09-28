@@ -82,7 +82,14 @@ export function Sidebar({ signedIn }: { signedIn: boolean }) {
       {/* The panel stays in view while a long page scrolls; the aside keeps the background full height. */}
       <div className={cn('sticky top-0 flex h-screen flex-col py-5', collapsed ? 'px-2' : 'px-4')}>
         <BrandLink className={cn('mb-8 text-lg', collapsed ? 'justify-center' : 'px-2')} labelClassName={collapsed ? 'sr-only' : undefined} />
-        <nav aria-label={t('mainNavigation')} className="flex-1">
+        {/*
+          * `min-h-0` is what makes this shrink. A `flex-1` child cannot go below its content's height
+          * without it, so as the rail gained items the list grew past its share and pushed the collapse
+          * toggle and Sign out off the bottom of the screen — still in the DOM, unreachable on a short
+          * one. The list scrolls; the two controls underneath stay where they are, at any number of
+          * sections and any window height.
+          */}
+        <nav aria-label={t('mainNavigation')} className="min-h-0 flex-1 overflow-y-auto">
           <NavList collapsed={collapsed} />
         </nav>
         <RailCollapseToggle />

@@ -10,8 +10,8 @@ restated.
 | | |
 |---|---|
 | Integrated main | `d77f1d2` (`origin/main`), plus the checkpoint below in flight |
-| Current checkpoint | A scope is what the provider scopes by, and a job runs only where it applies |
-| Last green gates | tsc 0 · eslint 0 · **2597 unit** · **447 e2e, 2 skipped** · `roadmap:check` 0 |
+| Current checkpoint | Problems across every cloud, on a page that does not need a connection first |
+| Last green gates | tsc 0 · eslint 0 · **2608 unit** · **451 e2e, 2 skipped** · `roadmap:check` 0 |
 | Schema | drizzle **0038** — `connections.do_token_ciphertext` and `do_last_test`; 0037 added `connections` gains a provider and Google columns, and `aws_account_id` becomes nullable; 0035 added `aws_collection_stacks`, keyed by `(connection, region)`; 0034 added `hosts.region`, beside `hosts.connection_id`; 0033 added `audit_log.connection_id`, nullable, for an installation-wide action; 0032 keyed `logs_usage` by `(day, connection_id)`; 0031 added `hosts.services` and `hosts.redis`; 0030 added `hosts` and `host_samples`. 0029 added `notify_destinations.connection_id`, nullable, so a single-account installation behaves exactly as before |
 | CloudFormation | base template v1; collection template v1. **AWS-5 (v2) is prepared and tested here, never deployed** |
 
@@ -235,6 +235,40 @@ the detect path passes **null** rather than the project id — carrying a projec
 matching nothing. And a Google connection with no project set yet is collected under **no** scope
 rather than under `''`: rows written under an empty string could never be found again and would show
 on System status as a collected environment.
+
+### What is wrong anywhere
+
+The monitoring rail answers "what is wrong in this account and this region", which is the right
+question once you know where to look. An operator with three AWS accounts and a Google project has to
+know where to look *before* they can ask, so the answer depends on where they started. `/problems` is
+the other question, instance-scoped beside Linux servers and Cloudflare for the same reason: "what is
+wrong" is not an attribute of one AWS account and region.
+
+**Provider identity is carried, never flattened.** Every row says which cloud produced the evidence,
+which connection, and what its scope is — named as what it is, a *region* for AWS and a *project* for
+Google, from `scopeKindOf`. "The payments database is at 98 % CPU" and "Google has an open incident on
+checkout" are fixed in different places by different people, and a unified list that dropped the cloud
+would be a list nobody could act on.
+
+Two rules held by test rather than by care. The **counts are of everything**, so filtering empties the
+list and does not move the numbers. And a **Google problem gets no link into the AWS rail**: `href` on
+a problem row is a monitoring-rail path, and the rail is ten AWS services — following one for a Google
+incident would open a page about a service that cloud does not have, which is the "clone the AWS UI
+and change the names" failure arriving through a link.
+
+An empty list says what it counted. "Nothing is open" is a statement about the database, not about the
+clouds, and the page says so: a connection nothing has been read from contributes no rows, which is
+not the same as it being well.
+
+### A nav item that pushed Sign out off the screen
+
+Adding one item to the rail broke `01-setup`: **Sign out** left the viewport, still in the DOM and
+still "visible" to a query, so the click timed out. The cause is one class — a `flex-1` child of a
+fixed-height column cannot shrink below its own content without `min-h-0`, so the list grew past its
+share instead of scrolling. The list scrolls now and the two controls under it stay put, and
+`sidebar-fits.test.ts` holds it, because this failure scales with the product: every section added
+from here makes it likelier, and it shows up first on whichever screen is shortest rather than on the
+one it was built on.
 
 ### What is still only architecture
 

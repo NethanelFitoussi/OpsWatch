@@ -21,7 +21,8 @@
       "redis": "Redis",
       "kubernetes": "Kubernetes",
       "docs": "Documentation",
-      "hosts": "Serveurs Linux"
+      "hosts": "Serveurs Linux",
+      "problems": "Problèmes"
     },
     "language": {
       "label": "Langue",
@@ -6762,5 +6763,36 @@
     },
     "alsoManaged": "Également disponible en transfert, si vous l’activez.",
     "direct": "Tout ce qui précède est lu par OpsWatch en appelant le fournisseur avec l’identifiant que vous lui avez donné. Rien n’est envoyé ailleurs, et rien ici n’exige de forwarder, d’agent ou de compte chez nous."
+  },
+  "Problems": {
+    "title": "Problèmes",
+    "description": "Ce qui ne va pas partout où OpsWatch est connecté, le plus grave d’abord.",
+    "listTitle": "Ouverts sur toutes les connexions",
+    "listHint": "Chaque ligne indique quel cloud a fourni la preuve, et où agir.",
+    "filterLabel": "Filtrer les problèmes par cloud",
+    "filterAll": "Tous ({count})",
+    "filterProvider": "{provider} ({count})",
+    "emptyTitle": "Rien n’est ouvert.",
+    "emptyFiltered": "Rien n’est ouvert pour ce cloud.",
+    "emptyHint": "Ceci compte ce qui a été collecté. Une connexion dont rien n’a été lu n’apporte aucune ligne ici, ce qui ne signifie pas qu’elle se porte bien.",
+    "truncated": "Plus de problèmes sont ouverts que cette page n’en montre. La liste présente les plus graves.",
+    "collected": "Lu depuis ce que le collecteur a déjà écrit : cette page ne coûte aucune requête au fournisseur.",
+    "connectionGone": "Connexion supprimée",
+    "columns": {
+      "problem": "Problème",
+      "where": "Où",
+      "severity": "Gravité",
+      "since": "Depuis"
+    },
+    "severity": {
+      "critical": "Critique",
+      "warning": "Avertissement",
+      "info": "Information"
+    },
+    "scopeKind": {
+      "region": "région {scope}",
+      "project": "projet {scope}",
+      "account": "compte entier"
+    }
   }
 }

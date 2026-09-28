@@ -63,6 +63,7 @@ const BOUNDED_BY_NATURE: Record<string, string> = {
   'problems.ts:listLiveProblems': 'the open problems of one environment — the detector must see all of them, and truncating would make it wrong',
   'problems.ts:applyTransitions': 'the transitions of one detect cycle',
   'problems.ts:countProblemsBySeverity': 'one row per severity: it counts, and a count has as many rows as there are severities',
+  'problems.ts:countLiveProblemsByConnection': 'one aggregate row per connection and source, and a connection is something an operator created by hand',
   'audit.ts:countAudit': 'one row per action counted, and the actions are a closed list',
   'deployments.ts:countDeployments': 'one row per status counted, and the statuses are a closed list',
   'errors.ts:countOccurrences': 'one aggregate row, whatever the occurrences behind it',

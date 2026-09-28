@@ -288,6 +288,51 @@ export function listLiveProblems(db: Db, connectionId: string, scope: string): {
     .map((row) => ({ row, live: toLive(row) }));
 }
 
+/**
+ * Every problem still open **across every connection**, worst first, bounded.
+ *
+ * The per-environment read above answers "what is wrong in this account and region", which is the
+ * question the monitoring rail asks. An operator with three AWS accounts and a Google project has a
+ * different question — "what is wrong anywhere" — and until now had to visit each environment in turn
+ * to answer it, which means the answer depended on where they happened to look.
+ *
+ * Ordered by severity and then by what was seen most recently, because a list read top-down should
+ * start with the thing most worth acting on. Limited rather than `.all()`: this grows with the whole
+ * installation, and a page that loads every open problem is a page that stops loading in two years.
+ */
+export function listLiveProblemsAcross(
+  db: Db,
+  filter: { connectionIds?: readonly string[]; sources?: readonly string[]; severities?: readonly ProblemSeverity[] },
+  limit: number,
+): ProblemRow[] {
+  const where = [isNull(problems.resolvedAt), eq(problems.grouped, false)];
+  // An empty array is a filter matching nothing, and is honoured as such rather than ignored: a
+  // caller that filtered to a provider with no connections must see none, not all of them.
+  if (filter.connectionIds !== undefined) where.push(inArray(problems.connectionId, [...filter.connectionIds]));
+  if (filter.sources !== undefined) where.push(inArray(problems.source, [...filter.sources]));
+  if (filter.severities !== undefined) where.push(inArray(problems.severity, [...filter.severities]));
+
+  return db
+    .select()
+    .from(problems)
+    .where(and(...where))
+    // `score` is the product's own ranking of how much a problem is worth, and severity is what an
+    // operator scans for. Both, so two criticals are ordered by which matters more.
+    .orderBy(desc(problems.score), desc(problems.lastSeenAt), asc(problems.id))
+    .limit(limit)
+    .all();
+}
+
+/** How many problems are open per connection, so a page can count without loading them. */
+export function countLiveProblemsByConnection(db: Db): { connectionId: string; source: string; total: number }[] {
+  return db
+    .select({ connectionId: problems.connectionId, source: problems.source, total: sql<number>`count(*)` })
+    .from(problems)
+    .where(and(isNull(problems.resolvedAt), eq(problems.grouped, false)))
+    .groupBy(problems.connectionId, problems.source)
+    .all();
+}
+
 /** Rows resolved recently enough that trouble returning should continue them rather than start again. */
 export function listRecentlyResolved(db: Db, connectionId: string, scope: string, notBeforeMs: number): LiveProblem[] {
   return db
